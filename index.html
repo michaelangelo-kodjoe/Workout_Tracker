@@ -116,6 +116,14 @@
   .edrow .m{font-size:10.5px;color:var(--text-dim);}
   .edrow .acts span{cursor:pointer;color:var(--light);font-size:14px;margin-left:10px;}
   .edrow .acts span.x{color:var(--accent);}
+  .cardio-tab{border-style:dashed;}
+  .rpe-row{display:flex;gap:6px;margin-top:6px;}
+  .rpe-dot{flex:1;text-align:center;padding:8px 0;border-radius:3px;border:1px solid var(--line);background:var(--panel-raised);font-size:12px;cursor:pointer;color:var(--text-dim);}
+  .rpe-dot.on{background:var(--light);border-color:var(--light);color:#0d1a22;}
+  .ctype{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 4px;}
+  .ctype span{padding:8px 12px;border-radius:3px;border:1px solid var(--line);background:var(--panel-raised);font-size:12.5px;cursor:pointer;color:var(--text-dim);}
+  .ctype span.on{border-color:var(--light);color:var(--text);background:rgba(79,163,209,.12);}
+  .field-label{font-size:11px;color:var(--text-dim);margin:12px 0 4px;}
   .chk{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text-dim);margin:2px 6px 2px 0;font-family:'Georgia',serif;}
   .empty{font-size:12.5px;color:var(--text-dim);line-height:1.6;padding:6px 0;}
   .storage-warn{font-size:11px;color:var(--amber);margin-top:8px;}
@@ -258,6 +266,10 @@
       <h3>Body weight</h3>
       <div class="row"><input class="in" type="number" inputmode="decimal" id="bwInput" placeholder="lb" style="width:90px"><button class="btn" id="bwLog">log today</button><span id="bwInfo" style="font-size:11px;color:var(--text-dim)"></span></div>
       <div id="bwSpark"></div>
+    </div>
+    <div class="card" id="conditioningCard" style="display:none">
+      <h3>Conditioning</h3>
+      <div id="condStats"></div>
     </div>
     <div id="strengthList"></div>
     <div class="note-sm">Strength level compares each lift to the numbers you started with (100%). It weighs both the load and the reps, so adding reps at the same weight counts too. "Per lb of body weight" divides that by your logged weight, so getting stronger while staying the same size counts extra.</div>
@@ -535,9 +547,12 @@ function renderBody(){
 }
 
 // ---------- log view ----------
-async function loadDay(d){ currentDay=d; todayData=(await sget('today:'+d))||{}; lastSessionData[d]=await sget('last:'+d); render(); }
+async function loadDay(d){ currentDay=d; if(d==='cardio'){ renderTabs(); renderBody(); renderCardioForm(); return; } document.getElementById('finishBtn').style.display=''; document.getElementById('resetLink').style.display=''; todayData=(await sget('today:'+d))||{}; lastSessionData[d]=await sget('last:'+d); render(); }
 function ensureState(ex){ if(!todayData[ex.name]) todayData[ex.name]={open:false,sets:Array.from({length:setsCountFor(ex)},()=>({w:'',r:'',done:false}))}; return todayData[ex.name]; }
-function renderTabs(){ const w=document.getElementById('dayTabs'); w.innerHTML=''; PROGRAM.forEach(d=>{ const el=document.createElement('div'); el.className='daytab'+(d.id===currentDay?' active':''); el.innerHTML=`${d.name}<span class="dsub">${d.sub}</span>`; el.onclick=()=>loadDay(d.id); w.appendChild(el); }); }
+function renderTabs(){ const w=document.getElementById('dayTabs'); w.innerHTML='';
+  PROGRAM.forEach(d=>{ const el=document.createElement('div'); el.className='daytab'+(d.id===currentDay?' active':''); el.innerHTML=`${d.name}<span class="dsub">${d.sub}</span>`; el.onclick=()=>loadDay(d.id); w.appendChild(el); });
+  const c=document.createElement('div'); c.className='daytab cardio-tab'+(currentDay==='cardio'?' active':''); c.innerHTML='Cardio<span class="dsub">endurance</span>'; c.onclick=()=>loadDay('cardio'); w.appendChild(c);
+}
 
 function render(){
   renderTabs(); renderBody();
@@ -622,25 +637,123 @@ async function finishSession(){
   if(settings.autoBackup && backupDue()) setTimeout(()=>doExport(true), 1200); else updateBackupUI();
 }
 
+// ---------- cardio ----------
+const CARDIO_TYPES=[
+  {key:'zone2',label:'Zone 2 (steady state)',
+   desc:'20-40 min at a pace you could hold a conversation. Bike, incline walk, row, or jog. This builds your aerobic base more than intervals do.',
+   cue:'Pick a pace where you could speak in full sentences but not sing. Roughly 60-70% of max heart rate if you track it, or "comfortably annoying" by feel. Keep it steady the whole time; do not surge. The goal is time at that pace, not distance.',
+   demo:'zone 2 cardio training form'},
+  {key:'hiit',label:'Intervals / HIIT',
+   desc:'6-10 rounds of 30s hard / 90s easy on a bike or rower. Raises your ceiling for sustained output. Give it 48h+ from your next Lower day.',
+   cue:'Warm up 5 minutes easy first. On the hard 30s, push to about 8-9 out of 10 effort — hard enough that talking is not possible. Use the full 90s easy to bring your breathing back down before the next round. Quality over round count; stop if form or effort drops off badly.',
+   demo:'HIIT interval training bike rower form'},
+  {key:'finisher',label:'Short finisher',
+   desc:'5-8 min bodyweight circuit (burpees, mountain climbers, jump rope) done for time, tacked onto a lifting day. Cheap work-capacity builder.',
+   cue:'Pick 2-3 movements (e.g. burpees, mountain climbers, jump rope) and cycle through them for time with minimal rest. Move fast but keep form clean — a sloppy burpee is a wasted rep. This comes after lifting, not before, so your main lifts stay strong.',
+   demo:'bodyweight finisher circuit workout'},
+];
+let cardioDraft={type:'zone2',duration:'',distance:'',rpe:0,notes:'',showHow:false};
+function renderCardioForm(){
+  document.getElementById('dayLabel').innerHTML=`<span><span class="badge light">endurance</span>Conditioning</span><span class="linkbtn" id="cardioHistLink">history</span>`;
+  document.getElementById('cardioHistLink').onclick=()=>setView('history');
+  const list=document.getElementById('exerciseList'); list.innerHTML='';
+  const wrap=document.createElement('div'); wrap.className='exercise open';
+  const t=CARDIO_TYPES.find(x=>x.key===cardioDraft.type);
+  const yt='https://www.youtube.com/results?search_query='+encodeURIComponent(t.demo);
+  wrap.innerHTML=`
+    <div class="ex-head" style="cursor:default"><div><div class="ex-name">Log a session</div><div class="ex-target">pick a type, fill in what applies</div></div></div>
+    <div class="ex-body" style="display:block">
+      <div class="ctype" id="ctypeRow">${CARDIO_TYPES.map(x=>`<span data-k="${x.key}" class="${x.key===cardioDraft.type?'on':''}">${x.label}</span>`).join('')}</div>
+      <div class="cue">${t.desc}</div>
+      <div class="howto-row" style="margin-top:8px"><span class="howto-btn" id="cardioHowtoBtn">${cardioDraft.showHow?'hide how to':'how to'}</span><a class="demo-link" href="${yt}" target="_blank" rel="noopener">watch demo ↗</a></div>
+      ${cardioDraft.showHow?`<div class="cue" style="display:block">${t.cue}</div>`:''}
+      <div class="field-label">duration (minutes)</div>
+      <div class="setgrid" style="grid-template-columns:1fr"><input type="number" inputmode="numeric" id="cDur" placeholder="e.g. 30" value="${cardioDraft.duration}"></div>
+      <div class="field-label">distance (optional, miles/km)</div>
+      <div class="setgrid" style="grid-template-columns:1fr"><input type="text" inputmode="decimal" id="cDist" placeholder="e.g. 3.1 mi" value="${cardioDraft.distance}"></div>
+      <div class="field-label">effort (RPE, 1 easy - 10 max)</div>
+      <div class="rpe-row" id="rpeRow">${Array.from({length:10},(_,i)=>i+1).map(n=>`<div class="rpe-dot ${cardioDraft.rpe===n?'on':''}" data-n="${n}">${n}</div>`).join('')}</div>
+      <textarea class="notes" id="cNotes" placeholder="notes (route, how it felt…)">${cardioDraft.notes}</textarea>
+      <div class="row" style="margin-top:12px"><button class="btn primary" id="cardioLogBtn" style="flex:1">log session</button></div>
+    </div>`;
+  list.appendChild(wrap);
+  document.getElementById('cardioHowtoBtn').onclick=()=>{ cardioDraft.showHow=!cardioDraft.showHow; renderCardioForm(); };
+  wrap.querySelectorAll('#ctypeRow span').forEach(el=>el.onclick=()=>{ cardioDraft.type=el.dataset.k; renderCardioForm(); });
+  wrap.querySelectorAll('.rpe-dot').forEach(el=>el.onclick=()=>{ cardioDraft.rpe=parseInt(el.dataset.n); renderCardioForm(); });
+  document.getElementById('cDur').oninput=e=>cardioDraft.duration=e.target.value;
+  document.getElementById('cDist').oninput=e=>cardioDraft.distance=e.target.value;
+  document.getElementById('cNotes').oninput=e=>cardioDraft.notes=e.target.value;
+  document.getElementById('cardioLogBtn').onclick=logCardio;
+  document.getElementById('finishBtn').style.display='none';
+  document.getElementById('resetLink').style.display='none';
+}
+async function logCardio(){
+  if(!cardioDraft.duration){ showToast('add a duration first'); return; }
+  const rec={t:Date.now(), isCardio:true, ctype:cardioDraft.type, ctypeLabel:CARDIO_TYPES.find(x=>x.key===cardioDraft.type).label, duration:parseInt(cardioDraft.duration), distance:cardioDraft.distance, rpe:cardioDraft.rpe, notes:cardioDraft.notes};
+  sessions.push(rec); await sset('sessions',sessions);
+  cardioDraft={type:cardioDraft.type,duration:'',distance:'',rpe:0,notes:'',showHow:cardioDraft.showHow};
+  showToast('conditioning logged 🏃'); renderCardioForm();
+  if(settings.autoBackup && backupDue()) setTimeout(()=>doExport(true),1200); else updateBackupUI();
+}
+
 // ---------- history view ----------
 function renderHistory(){
   const st=document.getElementById('histStats'), list=document.getElementById('sessList'); list.innerHTML='';
   const week=Date.now()-7*864e5, month=Date.now()-30*864e5;
-  const thisWeek=sessions.filter(s=>s.t>=week).length, thisMonth=sessions.filter(s=>s.t>=month).length;
-  const wk=[]; for(let i=7;i>=0;i--){ const a=Date.now()-(i+1)*7*864e5,b=Date.now()-i*7*864e5; wk.push(sessions.filter(s=>s.t>=a&&s.t<b).length); }
-  st.innerHTML=`<div class="stat"><div class="v ${thisWeek>=4?'up':''}">${thisWeek}<span style="font-size:12px;color:var(--text-dim)"> / 4</span></div><div class="l">sessions in the last 7 days</div></div>
-    <div class="stat"><div class="v">${thisMonth}</div><div class="l">last 30 days</div>${sparkline(wk,'var(--green)')}</div>`;
-  if(!sessions.length){ list.innerHTML='<div class="empty">No sessions yet. Finish a workout in the Log tab and it will show up here with the date, what you lifted, and total weight moved.</div>'; return; }
-  [...sessions].reverse().forEach((s,i)=>{
+  const lifts=sessions.filter(s=>!s.isCardio), cardio=sessions.filter(s=>s.isCardio);
+  const thisWeek=lifts.filter(s=>s.t>=week).length, thisMonth=lifts.filter(s=>s.t>=month).length;
+  const cardioWeekMin=cardio.filter(s=>s.t>=week).reduce((a,b)=>a+(b.duration||0),0);
+  const wk=[]; for(let i=7;i>=0;i--){ const a=Date.now()-(i+1)*7*864e5,b=Date.now()-i*7*864e5; wk.push(lifts.filter(s=>s.t>=a&&s.t<b).length); }
+  st.innerHTML=`<div class="stat"><div class="v ${thisWeek>=4?'up':''}">${thisWeek}<span style="font-size:12px;color:var(--text-dim)"> / 4</span></div><div class="l">lifting sessions, last 7 days</div></div>
+    <div class="stat"><div class="v">${thisMonth}</div><div class="l">lifting, last 30 days</div>${sparkline(wk,'var(--green)')}</div>
+    <div class="stat" style="grid-column:1 / -1"><div class="v ${cardioWeekMin>=60?'up':''}">${cardioWeekMin} min</div><div class="l">conditioning this week (2-3 sessions/wk is the target)</div></div>`;
+  if(!sessions.length){ list.innerHTML='<div class="empty">No sessions yet. Finish a workout or log a conditioning session and it will show up here.</div>'; return; }
+  [...sessions].reverse().forEach((s)=>{
     const el=document.createElement('div'); el.className='sess';
-    const det=Object.entries(s.ex).map(([n,sets])=>`<b style="font-weight:normal;color:var(--text)">${n}</b> — ${sets.map(x=>`${x.w||'bw'}×${x.r||'-'}`).join(', ')}`).join('<br>');
-    el.innerHTML=`<div class="sh"><span>${fmtDate(s.t)}</span><span style="color:var(--text-dim)">${s.dayName} · ${s.sub}</span></div><div class="sm">${s.sets} sets · ${s.vol.toLocaleString()} lb moved</div><div class="sdet">${det}</div>`;
-    el.onclick=()=>el.classList.toggle('open'); list.appendChild(el);
+    if(s.isCardio){
+      el.innerHTML=`<div class="sh"><span>${fmtDate(s.t)}</span><span style="color:var(--text-dim)">${s.ctypeLabel}</span></div><div class="sm">${s.duration} min${s.distance?' · '+s.distance:''}${s.rpe?' · RPE '+s.rpe:''}</div>${s.notes?`<div class="sdet" style="display:block;border:none;padding-top:4px">${s.notes}</div>`:''}`;
+    } else {
+      const det=Object.entries(s.ex).map(([n,sets])=>`<b style="font-weight:normal;color:var(--text)">${n}</b> — ${sets.map(x=>`${x.w||'bw'}×${x.r||'-'}`).join(', ')}`).join('<br>');
+      el.innerHTML=`<div class="sh"><span>${fmtDate(s.t)}</span><span style="color:var(--text-dim)">${s.dayName} · ${s.sub}</span></div><div class="sm">${s.sets} sets · ${s.vol.toLocaleString()} lb moved</div><div class="sdet">${det}</div>`;
+      el.onclick=()=>el.classList.toggle('open');
+    }
+    list.appendChild(el);
   });
 }
 
 // ---------- strength view ----------
+function parsePace(distStr){ const m=(distStr||'').match(/([\d.]+)/); return m?parseFloat(m[1]):null; }
+function renderConditioning(){
+  const card=document.getElementById('conditioningCard'), out=document.getElementById('condStats');
+  const cardio=[...sessions].filter(s=>s.isCardio).sort((a,b)=>a.t-b.t);
+  if(!cardio.length){ card.style.display='none'; return; }
+  card.style.display='';
+  // weekly minutes for last 8 weeks
+  const wk=[]; for(let i=7;i>=0;i--){ const a=Date.now()-(i+1)*7*864e5,b=Date.now()-i*7*864e5; wk.push(cardio.filter(s=>s.t>=a&&s.t<b).reduce((x,y)=>x+(y.duration||0),0)); }
+  const first4=cardio.slice(0,Math.max(1,Math.ceil(cardio.length/2))), recent4=cardio.slice(-Math.max(1,Math.ceil(cardio.length/2)));
+  const avgRpeEarly=first4.filter(s=>s.rpe).length?first4.filter(s=>s.rpe).reduce((a,b)=>a+b.rpe,0)/first4.filter(s=>s.rpe).length:null;
+  const avgRpeRecent=recent4.filter(s=>s.rpe).length?recent4.filter(s=>s.rpe).reduce((a,b)=>a+b.rpe,0)/recent4.filter(s=>s.rpe).length:null;
+  const rpeDelta = (avgRpeEarly&&avgRpeRecent)? avgRpeRecent-avgRpeEarly : null;
+  const durTrend = cardio.map(s=>s.duration||0);
+  const rpeTrend = cardio.filter(s=>s.rpe).map(s=>s.rpe);
+  const paced = cardio.filter(s=>parsePace(s.distance)&&s.duration);
+  let paceHtml='';
+  if(paced.length>=2){
+    const paceVals = paced.map(s=>s.duration/parsePace(s.distance)); // min per mile/km
+    const p0=paceVals[0], p1=paceVals[paceVals.length-1];
+    const paceChange = ((p0-p1)/p0*100); // positive = faster pace now
+    paceHtml = `<div class="srow" style="grid-template-columns:1fr 70px 64px"><div><div class="sn">Pace (min per mile/km)</div><div class="sd">${paced.length} sessions with distance logged</div></div><div class="se">${p1.toFixed(1)}</div><div class="sp ${paceChange>0.5?'up':paceChange<-0.5?'down':'flat'}">${paceChange>0?'faster':'slower'}</div>${sparkline(paceVals,'var(--light)')}</div>`;
+  }
+  out.innerHTML = `
+    <div class="stats2" style="margin-bottom:10px">
+      <div class="stat"><div class="v">${wk[wk.length-1]} min</div><div class="l">this week</div>${sparkline(wk,'var(--green)')}</div>
+      <div class="stat"><div class="v ${rpeDelta!==null&&rpeDelta<-0.3?'up':''}">${avgRpeRecent?avgRpeRecent.toFixed(1):'—'}</div><div class="l">recent avg effort (RPE)${rpeDelta!==null?`, ${rpeDelta<0?'down':'up'} from ${avgRpeEarly.toFixed(1)} early on`:''}</div>${rpeTrend.length>1?sparkline(rpeTrend,'var(--amber)'):''}</div>
+    </div>
+    ${paceHtml}
+    <div class="note-sm" style="margin-top:${paceHtml?'10px':'0'}">Same effort covering more distance, or the same pace feeling easier (lower RPE), is what real endurance improvement looks like — not just logging more minutes.</div>`;
+}
 function renderStrength(){
+  renderConditioning();
   const sum=document.getElementById('strengthSummary'), list=document.getElementById('strengthList'); list.innerHTML='';
   let changes=[], bigTotal=0, bigBase=0; const BIG=['Machine Chest Press','Machine Mid Row','Lat Pulldown','Converging Shoulder Press','Machine Leg Press'];
   PROGRAM.forEach(day=>{
