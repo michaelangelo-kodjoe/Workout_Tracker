@@ -28,8 +28,13 @@
   .banner{display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(214,160,58,.1);border:1px solid rgba(214,160,58,.4);border-radius:4px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--amber);}
   .banner .linkbtn{color:var(--amber);white-space:nowrap;}
   .bodymap{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:12px 12px 10px;margin-bottom:18px;}
-  .bodymap-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
-  .bodymap-title{font-size:13px;} .bodymap-note{font-size:10px;color:var(--text-dim);}
+  .recov-hero{background:linear-gradient(165deg,var(--panel-raised) 0%,#1a2b20 130%);border:1px solid var(--line);border-radius:6px;padding:14px 14px 12px;margin-bottom:14px;position:relative;overflow:hidden;}
+  .recov-hero::after{content:"";position:absolute;top:-40px;right:-40px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(92,187,111,.22),transparent 70%);}
+  .recov-top{display:flex;align-items:center;gap:14px;position:relative;}
+  .recov-ring{flex:0 0 auto;}
+  .recov-score{font-family:'Menlo','SF Mono',monospace;font-size:13px;}
+  .recov-score b{font-size:26px;color:var(--green);display:block;line-height:1;}
+  .recov-sub{font-size:11px;color:var(--text-dim);margin-top:8px;line-height:1.5;position:relative;}
   .figures{display:flex;justify-content:space-around;gap:8px;}
   .figures svg{height:310px;width:auto;}
   .figures .cap{text-align:center;font-size:10px;color:var(--text-dim);margin-top:2px;}
@@ -37,8 +42,15 @@
   .muscle{stroke:#101216;stroke-width:1.6;stroke-linejoin:round;transition:fill .6s;}
   .skin{fill:#3b404b;stroke:#101216;stroke-width:1.6;stroke-linejoin:round;}
   .detail{fill:none;stroke:#101216;stroke-width:1.1;stroke-linecap:round;opacity:.7;}
+  .m-worked{fill:#c94a3a;}
+  .m-recovering{fill:#d6a03a;}
+  .m-ready{fill:#4a9e5c;filter:drop-shadow(0 0 5px rgba(92,187,111,.7));animation:glowpulse 2.6s ease-in-out infinite;}
+  @keyframes glowpulse{0%,100%{filter:drop-shadow(0 0 3px rgba(92,187,111,.5));}50%{filter:drop-shadow(0 0 9px rgba(92,187,111,.9));}}
+  @media (prefers-reduced-motion: reduce){ .m-ready{animation:none;} }
+  .tap-hint{font-size:10.5px;color:var(--text-dim);text-align:center;margin-top:8px;}
+  .tap-hint b{color:var(--text);}
   .legend{display:flex;justify-content:center;gap:14px;margin-top:8px;font-size:10px;color:var(--text-dim);}
-  .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:middle;}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle;}
   .recov-list{margin-top:8px;font-size:11px;color:var(--text-dim);line-height:1.6;border-top:1px dashed var(--line);padding-top:8px;}
   .recov-list b{color:var(--text);font-weight:normal;}
   .daylabel{font-size:13px;color:var(--text-dim);margin:4px 0 14px;display:flex;justify-content:space-between;align-items:center;}
@@ -145,7 +157,16 @@
   <section id="logView">
     <div class="banner" id="backupBanner" style="display:none"><span>It's been a week since your last backup.</span><span class="linkbtn" id="bannerBtn">back up now</span></div>
     <div class="bodymap">
-      <div class="bodymap-head"><div class="bodymap-title">Recovery map</div><div class="bodymap-note">est. 36–72h per muscle</div></div>
+      <div class="recov-hero" id="recovHero">
+        <div class="recov-top">
+          <svg class="recov-ring" width="60" height="60" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="27" fill="none" stroke="var(--line)" stroke-width="5"/>
+            <circle cx="32" cy="32" r="27" fill="none" stroke="var(--green)" stroke-width="5" stroke-linecap="round" stroke-dasharray="169.6" stroke-dashoffset="0" id="recovRingArc" transform="rotate(-90 32 32)"/>
+          </svg>
+          <div class="recov-score"><b id="recovPct">100%</b>ready to train</div>
+        </div>
+        <div class="recov-sub" id="recovSub">Every muscle group is fully recovered — ready for anything today.</div>
+      </div>
       <div class="figures">
         <div class="fig"><svg viewBox="0 0 160 322" xmlns="http://www.w3.org/2000/svg">
           <ellipse class="skin" cx="80" cy="22" rx="14" ry="17"/>
@@ -247,8 +268,10 @@
           <path class="skin" d="M 106 313 H 84 Q 82 322 86 322 H 104 Q 108 322 106 313 Z"/>
         </svg><div class="cap">back</div></div>
       </div>
-      <div class="legend"><span><i style="background:#e6473a"></i>just worked</span><span><i style="background:#d6a03a"></i>recovering</span><span><i style="background:#4a9e5c"></i>ready</span></div>
-      <div class="recov-list" id="recovList"></div>
+      <div class="tap-hint" id="tapHint">All muscles recovered. Ready to train.</div>
+      <div class="legend"><span><i style="background:#c94a3a"></i>just worked</span><span><i style="background:#d6a03a"></i>recovering</span><span><i style="background:#4a9e5c"></i>ready</span></div>
+      <div class="linkbtn" id="recovDetailToggle" style="display:none;text-align:center;margin-top:8px">see full breakdown</div>
+      <div class="recov-list" id="recovList" style="display:none"></div>
     </div>
     <div class="daylabel" id="dayLabel"></div>
     <div id="exerciseList"></div>
@@ -537,14 +560,43 @@ document.getElementById('tPlus').onclick=()=>{ timer.end+=30000; timer.total+=30
 
 // ---------- recovery map ----------
 function recoveryProgress(m){ const r=recovery[m]; if(!r) return 1; return Math.min(1,Math.max(0,(Date.now()-r.start)/3600000/r.hours)); }
-function progressColor(p){ const hue=p<0.5?4+(p/0.5)*36:40+((p-0.5)/0.5)*98; const sat=p<0.5?72-p*20:62-(p-0.5)*30; const light=p<0.5?56:52-(p-0.5)*14; return `hsl(${hue.toFixed(0)} ${sat.toFixed(0)}% ${light.toFixed(0)}%)`; }
+function recovClass(p){ return p>=1?'m-ready':p>=0.5?'m-recovering':'m-worked'; }
+const RECOV_RING_C=169.6;
 function renderBody(){
-  document.querySelectorAll('.muscle').forEach(el=>{ el.style.fill=progressColor(recoveryProgress(el.dataset.m)); });
-  const list=document.getElementById('recovList');
-  const active=Object.keys(recovery).filter(m=>recoveryProgress(m)<1).sort((a,b)=>recoveryProgress(a)-recoveryProgress(b));
-  if(!active.length){ list.innerHTML='All muscles recovered. Ready to train.'; return; }
+  document.querySelectorAll('.muscle').forEach(el=>{ el.classList.remove('m-ready','m-recovering','m-worked'); el.classList.add(recovClass(recoveryProgress(el.dataset.m))); });
+
+  const allMuscles=Object.keys(RECOVERY_HOURS);
+  const avg=allMuscles.reduce((sum,m)=>sum+Math.min(1,recoveryProgress(m)),0)/allMuscles.length;
+  const pct=Math.round(avg*100);
+  document.getElementById('recovPct').textContent=pct+'%';
+  document.getElementById('recovRingArc').style.strokeDashoffset=(RECOV_RING_C*(1-avg)).toFixed(1);
+
+  const active=allMuscles.filter(m=>recoveryProgress(m)<1).sort((a,b)=>recoveryProgress(a)-recoveryProgress(b));
+  const sub=document.getElementById('recovSub'), hint=document.getElementById('tapHint'), list=document.getElementById('recovList'), toggle=document.getElementById('recovDetailToggle');
+
+  if(!active.length){
+    sub.textContent='Every muscle group is fully recovered — ready for anything today.';
+    hint.textContent='All muscles recovered. Ready to train.';
+    list.innerHTML=''; list.style.display='none'; toggle.style.display='none'; toggle.textContent='see full breakdown';
+    return;
+  }
+  toggle.style.display='block';
+
+  const worst=active[0], wr=recovery[worst], leftH=Math.max(0,wr.hours-(Date.now()-wr.start)/3600000);
+  const day=new Date(wr.start).toLocaleDateString(undefined,{weekday:'long'});
+  const readyNames=allMuscles.filter(m=>!active.includes(m)).map(m=>MUSCLE_LABEL[m]);
+  const readyTxt=readyNames.length?`${readyNames.slice(0,3).join(', ')}${readyNames.length>3?' and more':''} ${readyNames.length===1?'is':'are'} fully recovered. `:'';
+  sub.textContent=`${readyTxt}${MUSCLE_LABEL[worst]} is still coming back from ${day} — light work only.`;
+  hint.innerHTML=`<b>${MUSCLE_LABEL[worst]}</b> ready in ${leftH<1?'<1':Math.ceil(leftH)}h`;
+
   list.innerHTML=active.map(m=>{ const r=recovery[m]; const left=Math.max(0,r.hours-(Date.now()-r.start)/3600000); return `<b>${MUSCLE_LABEL[m]}</b> ${Math.round(recoveryProgress(m)*100)}% · ~${left<1?'<1':Math.ceil(left)}h left`; }).join('<br>');
 }
+document.getElementById('recovDetailToggle').onclick=()=>{
+  const l=document.getElementById('recovList'), t=document.getElementById('recovDetailToggle');
+  const open=l.style.display!=='none';
+  l.style.display=open?'none':'block';
+  t.textContent=open?'see full breakdown':'hide breakdown';
+};
 
 // ---------- log view ----------
 async function loadDay(d){ currentDay=d; if(d==='cardio'){ renderTabs(); renderBody(); renderCardioForm(); return; } document.getElementById('finishBtn').style.display=''; document.getElementById('resetLink').style.display=''; todayData=(await sget('today:'+d))||{}; lastSessionData[d]=await sget('last:'+d); render(); }
