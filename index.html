@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#14161a">
 <title>Lift Log</title>
 <style>
-  :root{--bg:#14161a;--panel:#1c1f25;--panel-raised:#22262e;--line:#2c3038;--text:#e8e9ec;--text-dim:#8b8f98;--accent:#ff5d3b;--heavy:#ff5d3b;--light:#4fa3d1;--done-bg:#1f2a20;--done-line:#3d5c3f;--green:#5cbb6f;--amber:#d6a03a;}
+  :root{--bg:#14161a;--panel:#1c1f25;--panel-raised:#22262e;--line:#2c3038;--text:#e8e9ec;--text-dim:#8b8f98;--accent:#ff5d3b;--heavy:#ff5d3b;--light:#4fa3d1;--done-bg:#1f2a20;--done-line:#3d5c3f;--green:#5cbb6f;--amber:#d6a03a;--gold:#e8b23d;}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Georgia','Iowan Old Style',serif;min-height:100vh;}
   button,input,textarea,select{font-family:'Menlo','SF Mono',monospace;}
@@ -107,11 +107,19 @@
   .stat{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:12px 14px;}
   .stat .v{font-family:'Menlo',monospace;font-size:22px;} .stat .v.up{color:var(--green);} .stat .v.down{color:var(--accent);}
   .stat .l{font-size:11px;color:var(--text-dim);margin-top:2px;}
-  .srow{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:10px 14px;margin-bottom:8px;display:grid;grid-template-columns:1fr 70px 64px;gap:10px;align-items:center;}
+  .srow{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:10px 14px;margin-bottom:8px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:baseline;}
   .srow .sn{font-size:14px;} .srow .sd{font-size:10.5px;color:var(--text-dim);margin-top:2px;}
-  .srow .se{font-family:'Menlo',monospace;font-size:15px;text-align:right;} .srow .sp{font-family:'Menlo',monospace;font-size:11px;text-align:right;}
+  .srow .sp{font-family:'Menlo',monospace;font-size:16px;text-align:right;white-space:nowrap;}
   .sp.up{color:var(--green);} .sp.down{color:var(--accent);} .sp.flat{color:var(--text-dim);}
-  .spark{grid-column:1 / -1;height:26px;width:100%;}
+  .spark{grid-column:1 / -1;height:28px;width:100%;margin-top:4px;}
+  .milestone{fill:var(--gold);filter:drop-shadow(0 0 4px rgba(232,178,61,.8));}
+  .str-hero{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:14px 14px 12px;margin-bottom:14px;}
+  .str-hero-num{font-family:'Menlo',monospace;font-size:32px;color:var(--green);line-height:1;}
+  .str-hero-num.down{color:var(--accent);}
+  .str-hero-lbl{font-size:12px;color:var(--text-dim);margin-top:6px;}
+  .str-spark{width:100%;height:50px;margin-top:12px;display:block;}
+  .str-hero-sub{font-size:10.5px;color:var(--text-dim);margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);}
+  .bwlb{display:inline-block;font-size:9.5px;background:rgba(79,163,209,.15);color:var(--light);border:1px solid rgba(79,163,209,.4);padding:1px 6px;border-radius:9px;margin-left:6px;}
   .note-sm{font-size:10.5px;color:var(--text-dim);line-height:1.5;margin-top:14px;}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:12px 14px;margin-bottom:10px;}
   .card h3{margin:0 0 8px;font-size:14px;font-weight:normal;}
@@ -284,7 +292,12 @@
   </section>
 
   <section id="strengthView" style="display:none">
-    <div class="stats2" id="strengthSummary"></div>
+    <div class="str-hero">
+      <div class="str-hero-num" id="strHeroNum">—</div>
+      <div class="str-hero-lbl">stronger than where you started<span class="bwlb" id="strBwPill" style="display:none"></span></div>
+      <svg class="str-spark" id="strHeroSpark" viewBox="0 0 300 56" preserveAspectRatio="none"></svg>
+      <div class="str-hero-sub" id="strBigLifts"></div>
+    </div>
     <div class="card">
       <h3>Body weight</h3>
       <div class="row"><input class="in" type="number" inputmode="decimal" id="bwInput" placeholder="lb" style="width:90px"><button class="btn" id="bwLog">log today</button><span id="bwInfo" style="font-size:11px;color:var(--text-dim)"></span></div>
@@ -530,12 +543,33 @@ function isPlateau(d,ex){
   const last3=h.slice(-3); const first=last3[0].e1rm;
   return Math.max(...last3.map(x=>x.e1rm)) <= first*1.01;
 }
+function plateauBreakIdx(h){
+  // indices into h where a session broke a preceding 3-session plateau
+  const idx=[];
+  for(let i=3;i<h.length;i++){
+    const window=h.slice(i-3,i); const first=window[0].e1rm;
+    const wasPlateaued=Math.max(...window.map(x=>x.e1rm))<=first*1.01;
+    if(wasPlateaued && h[i].e1rm>first*1.03) idx.push(i);
+  }
+  return idx;
+}
 function fmtDate(t){ const d=new Date(t); return d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}); }
-function sparkline(points,color){
+function sparkline(points,color,milestoneIdx){
   if(!points||points.length<2) return '';
   const w=300,h=26,pad=2,min=Math.min(...points),max=Math.max(...points),span=(max-min)||1;
-  const pts=points.map((v,i)=>`${pad+(i/(points.length-1))*(w-2*pad)},${h-pad-((v-min)/span)*(h-2*pad)}`).join(' ');
-  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline fill="none" stroke="${color||'var(--light)'}" stroke-width="1.6" points="${pts}"/></svg>`;
+  const coords=points.map((v,i)=>[pad+(i/(points.length-1))*(w-2*pad),h-pad-((v-min)/span)*(h-2*pad)]);
+  const pts=coords.map(c=>c.join(',')).join(' ');
+  const dot=(milestoneIdx!=null&&coords[milestoneIdx])?`<circle class="milestone" cx="${coords[milestoneIdx][0]}" cy="${coords[milestoneIdx][1]}" r="2.6"/>`:'';
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline fill="none" stroke="${color||'var(--light)'}" stroke-width="1.6" points="${pts}"/>${dot}</svg>`;
+}
+function sparklineHero(points){
+  if(!points||points.length<2) return '';
+  const w=300,h=56,pad=3,min=Math.min(...points),max=Math.max(...points),span=(max-min)||1;
+  const coords=points.map((v,i)=>[pad+(i/(points.length-1))*(w-2*pad),h-pad-((v-min)/span)*(h-2*pad)]);
+  const line=coords.map(c=>c.join(',')).join(' ');
+  const area=`${coords[0][0]},${h} ${line} ${coords[coords.length-1][0]},${h}`;
+  const color=points[points.length-1]>=points[0]?'var(--green)':'var(--accent)';
+  return `<polyline fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${line}"/><polygon points="${area}" fill="${color}" opacity=".15"/>`;
 }
 function showToast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1800); }
 
@@ -806,8 +840,8 @@ function renderConditioning(){
 }
 function renderStrength(){
   renderConditioning();
-  const sum=document.getElementById('strengthSummary'), list=document.getElementById('strengthList'); list.innerHTML='';
-  let changes=[], bigTotal=0, bigBase=0; const BIG=['Machine Chest Press','Machine Mid Row','Lat Pulldown','Converging Shoulder Press','Machine Leg Press'];
+  const list=document.getElementById('strengthList'); list.innerHTML='';
+  let changes=[], bigTotal=0, bigBase=0, heroSeries=[]; const BIG=['Machine Chest Press','Machine Mid Row','Lat Pulldown','Converging Shoulder Press','Machine Leg Press'];
   PROGRAM.forEach(day=>{
     const gh=document.createElement('div'); gh.className='groupheader'; gh.textContent=`${day.name} · ${day.sub}`; list.appendChild(gh);
     day.exercises.forEach(ex=>{
@@ -816,23 +850,36 @@ function renderStrength(){
       const base=baselineFor(day.id,ex), cur=currentFor(day.id,ex), h=hist[histKey(day.id,ex)]||[];
       const p=h.length?pct(base,cur):null; if(p!==null) changes.push(p);
       if(BIG.includes(ex.name)&&day.id!=='d4'){ bigTotal+=cur; bigBase+=base; }
+      h.forEach(x=>heroSeries.push({t:x.t,p:pct(base,x.e1rm)}));
       const cls=p===null||Math.abs(p)<0.05?'flat':(p>0?'up':'down');
       const last=h.length?h[h.length-1]:null;
       const bestTxt=last?`${last.w} × ${last.r}`:(ex.seed?(()=>{const b=ex.seed.filter(x=>x.w&&x.r).sort((a,b)=>e1rm(b.w,b.r)-e1rm(a.w,a.r))[0]; return b?`${b.w} × ${b.r}`:'—';})():'—');
-      const lvl=(base&&cur)?Math.round(cur/base*100):100; const plat=isPlateau(day.id,ex);
+      const plat=isPlateau(day.id,ex);
+      const breaks=plateauBreakIdx(h); const milestoneIdx=breaks.length?breaks[breaks.length-1]+1:null;
       const row=document.createElement('div'); row.className='srow';
-      row.innerHTML=`<div><div class="sn">${ex.name}${plat?'<span class="badge plateau">plateau</span>':''}</div><div class="sd">best set ${bestTxt} · ${h.length?h.length+' session'+(h.length>1?'s':'')+' logged':'your starting numbers'}</div></div><div class="se">${lvl}%</div><div class="sp ${cls}">${p===null?'start':fmtPct(p)}</div>${sparkline([base,...h.map(x=>x.e1rm)])}`;
+      row.innerHTML=`<div><div class="sn">${ex.name}${plat?'<span class="badge plateau">plateau</span>':''}</div><div class="sd">best set ${bestTxt} · ${h.length?h.length+' session'+(h.length>1?'s':'')+' logged':'your starting numbers'}</div></div><div class="sp ${cls}">${p===null?'start':fmtPct(p)}</div>${sparkline([base,...h.map(x=>x.e1rm)],cls==='down'?'var(--amber)':'var(--green)',milestoneIdx)}`;
       list.appendChild(row);
     });
   });
   const avg=changes.length?changes.reduce((a,b)=>a+b,0)/changes.length:null; const bigP=pct(bigBase,bigTotal);
-  const cls=v=>v===null||Math.abs(v)<0.05?'':(v>0?'up':'down');
-  // relative strength vs body weight
-  let relTxt='log your body weight to see this';
-  if(bodyweight.length&&bigBase&&bigTotal){ const bw0=bodyweight[0].w, bw1=bodyweight[bodyweight.length-1].w; const rel=(bigTotal/bw1)/(bigBase/bw0)*100; relTxt=`${Math.round(rel)}% — strength per lb of body weight`; }
-  sum.innerHTML=`<div class="stat"><div class="v ${cls(avg)}">${avg===null?'100%':Math.round(100+avg)+'%'}</div><div class="l">overall strength vs where you started</div></div>
-    <div class="stat"><div class="v ${cls(bigP)}">${bigP===null?'100%':Math.round(100+bigP)+'%'}</div><div class="l">big lifts (press, row, pulldown, shoulders, legs)</div></div>
-    <div class="stat" style="grid-column:1 / -1"><div class="l" style="margin:0">${relTxt}</div></div>`;
+
+  const heroNum=document.getElementById('strHeroNum');
+  heroNum.textContent=avg===null?'start':fmtPct(avg);
+  heroNum.className='str-hero-num'+(avg!==null&&avg<-0.05?' down':'');
+  const bwPill=document.getElementById('strBwPill');
+  if(bodyweight.length&&bigBase&&bigTotal){
+    const bw0=bodyweight[0].w, bw1=bodyweight[bodyweight.length-1].w;
+    const rel=((bigTotal/bw1)/(bigBase/bw0)-1)*100;
+    bwPill.textContent=`${rel>=0?'+':''}${Math.round(rel)}% per lb bodyweight`; bwPill.style.display='inline-block';
+  } else bwPill.style.display='none';
+  document.getElementById('strBigLifts').innerHTML=bigP===null?'':`Big lifts (press, row, pulldown, shoulders, legs): <b style="color:${bigP<-0.05?'var(--accent)':'var(--text)'}">${fmtPct(bigP)}</b>`;
+  const heroSpark=document.getElementById('strHeroSpark');
+  heroSeries.sort((a,b)=>a.t-b.t);
+  if(heroSeries.length>=2){
+    const n=Math.min(10,heroSeries.length);
+    const pts=Array.from({length:n},(_,i)=>heroSeries[Math.round(i*(heroSeries.length-1)/(n-1))].p);
+    heroSpark.innerHTML=sparklineHero(pts);
+  } else heroSpark.innerHTML='';
   // bodyweight card
   const info=document.getElementById('bwInfo'), sp=document.getElementById('bwSpark');
   if(bodyweight.length){ const f=bodyweight[0].w,l=bodyweight[bodyweight.length-1].w; info.textContent=`${l} lb now · ${l-f>=0?'+':''}${Math.round((l-f)*10)/10} since ${fmtDate(bodyweight[0].t)}`; sp.innerHTML=bodyweight.length>1?sparkline(bodyweight.map(b=>b.w),'var(--amber)'):''; document.getElementById('bwInput').placeholder=l; }
