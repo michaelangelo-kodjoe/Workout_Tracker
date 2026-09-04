@@ -699,7 +699,7 @@ function suggestedRest(ex){
 }
 function isDeloadActive(){ return !!deloadStart && (Date.now()-deloadStart < 7*864e5); }
 function suggestWeight(ex,last){
-  if(ex.start===0) return null;
+  if(ex.start===0) return latestBW();
   if(ex.start===-1 && !(last&&last.sets&&last.sets.some(x=>x.w&&x.r))) return -1;
   let w;
   if(!last||!last.sets) w=ex.start;
@@ -752,6 +752,7 @@ function dispBW(lb){ const n=parseFloat(lb); if(isNaN(n)) return lb; return sett
 function storeBW(val){ const n=parseFloat(val); if(isNaN(n)) return val; return settings.unit==='kg'?Math.round(n*LB_PER_KG*100)/100:n; }
 function dispVol(lb){ return settings.unit==='kg'?Math.round(lb/LB_PER_KG):Math.round(lb); }
 function dedupeSortByT(arr){ const seen=new Set(); const out=[]; [...arr].sort((a,b)=>a.t-b.t).forEach(x=>{ if(!seen.has(x.t)){ seen.add(x.t); out.push(x); } }); return out; }
+function latestBW(){ return bodyweight.length?bodyweight[bodyweight.length-1].w:null; }
 function sparkline(points,color,milestoneIdx){
   if(!points||points.length<2) return '';
   const w=300,h=26,pad=2,min=Math.min(...points),max=Math.max(...points),span=(max-min)||1;
@@ -840,7 +841,7 @@ function renderHeaderStats(){
   document.getElementById('sessionCount').textContent=sessionCount;
 }
 async function loadDay(d){ currentDay=d; renderHeaderStats(); if(d==='cardio'){ document.getElementById('arrivalPanel').innerHTML=''; document.getElementById('arrivalPanel').style.display='none'; document.getElementById('dayLabel').style.display=''; document.getElementById('exerciseList').style.display=''; document.getElementById('bodymapCard').style.display=''; renderTabs(); renderBody(); renderCardioForm(); return; } document.getElementById('finishBtn').style.display=''; document.getElementById('resetLink').style.display=''; todayData=(await sget('today:'+d))||{}; lastSessionData[d]=await sget('last:'+d); render(); }
-function ensureState(ex){ if(!todayData[ex.name]) todayData[ex.name]={open:false,sets:Array.from({length:setsCountFor(ex)},()=>({w:'',r:'',done:false,rir:null}))}; return todayData[ex.name]; }
+function ensureState(ex){ if(!todayData[ex.name]) todayData[ex.name]={open:false,sets:Array.from({length:setsCountFor(ex)},()=>({w:ex.start===0?(latestBW()??''):'',r:'',done:false,rir:null}))}; return todayData[ex.name]; }
 function touchDayStart(){ if(!dayStartTimes[currentDay]) dayStartTimes[currentDay]=Date.now(); }
 function hasLoggedAnything(state){ return Object.values(state).some(s=>s.sets.some(x=>x.w||x.r||x.done)); }
 function suggestedDayId(){
@@ -908,8 +909,8 @@ function render(){
     if(ex.group!==lastGroup){ const gh=document.createElement('div'); gh.className='groupheader'; gh.textContent=ex.group; list.appendChild(gh); lastGroup=ex.group; }
     const state=ensureState(ex); const complete=state.sets.every(s=>s.done); if(!complete) allComplete=false;
     const saved=lastSessionData[currentDay]&&lastSessionData[currentDay][ex.name];
-    const sug=suggestWeight(ex,saved); const sugTxt=sug===null?'bodyweight':sug===-1?'find a weight for the rep range':(dispWeight(sug)+' '+unitLabel()+(isDeloadActive()?' · deload':''));
-    const cur=ex.start===0?0:currentFor(currentDay,ex), base=ex.start===0?0:baselineFor(currentDay,ex);
+    const sug=suggestWeight(ex,saved); const sugTxt=sug===null?'log body weight in More to use here':sug===-1?'find a weight for the rep range':(dispWeight(sug)+' '+unitLabel()+(ex.start===0?' bodyweight':'')+(isDeloadActive()?' · deload':''));
+    const cur=currentFor(currentDay,ex), base=baselineFor(currentDay,ex);
     const lvl=(base&&cur)?Math.round(cur/base*100):0; const lvlTxt=lvl&&lvl!==100?` <span class="e1rm">· strength ${lvl}%</span>`:'';
     const plat=isPlateau(currentDay,ex);
     let deltaPill='';
@@ -948,7 +949,7 @@ function render(){
       }
     });
     const addset=document.createElement('div'); addset.className='addset'; addset.textContent='+ add a set';
-    addset.onclick=()=>{ state.sets.push({w:'',r:'',done:false,rir:null}); sset('today:'+currentDay,todayData); render(); }; body.appendChild(addset);
+    addset.onclick=()=>{ state.sets.push({w:ex.start===0?(latestBW()??''):'',r:'',done:false,rir:null}); sset('today:'+currentDay,todayData); render(); }; body.appendChild(addset);
 
     const ta=document.createElement('textarea'); ta.className='notes'; ta.placeholder='notes (seat setting, how it felt…)'; ta.value=notes[histKey(currentDay,ex)]||'';
     ta.oninput=e=>{ notes[histKey(currentDay,ex)]=e.target.value; sset('notes',notes); }; body.appendChild(ta);
@@ -1223,7 +1224,6 @@ function renderStrength(){
   PROGRAM.forEach(day=>{
     const gh=document.createElement('div'); gh.className='groupheader'; gh.textContent=`${day.name} · ${day.sub}`; list.appendChild(gh);
     day.exercises.forEach(ex=>{
-      if(ex.start===0) return;
       if(ex.start===-1 && !(hist[histKey(day.id,ex)]||[]).length) return;
       const base=baselineFor(day.id,ex), cur=currentFor(day.id,ex), h=hist[histKey(day.id,ex)]||[];
       const p=h.length?pct(base,cur):null; if(p!==null) changes.push(p);
