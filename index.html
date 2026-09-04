@@ -152,6 +152,10 @@
   .rpe-row{display:flex;gap:6px;margin-top:6px;}
   .rpe-dot{flex:1;text-align:center;padding:8px 0;border-radius:3px;border:1px solid var(--line);background:var(--panel-raised);font-size:12px;cursor:pointer;color:var(--text-dim);}
   .rpe-dot.on{background:var(--light);border-color:var(--light);color:#0d1a22;}
+  .rir-row{display:flex;align-items:center;gap:5px;margin:-2px 0 8px;flex-wrap:wrap;}
+  .rir-lbl{font-size:10px;color:var(--text-dim);margin-right:2px;}
+  .rir-pill{font-size:11px;color:var(--text-dim);background:var(--panel-raised);border:1px solid var(--line);border-radius:10px;padding:3px 9px;cursor:pointer;}
+  .rir-pill.on{background:var(--light);border-color:var(--light);color:#0d1a22;}
   .ctype{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 4px;}
   .ctype span{padding:8px 12px;border-radius:3px;border:1px solid var(--line);background:var(--panel-raised);font-size:12.5px;cursor:pointer;color:var(--text-dim);}
   .ctype span.on{border-color:var(--light);color:var(--text);background:rgba(79,163,209,.12);}
@@ -254,6 +258,7 @@
     <div class="banner" id="backupBanner" style="display:none"><span>It's been a week since your last backup.</span><span class="linkbtn" id="bannerBtn">back up now</span></div>
     <div class="banner" id="deloadBanner" style="display:none"><span>It's been a while since your last deload — a lighter week can help you keep progressing.</span><span class="linkbtn" id="deloadBannerBtn">plan a deload week</span></div>
     <div class="banner info" id="deloadActiveBanner" style="display:none"></div>
+    <div class="banner" id="bwBanner" style="display:none"><span>It's been a week since you last logged your weight.</span><span class="linkbtn" id="bwBannerBtn">log it now</span></div>
     <div id="arrivalPanel"></div>
     <div class="bodymap" id="bodymapCard">
       <div class="recov-hero" id="recovHero">
@@ -398,6 +403,7 @@
       <h3>Body weight</h3>
       <div class="row"><input class="in" type="number" inputmode="decimal" id="bwInput" placeholder="lb" style="width:90px"><button class="btn" id="bwLog">log today</button><span id="bwInfo" style="font-size:11px;color:var(--text-dim)"></span></div>
       <div id="bwSpark"></div>
+      <div id="bwNote"></div>
     </div>
     <div class="card" id="conditioningCard" style="display:none">
       <h3>Conditioning</h3>
@@ -656,7 +662,16 @@ function suggestWeight(ex,last){
   else{
     const logged=last.sets.filter(s=>s.w!==''&&s.r!=='');
     if(!logged.length) w=ex.start;
-    else{ const mw=Math.max(...logged.map(s=>parseFloat(s.w)||0)); if(!mw) w=ex.start; else w=logged.every(s=>parseInt(s.r)>=topRep(ex.target))?mw+ex.step:mw; }
+    else{
+      const mw=Math.max(...logged.map(s=>parseFloat(s.w)||0));
+      if(!mw) w=ex.start;
+      else if(logged.every(s=>parseInt(s.r)>=topRep(ex.target))){
+        // hit the top of the rep range on every set — bump the weight, and bump it further if RIR says it was easy across the board
+        const rirVals=logged.map(s=>s.rir).filter(v=>v!=null);
+        const feltEasy=rirVals.length===logged.length && Math.min(...rirVals)>=3;
+        w=feltEasy?mw+ex.step*2:mw+ex.step;
+      } else w=mw;
+    }
   }
   if(w && isDeloadActive()) w=Math.round(w*0.9/2.5)*2.5;
   return w;
@@ -772,7 +787,7 @@ function renderHeaderStats(){
   document.getElementById('sessionCount').textContent=sessionCount;
 }
 async function loadDay(d){ currentDay=d; renderHeaderStats(); if(d==='cardio'){ document.getElementById('arrivalPanel').innerHTML=''; document.getElementById('arrivalPanel').style.display='none'; document.getElementById('dayLabel').style.display=''; document.getElementById('exerciseList').style.display=''; document.getElementById('bodymapCard').style.display=''; renderTabs(); renderBody(); renderCardioForm(); return; } document.getElementById('finishBtn').style.display=''; document.getElementById('resetLink').style.display=''; todayData=(await sget('today:'+d))||{}; lastSessionData[d]=await sget('last:'+d); render(); }
-function ensureState(ex){ if(!todayData[ex.name]) todayData[ex.name]={open:false,sets:Array.from({length:setsCountFor(ex)},()=>({w:'',r:'',done:false}))}; return todayData[ex.name]; }
+function ensureState(ex){ if(!todayData[ex.name]) todayData[ex.name]={open:false,sets:Array.from({length:setsCountFor(ex)},()=>({w:'',r:'',done:false,rir:null}))}; return todayData[ex.name]; }
 function touchDayStart(){ if(!dayStartTimes[currentDay]) dayStartTimes[currentDay]=Date.now(); }
 function hasLoggedAnything(state){ return Object.values(state).some(s=>s.sets.some(x=>x.w||x.r||x.done)); }
 function suggestedDayId(){
@@ -858,15 +873,21 @@ function render(){
       rI.oninput=e=>{s.r=e.target.value; touchDayStart(); sset('today:'+currentDay,todayData);};
       row.querySelector('.setdone').onclick=()=>{ s.done=!s.done; touchDayStart(); if(s.done&&settings.auto) startTimer(settings.rest); sset('today:'+currentDay,todayData); render(); };
       body.appendChild(row);
+      if(s.done){
+        const rir=document.createElement('div'); rir.className='rir-row';
+        rir.innerHTML=`<span class="rir-lbl">reps left in tank</span>`+[0,1,2,3,4].map(v=>`<span class="rir-pill${s.rir===v?' on':''}" data-v="${v}">${v===4?'4+':v}</span>`).join('');
+        rir.querySelectorAll('.rir-pill').forEach(p=>p.onclick=()=>{ const v=parseInt(p.dataset.v); s.rir=(s.rir===v)?null:v; touchDayStart(); sset('today:'+currentDay,todayData); render(); });
+        body.appendChild(rir);
+      }
     });
     const addset=document.createElement('div'); addset.className='addset'; addset.textContent='+ add a set';
-    addset.onclick=()=>{ state.sets.push({w:'',r:'',done:false}); sset('today:'+currentDay,todayData); render(); }; body.appendChild(addset);
+    addset.onclick=()=>{ state.sets.push({w:'',r:'',done:false,rir:null}); sset('today:'+currentDay,todayData); render(); }; body.appendChild(addset);
 
     const ta=document.createElement('textarea'); ta.className='notes'; ta.placeholder='notes (seat setting, how it felt…)'; ta.value=notes[histKey(currentDay,ex)]||'';
     ta.oninput=e=>{ notes[histKey(currentDay,ex)]=e.target.value; sset('notes',notes); }; body.appendChild(ta);
 
     const lastToShow=saved?saved.sets:ex.seed;
-    if(lastToShow){ const parts=lastToShow.filter(s=>s.w||s.r).map(s=>`${s.w||'-'}x${s.r||'-'}`).join(', '); if(parts){ const d=document.createElement('div'); d.className='last-time'; d.textContent='last time: '+parts; body.appendChild(d); } }
+    if(lastToShow){ const parts=lastToShow.filter(s=>s.w||s.r).map(s=>`${s.w||'-'}x${s.r||'-'}${s.rir!=null?' (RIR '+s.rir+')':''}`).join(', '); if(parts){ const d=document.createElement('div'); d.className='last-time'; d.textContent='last time: '+parts; body.appendChild(d); } }
     card.appendChild(body); list.appendChild(card);
   });
   document.getElementById('finishBtn').textContent=allComplete?'session complete — log it':'mark session complete';
@@ -942,7 +963,7 @@ async function finishSession(){
   let vol=0, nsets=0; const exRec={}; const prCandidates=[];
   worked.forEach(ex=>{
     const sets=todayData[ex.name].sets.filter(st=>st.w&&st.r);
-    exRec[ex.name]=todayData[ex.name].sets.filter(isLogged).map(st=>({w:st.w,r:st.r}));
+    exRec[ex.name]=todayData[ex.name].sets.filter(isLogged).map(st=>({w:st.w,r:st.r,rir:st.rir??null}));
     nsets+=todayData[ex.name].sets.filter(isLogged).length;
     sets.forEach(st=>vol+=(parseFloat(st.w)||0)*(parseInt(st.r)||0));
     const b=bestE1rm(sets); if(!b) return;
@@ -1088,7 +1109,7 @@ function renderHistory(){
     if(s.isCardio){
       el.innerHTML=`<div class="sh"><span>${fmtDate(s.t)}</span><span style="color:var(--text-dim)">${s.ctypeLabel}</span></div><div class="sm">${s.duration} min${s.distance?' · '+s.distance:''}${s.rpe?' · RPE '+s.rpe:''}</div>${s.notes?`<div class="sdet" style="display:block;border:none;padding-top:4px">${s.notes}</div>`:''}`;
     } else {
-      const det=Object.entries(s.ex).map(([n,sets])=>`<b style="font-weight:normal;color:var(--text)">${n}</b> — ${sets.map(x=>`${x.w||'bw'}×${x.r||'-'}`).join(', ')}`).join('<br>');
+      const det=Object.entries(s.ex).map(([n,sets])=>`<b style="font-weight:normal;color:var(--text)">${n}</b> — ${sets.map(x=>`${x.w||'bw'}×${x.r||'-'}${x.rir!=null?' (RIR '+x.rir+')':''}`).join(', ')}`).join('<br>');
       el.innerHTML=`<div class="sh"><span>${fmtDate(s.t)}</span><span style="color:var(--text-dim)">${s.dayName} · ${s.sub}</span></div><div class="sm">${s.sets} sets · ${s.vol.toLocaleString()} lb moved</div><div class="sdet">${det}</div>`;
       el.onclick=()=>el.classList.toggle('open');
     }
@@ -1170,11 +1191,13 @@ function renderStrength(){
     heroSpark.innerHTML=sparklineHero(pts);
   } else heroSpark.innerHTML='';
   // bodyweight card
-  const info=document.getElementById('bwInfo'), sp=document.getElementById('bwSpark');
+  const info=document.getElementById('bwInfo'), sp=document.getElementById('bwSpark'), bwNote=document.getElementById('bwNote');
   if(bodyweight.length){ const f=bodyweight[0].w,l=bodyweight[bodyweight.length-1].w; info.textContent=`${l} lb now · ${l-f>=0?'+':''}${Math.round((l-f)*10)/10} since ${fmtDate(bodyweight[0].t)}`; sp.innerHTML=bodyweight.length>1?sparkline(bodyweight.map(b=>b.w),'var(--amber)'):''; document.getElementById('bwInput').placeholder=l; }
   else { info.textContent=''; sp.innerHTML=''; }
+  const bwRate=bwWeeklyRate();
+  bwNote.innerHTML=(bwRate!==null && bwRate<=-1)?`<div class="plateau-tip" style="margin-top:10px">Losing about ${Math.abs(bwRate).toFixed(1)}% of body weight a week — research on rate of loss suggests staying closer to 0.5-1%/week better preserves strength and muscle. Fine if it's a short intentional push; worth easing off if it's not.</div>`:'';
 }
-document.getElementById('bwLog').onclick=async()=>{ const v=parseFloat(document.getElementById('bwInput').value); if(!v){ showToast('enter a weight'); return; } bodyweight.push({t:Date.now(),w:v}); await sset('bodyweight',bodyweight); document.getElementById('bwInput').value=''; showToast('body weight logged'); renderStrength(); };
+document.getElementById('bwLog').onclick=async()=>{ const v=parseFloat(document.getElementById('bwInput').value); if(!v){ showToast('enter a weight'); return; } bodyweight.push({t:Date.now(),w:v}); await sset('bodyweight',bodyweight); document.getElementById('bwInput').value=''; showToast('body weight logged'); renderStrength(); updateBwUI(); };
 
 // ---------- more: settings, editor, data ----------
 function renderSettings(){ document.getElementById('restSel').value=String(settings.rest); document.getElementById('autoTimer').checked=!!settings.auto; document.getElementById('autoBackup').checked=!!settings.autoBackup; updateBackupUI();
@@ -1230,6 +1253,20 @@ function updateDeloadUI(){
     document.getElementById('endDeloadBtn').onclick=async()=>{ deloadStart=0; await sset('deloadStart',0); updateDeloadUI(); render(); showToast('deload week ended'); };
   } else active.style.display='none';
 }
+// ---------- body weight: staleness reminder + rate-of-change note ----------
+function bwDue(){ return bodyweight.length && (Date.now()-bodyweight[bodyweight.length-1].t > 7*864e5); }
+function updateBwUI(){ document.getElementById('bwBanner').style.display = bwDue() ? 'flex':'none'; }
+function bwWeeklyRate(){
+  if(bodyweight.length<2) return null;
+  const latest=bodyweight[bodyweight.length-1];
+  const cutoff=latest.t-21*864e5;
+  let ref=bodyweight.find(b=>b.t>=cutoff && b.t!==latest.t);
+  if(!ref) ref=bodyweight[0];
+  if(ref.t===latest.t) return null;
+  const days=(latest.t-ref.t)/864e5; if(days<3) return null;
+  return ((latest.w-ref.w)/ref.w*100)/(days/7);
+}
+document.getElementById('bwBannerBtn').onclick=()=>{ setView('strength'); document.getElementById('bwInput').focus(); };
 function openDeloadSheet(){
   const wks=weeksSinceDeload().toFixed(1); const plat=plateauCountAll();
   document.getElementById('deloadStats').textContent=`${wks} weeks since your last deload · ${plat} exercise${plat===1?'':'s'} currently plateaued`;
@@ -1326,7 +1363,7 @@ document.getElementById('resetLink').onclick=async()=>{ todayData={}; await sset
   recovery=(await sget('recovery'))||{}; hist=(await sget('hist'))||{}; sessions=(await sget('sessions'))||[]; notes=(await sget('notes'))||{}; bodyweight=(await sget('bodyweight'))||[];
   settings=Object.assign({rest:90,auto:true,autoBackup:true},(await sget('settings'))||{});
   lastBackup=(await sget('lastBackup'))||0; updateBackupUI();
-  lastDeload=(await sget('lastDeload'))||0; deloadStart=(await sget('deloadStart'))||0; updateDeloadUI();
+  lastDeload=(await sget('lastDeload'))||0; deloadStart=(await sget('deloadStart'))||0; updateDeloadUI(); updateBwUI();
   const custom=await sget('program'); if(custom&&Array.isArray(custom)&&custom.length===4) PROGRAM=custom;
   await loadDay(suggestedDayId()); setInterval(renderBody,60000);
 })();
