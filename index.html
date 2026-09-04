@@ -416,7 +416,9 @@
   <section id="moreView" style="display:none">
     <div class="card">
       <h3>Rest timer</h3>
-      <div class="row"><span style="font-size:12px;color:var(--text-dim)">default rest</span>
+      <div class="row"><label class="chk"><input type="checkbox" id="smartRestChk"> use a smart rest time based on each exercise's rep range</label></div>
+      <div class="note-sm" style="margin-top:2px">Lower-rep sets (up to 10) rest ~150s, moderate sets (up to 12) rest 90s, higher-rep and hold-based sets rest 60s — heavier, lower-rep work needs more recovery between sets than light, high-rep work does.</div>
+      <div class="row" style="margin-top:10px"><span style="font-size:12px;color:var(--text-dim)" id="restSelLbl">fallback rest</span>
         <select class="in" id="restSel"><option value="60">60s</option><option value="90">90s</option><option value="120">120s</option><option value="150">150s</option><option value="180">180s</option></select>
         <label class="chk"><input type="checkbox" id="autoTimer"> start automatically when a set is checked</label></div>
     </div>
@@ -476,23 +478,49 @@
     <button class="btn primary" id="startDeloadBtn" style="flex:1">start deload week</button>
   </div>
 </div>
+<div class="sheet-bg" id="cardioSuggestBg"></div>
+<div class="sheet" id="cardioSuggestSheet">
+  <div class="sheet-head"><div><div style="font-size:15px">Cardio's up next</div><div style="font-size:11px;color:var(--text-dim);margin-top:2px">Two lifting sessions in a row</div></div><span class="linkbtn" id="cardioSuggestClose">close</span></div>
+  <div class="plateau-tip" style="margin-bottom:14px">You've done two straight lifting sessions, so conditioning work is next in the rotation — it gives your joints and nervous system a break from heavy loading while still building your aerobic base. Totally fine to lift again today if that's what you'd rather do.</div>
+  <div class="row" style="gap:10px;flex-wrap:nowrap">
+    <button class="btn" id="cardioSuggestLift" style="flex:1"></button>
+    <button class="btn primary" id="cardioSuggestGo" style="flex:1">do cardio</button>
+  </div>
+</div>
 
 <script>
 // ---------- storage: phone browser first, Claude artifact as fallback ----------
 const store = {
-  mode:'memory', mem:{},
-  init(){ try{ localStorage.setItem('__ll','1'); localStorage.removeItem('__ll'); this.mode='local'; }
-          catch(e){ this.mode = (window.storage && window.storage.get) ? 'claude' : 'memory'; } },
+  mode:'memory', mem:{}, idb:null,
+  async init(){
+    try{ localStorage.setItem('__ll','1'); localStorage.removeItem('__ll'); this.mode='local'; return; }catch(e){}
+    try{ this.idb=await this._openIDB(); this.mode='idb'; }catch(e){ this.mode='memory'; }
+  },
+  _openIDB(){
+    return new Promise((resolve,reject)=>{
+      if(!window.indexedDB){ reject(new Error('no indexeddb')); return; }
+      const req=indexedDB.open('liftlog',1);
+      req.onupgradeneeded=()=>{ req.result.createObjectStore('kv'); };
+      req.onsuccess=()=>resolve(req.result);
+      req.onerror=()=>reject(req.error);
+    });
+  },
   async get(k){ try{
     if(this.mode==='local'){ const v=localStorage.getItem('liftlog:'+k); return v?JSON.parse(v):null; }
-    if(this.mode==='claude'){ const r=await window.storage.get('liftlog_'+k.replace(/:/g,'_')); return r&&r.value?JSON.parse(r.value):null; }
+    if(this.mode==='idb') return await new Promise((resolve,reject)=>{
+      const rq=this.idb.transaction('kv','readonly').objectStore('kv').get(k);
+      rq.onsuccess=()=>resolve(rq.result!=null?JSON.parse(rq.result):null);
+      rq.onerror=()=>reject(rq.error);
+    });
     return this.mem[k]??null; }catch(e){ return null; } },
   async set(k,v){ try{
     if(this.mode==='local') localStorage.setItem('liftlog:'+k, JSON.stringify(v));
-    else if(this.mode==='claude') await window.storage.set('liftlog_'+k.replace(/:/g,'_'), JSON.stringify(v));
+    else if(this.mode==='idb') await new Promise((resolve,reject)=>{
+      const tx=this.idb.transaction('kv','readwrite'); tx.objectStore('kv').put(JSON.stringify(v),k);
+      tx.oncomplete=resolve; tx.onerror=()=>reject(tx.error);
+    });
     else this.mem[k]=v; }catch(e){ console.error(e); } }
 };
-store.init();
 const KEYS = ['lastBackup','program','recovery','hist','sessions','notes','bodyweight','settings','meta:sessionCount','today:d1','today:d2','today:d3','today:d4','last:d1','last:d2','last:d3','last:d4','lastDeload','deloadStart'];
 
 const RECOVERY_HOURS = { chest:72, back:72, quads:72, hamstrings:72, glutes:72, lowerback:72, shoulders:48, biceps:48, triceps:48, forearms:48, calves:48, abs:36 };
@@ -638,7 +666,7 @@ const ALTS = {
 };
 
 let PROGRAM = JSON.parse(JSON.stringify(DEFAULT_PROGRAM));
-let currentDay='d1', todayData={}, lastSessionData={}, sessionCount=0, recovery={}, hist={}, sessions=[], notes={}, bodyweight=[], settings={rest:90, auto:true, autoBackup:true}, view='log';
+let currentDay='d1', todayData={}, lastSessionData={}, sessionCount=0, recovery={}, hist={}, sessions=[], notes={}, bodyweight=[], settings={rest:90, auto:true, autoBackup:true, smartRest:true}, view='log';
 let dayStartTimes={}, arrivalActive={};
 let lastDeload=0, deloadStart=0;
 
@@ -651,8 +679,18 @@ function baselineFor(d,ex){ if(ex.seed){ const b=bestE1rm(ex.seed); if(b) return
 function currentFor(d,ex){ const h=hist[histKey(d,ex)]; if(h&&h.length) return h[h.length-1].e1rm; return baselineFor(d,ex); }
 function pct(a,b){ return (!a||!b)?null:((b-a)/a)*100; }
 function fmtPct(p){ if(p===null) return '—'; const r=Math.round(p*10)/10; return (r>0?'+':'')+r+'%'; }
-function topRep(t){ const m=t.match(/(\d+)\s*[-–]?\s*(\d+)?/); return m?parseInt(m[2]||m[1]):12; }
+function topRep(t){ const m=t.match(/x\s*(\d+)\s*[-–]?\s*(\d+)?/i); return m?parseInt(m[2]||m[1]):12; }
 function setsCountFor(ex){ if(ex.seed) return ex.seed.length; const m=ex.target.match(/^(\d+)/); return m?parseInt(m[1]):3; }
+// research-informed default rest, since "3-5 low reps" and "12-15 high reps" don't recover the same way:
+// NSCA guidance is roughly 3-5min for strength-range work, 30-90s for hypertrophy-range, and shorter still for higher-rep/endurance work,
+// with isolation-style hold work (planks etc.) treated separately since the number in the target is seconds, not reps.
+function suggestedRest(ex){
+  if(/\d+s(\/|\b)/.test(ex.target)) return 60;
+  const hi=topRep(ex.target);
+  if(hi<=10) return 150;
+  if(hi<=12) return 90;
+  return 60;
+}
 function isDeloadActive(){ return !!deloadStart && (Date.now()-deloadStart < 7*864e5); }
 function suggestWeight(ex,last){
   if(ex.start===0) return null;
@@ -791,7 +829,9 @@ function ensureState(ex){ if(!todayData[ex.name]) todayData[ex.name]={open:false
 function touchDayStart(){ if(!dayStartTimes[currentDay]) dayStartTimes[currentDay]=Date.now(); }
 function hasLoggedAnything(state){ return Object.values(state).some(s=>s.sets.some(x=>x.w||x.r||x.done)); }
 function suggestedDayId(){
-  const lifts=[...sessions].filter(s=>!s.isCardio).sort((a,b)=>b.t-a.t);
+  const recent=[...sessions].sort((a,b)=>b.t-a.t);
+  if(recent.length>=2 && !recent[0].isCardio && !recent[1].isCardio) return 'cardio';
+  const lifts=recent.filter(s=>!s.isCardio);
   if(!lifts.length) return PROGRAM[0].id;
   const idx=PROGRAM.findIndex(d=>d.id===lifts[0].dayId);
   return idx<0?PROGRAM[0].id:PROGRAM[(idx+1)%PROGRAM.length].id;
@@ -799,7 +839,7 @@ function suggestedDayId(){
 function renderTabs(){ const w=document.getElementById('dayTabs'); w.innerHTML='';
   const suggested=suggestedDayId();
   PROGRAM.forEach(d=>{ const el=document.createElement('div'); el.className='daytab'+(d.id===currentDay?' active':'')+(d.id===suggested?' suggested':''); if(d.id===suggested) el.title='next up in your rotation'; el.innerHTML=`${d.name}<span class="dsub">${d.sub}</span>`; el.onclick=()=>attemptLoadDay(d.id); w.appendChild(el); });
-  const c=document.createElement('div'); c.className='daytab cardio-tab'+(currentDay==='cardio'?' active':''); c.innerHTML='Cardio<span class="dsub">endurance</span>'; c.onclick=()=>loadDay('cardio'); w.appendChild(c);
+  const c=document.createElement('div'); c.className='daytab cardio-tab'+(currentDay==='cardio'?' active':'')+(suggested==='cardio'?' suggested':''); if(suggested==='cardio') c.title='next up in your rotation'; c.innerHTML='Cardio<span class="dsub">endurance</span>'; c.onclick=()=>loadDay('cardio'); w.appendChild(c);
 }
 
 // ---------- fatigue disclaimer: warn (don't block) when picking a day whose muscles haven't recovered ----------
@@ -812,12 +852,24 @@ function dayFatigueConflicts(day){
 }
 function attemptLoadDay(dayId){
   if(dayId===currentDay){ return; }
+  const suggested=suggestedDayId();
+  if(suggested==='cardio' && dayId!=='cardio'){ showCardioSuggestion(dayId); return; }
   const day=PROGRAM.find(d=>d.id===dayId);
-  if(!day || dayId===suggestedDayId()){ loadDay(dayId); return; }
+  if(!day || dayId===suggested){ loadDay(dayId); return; }
   const conflicts=dayFatigueConflicts(day);
   if(!conflicts.length){ loadDay(dayId); return; }
   showFatigueWarning(day,conflicts,()=>loadDay(dayId));
 }
+function showCardioSuggestion(dayId){
+  const day=PROGRAM.find(d=>d.id===dayId); if(!day) return;
+  document.getElementById('cardioSuggestLift').textContent=`${day.name} ${day.sub} instead`;
+  document.getElementById('cardioSuggestBg').classList.add('on'); document.getElementById('cardioSuggestSheet').classList.add('on');
+  document.getElementById('cardioSuggestGo').onclick=()=>{ closeCardioSuggest(); loadDay('cardio'); };
+  document.getElementById('cardioSuggestLift').onclick=()=>{ closeCardioSuggest(); loadDay(dayId); };
+}
+function closeCardioSuggest(){ document.getElementById('cardioSuggestBg').classList.remove('on'); document.getElementById('cardioSuggestSheet').classList.remove('on'); }
+document.getElementById('cardioSuggestClose').onclick=closeCardioSuggest;
+document.getElementById('cardioSuggestBg').onclick=closeCardioSuggest;
 function showFatigueWarning(day,conflicts,onProceed){
   document.getElementById('fatigueSub').textContent=`Switching to ${day.name} ${day.sub} instead of your suggested day`;
   const note=`Training a muscle again before it's recovered means fewer quality reps at your working weight, faster fatigue within the set, and — if it becomes a pattern — a higher risk of strain. Muscle rebuilds stronger during rest, not just during the lift, which is why these windows exist.`;
@@ -871,7 +923,7 @@ function render(){
       const [wI,rI]=row.querySelectorAll('input');
       wI.oninput=e=>{s.w=e.target.value; touchDayStart(); sset('today:'+currentDay,todayData);};
       rI.oninput=e=>{s.r=e.target.value; touchDayStart(); sset('today:'+currentDay,todayData);};
-      row.querySelector('.setdone').onclick=()=>{ s.done=!s.done; touchDayStart(); if(s.done&&settings.auto) startTimer(settings.rest); sset('today:'+currentDay,todayData); render(); };
+      row.querySelector('.setdone').onclick=()=>{ s.done=!s.done; touchDayStart(); if(s.done&&settings.auto) startTimer(settings.smartRest?suggestedRest(ex):settings.rest); sset('today:'+currentDay,todayData); render(); };
       body.appendChild(row);
       if(s.done){
         const rir=document.createElement('div'); rir.className='rir-row';
@@ -1200,10 +1252,11 @@ function renderStrength(){
 document.getElementById('bwLog').onclick=async()=>{ const v=parseFloat(document.getElementById('bwInput').value); if(!v){ showToast('enter a weight'); return; } bodyweight.push({t:Date.now(),w:v}); await sset('bodyweight',bodyweight); document.getElementById('bwInput').value=''; showToast('body weight logged'); renderStrength(); updateBwUI(); };
 
 // ---------- more: settings, editor, data ----------
-function renderSettings(){ document.getElementById('restSel').value=String(settings.rest); document.getElementById('autoTimer').checked=!!settings.auto; document.getElementById('autoBackup').checked=!!settings.autoBackup; updateBackupUI();
-  document.getElementById('storageInfo').textContent = store.mode==='local'?'Data is saved on this device. Export a backup now and then so it is never trapped on one phone.':store.mode==='claude'?'Running inside Claude: data is saved to your Claude account. For a home-screen app, open this file in your phone browser instead.':'Storage unavailable in this browser — nothing will be saved after you close the page.'; }
+function renderSettings(){ document.getElementById('restSel').value=String(settings.rest); document.getElementById('autoTimer').checked=!!settings.auto; document.getElementById('autoBackup').checked=!!settings.autoBackup; document.getElementById('smartRestChk').checked=!!settings.smartRest; document.getElementById('restSelLbl').textContent=settings.smartRest?'fallback rest':'default rest'; updateBackupUI();
+  document.getElementById('storageInfo').textContent = store.mode==='local'?'Data is saved on this device. Export a backup now and then so it is never trapped on one phone.':store.mode==='idb'?'Data is saved on this device (using this browser’s IndexedDB storage). Export a backup now and then so it is never trapped on one phone.':'Storage unavailable in this browser — nothing will be saved after you close the page.'; }
 document.getElementById('restSel').onchange=e=>{ settings.rest=parseInt(e.target.value); sset('settings',settings); };
 document.getElementById('autoTimer').onchange=e=>{ settings.auto=e.target.checked; sset('settings',settings); };
+document.getElementById('smartRestChk').onchange=e=>{ settings.smartRest=e.target.checked; sset('settings',settings); renderSettings(); };
 
 function renderEditor(){
   const sel=document.getElementById('edDay'); if(!sel.options.length){ PROGRAM.forEach(d=>{ const o=document.createElement('option'); o.value=d.id; o.textContent=`${d.name} · ${d.sub}`; sel.appendChild(o); }); sel.value=PROGRAM.some(d=>d.id===currentDay)?currentDay:PROGRAM[0].id; sel.onchange=renderEditor; }
@@ -1359,9 +1412,10 @@ document.getElementById('finishBtn').onclick=finishSession;
 document.getElementById('resetLink').onclick=async()=>{ todayData={}; await sset('today:'+currentDay,{}); render(); };
 
 (async function init(){
+  await store.init();
   sessionCount=(await sget('meta:sessionCount'))||0; document.getElementById('sessionCount').textContent=sessionCount;
   recovery=(await sget('recovery'))||{}; hist=(await sget('hist'))||{}; sessions=(await sget('sessions'))||[]; notes=(await sget('notes'))||{}; bodyweight=(await sget('bodyweight'))||[];
-  settings=Object.assign({rest:90,auto:true,autoBackup:true},(await sget('settings'))||{});
+  settings=Object.assign({rest:90,auto:true,autoBackup:true,smartRest:true},(await sget('settings'))||{});
   lastBackup=(await sget('lastBackup'))||0; updateBackupUI();
   lastDeload=(await sget('lastDeload'))||0; deloadStart=(await sget('deloadStart'))||0; updateDeloadUI(); updateBwUI();
   const custom=await sget('program'); if(custom&&Array.isArray(custom)&&custom.length===4) PROGRAM=custom;

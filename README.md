@@ -54,7 +54,7 @@ Strength math: estimated 1RM uses Epley's formula (`w * (1 + r/30)`, or just `w`
 
 ## How data works
 
-Everything is stored **locally on the device** — there is no backend and no sync. The `store` object (top of the `<script>` block) uses `localStorage` when it's available, falling back to an in-memory object if it's not (the app still functions, but nothing survives a page reload).
+Everything is stored **locally on the device** — there is no backend and no sync. The `store` object (top of the `<script>` block) uses `localStorage` when it's available, falls back to the browser's `IndexedDB` if it's not, and falls back to an in-memory object as a last resort (the app still functions, but nothing survives a page reload).
 
 The **More → Your data** panel tells you which mode is active. Because storage is device-local, exporting a backup periodically (or enabling auto-backup) is the only way to move data between devices or survive clearing browser data.
 
