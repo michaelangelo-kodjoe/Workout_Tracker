@@ -84,8 +84,8 @@
   .setgrid.head{color:var(--text-dim);font-size:10px;} .setnum{color:var(--text-dim);}
   .setgrid input{width:100%;background:var(--panel-raised);border:1px solid var(--line);border-radius:3px;color:var(--text);padding:7px 6px;font-size:14px;text-align:center;}
   input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)!important;}
-  .setdone{width:26px;height:26px;border-radius:3px;border:1px solid var(--line);background:var(--panel-raised);color:transparent;cursor:pointer;font-size:13px;}
-  .setdone.on{background:var(--done-line);border-color:var(--done-line);color:#cfe8cf;animation:popcheck .4s ease;box-shadow:0 0 0 4px rgba(92,187,111,.18);}
+  .setdone{width:28px;height:28px;border-radius:6px;border:1px solid var(--line);background:var(--panel-raised);color:transparent;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;padding:0;}
+  .setdone.on{background:var(--green);border-color:var(--green);color:#0d1a0f;animation:popcheck .4s ease;box-shadow:0 0 0 4px rgba(92,187,111,.18);}
   @keyframes popcheck{0%{transform:scale(.7);}55%{transform:scale(1.18);}100%{transform:scale(1);}}
   .delta-pill{display:inline-flex;align-items:center;gap:3px;font-family:'Menlo',monospace;font-size:10.5px;color:var(--green);background:rgba(92,187,111,.12);border:1px solid rgba(92,187,111,.35);padding:2px 7px;border-radius:10px;margin-top:6px;}
   .first-log-note{font-size:11.5px;line-height:1.55;color:var(--light);background:rgba(79,163,209,.08);border-left:2px solid var(--light);padding:9px 11px;border-radius:3px;margin:0 0 10px;}
@@ -95,14 +95,15 @@
   footer{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));z-index:9;}
   .footer-inner{max-width:528px;margin:0 auto;}
   .finish-btn{width:100%;background:var(--accent);color:#1a0d08;border:none;border-radius:4px;padding:13px;font-size:13.5px;letter-spacing:.3px;cursor:pointer;}
-  .timer{display:none;align-items:center;justify-content:space-between;background:var(--panel-raised);border:1px solid rgba(255,93,59,.35);border-radius:4px;padding:10px 12px;margin-bottom:8px;font-size:13px;position:relative;overflow:hidden;}
+  .timer{display:none;flex-direction:column;background:var(--panel-raised);border:1px solid rgba(255,93,59,.35);border-radius:4px;padding:10px 12px;margin-bottom:8px;font-size:13px;position:relative;overflow:hidden;}
   .timer::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 15% 0%,rgba(255,93,59,.16),transparent 60%);pointer-events:none;}
   .timer.on{display:flex;} .timer.done{border-color:var(--done-line);}
-  .timer>div{position:relative;z-index:1;}
+  .timer>*{position:relative;z-index:1;}
+  .timer-row{display:flex;align-items:center;justify-content:space-between;}
   .timer .t{font-family:'Menlo',monospace;font-size:22px;color:var(--accent);} .timer .t.over{color:var(--green);}
   .timer .acts span{font-size:11px;color:var(--light);text-decoration:underline;margin-left:12px;cursor:pointer;}
-  .tbar{height:2px;background:var(--line);border-radius:1px;margin-top:6px;overflow:hidden;}
-  .tbar i{display:block;height:100%;background:var(--accent);transition:width 1s linear;}
+  .tbar{height:6px;background:var(--line);border-radius:3px;margin-top:8px;overflow:hidden;}
+  .tbar i{display:block;height:100%;background:var(--accent);transition:width 1s linear,background 1s linear;}
   .reset-link{text-align:center;margin-top:24px;font-size:11px;color:var(--text-dim);text-decoration:underline;cursor:pointer;}
   .sheet-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:30;}
   .sheet{display:none;position:fixed;left:0;right:0;bottom:0;max-height:78vh;overflow-y:auto;background:var(--panel);border-top:1px solid var(--line);border-radius:10px 10px 0 0;padding:14px 16px calc(16px + env(safe-area-inset-bottom));z-index:31;}
@@ -458,7 +459,7 @@
 </main>
 
 <footer><div class="footer-inner">
-  <div class="timer" id="timer"><div><div class="t" id="timerT">1:30</div><div class="tbar"><i id="timerBar" style="width:100%"></i></div></div><div class="acts"><span id="tPlus">+30s</span><span id="tSkip">skip</span></div></div>
+  <div class="timer" id="timer"><div class="timer-row"><div class="t" id="timerT">1:30</div><div class="acts"><span id="tPlus">+30s</span><span id="tSkip">skip</span></div></div><div class="tbar"><i id="timerBar" style="width:100%"></i></div></div>
   <button class="finish-btn" id="finishBtn">mark session complete</button>
 </div></footer>
 <div class="sheet-bg" id="sheetBg"></div>
@@ -781,11 +782,17 @@ function startTimer(sec){
   const el=document.getElementById('timer'); el.classList.add('on'); el.classList.remove('done');
   tick(); timer.iv=setInterval(tick,1000);
 }
+// timer runs cool blue while there's plenty of rest left, then fades to the accent color over the final quarter of the rest as a "time's almost up" cue
+const TIMER_BLUE=[79,163,209], TIMER_ACCENT=[255,93,59], TIMER_FADE_WINDOW=0.25;
+function lerpColor(a,b,t){ return `rgb(${Math.round(a[0]+(b[0]-a[0])*t)},${Math.round(a[1]+(b[1]-a[1])*t)},${Math.round(a[2]+(b[2]-a[2])*t)})`; }
 function tick(){
   const left=Math.ceil((timer.end-Date.now())/1000);
   const t=document.getElementById('timerT'), bar=document.getElementById('timerBar'), el=document.getElementById('timer');
-  if(left<=0){ t.textContent='go'; t.classList.add('over'); bar.style.width='0%'; el.classList.add('done'); clearInterval(timer.iv); beep(); setTimeout(stopTimer,4000); return; }
-  t.classList.remove('over'); t.textContent=`${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}`; bar.style.width=(left/timer.total*100)+'%';
+  if(left<=0){ t.textContent='go'; t.classList.add('over'); t.style.color=''; bar.style.width='0%'; bar.style.background=''; el.classList.add('done'); clearInterval(timer.iv); beep(); setTimeout(stopTimer,4000); return; }
+  t.classList.remove('over'); t.textContent=`${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}`;
+  const pct=left/timer.total; bar.style.width=(pct*100)+'%';
+  const fadeT=Math.min(1,pct/TIMER_FADE_WINDOW); const col=lerpColor(TIMER_ACCENT,TIMER_BLUE,fadeT);
+  t.style.color=col; bar.style.background=col;
 }
 function stopTimer(){ clearInterval(timer.iv); document.getElementById('timer').classList.remove('on'); }
 document.getElementById('tSkip').onclick=stopTimer;
@@ -916,7 +923,7 @@ function render(){
     let deltaPill='';
     if(typeof sug==='number' && saved && saved.sets){
       const loggedLast=saved.sets.filter(s=>s.w!==''&&s.r!=='');
-      if(loggedLast.length){ const lastW=Math.max(...loggedLast.map(s=>parseFloat(s.w)||0)); if(lastW && sug>lastW) deltaPill=`<div class="delta-pill">↑ +${Math.round((sug-lastW)*10)/10} lb vs last time</div>`; }
+      if(loggedLast.length){ const lastW=Math.max(...loggedLast.map(s=>parseFloat(s.w)||0)); if(lastW && sug>lastW) deltaPill=`<div class="delta-pill">↑ +${Math.round((dispWeight(sug)-dispWeight(lastW))*10)/10} ${unitLabel()} vs last time</div>`; }
     }
     const card=document.createElement('div'); card.className='exercise'+(state.open?' open':'')+(complete?' complete':'');
     const head=document.createElement('div'); head.className='ex-head';
