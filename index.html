@@ -13,20 +13,27 @@
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Georgia','Iowan Old Style',serif;min-height:100vh;}
   button,input,textarea,select{font-family:'Menlo','SF Mono',monospace;}
   header{position:sticky;top:0;z-index:10;background:var(--bg);padding:calc(14px + env(safe-area-inset-top)) 18px 10px;border-bottom:1px solid var(--line);}
-  .title-row{display:flex;align-items:baseline;justify-content:space-between;}
+  .title-row{display:flex;align-items:center;justify-content:space-between;}
   h1{font-size:22px;margin:0;font-weight:normal;letter-spacing:.3px;}
-  .streak{font-size:12px;color:var(--text-dim);}
-  .streak .n{color:var(--accent);font-size:14px;}
+  .rhythm{display:flex;align-items:center;gap:8px;}
+  .rhythm-ring{flex:0 0 auto;}
+  .rhythm-label{font-size:10px;color:var(--text-dim);line-height:1.35;text-align:right;}
+  .rhythm-label b{color:var(--green);font-size:13px;font-family:'Menlo',monospace;}
+  .rhythm-total{font-size:9px;color:var(--text-dim);opacity:.8;}
   .viewtabs{display:flex;gap:18px;margin-top:12px;font-size:13px;}
   .viewtab{color:var(--text-dim);cursor:pointer;padding-bottom:4px;border-bottom:2px solid transparent;}
   .viewtab.active{color:var(--text);border-bottom-color:var(--accent);}
   .daytabs{display:flex;gap:6px;margin-top:12px;overflow-x:auto;padding-bottom:2px;}
-  .daytab{flex:1 0 auto;text-align:center;padding:8px 8px;border-radius:3px;border:1px solid var(--line);background:var(--panel);color:var(--text-dim);font-size:12px;cursor:pointer;white-space:nowrap;}
+  .daytab{position:relative;flex:1 0 auto;text-align:center;padding:8px 8px;border-radius:3px;border:1px solid var(--line);background:var(--panel);color:var(--text-dim);font-size:12px;cursor:pointer;white-space:nowrap;}
+  .daytab.suggested{border-color:rgba(255,93,59,.55);background:rgba(255,93,59,.09);color:var(--text);}
+  .daytab.suggested.active{background:var(--panel-raised);}
   .daytab.active{border-color:var(--accent);color:var(--text);background:var(--panel-raised);}
   .daytab .dsub{display:block;font-size:9.5px;margin-top:2px;opacity:.75;}
   main{padding:16px 16px 120px;max-width:560px;margin:0 auto;}
   .banner{display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(214,160,58,.1);border:1px solid rgba(214,160,58,.4);border-radius:4px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--amber);}
   .banner .linkbtn{color:var(--amber);white-space:nowrap;}
+  .banner.info{background:rgba(79,163,209,.1);border-color:rgba(79,163,209,.4);color:var(--light);}
+  .banner.info .linkbtn{color:var(--light);}
   .bodymap{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:12px 12px 10px;margin-bottom:18px;}
   .recov-hero{background:linear-gradient(165deg,var(--panel-raised) 0%,#1a2b20 130%);border:1px solid var(--line);border-radius:6px;padding:14px 14px 12px;margin-bottom:14px;position:relative;overflow:hidden;}
   .recov-hero::after{content:"";position:absolute;top:-40px;right:-40px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(92,187,111,.22),transparent 70%);}
@@ -222,7 +229,17 @@
 </head>
 <body>
 <header>
-  <div class="title-row"><h1>Lift Log</h1><div class="streak">sessions logged&nbsp;<span class="n" id="sessionCount">0</span></div></div>
+  <div class="title-row"><h1>Lift Log</h1>
+    <div class="rhythm">
+      <div class="rhythm-label">this week <b id="weekCount">0</b>/4<br><span class="rhythm-total"><span id="sessionCount">0</span> sessions total</span></div>
+      <div class="rhythm-ring">
+        <svg width="28" height="28" viewBox="0 0 30 30">
+          <circle cx="15" cy="15" r="12" fill="none" stroke="var(--line)" stroke-width="3.5"/>
+          <circle cx="15" cy="15" r="12" fill="none" stroke="var(--green)" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="75.4" stroke-dashoffset="0" id="weekRingArc" transform="rotate(-90 15 15)"/>
+        </svg>
+      </div>
+    </div>
+  </div>
   <div class="viewtabs">
     <span class="viewtab active" data-v="log">Log</span>
     <span class="viewtab" data-v="history">History</span>
@@ -235,6 +252,8 @@
 <main>
   <section id="logView">
     <div class="banner" id="backupBanner" style="display:none"><span>It's been a week since your last backup.</span><span class="linkbtn" id="bannerBtn">back up now</span></div>
+    <div class="banner" id="deloadBanner" style="display:none"><span>It's been a while since your last deload — a lighter week can help you keep progressing.</span><span class="linkbtn" id="deloadBannerBtn">plan a deload week</span></div>
+    <div class="banner info" id="deloadActiveBanner" style="display:none"></div>
     <div id="arrivalPanel"></div>
     <div class="bodymap" id="bodymapCard">
       <div class="recov-hero" id="recovHero">
@@ -429,9 +448,28 @@
   <button class="finish-btn" id="finishBtn">mark session complete</button>
 </div></footer>
 <div class="sheet-bg" id="sheetBg"></div>
-<div class="sheet" id="sheet"><div class="sheet-head"><div><div id="sheetTitle" style="font-size:15px">Swap exercise</div><div id="sheetSub" style="font-size:11px;color:var(--text-dim);margin-top:2px"></div></div><span class="linkbtn" id="sheetClose">close</span></div><div id="sheetList"></div></div>
+<div class="sheet" id="sheet"><div class="sheet-head"><div><div id="sheetTitle" style="font-size:15px">Swap exercise</div><div id="sheetSub" style="font-size:11px;color:var(--text-dim);margin-top:2px"></div></div><span class="linkbtn" id="sheetClose">close</span></div><input class="in" id="sheetSearch" placeholder="search alternatives…" style="width:100%;margin-bottom:12px"><div id="sheetList"></div></div>
 <div class="toast" id="toast">saved</div>
 <div class="celebrate-bg" id="celebrateBg"><div class="celebrate" id="celebrateInner"></div></div>
+<div class="sheet-bg" id="fatigueBg"></div>
+<div class="sheet" id="fatigueSheet">
+  <div class="sheet-head"><div><div style="font-size:15px">Still recovering</div><div id="fatigueSub" style="font-size:11px;color:var(--text-dim);margin-top:2px"></div></div><span class="linkbtn" id="fatigueClose">close</span></div>
+  <div id="fatigueList"></div>
+  <div class="row" style="margin-top:16px;gap:10px;flex-wrap:nowrap">
+    <button class="btn" id="fatigueCancel" style="flex:1">stick with suggested</button>
+    <button class="btn primary" id="fatigueProceed" style="flex:1">do it anyway</button>
+  </div>
+</div>
+<div class="sheet-bg" id="deloadBg"></div>
+<div class="sheet" id="deloadSheet">
+  <div class="sheet-head"><div><div style="font-size:15px">Plan a deload week</div><div id="deloadStats" style="font-size:11px;color:var(--text-dim);margin-top:2px"></div></div><span class="linkbtn" id="deloadClose">close</span></div>
+  <div class="plateau-tip" style="margin-bottom:14px">A deload is a planned lighter week — usually about 10-20% less weight and/or fewer hard sets — taken every 4-8 weeks of consistent training. It gives connective tissue and your nervous system time to catch up with the muscle adaptations you've already earned, which is generally thought to lower overuse-injury risk and can help push through a stall that isn't responding to changes on a single exercise. It's not mandatory, and skipping one occasionally is fine — but going many months without one is usually when plateaus and nagging aches start to stack up.</div>
+  <div class="empty" style="margin-bottom:10px">Starting one suggests weights about 10% lighter across every exercise for the next 7 days. Nothing about your logged history changes — it only affects the "try N lb" suggestion.</div>
+  <div class="row" style="gap:10px;flex-wrap:nowrap">
+    <button class="btn" id="deloadNotNow" style="flex:1">not now</button>
+    <button class="btn primary" id="startDeloadBtn" style="flex:1">start deload week</button>
+  </div>
+</div>
 
 <script>
 // ---------- storage: phone browser first, Claude artifact as fallback ----------
@@ -449,7 +487,7 @@ const store = {
     else this.mem[k]=v; }catch(e){ console.error(e); } }
 };
 store.init();
-const KEYS = ['lastBackup','program','recovery','hist','sessions','notes','bodyweight','settings','meta:sessionCount','today:d1','today:d2','today:d3','today:d4','last:d1','last:d2','last:d3','last:d4'];
+const KEYS = ['lastBackup','program','recovery','hist','sessions','notes','bodyweight','settings','meta:sessionCount','today:d1','today:d2','today:d3','today:d4','last:d1','last:d2','last:d3','last:d4','lastDeload','deloadStart'];
 
 const RECOVERY_HOURS = { chest:72, back:72, quads:72, hamstrings:72, glutes:72, lowerback:72, shoulders:48, biceps:48, triceps:48, forearms:48, calves:48, abs:36 };
 const MUSCLE_LABEL = { chest:'Chest', back:'Back', quads:'Quads', hamstrings:'Hamstrings', glutes:'Glutes', lowerback:'Lower back', shoulders:'Shoulders', biceps:'Biceps', triceps:'Triceps', forearms:'Forearms', calves:'Calves', abs:'Core' };
@@ -596,6 +634,7 @@ const ALTS = {
 let PROGRAM = JSON.parse(JSON.stringify(DEFAULT_PROGRAM));
 let currentDay='d1', todayData={}, lastSessionData={}, sessionCount=0, recovery={}, hist={}, sessions=[], notes={}, bodyweight=[], settings={rest:90, auto:true, autoBackup:true}, view='log';
 let dayStartTimes={}, arrivalActive={};
+let lastDeload=0, deloadStart=0;
 
 // ---------- helpers ----------
 const sget=(k)=>store.get(k), sset=(k,v)=>store.set(k,v);
@@ -608,20 +647,32 @@ function pct(a,b){ return (!a||!b)?null:((b-a)/a)*100; }
 function fmtPct(p){ if(p===null) return '—'; const r=Math.round(p*10)/10; return (r>0?'+':'')+r+'%'; }
 function topRep(t){ const m=t.match(/(\d+)\s*[-–]?\s*(\d+)?/); return m?parseInt(m[2]||m[1]):12; }
 function setsCountFor(ex){ if(ex.seed) return ex.seed.length; const m=ex.target.match(/^(\d+)/); return m?parseInt(m[1]):3; }
+function isDeloadActive(){ return !!deloadStart && (Date.now()-deloadStart < 7*864e5); }
 function suggestWeight(ex,last){
   if(ex.start===0) return null;
   if(ex.start===-1 && !(last&&last.sets&&last.sets.some(x=>x.w&&x.r))) return -1;
-  if(!last||!last.sets) return ex.start;
-  const logged=last.sets.filter(s=>s.w!==''&&s.r!=='');
-  if(!logged.length) return ex.start;
-  const w=Math.max(...logged.map(s=>parseFloat(s.w)||0)); if(!w) return ex.start;
-  return logged.every(s=>parseInt(s.r)>=topRep(ex.target)) ? w+ex.step : w;
+  let w;
+  if(!last||!last.sets) w=ex.start;
+  else{
+    const logged=last.sets.filter(s=>s.w!==''&&s.r!=='');
+    if(!logged.length) w=ex.start;
+    else{ const mw=Math.max(...logged.map(s=>parseFloat(s.w)||0)); if(!mw) w=ex.start; else w=logged.every(s=>parseInt(s.r)>=topRep(ex.target))?mw+ex.step:mw; }
+  }
+  if(w && isDeloadActive()) w=Math.round(w*0.9/2.5)*2.5;
+  return w;
 }
 function isPlateau(d,ex){
   const h=hist[histKey(d,ex)]; if(!h||h.length<3) return false;
   const last3=h.slice(-3); const first=last3[0].e1rm;
   return Math.max(...last3.map(x=>x.e1rm)) <= first*1.01;
 }
+// ---------- deload / periodization ----------
+function plateauCountAll(){ let n=0; PROGRAM.forEach(day=>day.exercises.forEach(ex=>{ if(ex.start!==0 && isPlateau(day.id,ex)) n++; })); return n; }
+function weeksSinceDeload(){
+  const base=lastDeload || (sessions.length?Math.min(...sessions.map(s=>s.t)):Date.now());
+  return (Date.now()-base)/(7*864e5);
+}
+function deloadDue(){ return !isDeloadActive() && (weeksSinceDeload()>=5 || plateauCountAll()>=3); }
 function plateauBreakIdx(h){
   // indices into h where a session broke a preceding 3-session plateau
   const idx=[];
@@ -712,14 +763,57 @@ document.getElementById('recovDetailToggle').onclick=()=>{
 };
 
 // ---------- log view ----------
-async function loadDay(d){ currentDay=d; if(d==='cardio'){ document.getElementById('arrivalPanel').innerHTML=''; document.getElementById('arrivalPanel').style.display='none'; document.getElementById('dayLabel').style.display=''; document.getElementById('exerciseList').style.display=''; document.getElementById('bodymapCard').style.display=''; renderTabs(); renderBody(); renderCardioForm(); return; } document.getElementById('finishBtn').style.display=''; document.getElementById('resetLink').style.display=''; todayData=(await sget('today:'+d))||{}; lastSessionData[d]=await sget('last:'+d); render(); }
+function renderHeaderStats(){
+  const week=Date.now()-7*864e5;
+  const thisWeek=sessions.filter(s=>!s.isCardio && s.t>=week).length;
+  const c=75.4;
+  document.getElementById('weekRingArc').style.strokeDashoffset=(c*(1-Math.min(1,thisWeek/4))).toFixed(1);
+  document.getElementById('weekCount').textContent=thisWeek;
+  document.getElementById('sessionCount').textContent=sessionCount;
+}
+async function loadDay(d){ currentDay=d; renderHeaderStats(); if(d==='cardio'){ document.getElementById('arrivalPanel').innerHTML=''; document.getElementById('arrivalPanel').style.display='none'; document.getElementById('dayLabel').style.display=''; document.getElementById('exerciseList').style.display=''; document.getElementById('bodymapCard').style.display=''; renderTabs(); renderBody(); renderCardioForm(); return; } document.getElementById('finishBtn').style.display=''; document.getElementById('resetLink').style.display=''; todayData=(await sget('today:'+d))||{}; lastSessionData[d]=await sget('last:'+d); render(); }
 function ensureState(ex){ if(!todayData[ex.name]) todayData[ex.name]={open:false,sets:Array.from({length:setsCountFor(ex)},()=>({w:'',r:'',done:false}))}; return todayData[ex.name]; }
 function touchDayStart(){ if(!dayStartTimes[currentDay]) dayStartTimes[currentDay]=Date.now(); }
 function hasLoggedAnything(state){ return Object.values(state).some(s=>s.sets.some(x=>x.w||x.r||x.done)); }
+function suggestedDayId(){
+  const lifts=[...sessions].filter(s=>!s.isCardio).sort((a,b)=>b.t-a.t);
+  if(!lifts.length) return PROGRAM[0].id;
+  const idx=PROGRAM.findIndex(d=>d.id===lifts[0].dayId);
+  return idx<0?PROGRAM[0].id:PROGRAM[(idx+1)%PROGRAM.length].id;
+}
 function renderTabs(){ const w=document.getElementById('dayTabs'); w.innerHTML='';
-  PROGRAM.forEach(d=>{ const el=document.createElement('div'); el.className='daytab'+(d.id===currentDay?' active':''); el.innerHTML=`${d.name}<span class="dsub">${d.sub}</span>`; el.onclick=()=>loadDay(d.id); w.appendChild(el); });
+  const suggested=suggestedDayId();
+  PROGRAM.forEach(d=>{ const el=document.createElement('div'); el.className='daytab'+(d.id===currentDay?' active':'')+(d.id===suggested?' suggested':''); if(d.id===suggested) el.title='next up in your rotation'; el.innerHTML=`${d.name}<span class="dsub">${d.sub}</span>`; el.onclick=()=>attemptLoadDay(d.id); w.appendChild(el); });
   const c=document.createElement('div'); c.className='daytab cardio-tab'+(currentDay==='cardio'?' active':''); c.innerHTML='Cardio<span class="dsub">endurance</span>'; c.onclick=()=>loadDay('cardio'); w.appendChild(c);
 }
+
+// ---------- fatigue disclaimer: warn (don't block) when picking a day whose muscles haven't recovered ----------
+function dayFatigueConflicts(day){
+  const muscles=new Set(); day.exercises.forEach(ex=>ex.m.forEach(m=>muscles.add(m)));
+  return [...muscles].filter(m=>recoveryProgress(m)<1).map(m=>{
+    const r=recovery[m]; const left=Math.max(0,r.hours-(Date.now()-r.start)/3600000);
+    return {m,pct:Math.round(recoveryProgress(m)*100),left};
+  }).sort((a,b)=>a.pct-b.pct);
+}
+function attemptLoadDay(dayId){
+  if(dayId===currentDay){ return; }
+  const day=PROGRAM.find(d=>d.id===dayId);
+  if(!day || dayId===suggestedDayId()){ loadDay(dayId); return; }
+  const conflicts=dayFatigueConflicts(day);
+  if(!conflicts.length){ loadDay(dayId); return; }
+  showFatigueWarning(day,conflicts,()=>loadDay(dayId));
+}
+function showFatigueWarning(day,conflicts,onProceed){
+  document.getElementById('fatigueSub').textContent=`Switching to ${day.name} ${day.sub} instead of your suggested day`;
+  const note=`Training a muscle again before it's recovered means fewer quality reps at your working weight, faster fatigue within the set, and — if it becomes a pattern — a higher risk of strain. Muscle rebuilds stronger during rest, not just during the lift, which is why these windows exist.`;
+  const rows=conflicts.map(c=>`<div class="edrow"><div><div>${MUSCLE_LABEL[c.m]}</div><div class="m">${c.pct}% recovered · ~${c.left<1?'<1':Math.ceil(c.left)}h left</div></div></div>`).join('');
+  document.getElementById('fatigueList').innerHTML=`<div class="plateau-tip" style="margin-bottom:4px">${note}</div>${rows}`;
+  document.getElementById('fatigueBg').classList.add('on'); document.getElementById('fatigueSheet').classList.add('on');
+  document.getElementById('fatigueProceed').onclick=()=>{ closeFatigue(); onProceed(); };
+  document.getElementById('fatigueCancel').onclick=closeFatigue;
+}
+function closeFatigue(){ document.getElementById('fatigueBg').classList.remove('on'); document.getElementById('fatigueSheet').classList.remove('on'); }
+document.getElementById('fatigueClose').onclick=closeFatigue; document.getElementById('fatigueBg').onclick=closeFatigue;
 
 function render(){
   renderTabs(); renderBody();
@@ -732,7 +826,7 @@ function render(){
     if(ex.group!==lastGroup){ const gh=document.createElement('div'); gh.className='groupheader'; gh.textContent=ex.group; list.appendChild(gh); lastGroup=ex.group; }
     const state=ensureState(ex); const complete=state.sets.every(s=>s.done); if(!complete) allComplete=false;
     const saved=lastSessionData[currentDay]&&lastSessionData[currentDay][ex.name];
-    const sug=suggestWeight(ex,saved); const sugTxt=sug===null?'bodyweight':sug===-1?'find a weight for the rep range':(sug+' lb');
+    const sug=suggestWeight(ex,saved); const sugTxt=sug===null?'bodyweight':sug===-1?'find a weight for the rep range':(sug+' lb'+(isDeloadActive()?' · deload':''));
     const cur=ex.start===0?0:currentFor(currentDay,ex), base=ex.start===0?0:baselineFor(currentDay,ex);
     const lvl=(base&&cur)?Math.round(cur/base*100):0; const lvlTxt=lvl&&lvl!==100?` <span class="e1rm">· strength ${lvl}%</span>`:'';
     const plat=isPlateau(currentDay,ex);
@@ -752,7 +846,7 @@ function render(){
     howto.innerHTML=`<div class="howto-row"><span><span class="howto-btn">${state.howto?'hide':'how to'}</span><span class="howto-btn swap-btn" style="margin-left:14px">swap ↔</span></span><a class="demo-link" href="${yt}" target="_blank" rel="noopener">watch demo ↗</a></div><div class="cue">${ex.cue||'No cue written yet.'}</div>`;
     howto.querySelector('.howto-btn').onclick=()=>{ state.howto=!state.howto; render(); };
     howto.querySelector('.swap-btn').onclick=()=>openSwap(currentDay, ex); body.appendChild(howto);
-    if(plat){ const pt=document.createElement('div'); pt.className='plateau-tip'; pt.textContent=`No progress in 3 sessions. Try a lighter week (about 10% less, same reps), then come back — or switch the rep range for a few weeks.`; body.appendChild(pt); }
+    if(plat){ const pt=document.createElement('div'); pt.className='plateau-tip'; pt.innerHTML=`No progress in 3 sessions. Try a lighter week (about 10% less, same reps), then come back — or switch the rep range for a few weeks. If several lifts feel stuck at once, <span class="linkbtn" style="color:var(--amber)">consider a full deload week</span>.`; pt.querySelector('.linkbtn').onclick=openDeloadSheet; body.appendChild(pt); }
     if(sug===-1){ const fn=document.createElement('div'); fn.className='first-log-note'; fn.textContent='New lift — no history yet. Log a comfortable first set below; Lift Log will suggest a weight next time from what you log now.'; body.appendChild(fn); }
 
     const hr=document.createElement('div'); hr.className='setgrid head'; hr.innerHTML='<div>set</div><div>weight</div><div>reps</div><div></div>'; body.appendChild(hr);
@@ -814,18 +908,19 @@ function renderArrival(){
     const lastLift=[...sessions].reverse().find(s=>!s.isCardio);
     const lastTxt=lastLift?`Last time: ${fmtDate(lastLift.t)}, ${lastLift.dayName} ${lastLift.sub}. `:'';
     const recovTxt=document.getElementById('recovSub').textContent;
+    const rotationTxt=(day.id===suggestedDayId())?' Next up in your rotation.':'';
     panel.innerHTML=`
       <div class="greet-wrap">
         <div class="greet-eyebrow">${new Date().toLocaleDateString(undefined,{weekday:'long'})}</div>
         <div class="greet-h1">Ready for ${day.name} — ${day.sub}?</div>
-        <div class="greet-sub">${lastTxt}${recovTxt}</div>
+        <div class="greet-sub">${lastTxt}${recovTxt}${rotationTxt}</div>
       </div>
       <div class="day-carousel">
         ${PROGRAM.map(d=>`<div class="day-card${d.id===currentDay?' today':''}" data-day="${d.id}">${d.id===currentDay?'<div class="ddot"></div>':''}<div class="dtag">${d.id===currentDay?'Today':''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub} · ${d.exercises.length} exercises</div></div>`).join('')}
       </div>
       <div class="preview-list">${previewRows}${moreRow}</div>
       <button class="start-cta" id="arrivalStart">start ${day.name} — ${day.sub}</button>`;
-    panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>loadDay(c.dataset.day));
+    panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day));
   }
   document.getElementById('arrivalStart').onclick=()=>{ touchDayStart(); arrivalActive[currentDay]=false; renderArrival(); };
 }
@@ -867,6 +962,7 @@ async function finishSession(){
   const rhythmCount=sessions.filter(s=>!s.isCardio && s.t>=now-7*864e5).length;
   showCelebration({day,worked:worked.length,nsets,vol:Math.round(vol),durationMin,pr:topPR,rhythmCount});
   await loadDay(currentDay);
+  updateDeloadUI();
   if(settings.autoBackup && backupDue()) setTimeout(()=>doExport(true), 1200); else updateBackupUI();
 }
 
@@ -1125,6 +1221,30 @@ function updateBackupUI(){
   const b=document.getElementById('backupBanner'); b.style.display = backupDue() && sessions.length ? 'flex':'none';
   const l=document.getElementById('lastBackup'); l.textContent = lastBackup ? `Last backup: ${fmtDate(lastBackup)}${backupDue()?' — a new one is due':''}` : 'No backup yet.';
 }
+function updateDeloadUI(){
+  document.getElementById('deloadBanner').style.display = (deloadDue() && sessions.length) ? 'flex':'none';
+  const active=document.getElementById('deloadActiveBanner');
+  if(isDeloadActive()){
+    active.innerHTML=`<span>Deload week — suggested weights are about 10% lighter through ${fmtDate(deloadStart+7*864e5)}.</span><span class="linkbtn" id="endDeloadBtn">end early</span>`;
+    active.style.display='flex';
+    document.getElementById('endDeloadBtn').onclick=async()=>{ deloadStart=0; await sset('deloadStart',0); updateDeloadUI(); render(); showToast('deload week ended'); };
+  } else active.style.display='none';
+}
+function openDeloadSheet(){
+  const wks=weeksSinceDeload().toFixed(1); const plat=plateauCountAll();
+  document.getElementById('deloadStats').textContent=`${wks} weeks since your last deload · ${plat} exercise${plat===1?'':'s'} currently plateaued`;
+  document.getElementById('deloadBg').classList.add('on'); document.getElementById('deloadSheet').classList.add('on');
+}
+function closeDeloadSheet(){ document.getElementById('deloadBg').classList.remove('on'); document.getElementById('deloadSheet').classList.remove('on'); }
+document.getElementById('deloadClose').onclick=closeDeloadSheet;
+document.getElementById('deloadBg').onclick=closeDeloadSheet;
+document.getElementById('deloadNotNow').onclick=closeDeloadSheet;
+document.getElementById('deloadBannerBtn').onclick=openDeloadSheet;
+document.getElementById('startDeloadBtn').onclick=async()=>{
+  deloadStart=Date.now(); lastDeload=deloadStart;
+  await sset('deloadStart',deloadStart); await sset('lastDeload',lastDeload);
+  closeDeloadSheet(); updateDeloadUI(); render(); showToast('deload week started — suggestions are ~10% lighter');
+};
 document.getElementById('exportBtn').onclick=()=>doExport(false);
 document.getElementById('bannerBtn').onclick=()=>doExport(false);
 document.getElementById('autoBackup').onchange=e=>{ settings.autoBackup=e.target.checked; sset('settings',settings); };
@@ -1147,8 +1267,9 @@ function openSwap(dayId, ex){
   document.getElementById('sheetSub').textContent=`Replacing ${ex.name} · ${day.name} ${day.sub}`;
   const list=document.getElementById('sheetList'); list.innerHTML='';
   const original=(DEFAULT_PROGRAM.find(d=>d.id===dayId).exercises[idx]);
-  const render1=(alt,tag)=>{
-    const el=document.createElement('div'); el.className='alt';
+  const render1=(alt,tag,searchable)=>{
+    const el=document.createElement('div'); el.className='alt'+(searchable?' alt-searchable':'');
+    if(searchable) el.dataset.name=alt.name.toLowerCase();
     el.innerHTML=`<div class="an">${alt.name}${tag?` <span class="e1rm">· ${tag}</span>`:''}</div><div class="am">${alt.target} · ${alt.m.map(k=>MUSCLE_LABEL[k]).join(', ')}</div><div class="ac">${alt.cue||''}</div><div class="ab"><button class="btn primary">use this</button></div>`;
     el.querySelector('button').onclick=()=>{ doSwap(day, idx, alt); };
     list.appendChild(el);
@@ -1159,11 +1280,25 @@ function openSwap(dayId, ex){
   const seen=new Set([ex.name]);
   const pool=[...(ALTS[key]||[])];
   DEFAULT_PROGRAM.forEach(d=>d.exercises.forEach(e=>{ if(groupKeyFor(e)===key) pool.push(Object.assign({},e,{seed:null})); }));
-  pool.forEach(a=>{ if(seen.has(a.name)||inUse.has(a.name)) return; seen.add(a.name); render1(a); });
+  let poolCount=0;
+  pool.forEach(a=>{ if(seen.has(a.name)||inUse.has(a.name)) return; seen.add(a.name); render1(a,null,true); poolCount++; });
   const h2=document.createElement('div'); h2.className='alt-sec'; h2.textContent='Something else'; list.appendChild(h2);
   const c=document.createElement('div'); c.className='alt'; c.innerHTML=`<div class="an">Custom name</div><div class="am">Keeps this slot's muscles and rep range; just renames it (e.g. a different machine brand).</div><div class="ab"><button class="btn">rename</button></div>`;
   c.querySelector('button').onclick=()=>{ const n=prompt('New exercise name:',ex.name); if(n&&n.trim()){ ex.name=n.trim(); ex.seed=null; ex.start=ex.start===0?0:-1; saveProgram(); closeSheet(); showToast('renamed'); } };
   list.appendChild(c);
+
+  const search=document.getElementById('sheetSearch');
+  search.style.display=poolCount>6?'':'none';
+  search.value='';
+  search.oninput=()=>{
+    const term=search.value.trim().toLowerCase();
+    let anyVisible=false;
+    list.querySelectorAll('.alt-searchable').forEach(el=>{ const match=!term||el.dataset.name.includes(term); el.style.display=match?'':'none'; if(match) anyVisible=true; });
+    h1.style.display=(term&&!anyVisible)?'none':'';
+    let noMsg=document.getElementById('altNoMatch');
+    if(term&&!anyVisible){ if(!noMsg){ noMsg=document.createElement('div'); noMsg.id='altNoMatch'; noMsg.className='empty'; h1.insertAdjacentElement('afterend',noMsg); } noMsg.textContent=`No alternatives match "${search.value.trim()}".`; noMsg.style.display=''; }
+    else if(noMsg) noMsg.style.display='none';
+  };
   document.getElementById('sheet').classList.add('on'); document.getElementById('sheetBg').classList.add('on');
 }
 async function doSwap(day, idx, alt){
@@ -1191,8 +1326,9 @@ document.getElementById('resetLink').onclick=async()=>{ todayData={}; await sset
   recovery=(await sget('recovery'))||{}; hist=(await sget('hist'))||{}; sessions=(await sget('sessions'))||[]; notes=(await sget('notes'))||{}; bodyweight=(await sget('bodyweight'))||[];
   settings=Object.assign({rest:90,auto:true,autoBackup:true},(await sget('settings'))||{});
   lastBackup=(await sget('lastBackup'))||0; updateBackupUI();
+  lastDeload=(await sget('lastDeload'))||0; deloadStart=(await sget('deloadStart'))||0; updateDeloadUI();
   const custom=await sget('program'); if(custom&&Array.isArray(custom)&&custom.length===4) PROGRAM=custom;
-  await loadDay(PROGRAM[0].id); setInterval(renderBody,60000);
+  await loadDay(suggestedDayId()); setInterval(renderBody,60000);
 })();
 </script>
 </body>
