@@ -442,7 +442,8 @@
     </div>
     <div class="card">
       <h3>Your data</h3>
-      <div class="row"><button class="btn" id="exportBtn">export backup</button><button class="btn" id="importBtn">import backup</button><input type="file" id="importFile" accept="application/json" style="display:none"></div>
+      <div class="row"><button class="btn" id="exportBtn">export backup</button><button class="btn" id="importBtn">import backup</button><button class="btn" id="mergeBtn">merge backup</button><input type="file" id="importFile" accept="application/json" style="display:none"></div>
+      <div class="note-sm" style="margin-top:6px">Import replaces everything on this device with the backup file. Merge combines the backup's sessions, exercise history and body weight with what's already here instead of overwriting it — use this to bring two devices' data together.</div>
       <div class="row" style="margin-top:10px"><label class="chk"><input type="checkbox" id="autoBackup"> auto-download a backup when I finish a session and it's been 7+ days</label></div>
       <div class="storage-warn" id="lastBackup" style="color:var(--text-dim)"></div>
       <div class="row" style="margin-top:10px"><button class="btn danger" id="wipeBtn">erase everything</button></div>
@@ -737,6 +738,7 @@ function plateauBreakIdx(h){
   return idx;
 }
 function fmtDate(t){ const d=new Date(t); return d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}); }
+function dedupeSortByT(arr){ const seen=new Set(); const out=[]; [...arr].sort((a,b)=>a.t-b.t).forEach(x=>{ if(!seen.has(x.t)){ seen.add(x.t); out.push(x); } }); return out; }
 function sparkline(points,color,milestoneIdx){
   if(!points||points.length<2) return '';
   const w=300,h=26,pad=2,min=Math.min(...points),max=Math.max(...points),span=(max-min)||1;
@@ -1338,11 +1340,51 @@ document.getElementById('startDeloadBtn').onclick=async()=>{
 document.getElementById('exportBtn').onclick=()=>doExport(false);
 document.getElementById('bannerBtn').onclick=()=>doExport(false);
 document.getElementById('autoBackup').onchange=e=>{ settings.autoBackup=e.target.checked; sset('settings',settings); };
-document.getElementById('importBtn').onclick=()=>document.getElementById('importFile').click();
+async function doMergeImport(d){
+  const localSessionsBefore=[...sessions];
+  const importedSessions=d.sessions||[];
+  sessions=dedupeSortByT([...sessions, ...importedSessions]);
+  await sset('sessions',sessions);
+
+  const importedHist=d.hist||{};
+  Object.keys(importedHist).forEach(k=>{ hist[k]=dedupeSortByT([...(hist[k]||[]), ...importedHist[k]]); });
+  await sset('hist',hist);
+
+  bodyweight=dedupeSortByT([...bodyweight, ...(d.bodyweight||[])]);
+  await sset('bodyweight',bodyweight);
+
+  const importedRecovery=d.recovery||{};
+  Object.keys(importedRecovery).forEach(m=>{ const inc=importedRecovery[m]; if(!recovery[m]||inc.start>recovery[m].start) recovery[m]=inc; });
+  await sset('recovery',recovery);
+
+  const importedNotes=d.notes||{};
+  Object.keys(importedNotes).forEach(k=>{ if(!(k in notes)) notes[k]=importedNotes[k]; });
+  await sset('notes',notes);
+
+  const localProgramRaw=await sget('program');
+  if(!localProgramRaw && d.program){ PROGRAM=d.program; await sset('program',PROGRAM); }
+
+  for(const dayId of ['d1','d2','d3','d4']){
+    const localLatest=Math.max(0, ...localSessionsBefore.filter(s=>s.dayId===dayId).map(s=>s.t));
+    const importedLatest=Math.max(0, ...importedSessions.filter(s=>s.dayId===dayId).map(s=>s.t));
+    if(importedLatest>localLatest && d['last:'+dayId]) await sset('last:'+dayId, d['last:'+dayId]);
+  }
+
+  sessionCount=sessions.filter(s=>!s.isCardio).length;
+  await sset('meta:sessionCount',sessionCount);
+}
+let importMode='replace';
+document.getElementById('importBtn').onclick=()=>{ importMode='replace'; document.getElementById('importFile').click(); };
+document.getElementById('mergeBtn').onclick=()=>{ importMode='merge'; document.getElementById('importFile').click(); };
 document.getElementById('importFile').onchange=async e=>{
   const f=e.target.files[0]; if(!f) return;
-  try{ const j=JSON.parse(await f.text()); if(j.app!=='liftlog') throw 0; for(const k of KEYS){ if(k in j.data) await sset(k,j.data[k]); } showToast('restored — reloading'); setTimeout(()=>location.reload(),900); }
-  catch(err){ showToast('that file is not a Lift Log backup'); }
+  try{
+    const j=JSON.parse(await f.text()); if(j.app!=='liftlog') throw 0;
+    if(importMode==='merge'){ await doMergeImport(j.data); showToast('merged — reloading'); }
+    else{ const replaceKeys=KEYS.filter(k=>!k.startsWith('today:')); for(const k of replaceKeys){ if(k in j.data) await sset(k,j.data[k]); } showToast('restored — reloading'); }
+    setTimeout(()=>location.reload(),900);
+  }catch(err){ showToast('that file is not a Lift Log backup'); }
+  e.target.value='';
 };
 document.getElementById('wipeBtn').onclick=async()=>{ if(confirm('Erase all workouts, history and settings on this device?')&&confirm('Really erase? This cannot be undone.')){ for(const k of KEYS) await sset(k,null); location.reload(); } };
 
