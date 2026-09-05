@@ -210,6 +210,20 @@
   .preview-row:last-child{border-bottom:none;}
   .preview-row .pt{font-family:'Menlo',monospace;font-size:10.5px;color:var(--text-dim);}
   .start-cta{margin-top:18px;display:block;width:100%;background:var(--accent);color:#1a0d08;border:none;border-radius:4px;padding:14px;font-size:13.5px;font-family:'Menlo',monospace;letter-spacing:.3px;cursor:pointer;}
+  /* first-launch builder */
+  .build-eq{display:flex;flex-wrap:wrap;gap:6px;margin:14px 2px 2px;}
+  .eqchip{font-size:10.5px;font-family:'Menlo',monospace;padding:6px 10px;border:1px solid var(--line);border-radius:14px;color:var(--text-dim);cursor:pointer;background:var(--panel);user-select:none;}
+  .eqchip.on{border-color:var(--accent);color:var(--text);background:rgba(255,93,59,.12);}
+  .build-day{margin:18px 2px 0;}
+  .build-dh{font-size:10.5px;letter-spacing:.4px;text-transform:uppercase;color:var(--text-dim);padding-bottom:5px;border-bottom:1px solid var(--line);}
+  .build-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:12.5px;}
+  .build-row:last-child{border-bottom:none;}
+  .build-row .bg{flex:0 0 70px;font-family:'Menlo',monospace;font-size:10px;color:var(--text-dim);}
+  .build-row .bn{flex:1;min-width:0;}
+  .build-row .bt{font-family:'Menlo',monospace;font-size:10px;color:var(--text-dim);margin-top:2px;}
+  .build-row .bc{flex:0 0 auto;}
+  .build-row.miss .bn{color:var(--text-dim);}
+  .build-row .bm{color:var(--amber);font-family:'Georgia',serif;font-size:10.5px;}
   .empty-hero{padding:20px 4px 6px;text-align:center;}
   .empty-h1{font-size:19px;margin:16px 0 8px;text-wrap:balance;}
   .empty-sub{font-size:12.5px;color:var(--text-dim);line-height:1.6;max-width:280px;margin:0 auto 18px;}
@@ -543,8 +557,10 @@ const store = {
     else this.mem[k]=v; }catch(e){ console.error(e); } }
 };
 const KEYS = ['lastBackup','program','recovery','hist','sessions','notes','bodyweight','settings','meta:sessionCount','today:d1','today:d2','today:d3','today:d4','last:d1','last:d2','last:d3','last:d4','lastDeload','deloadStart'];
-// anchor lifts: excluded from auto-rotation so the Strength tab's big-lift composite stays on a fixed, comparable set of exercises
-const BIG_LIFTS=['Machine Chest Press','Machine Mid Row','Lat Pulldown','Converging Shoulder Press','Machine Leg Press'];
+// anchor lifts for the Strength tab's big-lift composite: the first exercise of these groups on these days,
+// whatever the user picked for them — slot-based rather than name-based so a built or swapped program still has a composite
+const BIG_SLOTS=[['d1','Chest'],['d1','Back'],['d1','Shoulders'],['d2','Quads']];
+function isAnchorLift(day,ex){ return BIG_SLOTS.some(([d,g])=>d===day.id && g===ex.group && day.exercises.find(e=>e.group===g)===ex); }
 
 const RECOVERY_HOURS = { 'chest-upper':72, 'chest-mid':72, 'chest-lower':72, back:72, quads:72, hamstrings:72, glutes:72, lowerback:72, shoulders:48, biceps:48, triceps:48, forearms:48, calves:48, abs:36 };
 const MUSCLE_LABEL = { chest:'Chest', back:'Back', quads:'Quads', hamstrings:'Hamstrings', glutes:'Glutes', lowerback:'Lower back', shoulders:'Shoulders', biceps:'Biceps', triceps:'Triceps', forearms:'Forearms', calves:'Calves', abs:'Core' };
@@ -555,54 +571,60 @@ const RECOVERY_LABEL = Object.assign({}, MUSCLE_LABEL, { 'chest-upper':'Upper ch
 // ex.m keeps saying 'chest' generically everywhere (grouping, labels, editor) — only recovery tracking looks at ex.region to split it three ways.
 function recoveryKey(ex,m){ if(m!=='chest') return m; return ex.region==='upper chest'?'chest-upper':ex.region==='lower chest'?'chest-lower':'chest-mid'; }
 
-const DEFAULT_PROGRAM = [
-  { id:'d1', name:'Upper', sub:'Heavy', badge:'heavy', factor:1.0,
-    exercises:[
-      { group:'Chest', name:'Machine Chest Press', equip:'machine', target:'3 x 6-10', cue:'Seat so handles sit at mid-chest. Shoulder blades pinned back and down. Press to just short of lockout, lower slowly until elbows are level with your torso.', start:165, step:10, m:['chest','shoulders','triceps'], seed:[{w:145,r:12},{w:145,r:12},{w:145,r:12}] },
-      { group:'Back', name:'Machine Mid Row', equip:'machine', target:'3 x 6-10', cue:'Chest against the pad, neutral spine. Pull elbows straight back past your ribs, squeeze shoulder blades together for a beat, then control the return.', start:205, step:10, m:['back','biceps'], seed:[{w:205,r:12},{w:205,r:8},{w:205,r:8}] },
-      { group:'Back', name:'Lat Pulldown', equip:'machine', target:'3 x 8-10', cue:'Grip slightly wider than shoulders, slight lean back. Pull the bar to your upper chest by driving elbows down and back. Let arms fully extend at the top.', start:110, step:10, m:['back','biceps'], seed:[{w:100,r:12},{w:100,r:12},{w:100,r:10}] },
-      { group:'Shoulders', name:'Converging Shoulder Press', equip:'machine', target:'3 x 6-10', cue:'Seat height so handles start at ear level. Brace your core, press up without shrugging, stop just before elbows lock. Lower to chin height.', start:90, step:10, m:['shoulders','triceps'], seed:[{w:80,r:12},{w:80,r:12},{w:80,r:12}] },
-      { group:'Arms', name:'Machine Preacher Curl', equip:'machine', target:'3 x 8-10', cue:'Armpits snug over the pad, upper arms flat. Curl all the way up, pause, then lower under control to almost straight. No bouncing at the bottom.', start:60, step:5, m:['biceps'], seed:[{w:60,r:12},{w:60,r:9},{w:60,r:9}] },
-      { group:'Arms', name:'Seated Tricep Press', equip:'machine', target:'3 x 8-10', cue:'Elbows tucked in, not flared. Push handles down until arms are straight, squeeze triceps, then let them rise to about 90 degrees.', start:70, step:5, m:['triceps'], seed:[{w:60,r:12},{w:60,r:12},{w:60,r:12}] },
-      { group:'Forearms', name:'Barbell Wrist Curl', equip:'barbell', target:'3 x 10', cue:'Forearms resting on thighs or a bench, palms up, wrists hanging over the edge. Let the bar roll down to fingertips, curl it up as high as possible.', start:55, step:5, m:['forearms'], seed:[{w:50,r:10},{w:50,r:10},{w:50,r:10}] },
-    ]},
-  { id:'d2', name:'Lower', sub:'Heavy', badge:'heavy', factor:1.0,
-    exercises:[
-      { group:'Quads', name:'Machine Leg Press', equip:'machine', target:'3 x 6-10', cue:'Feet shoulder-width, mid-platform. Lower until knees hit about 90 degrees without your lower back lifting off the pad. Drive through heels, do not lock knees.', start:105, step:10, m:['quads','glutes'], seed:[{w:85,r:12},{w:85,r:12},{w:85,r:12}] },
-      { group:'Hamstrings', name:'Seated Leg Curl', equip:'machine', target:'3 x 8-10', cue:'Pad just above ankles, thigh pad snug. Curl heels toward your glutes, pause at the bottom, return slowly. Keep hips pressed into the seat.', start:50, step:5, m:['hamstrings'], seed:[{w:40,r:10},{w:40,r:10},{w:40,r:10}] },
-      { group:'Hamstrings', name:'45° Back Extension', equip:'machine', target:'3 x 10', cue:'Pad at the top of your thighs. Hinge at the hips with a flat back, lower until your torso is roughly parallel to the floor, squeeze glutes to rise. Do not hyperextend.', start:0, step:10, m:['lowerback','glutes','hamstrings'], seed:[{w:'',r:10},{w:'',r:10},{w:'',r:10}] },
-      { group:'Quads', name:'Leg Extension', equip:'machine', target:'3 x 8-10', cue:'Pad on your shins just above the ankles, knees aligned with the pivot. Extend fully and pause for a second, then lower slowly. Keep your back on the seat.', start:70, step:5, m:['quads'], seed:[{w:65,r:10},{w:65,r:12},{w:65,r:10}] },
-      { group:'Calves', name:'Standing Calf Raise', equip:'machine', target:'3 x 12-15', cue:'Balls of feet on the edge, heels hanging. Drop heels as low as they go, rise onto your toes as high as possible, pause at the top. Full range matters more than load.', start:135, step:10, m:['calves'], seed:[{w:115,r:20},{w:115,r:20},{w:115,r:20}] },
-      { group:'Core', name:'Hanging Leg Raise / Cable Crunch', equip:'cable', target:'3 x 12-15', cue:'Leg raise: hang, keep shoulders down, curl knees toward chest without swinging. Cable crunch: kneel, hold rope at forehead, crunch ribs toward hips. Do not pull with the arms.', start:0, step:5, m:['abs'], seed:null },
-    ]},
-  { id:'d3', name:'Upper', sub:'Volume', badge:'light', factor:0.85,
-    exercises:[
-      { group:'Chest', name:'Incline Smith Machine Press', equip:'machine', region:'upper chest', target:'3 x 10-12', cue:'Bench at 30 degrees, bar touching upper chest. Elbows about 45 degrees from your body. Press up and slightly back, lower with control.', start:55, step:10, m:['chest','shoulders','triceps'], seed:[{w:55,r:12},{w:55,r:12},{w:55,r:8}] },
-      { group:'Chest', name:'Machine Pec Fly', equip:'machine', target:'3 x 12-15', cue:'Handles level with mid-chest, slight elbow bend. Bring hands together in front of you and squeeze, then open only until you feel a stretch, not strain.', start:130, step:10, m:['chest'], seed:[{w:145,r:10},{w:145,r:8},{w:145,r:10}] },
-      { group:'Back', name:'Diverging Seated Row', equip:'machine', target:'3 x 10-12', cue:'Chest on the pad, grab handles, pull back and slightly out so elbows travel toward your hips. Squeeze the back, return until arms are straight.', start:110, step:10, m:['back','biceps'], seed:[{w:100,r:12},{w:100,r:12},{w:100,r:12}] },
-      { group:'Shoulders', name:'Lateral Raise Machine', equip:'machine', target:'3 x 12-15', cue:'Pads just above elbows. Raise arms out to the side to shoulder height, lead with elbows not hands. Lower slowly; no swinging.', start:80, step:5, m:['shoulders'], seed:[{w:80,r:12},{w:80,r:12},{w:80,r:12}] },
-      { group:'Shoulders', name:'Face Pulls', equip:'cable', target:'3 x 12-15', cue:'Rope at face height. Pull toward your forehead, splitting the rope so hands end beside your ears, elbows high. Squeeze rear delts and upper back.', start:32, step:5, m:['shoulders','back'], seed:[{w:32,r:12},{w:32,r:12},{w:32,r:8}] },
-      { group:'Shoulders', name:'Reverse Pec Deck', equip:'machine', target:'3 x 12-15', cue:'Face the pad, handles in front at shoulder height. Sweep arms back in a wide arc until they are in line with your shoulders. Keep a slight elbow bend.', start:50, step:5, m:['shoulders','back'], seed:null },
-      { group:'Arms', name:'Hammer Curl', equip:'dumbbell', target:'3 x 12', cue:'Palms facing in, dumbbells at your sides. Curl toward the shoulder without twisting the wrist. Elbows stay pinned by your ribs.', start:40, step:5, m:['biceps','forearms'], seed:[{w:35,r:12},{w:35,r:12},{w:35,r:12}] },
-      { group:'Arms', name:'Overhead Tricep Extension', equip:'dumbbell', target:'3 x 12-15', cue:'Dumbbell or rope overhead, elbows pointing to the ceiling and close to your head. Lower behind your head until forearms pass parallel, then extend fully.', start:25, step:2.5, m:['triceps'], seed:[{w:22,r:12},{w:22,r:12},{w:22,r:12}] },
-      { group:'Forearms', name:'Reverse Wrist Curl', equip:'barbell', target:'3 x 12-15', cue:'Forearms on thighs, palms down. Let the bar drop, then lift knuckles toward you as high as possible. Lighter than regular wrist curls is normal.', start:40, step:5, m:['forearms'], seed:[{w:40,r:10},{w:40,r:10},{w:40,r:10}] },
-    ]},
-  { id:'d4', name:'Lower', sub:'Volume', badge:'light', factor:0.85,
-    exercises:[
-      { group:'Quads', name:'Bulgarian Split Squat', equip:'dumbbell', target:'3 x 10-12/leg', cue:'Rear foot on a bench, front foot far enough forward that your knee stays over the ankle. Lower straight down until the front thigh is parallel, drive up through the heel.', start:0, step:5, m:['quads','glutes','hamstrings'], seed:null },
-      { group:'Quads', name:'Machine Leg Press', equip:'machine', target:'3 x 12-15', cue:'Feet shoulder-width, mid-platform. Lower until knees hit about 90 degrees without your lower back lifting off the pad. Drive through heels, do not lock knees.', start:95, step:10, m:['quads','glutes'], seed:[{w:85,r:15},{w:85,r:15},{w:85,r:15}] },
-      { group:'Hamstrings', name:'Dumbbell Romanian Deadlift', equip:'dumbbell', target:'3 x 10-12', cue:'Soft knees, dumbbells against your thighs. Push hips back and let the weights slide down your legs with a flat back until the hamstrings load. Squeeze glutes to stand.', start:30, step:5, m:['hamstrings','glutes','lowerback'], seed:null },
-      { group:'Quads', name:'Leg Extension', equip:'machine', target:'3 x 12-15', cue:'Pad on your shins just above the ankles, knees aligned with the pivot. Extend fully and pause for a second, then lower slowly. Keep your back on the seat.', start:65, step:5, m:['quads'], seed:[{w:65,r:10},{w:65,r:12},{w:65,r:10}] },
-      { group:'Hamstrings', name:'Seated Leg Curl', equip:'machine', target:'3 x 12-15', cue:'Pad just above ankles, thigh pad snug. Curl heels toward your glutes, pause at the bottom, return slowly. Keep hips pressed into the seat.', start:40, step:5, m:['hamstrings'], seed:[{w:40,r:10},{w:40,r:10},{w:40,r:10}] },
-      { group:'Calves', name:'Seated Calf Raise', equip:'machine', target:'3 x 15-20', cue:'Pads on your knees, balls of feet on the platform. Lower heels fully, then push up onto the toes and pause. Slow tempo; this is the soleus.', start:115, step:10, m:['calves'], seed:[{w:115,r:20},{w:115,r:15},{w:115,r:15}] },
-      { group:'Core', name:'Plank / Pallof Press', equip:'bodyweight', target:'3 x 30-45s', cue:'Plank: forearms down, body a straight line, squeeze glutes and brace. Pallof: cable at chest height, stand sideways, press it straight out and resist the rotation.', start:0, step:5, m:['abs'], seed:null },
-    ]},
+// program template: four fixed days, each a list of slots (muscle group + rep target). No exercise names, weights or
+// history live here — a slot only names its recommended pick from the curated pool below, and buildProgram() resolves it.
+// New users build their program from this on first launch; existing users on the old defaults get the same exercises name-for-name.
+const TEMPLATE = [
+  { id:'d1', name:'Upper', sub:'Heavy', badge:'heavy', factor:1.0, slots:[
+    { group:'Chest', key:'chest', target:'3 x 6-10', pick:'Machine Chest Press' },
+    { group:'Back', key:'back', target:'3 x 6-10', pick:'Machine Mid Row' },
+    { group:'Back', key:'back', target:'3 x 8-10', pick:'Lat Pulldown' },
+    { group:'Shoulders', key:'shoulders', target:'3 x 6-10', pick:'Converging Shoulder Press' },
+    { group:'Arms', key:'biceps', target:'3 x 8-10', pick:'Machine Preacher Curl' },
+    { group:'Arms', key:'triceps', target:'3 x 8-10', pick:'Seated Tricep Press' },
+    { group:'Forearms', key:'forearms', target:'3 x 10', pick:'Barbell Wrist Curl' },
+  ]},
+  { id:'d2', name:'Lower', sub:'Heavy', badge:'heavy', factor:1.0, slots:[
+    { group:'Quads', key:'quads', target:'3 x 6-10', pick:'Machine Leg Press' },
+    { group:'Hamstrings', key:'hamstrings', target:'3 x 8-10', pick:'Seated Leg Curl' },
+    { group:'Hamstrings', key:'hamstrings', target:'3 x 10', pick:'45° Back Extension' },
+    { group:'Quads', key:'quads', target:'3 x 8-10', pick:'Leg Extension' },
+    { group:'Calves', key:'calves', target:'3 x 12-15', pick:'Standing Calf Raise' },
+    { group:'Core', key:'abs', target:'3 x 12-15', pick:'Hanging Leg Raise / Cable Crunch' },
+  ]},
+  { id:'d3', name:'Upper', sub:'Volume', badge:'light', factor:0.85, slots:[
+    { group:'Chest', key:'chest', target:'3 x 10-12', pick:'Incline Smith Machine Press' },
+    { group:'Chest', key:'chest', target:'3 x 12-15', pick:'Machine Pec Fly' },
+    { group:'Back', key:'back', target:'3 x 10-12', pick:'Diverging Seated Row' },
+    { group:'Shoulders', key:'shoulders', target:'3 x 12-15', pick:'Lateral Raise Machine' },
+    { group:'Shoulders', key:'shoulders', target:'3 x 12-15', pick:'Face Pulls' },
+    { group:'Shoulders', key:'shoulders', target:'3 x 12-15', pick:'Reverse Pec Deck' },
+    { group:'Arms', key:'biceps', target:'3 x 12', pick:'Hammer Curl' },
+    { group:'Arms', key:'triceps', target:'3 x 12-15', pick:'Overhead Tricep Extension' },
+    { group:'Forearms', key:'forearms', target:'3 x 12-15', pick:'Reverse Wrist Curl' },
+  ]},
+  { id:'d4', name:'Lower', sub:'Volume', badge:'light', factor:0.85, slots:[
+    { group:'Quads', key:'quads', target:'3 x 10-12/leg', pick:'Bulgarian Split Squat' },
+    { group:'Quads', key:'quads', target:'3 x 12-15', pick:'Machine Leg Press' },
+    { group:'Hamstrings', key:'hamstrings', target:'3 x 10-12', pick:'Dumbbell Romanian Deadlift' },
+    { group:'Quads', key:'quads', target:'3 x 12-15', pick:'Leg Extension' },
+    { group:'Hamstrings', key:'hamstrings', target:'3 x 12-15', pick:'Seated Leg Curl' },
+    { group:'Calves', key:'calves', target:'3 x 15-20', pick:'Seated Calf Raise' },
+    { group:'Core', key:'abs', target:'3 x 30-45s', pick:'Plank / Pallof Press' },
+  ]},
 ];
 
 
-// ---------- alternatives library (same-muscle swaps) ----------
+// ---------- curated exercise pool ----------
+// per muscle group, recommended picks first. Feeds three things: buildProgram() (template slots resolve their pick here),
+// the first-launch builder's equipment-aware substitution (first entry that passes the filter wins), and openSwap()'s
+// "alternatives" list. Entries carry their own typical rep target; a template slot overrides it with the slot's target.
+// start:0 marks lifts loaded with body weight (weight field defaults to logged body weight).
 const ALTS = {
   chest:[
+    {name:'Machine Chest Press',equip:'machine', target:'3 x 6-10',m:['chest','shoulders','triceps'],step:10,cue:'Seat so handles sit at mid-chest. Shoulder blades pinned back and down. Press to just short of lockout, lower slowly until elbows are level with your torso.'},
+    {name:'Incline Smith Machine Press',equip:'machine', region:'upper chest', target:'3 x 10-12',m:['chest','shoulders','triceps'],step:10,cue:'Bench at 30 degrees, bar touching upper chest. Elbows about 45 degrees from your body. Press up and slightly back, lower with control.'},
+    {name:'Machine Pec Fly',equip:'machine', target:'3 x 12-15',m:['chest'],step:10,cue:'Handles level with mid-chest, slight elbow bend. Bring hands together in front of you and squeeze, then open only until you feel a stretch, not strain.'},
     {name:'Dumbbell Bench Press',equip:'dumbbell', target:'3 x 8-12',m:['chest','shoulders','triceps'],step:5,cue:'Dumbbells over your chest, elbows about 45 degrees out. Lower until upper arms are level with the bench, press up and slightly in.'},
     {name:'Incline Dumbbell Press',equip:'dumbbell', region:'upper chest', target:'3 x 8-12',m:['chest','shoulders','triceps'],step:5,cue:'Bench at 30 degrees. Press from upper chest, keep shoulder blades pinned back so the chest does the work, not the shoulders.'},
     {name:'Pec Deck',equip:'machine', target:'3 x 12-15',m:['chest'],step:5,cue:'Handles level with mid-chest, slight elbow bend. Squeeze the pads together and pause, open only to a comfortable stretch.'},
@@ -612,6 +634,9 @@ const ALTS = {
     {name:'Smith Machine Flat Press',equip:'machine', target:'3 x 8-10',m:['chest','shoulders','triceps'],step:10,cue:'Bar over mid-chest, feet planted. Lower to touch the chest, press up. Set the safeties so you can go to failure safely.'},
   ],
   back:[
+    {name:'Machine Mid Row',equip:'machine', target:'3 x 6-10',m:['back','biceps'],step:10,cue:'Chest against the pad, neutral spine. Pull elbows straight back past your ribs, squeeze shoulder blades together for a beat, then control the return.'},
+    {name:'Lat Pulldown',equip:'machine', target:'3 x 8-10',m:['back','biceps'],step:10,cue:'Grip slightly wider than shoulders, slight lean back. Pull the bar to your upper chest by driving elbows down and back. Let arms fully extend at the top.'},
+    {name:'Diverging Seated Row',equip:'machine', target:'3 x 10-12',m:['back','biceps'],step:10,cue:'Chest on the pad, grab handles, pull back and slightly out so elbows travel toward your hips. Squeeze the back, return until arms are straight.'},
     {name:'Seated Cable Row',equip:'cable', target:'3 x 10-12',m:['back','biceps'],step:10,cue:'Chest tall, slight lean forward at the start. Pull the handle to your stomach by driving elbows back, squeeze, then let the shoulder blades open on the return.'},
     {name:'Single-arm Dumbbell Row',equip:'dumbbell', target:'3 x 10-12/side',m:['back','biceps'],step:5,cue:'One hand braced on a bench, back flat. Row the dumbbell to your hip, not your chest, and control the lowering.'},
     {name:'Assisted Pull-up',equip:'machine', target:'3 x 8-10',m:['back','biceps'],step:10,cue:'Set the assist so you can finish every rep. Start from a full hang, pull chin over the bar by driving elbows down, lower slowly.'},
@@ -621,6 +646,10 @@ const ALTS = {
     {name:'Wide-grip Lat Pulldown',equip:'machine', target:'3 x 10-12',m:['back','biceps'],step:10,cue:'Wide grip, lean back slightly. Pull to the upper chest by driving elbows down and out, pause, then let arms fully extend.'},
   ],
   shoulders:[
+    {name:'Converging Shoulder Press',equip:'machine', target:'3 x 6-10',m:['shoulders','triceps'],step:10,cue:'Seat height so handles start at ear level. Brace your core, press up without shrugging, stop just before elbows lock. Lower to chin height.'},
+    {name:'Lateral Raise Machine',equip:'machine', target:'3 x 12-15',m:['shoulders'],step:5,cue:'Pads just above elbows. Raise arms out to the side to shoulder height, lead with elbows not hands. Lower slowly; no swinging.'},
+    {name:'Face Pulls',equip:'cable', target:'3 x 12-15',m:['shoulders','back'],step:5,cue:'Rope at face height. Pull toward your forehead, splitting the rope so hands end beside your ears, elbows high. Squeeze rear delts and upper back.'},
+    {name:'Reverse Pec Deck',equip:'machine', target:'3 x 12-15',m:['shoulders','back'],step:5,cue:'Face the pad, handles in front at shoulder height. Sweep arms back in a wide arc until they are in line with your shoulders. Keep a slight elbow bend.'},
     {name:'Dumbbell Shoulder Press',equip:'dumbbell', target:'3 x 8-12',m:['shoulders','triceps'],step:5,cue:'Seated with back support. Start with dumbbells at ear level, press up and slightly in until arms are straight but not locked, lower to ear level.'},
     {name:'Dumbbell Lateral Raise',equip:'dumbbell', target:'3 x 12-15',m:['shoulders'],step:2.5,cue:'Slight forward lean, soft elbows. Raise to shoulder height leading with the elbows, pause, lower slowly. Light weight, strict form.'},
     {name:'Cable Lateral Raise',equip:'cable', target:'3 x 12-15',m:['shoulders'],step:2.5,cue:'Cable set low, stand sideways. Raise the arm out to shoulder height across your body, controlling the return. Constant tension throughout.'},
@@ -629,6 +658,8 @@ const ALTS = {
     {name:'Cable Upright Row',equip:'cable', target:'3 x 10-12',m:['shoulders','back'],step:5,cue:'Wide grip, pull the bar up to chest height leading with the elbows out. Stop at chest level to protect the shoulders.'},
   ],
   biceps:[
+    {name:'Machine Preacher Curl',equip:'machine', target:'3 x 8-10',m:['biceps'],step:5,cue:'Armpits snug over the pad, upper arms flat. Curl all the way up, pause, then lower under control to almost straight. No bouncing at the bottom.'},
+    {name:'Hammer Curl',equip:'dumbbell', target:'3 x 12',m:['biceps','forearms'],step:5,cue:'Palms facing in, dumbbells at your sides. Curl toward the shoulder without twisting the wrist. Elbows stay pinned by your ribs.'},
     {name:'Dumbbell Curl',equip:'dumbbell', target:'3 x 10-12',m:['biceps'],step:5,cue:'Elbows pinned to your sides, palms up. Curl to the shoulder, squeeze, lower under control. No swinging from the hips.'},
     {name:'EZ-bar Curl',equip:'barbell', target:'3 x 8-12',m:['biceps','forearms'],step:5,cue:'Grip the angled parts of the bar. Curl to shoulder height keeping elbows still, then lower until arms are nearly straight.'},
     {name:'Cable Curl',equip:'cable', target:'3 x 12-15',m:['biceps'],step:5,cue:'Straight bar on a low cable. Step back slightly, curl to the shoulders with elbows fixed. Constant tension makes this feel heavier than it looks.'},
@@ -636,6 +667,8 @@ const ALTS = {
     {name:'Concentration Curl',equip:'dumbbell', target:'3 x 10-12/side',m:['biceps'],step:2.5,cue:'Seated, elbow braced on the inside of your thigh. Curl slowly to the shoulder, pause, lower fully. Strict and isolated.'},
   ],
   triceps:[
+    {name:'Seated Tricep Press',equip:'machine', target:'3 x 8-10',m:['triceps'],step:5,cue:'Elbows tucked in, not flared. Push handles down until arms are straight, squeeze triceps, then let them rise to about 90 degrees.'},
+    {name:'Overhead Tricep Extension',equip:'dumbbell', target:'3 x 12-15',m:['triceps'],step:2.5,cue:'Dumbbell or rope overhead, elbows pointing to the ceiling and close to your head. Lower behind your head until forearms pass parallel, then extend fully.'},
     {name:'Rope Pushdown',equip:'cable', target:'3 x 12-15',m:['triceps'],step:5,cue:'Elbows tucked, rope at chest height. Push down and split the rope at the bottom, squeeze, then let it rise to chest level.'},
     {name:'Dumbbell Skullcrusher',equip:'dumbbell', target:'3 x 10-12',m:['triceps'],step:2.5,cue:'Lying on a bench, dumbbells over your head. Lower toward your forehead by bending only the elbows, then extend back up.'},
     {name:'Close-grip Smith Press',equip:'machine', target:'3 x 8-10',m:['triceps','chest','shoulders'],step:10,cue:'Hands shoulder-width, elbows tucked. Lower the bar to the lower chest, press up focusing on straightening the arms.'},
@@ -643,6 +676,8 @@ const ALTS = {
     {name:'Cable Kickback',equip:'cable', target:'3 x 12-15/side',m:['triceps'],step:2.5,cue:'Single handle, hinge forward, upper arm parallel to the floor. Extend the arm straight back and squeeze; only the forearm moves.'},
   ],
   forearms:[
+    {name:'Barbell Wrist Curl',equip:'barbell', target:'3 x 10',m:['forearms'],step:5,cue:'Forearms resting on thighs or a bench, palms up, wrists hanging over the edge. Let the bar roll down to fingertips, curl it up as high as possible.'},
+    {name:'Reverse Wrist Curl',equip:'barbell', target:'3 x 12-15',m:['forearms'],step:5,cue:'Forearms on thighs, palms down. Let the bar drop, then lift knuckles toward you as high as possible. Lighter than regular wrist curls is normal.'},
     {name:'Dumbbell Wrist Curl',equip:'dumbbell', target:'3 x 12-15',m:['forearms'],step:2.5,cue:'Forearm on your thigh, palm up, wrist over the knee. Let the dumbbell roll down to your fingers, curl it up and squeeze.'},
     {name:"Farmer's Carry",equip:'dumbbell', target:'3 x 30-45s',m:['forearms','abs','back'],step:10,cue:'Heavy dumbbells at your sides, chest tall, walk with short quick steps. Stop when your grip is about to give.'},
     {name:'Plate Pinch Hold',equip:'bodyweight', target:'3 x 20-40s',m:['forearms'],step:0,cue:'Pinch two plates smooth-side out between fingers and thumb. Hold at your side for time. Builds crushing grip.'},
@@ -650,6 +685,9 @@ const ALTS = {
     {name:'Reverse Curl',equip:'dumbbell', target:'3 x 12-15',m:['forearms','biceps'],step:2.5,cue:'Palms facing down on a bar or dumbbells. Curl to shoulder height with elbows fixed. Lighter than regular curls.'},
   ],
   quads:[
+    {name:'Machine Leg Press',equip:'machine', target:'3 x 8-12',m:['quads','glutes'],step:10,cue:'Feet shoulder-width, mid-platform. Lower until knees hit about 90 degrees without your lower back lifting off the pad. Drive through heels, do not lock knees.'},
+    {name:'Leg Extension',equip:'machine', target:'3 x 10-12',m:['quads'],step:5,cue:'Pad on your shins just above the ankles, knees aligned with the pivot. Extend fully and pause for a second, then lower slowly. Keep your back on the seat.'},
+    {name:'Bulgarian Split Squat',equip:'dumbbell', target:'3 x 10-12/leg',m:['quads','glutes','hamstrings'],step:5,start:0,cue:'Rear foot on a bench, front foot far enough forward that your knee stays over the ankle. Lower straight down until the front thigh is parallel, drive up through the heel.'},
     {name:'Hack Squat',equip:'machine', target:'3 x 8-12',m:['quads','glutes'],step:10,cue:'Feet mid-platform, back flat on the pad. Lower until thighs are parallel or a bit below, drive up through the whole foot.'},
     {name:'Goblet Squat',equip:'dumbbell', target:'3 x 10-15',m:['quads','glutes','abs'],step:5,cue:'Hold a dumbbell or kettlebell against your chest. Sit down between your heels with chest tall, elbows inside the knees at the bottom.'},
     {name:'Smith Machine Squat',equip:'machine', target:'3 x 8-12',m:['quads','glutes'],step:10,cue:'Feet slightly forward of the bar, bar across the upper back. Squat to parallel keeping the chest up; the rails keep you on track.'},
@@ -658,6 +696,9 @@ const ALTS = {
     {name:'Leg Press (narrow stance)',equip:'machine', target:'3 x 10-15',m:['quads','glutes'],step:10,cue:'Feet close together and lower on the platform to bias the quads. Do not let your lower back peel off the pad at the bottom.'},
   ],
   hamstrings:[
+    {name:'Seated Leg Curl',equip:'machine', target:'3 x 10-12',m:['hamstrings'],step:5,cue:'Pad just above ankles, thigh pad snug. Curl heels toward your glutes, pause at the bottom, return slowly. Keep hips pressed into the seat.'},
+    {name:'45° Back Extension',equip:'machine', target:'3 x 10',m:['lowerback','glutes','hamstrings'],step:10,start:0,cue:'Pad at the top of your thighs. Hinge at the hips with a flat back, lower until your torso is roughly parallel to the floor, squeeze glutes to rise. Do not hyperextend.'},
+    {name:'Dumbbell Romanian Deadlift',equip:'dumbbell', target:'3 x 10-12',m:['hamstrings','glutes','lowerback'],step:5,cue:'Soft knees, dumbbells against your thighs. Push hips back and let the weights slide down your legs with a flat back until the hamstrings load. Squeeze glutes to stand.'},
     {name:'Lying Leg Curl',equip:'machine', target:'3 x 10-12',m:['hamstrings'],step:5,cue:'Pad just above the ankles, hips pressed into the bench. Curl heels to your glutes, pause, lower slowly. Do not lift your hips.'},
     {name:'Stiff-leg Dumbbell Deadlift',equip:'dumbbell', target:'3 x 10-12',m:['hamstrings','glutes','lowerback'],step:5,cue:'Legs nearly straight, hinge at the hips with a flat back until you feel the hamstrings load. Squeeze glutes to stand.'},
     {name:'Cable Pull-through',equip:'cable', target:'3 x 12-15',m:['hamstrings','glutes','lowerback'],step:5,cue:'Face away from a low cable, rope between your legs. Hinge forward, then drive hips forward and squeeze glutes to stand tall.'},
@@ -678,6 +719,8 @@ const ALTS = {
     {name:'Cable Pull-through',equip:'cable', target:'3 x 12-15',m:['lowerback','glutes','hamstrings'],step:5,cue:'Face away from a low cable, rope between your legs. Hinge forward, then drive hips forward and squeeze glutes to stand tall.'},
   ],
   calves:[
+    {name:'Standing Calf Raise',equip:'machine', target:'3 x 12-15',m:['calves'],step:10,cue:'Balls of feet on the edge, heels hanging. Drop heels as low as they go, rise onto your toes as high as possible, pause at the top. Full range matters more than load.'},
+    {name:'Seated Calf Raise',equip:'machine', target:'3 x 15-20',m:['calves'],step:10,cue:'Pads on your knees, balls of feet on the platform. Lower heels fully, then push up onto the toes and pause. Slow tempo; this is the soleus.'},
     {name:'Leg Press Calf Raise',equip:'machine', target:'3 x 15-20',m:['calves'],step:10,cue:'Toes on the bottom edge of the platform, legs straight but not locked. Push through the toes as far as you can, then let heels drop fully.'},
     {name:'Single-leg Calf Raise',equip:'dumbbell', target:'3 x 12-15/leg',m:['calves'],step:5,cue:'Stand on one foot on a step, hold a dumbbell on the same side. Full range, pause at the top. Bodyweight is plenty at first.'},
     {name:'Smith Machine Calf Raise',equip:'machine', target:'3 x 12-15',m:['calves'],step:10,cue:'Bar across the upper back, toes on a block. Rise as high as possible, pause, lower until you feel a deep stretch.'},
@@ -685,6 +728,8 @@ const ALTS = {
     {name:'Jump Rope',equip:'bodyweight', target:'3 x 60s',m:['calves'],step:0,cue:'Stay on the balls of your feet, small hops, wrists doing the work. Good finisher when calf machines are busy.'},
   ],
   abs:[
+    {name:'Hanging Leg Raise / Cable Crunch',equip:'cable', target:'3 x 12-15',m:['abs'],step:5,start:0,cue:'Leg raise: hang, keep shoulders down, curl knees toward chest without swinging. Cable crunch: kneel, hold rope at forehead, crunch ribs toward hips. Do not pull with the arms.'},
+    {name:'Plank / Pallof Press',equip:'bodyweight', target:'3 x 30-45s',m:['abs'],step:5,start:0,cue:'Plank: forearms down, body a straight line, squeeze glutes and brace. Pallof: cable at chest height, stand sideways, press it straight out and resist the rotation.'},
     {name:'Cable Crunch',equip:'cable', target:'3 x 12-15',m:['abs'],step:5,cue:'Kneel facing a high cable, rope at your forehead. Crunch ribs toward hips by rounding the spine; do not pull with your arms or hips.'},
     {name:'Ab Wheel Rollout',equip:'bodyweight', target:'3 x 8-12',m:['abs','lowerback'],step:0,cue:'Kneel, roll the wheel forward as far as you can hold a flat back, then pull back. Stop before the hips sag.'},
     {name:'Dead Bug',equip:'bodyweight', target:'3 x 10/side',m:['abs'],step:0,cue:'On your back, arms up, knees at 90 degrees. Lower opposite arm and leg while pressing the lower back into the floor. Slow and steady.'},
@@ -694,11 +739,24 @@ const ALTS = {
   ],
 };
 
+const CURATED_BY_NAME=(()=>{ const m={}; Object.keys(ALTS).forEach(k=>ALTS[k].forEach(a=>{ if(!m[a.name]) m[a.name]=a; })); return m; })();
+// turn a curated-pool entry (or a synthesized full-library entry) into a program exercise for a given template slot.
+// weights always start unknown (-1) unless the lift is body-weight loaded — the first logged set becomes the suggestion baseline.
+function slotExercise(slot, entry){
+  if(!entry) entry={name:slot.pick, equip:null, m:[slot.key], step:5, cue:''};
+  const ex={group:slot.group, key:slot.key, name:entry.name, equip:entry.equip, target:slot.target, cue:entry.cue||'', step:entry.step==null?5:entry.step, m:entry.m.slice(), start:(entry.start===0||entry.step===0)?0:-1, seed:null};
+  if(entry.region) ex.region=entry.region;
+  if(entry.approx) ex.approx=true;
+  return ex;
+}
+function buildProgram(){ return TEMPLATE.map(d=>({id:d.id,name:d.name,sub:d.sub,badge:d.badge,factor:d.factor,exercises:d.slots.map(s=>slotExercise(s, CURATED_BY_NAME[s.pick]))})); }
+const DEFAULT_PROGRAM = buildProgram();
 let PROGRAM = JSON.parse(JSON.stringify(DEFAULT_PROGRAM));
+let needsBuild=false; // true on first launch until the user accepts a program in the builder
 const EQUIP_TYPES=['barbell','dumbbell','kettlebell','cable','machine','bodyweight','band','accessory'];
 const EQUIP_LABEL={barbell:'barbell',dumbbell:'dumbbell',kettlebell:'kettlebell',cable:'cable',machine:'machine',bodyweight:'bodyweight',band:'resistance band',accessory:'other (ball/roller/etc.)'};
-// full exercise library (name/equip/muscles/cue), sourced from a third-party open dataset — no set/rep targets or seed history,
-// only ever offered as swap candidates via openSwap(), never part of the default program
+// full exercise library (name/equip/muscles/cue), sourced from a third-party open dataset — no set/rep targets of its own.
+// offered as swap candidates via openSwap(), and as a last-resort fill in the builder when no curated pick passes the equipment filter
 const FULL_CATALOG=JSON.parse(document.getElementById('fullCatalog').textContent);
 let currentDay='d1', todayData={}, lastSessionData={}, sessionCount=0, recovery={}, hist={}, sessions=[], notes={}, bodyweight=[], settings={rest:90, auto:true, autoBackup:true, smartRest:true, unit:'lb', autoRotate:true, rotateEvery:2, equipFilter:EQUIP_TYPES.slice()}, view='log';
 let dayStartTimes={}, arrivalActive={};
@@ -1005,11 +1063,37 @@ function render(){
   renderArrival();
 }
 
+// ---------- first-launch program builder ----------
+// shown instead of the arrival hero until a program is accepted. Equipment chips drive applyEquipPicks(); "change" reuses openSwap(),
+// whose doSwap() persists the program — so a reload mid-build keeps the picks made so far and lands on the normal hero.
+function renderBuilder(panel){
+  panel.style.display='block';
+  panel.innerHTML=`
+    <div class="greet-wrap">
+      <div class="greet-eyebrow">first launch</div>
+      <div class="greet-h1">Build your program</div>
+      <div class="greet-sub">Four days a week — Upper and Lower, one heavy and one volume day each. Tick what your gym has and every slot gets a recommended exercise. Change any pick now, or swap later from the log.</div>
+    </div>
+    <div class="build-eq">${EQUIP_TYPES.map(t=>`<span class="eqchip${settings.equipFilter.includes(t)?' on':''}" data-t="${t}">${EQUIP_LABEL[t]}</span>`).join('')}</div>
+    ${PROGRAM.map(d=>`<div class="build-day"><div class="build-dh">${d.name} · ${d.sub}</div>${d.exercises.map((ex,i)=>`<div class="build-row${equipAllowed(ex)?'':' miss'}"><span class="bg">${ex.group}</span><span class="bn">${ex.name}<div class="bt">${ex.target}${equipAllowed(ex)?(ex.approx?` · <span class="bm">closest library match — trains ${MUSCLE_LABEL[ex.key]||ex.group} only as a secondary muscle</span>`:''):' · <span class="bm">nothing in the library for your equipment — change it, or tick more above</span>'}</div></span><span class="linkbtn bc" data-d="${d.id}" data-i="${i}">change</span></div>`).join('')}</div>`).join('')}
+    <button class="start-cta" id="buildDone">use this program</button>`;
+  panel.querySelectorAll('.eqchip').forEach(c=>c.onclick=()=>{
+    const t=c.dataset.t; const next=settings.equipFilter.includes(t)?settings.equipFilter.filter(x=>x!==t):[...settings.equipFilter,t];
+    if(!next.length){ showToast('at least one equipment type stays on'); return; }
+    settings.equipFilter=next; sset('settings',settings);
+    const n=applyEquipPicks(PROGRAM); if(n) showToast(`${n} pick${n===1?'':'s'} changed for your equipment`);
+    renderBuilder(panel);
+  });
+  panel.querySelectorAll('.bc').forEach(b=>b.onclick=()=>{ const day=PROGRAM.find(d=>d.id===b.dataset.d); openSwap(day.id, day.exercises[+b.dataset.i]); });
+  document.getElementById('buildDone').onclick=async()=>{ await sset('program',PROGRAM); needsBuild=false; showToast('program saved — edit it any time in Settings'); render(); };
+}
+
 // ---------- arrival panel: greeting + day carousel (returning user), first-open hero (new user) ----------
 function renderArrival(){
   const panel=document.getElementById('arrivalPanel');
   const day=PROGRAM.find(d=>d.id===currentDay);
   const dayLabelEl=document.getElementById('dayLabel'), listEl=document.getElementById('exerciseList'), bodymapEl=document.getElementById('bodymapCard'), resetEl=document.getElementById('resetLink'), finishEl=document.getElementById('finishBtn');
+  if(needsBuild){ renderBuilder(panel); dayLabelEl.style.display='none'; listEl.style.display='none'; bodymapEl.style.display='none'; resetEl.style.display='none'; finishEl.style.display='none'; return; }
   const dismissed = arrivalActive[currentDay]===false || hasLoggedAnything(todayData);
   if(dismissed){
     panel.innerHTML=''; panel.style.display='none';
@@ -1263,14 +1347,14 @@ function renderStrength(){
   renderConditioning();
   document.getElementById('bwUnitNote').textContent=unitLabel();
   const list=document.getElementById('strengthList'); list.innerHTML='';
-  let changes=[], bigTotal=0, bigBase=0, heroSeries=[]; const BIG=BIG_LIFTS;
+  let changes=[], bigTotal=0, bigBase=0, heroSeries=[];
   PROGRAM.forEach(day=>{
     const gh=document.createElement('div'); gh.className='groupheader'; gh.textContent=`${day.name} · ${day.sub}`; list.appendChild(gh);
     day.exercises.forEach(ex=>{
       if(ex.start===-1 && !(hist[histKey(day.id,ex)]||[]).length) return;
       const base=baselineFor(day.id,ex), cur=currentFor(day.id,ex), h=hist[histKey(day.id,ex)]||[];
       const p=h.length?pct(base,cur):null; if(p!==null) changes.push(p);
-      if(BIG.includes(ex.name)&&day.id!=='d4'){ bigTotal+=cur; bigBase+=base; }
+      if(isAnchorLift(day,ex)){ bigTotal+=cur; bigBase+=base; }
       h.forEach(x=>heroSeries.push({t:x.t,p:pct(base,x.e1rm)}));
       const cls=p===null||Math.abs(p)<0.05?'flat':(p>0?'up':'down');
       const last=h.length?h[h.length-1]:null;
@@ -1293,7 +1377,7 @@ function renderStrength(){
     const rel=((bigTotal/bw1)/(bigBase/bw0)-1)*100;
     bwPill.textContent=`${rel>=0?'+':''}${Math.round(rel)}% per ${unitLabel()} bodyweight`; bwPill.style.display='inline-block';
   } else bwPill.style.display='none';
-  document.getElementById('strBigLifts').innerHTML=bigP===null?'':`Big lifts (press, row, pulldown, shoulders, legs): <b style="color:${bigP<-0.05?'var(--accent)':'var(--text)'}">${fmtPct(bigP)}</b>`;
+  document.getElementById('strBigLifts').innerHTML=bigP===null?'':`Big lifts (first chest, back and shoulder lift on Upper Heavy, first quad lift on Lower Heavy): <b style="color:${bigP<-0.05?'var(--accent)':'var(--text)'}">${fmtPct(bigP)}</b>`;
   const heroSpark=document.getElementById('strHeroSpark');
   heroSeries.sort((a,b)=>a.t-b.t);
   if(heroSeries.length>=2){
@@ -1356,7 +1440,7 @@ document.getElementById('adBtn').onclick=()=>{
   day.exercises.push({group,name,target,m,seed:null,start,step,cue}); saveProgram();
   ['adName','adGroup','adTarget','adStart','adStep','adCue'].forEach(id=>document.getElementById(id).value=''); document.querySelectorAll('#adMuscles input').forEach(i=>i.checked=false); showToast('added');
 };
-document.getElementById('edReset').onclick=async()=>{ if(confirm('Reset all four days to the original program? Your logged data stays.')){ PROGRAM=JSON.parse(JSON.stringify(DEFAULT_PROGRAM)); await sset('program',null); document.getElementById('edDay').innerHTML=''; renderEditor(); showToast('program reset'); } };
+document.getElementById('edReset').onclick=async()=>{ if(confirm('Reset all four days to the recommended program for your equipment? Your logged data stays.')){ PROGRAM=buildProgram(); applyEquipPicks(PROGRAM); await sset('program',PROGRAM); document.getElementById('edDay').innerHTML=''; renderEditor(); showToast('program reset'); } };
 
 let lastBackup=0;
 async function doExport(silent){
@@ -1463,7 +1547,40 @@ document.getElementById('wipeBtn').onclick=async()=>{ if(confirm('Erase all work
 function closeSheet(){ document.getElementById('sheet').classList.remove('on'); document.getElementById('sheetBg').classList.remove('on'); }
 document.getElementById('sheetClose').onclick=closeSheet; document.getElementById('sheetBg').onclick=closeSheet;
 const GROUP_KEY={Chest:'chest',Back:'back',Shoulders:'shoulders',Forearms:'forearms',Quads:'quads',Hamstrings:'hamstrings',Glutes:'glutes',Calves:'calves',Core:'abs',Abs:'abs','Lower back':'lowerback',Biceps:'biceps',Triceps:'triceps'};
-function groupKeyFor(ex){ return GROUP_KEY[ex.group] || ex.m[0]; }
+// slot muscle for an exercise: explicit key (built/swapped exercises carry their slot's), else by group name, else first listed muscle
+function groupKeyFor(ex){ return ex.key || GROUP_KEY[ex.group] || ex.m[0]; }
+// a custom exercise added via the editor has no equip tag — never hide those, only filter the tagged pool/catalog
+function equipAllowed(a){ return !a.equip || settings.equipFilter.includes(a.equip); }
+// best replacement for a slot under the current equipment filter: first curated entry that passes (recommended order),
+// else first full-library match — the library has no quality ranking, so it is only a fallback (kettlebell/band-only gyms etc.)
+// library matches are ranked by name simplicity (fewest words, then shortest) — the dataset lists "Advanced Windmill" before
+// "Windmill" and "Alternating Press On Floor" before "Floor Press"; a plainer name is nearly always the more standard lift.
+// a second library pass accepts the slot muscle as a secondary target (a goblet squat is keyed glutes but trains quads).
+function bestPickFor(slot, exclude){
+  const cur=(ALTS[slot.key]||[]).find(a=>equipAllowed(a)&&!exclude.has(a.name)); if(cur) return cur;
+  const simple=(a,b)=>(a.name.split(' ').length-b.name.split(' ').length)||(a.name.length-b.name.length);
+  const ok=a=>equipAllowed(a)&&!exclude.has(a.name);
+  const direct=FULL_CATALOG.filter(a=>a.key===slot.key&&ok(a)).sort(simple)[0];
+  const lib=direct || FULL_CATALOG.filter(a=>a.key!==slot.key&&a.m.includes(slot.key)&&ok(a)).sort(simple)[0];
+  if(!lib) return null;
+  const pick={name:lib.name,equip:lib.equip,m:[lib.key,...lib.m.filter(x=>x!==lib.key)],cue:lib.cue,step:lib.equip==='bodyweight'?0:5,region:lib.region}; // library m lists are alphabetical — put the primary first
+  if(!direct) pick.approx=true; // secondary-muscle match only — the builder says so rather than presenting it as a confident pick
+  return pick;
+}
+// replace every exercise the equipment filter rules out. Only touches failing slots, so manual picks survive a filter change.
+function applyEquipPicks(program){
+  let changed=0;
+  program.forEach(day=>{
+    const tpl=TEMPLATE.find(t=>t.id===day.id);
+    day.exercises.forEach((ex,i)=>{
+      if(equipAllowed(ex)) return;
+      const slot=(tpl&&tpl.slots.length===day.exercises.length)?tpl.slots[i]:{group:ex.group,key:groupKeyFor(ex),target:ex.target,pick:ex.name};
+      const pick=bestPickFor(slot,new Set(day.exercises.map(e=>e.name)));
+      if(pick){ day.exercises[i]=slotExercise(slot,pick); changed++; }
+    });
+  });
+  return changed;
+}
 function openSwap(dayId, ex){
   const day=PROGRAM.find(d=>d.id===dayId); const idx=day.exercises.indexOf(ex); if(idx<0) return;
   const key=groupKeyFor(ex); const inUse=new Set(day.exercises.map(e=>e.name));
@@ -1479,12 +1596,10 @@ function openSwap(dayId, ex){
   };
   if(original && original.name!==ex.name){ const h=document.createElement('div'); h.className='alt-sec'; h.textContent='Original'; list.appendChild(h); render1(original,'back to the program'); }
   const h1=document.createElement('div'); h1.className='alt-sec'; h1.textContent=`${ex.group} alternatives`; list.appendChild(h1);
-  // same-group options: the library for this group, plus any other program exercises from the same group not already in this day
+  // same-group options: the curated pool for this group (the program's own recommended picks live there too)
   const seen=new Set([ex.name]);
   const pool=[...(ALTS[key]||[])];
-  DEFAULT_PROGRAM.forEach(d=>d.exercises.forEach(e=>{ if(groupKeyFor(e)===key) pool.push(Object.assign({},e,{seed:null})); }));
-  // a custom exercise added via the editor has no equip tag — never hide those, only filter the tagged catalog
-  const equipOk=a=>!a.equip || settings.equipFilter.includes(a.equip);
+  const equipOk=equipAllowed;
   let poolCount=0, hiddenByEquip=0;
   pool.forEach(a=>{ if(seen.has(a.name)||inUse.has(a.name)) return; seen.add(a.name); if(!equipOk(a)){ hiddenByEquip++; return; } render1(a,null,true); poolCount++; });
   if(poolCount===0 && hiddenByEquip>0){ const e=document.createElement('div'); e.className='empty'; e.textContent=`${hiddenByEquip} alternative${hiddenByEquip===1?'':'s'} hidden by your equipment picks in Settings — widen them there, or use Custom name below.`; list.insertBefore(e,h1.nextSibling); }
@@ -1520,7 +1635,7 @@ function openSwap(dayId, ex){
     if(!matches.length){ libHint.textContent=`No full-library matches for "${search.value.trim()}" with your current equipment settings.`; return; }
     libHint.textContent=`From the full library:`;
     matches.forEach(a=>{
-      const alt={name:a.name, target:ex.target, m:a.m, cue:a.cue, step:a.equip==='bodyweight'?0:5, equip:a.equip, region:a.region};
+      const alt={name:a.name, target:ex.target, m:[a.key,...a.m.filter(x=>x!==a.key)], cue:a.cue, step:a.equip==='bodyweight'?0:5, equip:a.equip, region:a.region};
       const el=document.createElement('div'); el.className='alt';
       el.innerHTML=`<div class="an">${alt.name}</div><div class="am">${alt.target} · ${alt.m.map(k=>MUSCLE_LABEL[k]||k).join(', ')}</div><div class="ac">${alt.cue}</div><div class="ab"><button class="btn primary">use this</button></div>`;
       el.querySelector('button').onclick=()=>{ doSwap(day, idx, alt); };
@@ -1533,7 +1648,7 @@ function openSwap(dayId, ex){
 async function doSwap(day, idx, alt){
   const old=day.exercises[idx];
   const isOriginal = DEFAULT_PROGRAM.find(d=>d.id===day.id).exercises.some(e=>e.name===alt.name && e.group===alt.group);
-  const nu = isOriginal ? JSON.parse(JSON.stringify(alt)) : {group:old.group,name:alt.name,target:alt.target,m:alt.m.slice(),seed:null,start:(alt.step===0||alt.start===0)?0:-1,step:alt.step||5,cue:alt.cue||'',region:alt.region};
+  const nu = isOriginal ? JSON.parse(JSON.stringify(alt)) : {group:old.group,key:groupKeyFor(old),name:alt.name,target:alt.target,m:alt.m.slice(),seed:null,start:(alt.step===0||alt.start===0)?0:-1,step:alt.step||5,cue:alt.cue||'',region:alt.region};
   day.exercises[idx]=nu;
   if(todayData[old.name]) { delete todayData[old.name]; await sset('today:'+day.id,todayData); }
   await saveProgram(); closeSheet(); showToast(`swapped in ${nu.name}`);
@@ -1557,7 +1672,10 @@ document.getElementById('resetLink').onclick=async()=>{ todayData={}; await sset
   settings=Object.assign({rest:90,auto:true,autoBackup:true,smartRest:true,unit:'lb',autoRotate:true,rotateEvery:2,equipFilter:EQUIP_TYPES.slice()},(await sget('settings'))||{});
   lastBackup=(await sget('lastBackup'))||0; updateBackupUI();
   lastDeload=(await sget('lastDeload'))||0; deloadStart=(await sget('deloadStart'))||0; updateDeloadUI(); updateBwUI();
-  const custom=await sget('program'); if(custom&&Array.isArray(custom)&&custom.length===4) PROGRAM=custom;
+  const custom=await sget('program');
+  if(custom&&Array.isArray(custom)&&custom.length===4) PROGRAM=custom;
+  else if(sessionCount>0 || sessions.length>0){ await sset('program',PROGRAM); } // logged before a program was ever saved (the old fixed defaults): keep those exercises name-for-name so history keys still match, skip the builder
+  else { needsBuild=true; applyEquipPicks(PROGRAM); }
   await loadDay(suggestedDayId()); setInterval(renderBody,60000);
 })();
 </script>
