@@ -431,7 +431,7 @@
       <div class="row" style="margin-top:10px"><label class="chk"><input type="checkbox" id="autoRotateChk"> suggest a fresh variation after repeated sessions on the same exercise</label></div>
       <div class="row" style="margin-top:6px" id="rotateEveryRow"><span style="font-size:12px;color:var(--text-dim)">after</span>
         <select class="in" id="rotateEverySel"><option value="2">2 sessions</option><option value="4">4 sessions</option><option value="6">6 sessions</option><option value="8">8 sessions</option></select></div>
-      <div class="note-sm" style="margin-top:6px">Off by default. This only ever suggests a swap on the exercise card — nothing changes automatically, and your 5 anchor lifts on the Strength tab are never rotated.</div>
+      <div class="note-sm" style="margin-top:6px">On by default now that there's a full library to draw from — turn it off above if you'd rather stick with the same exercises. Either way, this only ever suggests a swap on the exercise card; nothing changes automatically.</div>
     </div>
     <div class="card">
       <h3>Rest timer</h3>
@@ -700,7 +700,7 @@ const EQUIP_LABEL={barbell:'barbell',dumbbell:'dumbbell',kettlebell:'kettlebell'
 // full exercise library (name/equip/muscles/cue), sourced from a third-party open dataset — no set/rep targets or seed history,
 // only ever offered as swap candidates via openSwap(), never part of the default program
 const FULL_CATALOG=JSON.parse(document.getElementById('fullCatalog').textContent);
-let currentDay='d1', todayData={}, lastSessionData={}, sessionCount=0, recovery={}, hist={}, sessions=[], notes={}, bodyweight=[], settings={rest:90, auto:true, autoBackup:true, smartRest:true, unit:'lb', autoRotate:false, rotateEvery:2, equipFilter:EQUIP_TYPES.slice()}, view='log';
+let currentDay='d1', todayData={}, lastSessionData={}, sessionCount=0, recovery={}, hist={}, sessions=[], notes={}, bodyweight=[], settings={rest:90, auto:true, autoBackup:true, smartRest:true, unit:'lb', autoRotate:true, rotateEvery:2, equipFilter:EQUIP_TYPES.slice()}, view='log';
 let dayStartTimes={}, arrivalActive={};
 let lastDeload=0, deloadStart=0;
 
@@ -1554,7 +1554,7 @@ document.getElementById('resetLink').onclick=async()=>{ todayData={}; await sset
   await store.init();
   sessionCount=(await sget('meta:sessionCount'))||0; document.getElementById('sessionCount').textContent=sessionCount;
   recovery=(await sget('recovery'))||{}; hist=(await sget('hist'))||{}; sessions=(await sget('sessions'))||[]; notes=(await sget('notes'))||{}; bodyweight=(await sget('bodyweight'))||[];
-  settings=Object.assign({rest:90,auto:true,autoBackup:true,smartRest:true,unit:'lb',autoRotate:false,rotateEvery:2,equipFilter:EQUIP_TYPES.slice()},(await sget('settings'))||{});
+  settings=Object.assign({rest:90,auto:true,autoBackup:true,smartRest:true,unit:'lb',autoRotate:true,rotateEvery:2,equipFilter:EQUIP_TYPES.slice()},(await sget('settings'))||{});
   lastBackup=(await sget('lastBackup'))||0; updateBackupUI();
   lastDeload=(await sget('lastDeload'))||0; deloadStart=(await sget('deloadStart'))||0; updateDeloadUI(); updateBwUI();
   const custom=await sget('program'); if(custom&&Array.isArray(custom)&&custom.length===4) PROGRAM=custom;
