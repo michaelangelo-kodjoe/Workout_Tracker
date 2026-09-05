@@ -251,7 +251,7 @@
     <span class="viewtab active" data-v="log">Log</span>
     <span class="viewtab" data-v="history">History</span>
     <span class="viewtab" data-v="strength">Strength</span>
-    <span class="viewtab" data-v="more">More</span>
+    <span class="viewtab" data-v="more">Settings</span>
   </div>
   <div class="daytabs" id="dayTabs"></div>
 </header>
@@ -950,7 +950,7 @@ function render(){
     if(ex.group!==lastGroup){ const gh=document.createElement('div'); gh.className='groupheader'; gh.textContent=ex.group; list.appendChild(gh); lastGroup=ex.group; }
     const state=ensureState(ex); const complete=state.sets.every(s=>s.done); if(!complete) allComplete=false;
     const saved=lastSessionData[currentDay]&&lastSessionData[currentDay][ex.name];
-    const sug=suggestWeight(ex,saved); const sugTxt=sug===null?'log body weight in More to use here':sug===-1?'find a weight for the rep range':(dispWeight(sug)+' '+unitLabel()+(ex.start===0?' bodyweight':'')+(isDeloadActive()?' · deload':''));
+    const sug=suggestWeight(ex,saved); const sugTxt=sug===null?'log body weight in Strength to use here':sug===-1?'find a weight for the rep range':(dispWeight(sug)+' '+unitLabel()+(ex.start===0?' bodyweight':'')+(isDeloadActive()?' · deload':''));
     const cur=currentFor(currentDay,ex), base=baselineFor(currentDay,ex);
     const lvl=(base&&cur)?Math.round(cur/base*100):0; const lvlTxt=lvl&&lvl!==100?` <span class="e1rm">· strength ${lvl}%</span>`:'';
     const plat=isPlateau(currentDay,ex);
@@ -1487,7 +1487,7 @@ function openSwap(dayId, ex){
   const equipOk=a=>!a.equip || settings.equipFilter.includes(a.equip);
   let poolCount=0, hiddenByEquip=0;
   pool.forEach(a=>{ if(seen.has(a.name)||inUse.has(a.name)) return; seen.add(a.name); if(!equipOk(a)){ hiddenByEquip++; return; } render1(a,null,true); poolCount++; });
-  if(poolCount===0 && hiddenByEquip>0){ const e=document.createElement('div'); e.className='empty'; e.textContent=`${hiddenByEquip} alternative${hiddenByEquip===1?'':'s'} hidden by your equipment settings in More — widen them there, or use Custom name below.`; list.insertBefore(e,h1.nextSibling); }
+  if(poolCount===0 && hiddenByEquip>0){ const e=document.createElement('div'); e.className='empty'; e.textContent=`${hiddenByEquip} alternative${hiddenByEquip===1?'':'s'} hidden by your equipment picks in Settings — widen them there, or use Custom name below.`; list.insertBefore(e,h1.nextSibling); }
 
   // full library merges right into the same section: curated picks show immediately above, library matches
   // (1,293 imported exercises, no set/rep targets of their own so they borrow this slot's rep range) appear
