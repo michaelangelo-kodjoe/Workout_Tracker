@@ -746,10 +746,11 @@ function isPlateau(d,ex){
   const last3=h.slice(-3); const first=last3[0].e1rm;
   return Math.max(...last3.map(x=>x.e1rm)) <= first*1.01;
 }
-// suggests a fresh variation after enough repeated exposure to build real progression data, never for the fixed anchor lifts the Strength tab's big-lift score depends on;
-// swapping resets the exercise's histKey so the count naturally restarts at 0 for whatever gets swapped in
+// suggests a fresh variation after enough repeated exposure to build real progression data;
+// swapping resets the exercise's histKey so the count naturally restarts at 0 for whatever gets swapped in.
+// anchor lifts are no longer excluded — the Strength tab's big-lift score can fluctuate when one gets rotated, by choice
 function rotationDue(d,ex){
-  if(!settings.autoRotate || BIG_LIFTS.includes(ex.name)) return false;
+  if(!settings.autoRotate) return false;
   const h=hist[histKey(d,ex)]; return !!h && h.length>=(settings.rotateEvery||6);
 }
 // ---------- deload / periodization ----------
