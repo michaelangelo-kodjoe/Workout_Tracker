@@ -421,6 +421,21 @@
         <select class="in" id="unitSel"><option value="lb">lb</option><option value="kg">kg</option></select></div>
     </div>
     <div class="card">
+      <h3>Equipment & variety</h3>
+      <div class="note-sm" style="margin-bottom:6px">Uncheck anything your gym doesn't have — swap alternatives and rotation suggestions will only draw from what's left checked.</div>
+      <div id="equipChks">
+        <label class="chk"><input type="checkbox" value="barbell"> barbell</label>
+        <label class="chk"><input type="checkbox" value="dumbbell"> dumbbell</label>
+        <label class="chk"><input type="checkbox" value="cable"> cable</label>
+        <label class="chk"><input type="checkbox" value="machine"> machine</label>
+        <label class="chk"><input type="checkbox" value="bodyweight"> bodyweight</label>
+      </div>
+      <div class="row" style="margin-top:10px"><label class="chk"><input type="checkbox" id="autoRotateChk"> suggest a fresh variation after repeated sessions on the same exercise</label></div>
+      <div class="row" style="margin-top:6px" id="rotateEveryRow"><span style="font-size:12px;color:var(--text-dim)">after</span>
+        <select class="in" id="rotateEverySel"><option value="4">4 sessions</option><option value="6">6 sessions</option><option value="8">8 sessions</option></select></div>
+      <div class="note-sm" style="margin-top:6px">Off by default. This only ever suggests a swap on the exercise card — nothing changes automatically, and your 5 anchor lifts on the Strength tab are never rotated.</div>
+    </div>
+    <div class="card">
       <h3>Rest timer</h3>
       <div class="row"><label class="chk"><input type="checkbox" id="smartRestChk"> use a smart rest time based on each exercise's rep range</label></div>
       <div class="note-sm" style="margin-top:2px">Lower-rep sets (up to 10) rest ~150s, moderate sets (up to 12) rest 90s, higher-rep and hold-based sets rest 60s — heavier, lower-rep work needs more recovery between sets than light, high-rep work does.</div>
@@ -529,6 +544,8 @@ const store = {
     else this.mem[k]=v; }catch(e){ console.error(e); } }
 };
 const KEYS = ['lastBackup','program','recovery','hist','sessions','notes','bodyweight','settings','meta:sessionCount','today:d1','today:d2','today:d3','today:d4','last:d1','last:d2','last:d3','last:d4','lastDeload','deloadStart'];
+// anchor lifts: excluded from auto-rotation so the Strength tab's big-lift composite stays on a fixed, comparable set of exercises
+const BIG_LIFTS=['Machine Chest Press','Machine Mid Row','Lat Pulldown','Converging Shoulder Press','Machine Leg Press'];
 
 const RECOVERY_HOURS = { chest:72, back:72, quads:72, hamstrings:72, glutes:72, lowerback:72, shoulders:48, biceps:48, triceps:48, forearms:48, calves:48, abs:36 };
 const MUSCLE_LABEL = { chest:'Chest', back:'Back', quads:'Quads', hamstrings:'Hamstrings', glutes:'Glutes', lowerback:'Lower back', shoulders:'Shoulders', biceps:'Biceps', triceps:'Triceps', forearms:'Forearms', calves:'Calves', abs:'Core' };
@@ -536,44 +553,44 @@ const MUSCLE_LABEL = { chest:'Chest', back:'Back', quads:'Quads', hamstrings:'Ha
 const DEFAULT_PROGRAM = [
   { id:'d1', name:'Upper', sub:'Heavy', badge:'heavy', factor:1.0,
     exercises:[
-      { group:'Chest', name:'Machine Chest Press', target:'3 x 6-10', cue:'Seat so handles sit at mid-chest. Shoulder blades pinned back and down. Press to just short of lockout, lower slowly until elbows are level with your torso.', start:165, step:10, m:['chest','shoulders','triceps'], seed:[{w:145,r:12},{w:145,r:12},{w:145,r:12}] },
-      { group:'Back', name:'Machine Mid Row', target:'3 x 6-10', cue:'Chest against the pad, neutral spine. Pull elbows straight back past your ribs, squeeze shoulder blades together for a beat, then control the return.', start:205, step:10, m:['back','biceps'], seed:[{w:205,r:12},{w:205,r:8},{w:205,r:8}] },
-      { group:'Back', name:'Lat Pulldown', target:'3 x 8-10', cue:'Grip slightly wider than shoulders, slight lean back. Pull the bar to your upper chest by driving elbows down and back. Let arms fully extend at the top.', start:110, step:10, m:['back','biceps'], seed:[{w:100,r:12},{w:100,r:12},{w:100,r:10}] },
-      { group:'Shoulders', name:'Converging Shoulder Press', target:'3 x 6-10', cue:'Seat height so handles start at ear level. Brace your core, press up without shrugging, stop just before elbows lock. Lower to chin height.', start:90, step:10, m:['shoulders','triceps'], seed:[{w:80,r:12},{w:80,r:12},{w:80,r:12}] },
-      { group:'Arms', name:'Machine Preacher Curl', target:'3 x 8-10', cue:'Armpits snug over the pad, upper arms flat. Curl all the way up, pause, then lower under control to almost straight. No bouncing at the bottom.', start:60, step:5, m:['biceps'], seed:[{w:60,r:12},{w:60,r:9},{w:60,r:9}] },
-      { group:'Arms', name:'Seated Tricep Press', target:'3 x 8-10', cue:'Elbows tucked in, not flared. Push handles down until arms are straight, squeeze triceps, then let them rise to about 90 degrees.', start:70, step:5, m:['triceps'], seed:[{w:60,r:12},{w:60,r:12},{w:60,r:12}] },
-      { group:'Forearms', name:'Barbell Wrist Curl', target:'3 x 10', cue:'Forearms resting on thighs or a bench, palms up, wrists hanging over the edge. Let the bar roll down to fingertips, curl it up as high as possible.', start:55, step:5, m:['forearms'], seed:[{w:50,r:10},{w:50,r:10},{w:50,r:10}] },
+      { group:'Chest', name:'Machine Chest Press', equip:'machine', target:'3 x 6-10', cue:'Seat so handles sit at mid-chest. Shoulder blades pinned back and down. Press to just short of lockout, lower slowly until elbows are level with your torso.', start:165, step:10, m:['chest','shoulders','triceps'], seed:[{w:145,r:12},{w:145,r:12},{w:145,r:12}] },
+      { group:'Back', name:'Machine Mid Row', equip:'machine', target:'3 x 6-10', cue:'Chest against the pad, neutral spine. Pull elbows straight back past your ribs, squeeze shoulder blades together for a beat, then control the return.', start:205, step:10, m:['back','biceps'], seed:[{w:205,r:12},{w:205,r:8},{w:205,r:8}] },
+      { group:'Back', name:'Lat Pulldown', equip:'machine', target:'3 x 8-10', cue:'Grip slightly wider than shoulders, slight lean back. Pull the bar to your upper chest by driving elbows down and back. Let arms fully extend at the top.', start:110, step:10, m:['back','biceps'], seed:[{w:100,r:12},{w:100,r:12},{w:100,r:10}] },
+      { group:'Shoulders', name:'Converging Shoulder Press', equip:'machine', target:'3 x 6-10', cue:'Seat height so handles start at ear level. Brace your core, press up without shrugging, stop just before elbows lock. Lower to chin height.', start:90, step:10, m:['shoulders','triceps'], seed:[{w:80,r:12},{w:80,r:12},{w:80,r:12}] },
+      { group:'Arms', name:'Machine Preacher Curl', equip:'machine', target:'3 x 8-10', cue:'Armpits snug over the pad, upper arms flat. Curl all the way up, pause, then lower under control to almost straight. No bouncing at the bottom.', start:60, step:5, m:['biceps'], seed:[{w:60,r:12},{w:60,r:9},{w:60,r:9}] },
+      { group:'Arms', name:'Seated Tricep Press', equip:'machine', target:'3 x 8-10', cue:'Elbows tucked in, not flared. Push handles down until arms are straight, squeeze triceps, then let them rise to about 90 degrees.', start:70, step:5, m:['triceps'], seed:[{w:60,r:12},{w:60,r:12},{w:60,r:12}] },
+      { group:'Forearms', name:'Barbell Wrist Curl', equip:'barbell', target:'3 x 10', cue:'Forearms resting on thighs or a bench, palms up, wrists hanging over the edge. Let the bar roll down to fingertips, curl it up as high as possible.', start:55, step:5, m:['forearms'], seed:[{w:50,r:10},{w:50,r:10},{w:50,r:10}] },
     ]},
   { id:'d2', name:'Lower', sub:'Heavy', badge:'heavy', factor:1.0,
     exercises:[
-      { group:'Quads', name:'Machine Leg Press', target:'3 x 6-10', cue:'Feet shoulder-width, mid-platform. Lower until knees hit about 90 degrees without your lower back lifting off the pad. Drive through heels, do not lock knees.', start:105, step:10, m:['quads','glutes'], seed:[{w:85,r:12},{w:85,r:12},{w:85,r:12}] },
-      { group:'Hamstrings', name:'Seated Leg Curl', target:'3 x 8-10', cue:'Pad just above ankles, thigh pad snug. Curl heels toward your glutes, pause at the bottom, return slowly. Keep hips pressed into the seat.', start:50, step:5, m:['hamstrings'], seed:[{w:40,r:10},{w:40,r:10},{w:40,r:10}] },
-      { group:'Hamstrings', name:'45° Back Extension', target:'3 x 10', cue:'Pad at the top of your thighs. Hinge at the hips with a flat back, lower until your torso is roughly parallel to the floor, squeeze glutes to rise. Do not hyperextend.', start:0, step:10, m:['lowerback','glutes','hamstrings'], seed:[{w:'',r:10},{w:'',r:10},{w:'',r:10}] },
-      { group:'Quads', name:'Leg Extension', target:'3 x 8-10', cue:'Pad on your shins just above the ankles, knees aligned with the pivot. Extend fully and pause for a second, then lower slowly. Keep your back on the seat.', start:70, step:5, m:['quads'], seed:[{w:65,r:10},{w:65,r:12},{w:65,r:10}] },
-      { group:'Calves', name:'Standing Calf Raise', target:'3 x 12-15', cue:'Balls of feet on the edge, heels hanging. Drop heels as low as they go, rise onto your toes as high as possible, pause at the top. Full range matters more than load.', start:135, step:10, m:['calves'], seed:[{w:115,r:20},{w:115,r:20},{w:115,r:20}] },
-      { group:'Core', name:'Hanging Leg Raise / Cable Crunch', target:'3 x 12-15', cue:'Leg raise: hang, keep shoulders down, curl knees toward chest without swinging. Cable crunch: kneel, hold rope at forehead, crunch ribs toward hips. Do not pull with the arms.', start:0, step:5, m:['abs'], seed:null },
+      { group:'Quads', name:'Machine Leg Press', equip:'machine', target:'3 x 6-10', cue:'Feet shoulder-width, mid-platform. Lower until knees hit about 90 degrees without your lower back lifting off the pad. Drive through heels, do not lock knees.', start:105, step:10, m:['quads','glutes'], seed:[{w:85,r:12},{w:85,r:12},{w:85,r:12}] },
+      { group:'Hamstrings', name:'Seated Leg Curl', equip:'machine', target:'3 x 8-10', cue:'Pad just above ankles, thigh pad snug. Curl heels toward your glutes, pause at the bottom, return slowly. Keep hips pressed into the seat.', start:50, step:5, m:['hamstrings'], seed:[{w:40,r:10},{w:40,r:10},{w:40,r:10}] },
+      { group:'Hamstrings', name:'45° Back Extension', equip:'machine', target:'3 x 10', cue:'Pad at the top of your thighs. Hinge at the hips with a flat back, lower until your torso is roughly parallel to the floor, squeeze glutes to rise. Do not hyperextend.', start:0, step:10, m:['lowerback','glutes','hamstrings'], seed:[{w:'',r:10},{w:'',r:10},{w:'',r:10}] },
+      { group:'Quads', name:'Leg Extension', equip:'machine', target:'3 x 8-10', cue:'Pad on your shins just above the ankles, knees aligned with the pivot. Extend fully and pause for a second, then lower slowly. Keep your back on the seat.', start:70, step:5, m:['quads'], seed:[{w:65,r:10},{w:65,r:12},{w:65,r:10}] },
+      { group:'Calves', name:'Standing Calf Raise', equip:'machine', target:'3 x 12-15', cue:'Balls of feet on the edge, heels hanging. Drop heels as low as they go, rise onto your toes as high as possible, pause at the top. Full range matters more than load.', start:135, step:10, m:['calves'], seed:[{w:115,r:20},{w:115,r:20},{w:115,r:20}] },
+      { group:'Core', name:'Hanging Leg Raise / Cable Crunch', equip:'cable', target:'3 x 12-15', cue:'Leg raise: hang, keep shoulders down, curl knees toward chest without swinging. Cable crunch: kneel, hold rope at forehead, crunch ribs toward hips. Do not pull with the arms.', start:0, step:5, m:['abs'], seed:null },
     ]},
   { id:'d3', name:'Upper', sub:'Volume', badge:'light', factor:0.85,
     exercises:[
-      { group:'Chest', name:'Incline Smith Machine Press', target:'3 x 10-12', cue:'Bench at 30 degrees, bar touching upper chest. Elbows about 45 degrees from your body. Press up and slightly back, lower with control.', start:55, step:10, m:['chest','shoulders','triceps'], seed:[{w:55,r:12},{w:55,r:12},{w:55,r:8}] },
-      { group:'Chest', name:'Machine Pec Fly', target:'3 x 12-15', cue:'Handles level with mid-chest, slight elbow bend. Bring hands together in front of you and squeeze, then open only until you feel a stretch, not strain.', start:130, step:10, m:['chest'], seed:[{w:145,r:10},{w:145,r:8},{w:145,r:10}] },
-      { group:'Back', name:'Diverging Seated Row', target:'3 x 10-12', cue:'Chest on the pad, grab handles, pull back and slightly out so elbows travel toward your hips. Squeeze the back, return until arms are straight.', start:110, step:10, m:['back','biceps'], seed:[{w:100,r:12},{w:100,r:12},{w:100,r:12}] },
-      { group:'Shoulders', name:'Lateral Raise Machine', target:'3 x 12-15', cue:'Pads just above elbows. Raise arms out to the side to shoulder height, lead with elbows not hands. Lower slowly; no swinging.', start:80, step:5, m:['shoulders'], seed:[{w:80,r:12},{w:80,r:12},{w:80,r:12}] },
-      { group:'Shoulders', name:'Face Pulls', target:'3 x 12-15', cue:'Rope at face height. Pull toward your forehead, splitting the rope so hands end beside your ears, elbows high. Squeeze rear delts and upper back.', start:32, step:5, m:['shoulders','back'], seed:[{w:32,r:12},{w:32,r:12},{w:32,r:8}] },
-      { group:'Shoulders', name:'Reverse Pec Deck', target:'3 x 12-15', cue:'Face the pad, handles in front at shoulder height. Sweep arms back in a wide arc until they are in line with your shoulders. Keep a slight elbow bend.', start:50, step:5, m:['shoulders','back'], seed:null },
-      { group:'Arms', name:'Hammer Curl', target:'3 x 12', cue:'Palms facing in, dumbbells at your sides. Curl toward the shoulder without twisting the wrist. Elbows stay pinned by your ribs.', start:40, step:5, m:['biceps','forearms'], seed:[{w:35,r:12},{w:35,r:12},{w:35,r:12}] },
-      { group:'Arms', name:'Overhead Tricep Extension', target:'3 x 12-15', cue:'Dumbbell or rope overhead, elbows pointing to the ceiling and close to your head. Lower behind your head until forearms pass parallel, then extend fully.', start:25, step:2.5, m:['triceps'], seed:[{w:22,r:12},{w:22,r:12},{w:22,r:12}] },
-      { group:'Forearms', name:'Reverse Wrist Curl', target:'3 x 12-15', cue:'Forearms on thighs, palms down. Let the bar drop, then lift knuckles toward you as high as possible. Lighter than regular wrist curls is normal.', start:40, step:5, m:['forearms'], seed:[{w:40,r:10},{w:40,r:10},{w:40,r:10}] },
+      { group:'Chest', name:'Incline Smith Machine Press', equip:'machine', target:'3 x 10-12', cue:'Bench at 30 degrees, bar touching upper chest. Elbows about 45 degrees from your body. Press up and slightly back, lower with control.', start:55, step:10, m:['chest','shoulders','triceps'], seed:[{w:55,r:12},{w:55,r:12},{w:55,r:8}] },
+      { group:'Chest', name:'Machine Pec Fly', equip:'machine', target:'3 x 12-15', cue:'Handles level with mid-chest, slight elbow bend. Bring hands together in front of you and squeeze, then open only until you feel a stretch, not strain.', start:130, step:10, m:['chest'], seed:[{w:145,r:10},{w:145,r:8},{w:145,r:10}] },
+      { group:'Back', name:'Diverging Seated Row', equip:'machine', target:'3 x 10-12', cue:'Chest on the pad, grab handles, pull back and slightly out so elbows travel toward your hips. Squeeze the back, return until arms are straight.', start:110, step:10, m:['back','biceps'], seed:[{w:100,r:12},{w:100,r:12},{w:100,r:12}] },
+      { group:'Shoulders', name:'Lateral Raise Machine', equip:'machine', target:'3 x 12-15', cue:'Pads just above elbows. Raise arms out to the side to shoulder height, lead with elbows not hands. Lower slowly; no swinging.', start:80, step:5, m:['shoulders'], seed:[{w:80,r:12},{w:80,r:12},{w:80,r:12}] },
+      { group:'Shoulders', name:'Face Pulls', equip:'cable', target:'3 x 12-15', cue:'Rope at face height. Pull toward your forehead, splitting the rope so hands end beside your ears, elbows high. Squeeze rear delts and upper back.', start:32, step:5, m:['shoulders','back'], seed:[{w:32,r:12},{w:32,r:12},{w:32,r:8}] },
+      { group:'Shoulders', name:'Reverse Pec Deck', equip:'machine', target:'3 x 12-15', cue:'Face the pad, handles in front at shoulder height. Sweep arms back in a wide arc until they are in line with your shoulders. Keep a slight elbow bend.', start:50, step:5, m:['shoulders','back'], seed:null },
+      { group:'Arms', name:'Hammer Curl', equip:'dumbbell', target:'3 x 12', cue:'Palms facing in, dumbbells at your sides. Curl toward the shoulder without twisting the wrist. Elbows stay pinned by your ribs.', start:40, step:5, m:['biceps','forearms'], seed:[{w:35,r:12},{w:35,r:12},{w:35,r:12}] },
+      { group:'Arms', name:'Overhead Tricep Extension', equip:'dumbbell', target:'3 x 12-15', cue:'Dumbbell or rope overhead, elbows pointing to the ceiling and close to your head. Lower behind your head until forearms pass parallel, then extend fully.', start:25, step:2.5, m:['triceps'], seed:[{w:22,r:12},{w:22,r:12},{w:22,r:12}] },
+      { group:'Forearms', name:'Reverse Wrist Curl', equip:'barbell', target:'3 x 12-15', cue:'Forearms on thighs, palms down. Let the bar drop, then lift knuckles toward you as high as possible. Lighter than regular wrist curls is normal.', start:40, step:5, m:['forearms'], seed:[{w:40,r:10},{w:40,r:10},{w:40,r:10}] },
     ]},
   { id:'d4', name:'Lower', sub:'Volume', badge:'light', factor:0.85,
     exercises:[
-      { group:'Quads', name:'Bulgarian Split Squat', target:'3 x 10-12/leg', cue:'Rear foot on a bench, front foot far enough forward that your knee stays over the ankle. Lower straight down until the front thigh is parallel, drive up through the heel.', start:0, step:5, m:['quads','glutes','hamstrings'], seed:null },
-      { group:'Quads', name:'Machine Leg Press', target:'3 x 12-15', cue:'Feet shoulder-width, mid-platform. Lower until knees hit about 90 degrees without your lower back lifting off the pad. Drive through heels, do not lock knees.', start:95, step:10, m:['quads','glutes'], seed:[{w:85,r:15},{w:85,r:15},{w:85,r:15}] },
-      { group:'Hamstrings', name:'Dumbbell Romanian Deadlift', target:'3 x 10-12', cue:'Soft knees, dumbbells against your thighs. Push hips back and let the weights slide down your legs with a flat back until the hamstrings load. Squeeze glutes to stand.', start:30, step:5, m:['hamstrings','glutes','lowerback'], seed:null },
-      { group:'Quads', name:'Leg Extension', target:'3 x 12-15', cue:'Pad on your shins just above the ankles, knees aligned with the pivot. Extend fully and pause for a second, then lower slowly. Keep your back on the seat.', start:65, step:5, m:['quads'], seed:[{w:65,r:10},{w:65,r:12},{w:65,r:10}] },
-      { group:'Hamstrings', name:'Seated Leg Curl', target:'3 x 12-15', cue:'Pad just above ankles, thigh pad snug. Curl heels toward your glutes, pause at the bottom, return slowly. Keep hips pressed into the seat.', start:40, step:5, m:['hamstrings'], seed:[{w:40,r:10},{w:40,r:10},{w:40,r:10}] },
-      { group:'Calves', name:'Seated Calf Raise', target:'3 x 15-20', cue:'Pads on your knees, balls of feet on the platform. Lower heels fully, then push up onto the toes and pause. Slow tempo; this is the soleus.', start:115, step:10, m:['calves'], seed:[{w:115,r:20},{w:115,r:15},{w:115,r:15}] },
-      { group:'Core', name:'Plank / Pallof Press', target:'3 x 30-45s', cue:'Plank: forearms down, body a straight line, squeeze glutes and brace. Pallof: cable at chest height, stand sideways, press it straight out and resist the rotation.', start:0, step:5, m:['abs'], seed:null },
+      { group:'Quads', name:'Bulgarian Split Squat', equip:'dumbbell', target:'3 x 10-12/leg', cue:'Rear foot on a bench, front foot far enough forward that your knee stays over the ankle. Lower straight down until the front thigh is parallel, drive up through the heel.', start:0, step:5, m:['quads','glutes','hamstrings'], seed:null },
+      { group:'Quads', name:'Machine Leg Press', equip:'machine', target:'3 x 12-15', cue:'Feet shoulder-width, mid-platform. Lower until knees hit about 90 degrees without your lower back lifting off the pad. Drive through heels, do not lock knees.', start:95, step:10, m:['quads','glutes'], seed:[{w:85,r:15},{w:85,r:15},{w:85,r:15}] },
+      { group:'Hamstrings', name:'Dumbbell Romanian Deadlift', equip:'dumbbell', target:'3 x 10-12', cue:'Soft knees, dumbbells against your thighs. Push hips back and let the weights slide down your legs with a flat back until the hamstrings load. Squeeze glutes to stand.', start:30, step:5, m:['hamstrings','glutes','lowerback'], seed:null },
+      { group:'Quads', name:'Leg Extension', equip:'machine', target:'3 x 12-15', cue:'Pad on your shins just above the ankles, knees aligned with the pivot. Extend fully and pause for a second, then lower slowly. Keep your back on the seat.', start:65, step:5, m:['quads'], seed:[{w:65,r:10},{w:65,r:12},{w:65,r:10}] },
+      { group:'Hamstrings', name:'Seated Leg Curl', equip:'machine', target:'3 x 12-15', cue:'Pad just above ankles, thigh pad snug. Curl heels toward your glutes, pause at the bottom, return slowly. Keep hips pressed into the seat.', start:40, step:5, m:['hamstrings'], seed:[{w:40,r:10},{w:40,r:10},{w:40,r:10}] },
+      { group:'Calves', name:'Seated Calf Raise', equip:'machine', target:'3 x 15-20', cue:'Pads on your knees, balls of feet on the platform. Lower heels fully, then push up onto the toes and pause. Slow tempo; this is the soleus.', start:115, step:10, m:['calves'], seed:[{w:115,r:20},{w:115,r:15},{w:115,r:15}] },
+      { group:'Core', name:'Plank / Pallof Press', equip:'bodyweight', target:'3 x 30-45s', cue:'Plank: forearms down, body a straight line, squeeze glutes and brace. Pallof: cable at chest height, stand sideways, press it straight out and resist the rotation.', start:0, step:5, m:['abs'], seed:null },
     ]},
 ];
 
@@ -581,99 +598,100 @@ const DEFAULT_PROGRAM = [
 // ---------- alternatives library (same-muscle swaps) ----------
 const ALTS = {
   chest:[
-    {name:'Dumbbell Bench Press',target:'3 x 8-12',m:['chest','shoulders','triceps'],step:5,cue:'Dumbbells over your chest, elbows about 45 degrees out. Lower until upper arms are level with the bench, press up and slightly in.'},
-    {name:'Incline Dumbbell Press',target:'3 x 8-12',m:['chest','shoulders','triceps'],step:5,cue:'Bench at 30 degrees. Press from upper chest, keep shoulder blades pinned back so the chest does the work, not the shoulders.'},
-    {name:'Pec Deck',target:'3 x 12-15',m:['chest'],step:5,cue:'Handles level with mid-chest, slight elbow bend. Squeeze the pads together and pause, open only to a comfortable stretch.'},
-    {name:'Cable Chest Fly',target:'3 x 12-15',m:['chest'],step:5,cue:'Cables at chest height, one step forward, slight lean. Bring hands together in an arc with soft elbows, squeeze, then control the return.'},
-    {name:'Push-ups',target:'3 x 10-20',m:['chest','shoulders','triceps','abs'],step:0,cue:'Hands just outside shoulders, body straight from head to heels. Lower until chest nearly touches, press up. Elevate hands on a bench to make it easier.'},
-    {name:'Assisted Dip',target:'3 x 8-12',m:['chest','triceps','shoulders'],step:10,cue:'Lean forward slightly to bias the chest. Lower until shoulders are level with elbows, press back up without locking out hard.'},
-    {name:'Smith Machine Flat Press',target:'3 x 8-10',m:['chest','shoulders','triceps'],step:10,cue:'Bar over mid-chest, feet planted. Lower to touch the chest, press up. Set the safeties so you can go to failure safely.'},
+    {name:'Dumbbell Bench Press',equip:'dumbbell', target:'3 x 8-12',m:['chest','shoulders','triceps'],step:5,cue:'Dumbbells over your chest, elbows about 45 degrees out. Lower until upper arms are level with the bench, press up and slightly in.'},
+    {name:'Incline Dumbbell Press',equip:'dumbbell', target:'3 x 8-12',m:['chest','shoulders','triceps'],step:5,cue:'Bench at 30 degrees. Press from upper chest, keep shoulder blades pinned back so the chest does the work, not the shoulders.'},
+    {name:'Pec Deck',equip:'machine', target:'3 x 12-15',m:['chest'],step:5,cue:'Handles level with mid-chest, slight elbow bend. Squeeze the pads together and pause, open only to a comfortable stretch.'},
+    {name:'Cable Chest Fly',equip:'cable', target:'3 x 12-15',m:['chest'],step:5,cue:'Cables at chest height, one step forward, slight lean. Bring hands together in an arc with soft elbows, squeeze, then control the return.'},
+    {name:'Push-ups',equip:'bodyweight', target:'3 x 10-20',m:['chest','shoulders','triceps','abs'],step:0,cue:'Hands just outside shoulders, body straight from head to heels. Lower until chest nearly touches, press up. Elevate hands on a bench to make it easier.'},
+    {name:'Assisted Dip',equip:'machine', target:'3 x 8-12',m:['chest','triceps','shoulders'],step:10,cue:'Lean forward slightly to bias the chest. Lower until shoulders are level with elbows, press back up without locking out hard.'},
+    {name:'Smith Machine Flat Press',equip:'machine', target:'3 x 8-10',m:['chest','shoulders','triceps'],step:10,cue:'Bar over mid-chest, feet planted. Lower to touch the chest, press up. Set the safeties so you can go to failure safely.'},
   ],
   back:[
-    {name:'Seated Cable Row',target:'3 x 10-12',m:['back','biceps'],step:10,cue:'Chest tall, slight lean forward at the start. Pull the handle to your stomach by driving elbows back, squeeze, then let the shoulder blades open on the return.'},
-    {name:'Single-arm Dumbbell Row',target:'3 x 10-12/side',m:['back','biceps'],step:5,cue:'One hand braced on a bench, back flat. Row the dumbbell to your hip, not your chest, and control the lowering.'},
-    {name:'Assisted Pull-up',target:'3 x 8-10',m:['back','biceps'],step:10,cue:'Set the assist so you can finish every rep. Start from a full hang, pull chin over the bar by driving elbows down, lower slowly.'},
-    {name:'Chest-supported T-bar Row',target:'3 x 8-10',m:['back','biceps'],step:10,cue:'Chest fully on the pad so the lower back is out of it. Pull elbows back and squeeze the mid-back, then lower until arms are straight.'},
-    {name:'Straight-arm Pulldown',target:'3 x 12-15',m:['back'],step:5,cue:'Rope or bar, arms straight, slight hip hinge. Sweep the bar down to your thighs using your lats, then raise until you feel a stretch.'},
-    {name:'Inverted Row',target:'3 x 8-15',m:['back','biceps'],step:0,cue:'Bar at hip height, body straight, heels on the floor. Pull chest to the bar and squeeze. Lower the bar to make it harder.'},
-    {name:'Wide-grip Lat Pulldown',target:'3 x 10-12',m:['back','biceps'],step:10,cue:'Wide grip, lean back slightly. Pull to the upper chest by driving elbows down and out, pause, then let arms fully extend.'},
+    {name:'Seated Cable Row',equip:'cable', target:'3 x 10-12',m:['back','biceps'],step:10,cue:'Chest tall, slight lean forward at the start. Pull the handle to your stomach by driving elbows back, squeeze, then let the shoulder blades open on the return.'},
+    {name:'Single-arm Dumbbell Row',equip:'dumbbell', target:'3 x 10-12/side',m:['back','biceps'],step:5,cue:'One hand braced on a bench, back flat. Row the dumbbell to your hip, not your chest, and control the lowering.'},
+    {name:'Assisted Pull-up',equip:'machine', target:'3 x 8-10',m:['back','biceps'],step:10,cue:'Set the assist so you can finish every rep. Start from a full hang, pull chin over the bar by driving elbows down, lower slowly.'},
+    {name:'Chest-supported T-bar Row',equip:'machine', target:'3 x 8-10',m:['back','biceps'],step:10,cue:'Chest fully on the pad so the lower back is out of it. Pull elbows back and squeeze the mid-back, then lower until arms are straight.'},
+    {name:'Straight-arm Pulldown',equip:'cable', target:'3 x 12-15',m:['back'],step:5,cue:'Rope or bar, arms straight, slight hip hinge. Sweep the bar down to your thighs using your lats, then raise until you feel a stretch.'},
+    {name:'Inverted Row',equip:'bodyweight', target:'3 x 8-15',m:['back','biceps'],step:0,cue:'Bar at hip height, body straight, heels on the floor. Pull chest to the bar and squeeze. Lower the bar to make it harder.'},
+    {name:'Wide-grip Lat Pulldown',equip:'machine', target:'3 x 10-12',m:['back','biceps'],step:10,cue:'Wide grip, lean back slightly. Pull to the upper chest by driving elbows down and out, pause, then let arms fully extend.'},
   ],
   shoulders:[
-    {name:'Dumbbell Shoulder Press',target:'3 x 8-12',m:['shoulders','triceps'],step:5,cue:'Seated with back support. Start with dumbbells at ear level, press up and slightly in until arms are straight but not locked, lower to ear level.'},
-    {name:'Dumbbell Lateral Raise',target:'3 x 12-15',m:['shoulders'],step:2.5,cue:'Slight forward lean, soft elbows. Raise to shoulder height leading with the elbows, pause, lower slowly. Light weight, strict form.'},
-    {name:'Cable Lateral Raise',target:'3 x 12-15',m:['shoulders'],step:2.5,cue:'Cable set low, stand sideways. Raise the arm out to shoulder height across your body, controlling the return. Constant tension throughout.'},
-    {name:'Arnold Press',target:'3 x 10-12',m:['shoulders','triceps'],step:5,cue:'Start palms facing you at chin height. Rotate the dumbbells out as you press overhead, reverse on the way down.'},
-    {name:'Rear Delt Dumbbell Fly',target:'3 x 12-15',m:['shoulders','back'],step:2.5,cue:'Bent over or chest on an incline bench. Raise light dumbbells out to the side with a slight elbow bend, squeezing the back of the shoulders.'},
-    {name:'Cable Upright Row',target:'3 x 10-12',m:['shoulders','back'],step:5,cue:'Wide grip, pull the bar up to chest height leading with the elbows out. Stop at chest level to protect the shoulders.'},
+    {name:'Dumbbell Shoulder Press',equip:'dumbbell', target:'3 x 8-12',m:['shoulders','triceps'],step:5,cue:'Seated with back support. Start with dumbbells at ear level, press up and slightly in until arms are straight but not locked, lower to ear level.'},
+    {name:'Dumbbell Lateral Raise',equip:'dumbbell', target:'3 x 12-15',m:['shoulders'],step:2.5,cue:'Slight forward lean, soft elbows. Raise to shoulder height leading with the elbows, pause, lower slowly. Light weight, strict form.'},
+    {name:'Cable Lateral Raise',equip:'cable', target:'3 x 12-15',m:['shoulders'],step:2.5,cue:'Cable set low, stand sideways. Raise the arm out to shoulder height across your body, controlling the return. Constant tension throughout.'},
+    {name:'Arnold Press',equip:'dumbbell', target:'3 x 10-12',m:['shoulders','triceps'],step:5,cue:'Start palms facing you at chin height. Rotate the dumbbells out as you press overhead, reverse on the way down.'},
+    {name:'Rear Delt Dumbbell Fly',equip:'dumbbell', target:'3 x 12-15',m:['shoulders','back'],step:2.5,cue:'Bent over or chest on an incline bench. Raise light dumbbells out to the side with a slight elbow bend, squeezing the back of the shoulders.'},
+    {name:'Cable Upright Row',equip:'cable', target:'3 x 10-12',m:['shoulders','back'],step:5,cue:'Wide grip, pull the bar up to chest height leading with the elbows out. Stop at chest level to protect the shoulders.'},
   ],
   biceps:[
-    {name:'Dumbbell Curl',target:'3 x 10-12',m:['biceps'],step:5,cue:'Elbows pinned to your sides, palms up. Curl to the shoulder, squeeze, lower under control. No swinging from the hips.'},
-    {name:'EZ-bar Curl',target:'3 x 8-12',m:['biceps','forearms'],step:5,cue:'Grip the angled parts of the bar. Curl to shoulder height keeping elbows still, then lower until arms are nearly straight.'},
-    {name:'Cable Curl',target:'3 x 12-15',m:['biceps'],step:5,cue:'Straight bar on a low cable. Step back slightly, curl to the shoulders with elbows fixed. Constant tension makes this feel heavier than it looks.'},
-    {name:'Incline Dumbbell Curl',target:'3 x 10-12',m:['biceps'],step:2.5,cue:'Bench at 45-60 degrees, arms hanging behind you. Curl without letting elbows drift forward. Great stretch on the biceps.'},
-    {name:'Concentration Curl',target:'3 x 10-12/side',m:['biceps'],step:2.5,cue:'Seated, elbow braced on the inside of your thigh. Curl slowly to the shoulder, pause, lower fully. Strict and isolated.'},
+    {name:'Dumbbell Curl',equip:'dumbbell', target:'3 x 10-12',m:['biceps'],step:5,cue:'Elbows pinned to your sides, palms up. Curl to the shoulder, squeeze, lower under control. No swinging from the hips.'},
+    {name:'EZ-bar Curl',equip:'barbell', target:'3 x 8-12',m:['biceps','forearms'],step:5,cue:'Grip the angled parts of the bar. Curl to shoulder height keeping elbows still, then lower until arms are nearly straight.'},
+    {name:'Cable Curl',equip:'cable', target:'3 x 12-15',m:['biceps'],step:5,cue:'Straight bar on a low cable. Step back slightly, curl to the shoulders with elbows fixed. Constant tension makes this feel heavier than it looks.'},
+    {name:'Incline Dumbbell Curl',equip:'dumbbell', target:'3 x 10-12',m:['biceps'],step:2.5,cue:'Bench at 45-60 degrees, arms hanging behind you. Curl without letting elbows drift forward. Great stretch on the biceps.'},
+    {name:'Concentration Curl',equip:'dumbbell', target:'3 x 10-12/side',m:['biceps'],step:2.5,cue:'Seated, elbow braced on the inside of your thigh. Curl slowly to the shoulder, pause, lower fully. Strict and isolated.'},
   ],
   triceps:[
-    {name:'Rope Pushdown',target:'3 x 12-15',m:['triceps'],step:5,cue:'Elbows tucked, rope at chest height. Push down and split the rope at the bottom, squeeze, then let it rise to chest level.'},
-    {name:'Dumbbell Skullcrusher',target:'3 x 10-12',m:['triceps'],step:2.5,cue:'Lying on a bench, dumbbells over your head. Lower toward your forehead by bending only the elbows, then extend back up.'},
-    {name:'Close-grip Smith Press',target:'3 x 8-10',m:['triceps','chest','shoulders'],step:10,cue:'Hands shoulder-width, elbows tucked. Lower the bar to the lower chest, press up focusing on straightening the arms.'},
-    {name:'Bench Dip',target:'3 x 10-15',m:['triceps','chest','shoulders'],step:0,cue:'Hands on a bench behind you, heels on the floor. Lower until elbows hit 90 degrees, press up. Keep shoulders down, not shrugged.'},
-    {name:'Cable Kickback',target:'3 x 12-15/side',m:['triceps'],step:2.5,cue:'Single handle, hinge forward, upper arm parallel to the floor. Extend the arm straight back and squeeze; only the forearm moves.'},
+    {name:'Rope Pushdown',equip:'cable', target:'3 x 12-15',m:['triceps'],step:5,cue:'Elbows tucked, rope at chest height. Push down and split the rope at the bottom, squeeze, then let it rise to chest level.'},
+    {name:'Dumbbell Skullcrusher',equip:'dumbbell', target:'3 x 10-12',m:['triceps'],step:2.5,cue:'Lying on a bench, dumbbells over your head. Lower toward your forehead by bending only the elbows, then extend back up.'},
+    {name:'Close-grip Smith Press',equip:'machine', target:'3 x 8-10',m:['triceps','chest','shoulders'],step:10,cue:'Hands shoulder-width, elbows tucked. Lower the bar to the lower chest, press up focusing on straightening the arms.'},
+    {name:'Bench Dip',equip:'bodyweight', target:'3 x 10-15',m:['triceps','chest','shoulders'],step:0,cue:'Hands on a bench behind you, heels on the floor. Lower until elbows hit 90 degrees, press up. Keep shoulders down, not shrugged.'},
+    {name:'Cable Kickback',equip:'cable', target:'3 x 12-15/side',m:['triceps'],step:2.5,cue:'Single handle, hinge forward, upper arm parallel to the floor. Extend the arm straight back and squeeze; only the forearm moves.'},
   ],
   forearms:[
-    {name:'Dumbbell Wrist Curl',target:'3 x 12-15',m:['forearms'],step:2.5,cue:'Forearm on your thigh, palm up, wrist over the knee. Let the dumbbell roll down to your fingers, curl it up and squeeze.'},
-    {name:"Farmer's Carry",target:'3 x 30-45s',m:['forearms','abs','back'],step:10,cue:'Heavy dumbbells at your sides, chest tall, walk with short quick steps. Stop when your grip is about to give.'},
-    {name:'Plate Pinch Hold',target:'3 x 20-40s',m:['forearms'],step:0,cue:'Pinch two plates smooth-side out between fingers and thumb. Hold at your side for time. Builds crushing grip.'},
-    {name:'Dead Hang',target:'3 x 20-45s',m:['forearms','back'],step:0,cue:'Hang from a bar with straight arms, shoulders relaxed. Hold for time; add a towel over the bar to make it much harder.'},
-    {name:'Reverse Curl',target:'3 x 12-15',m:['forearms','biceps'],step:2.5,cue:'Palms facing down on a bar or dumbbells. Curl to shoulder height with elbows fixed. Lighter than regular curls.'},
+    {name:'Dumbbell Wrist Curl',equip:'dumbbell', target:'3 x 12-15',m:['forearms'],step:2.5,cue:'Forearm on your thigh, palm up, wrist over the knee. Let the dumbbell roll down to your fingers, curl it up and squeeze.'},
+    {name:"Farmer's Carry",equip:'dumbbell', target:'3 x 30-45s',m:['forearms','abs','back'],step:10,cue:'Heavy dumbbells at your sides, chest tall, walk with short quick steps. Stop when your grip is about to give.'},
+    {name:'Plate Pinch Hold',equip:'bodyweight', target:'3 x 20-40s',m:['forearms'],step:0,cue:'Pinch two plates smooth-side out between fingers and thumb. Hold at your side for time. Builds crushing grip.'},
+    {name:'Dead Hang',equip:'bodyweight', target:'3 x 20-45s',m:['forearms','back'],step:0,cue:'Hang from a bar with straight arms, shoulders relaxed. Hold for time; add a towel over the bar to make it much harder.'},
+    {name:'Reverse Curl',equip:'dumbbell', target:'3 x 12-15',m:['forearms','biceps'],step:2.5,cue:'Palms facing down on a bar or dumbbells. Curl to shoulder height with elbows fixed. Lighter than regular curls.'},
   ],
   quads:[
-    {name:'Hack Squat',target:'3 x 8-12',m:['quads','glutes'],step:10,cue:'Feet mid-platform, back flat on the pad. Lower until thighs are parallel or a bit below, drive up through the whole foot.'},
-    {name:'Goblet Squat',target:'3 x 10-15',m:['quads','glutes','abs'],step:5,cue:'Hold a dumbbell or kettlebell against your chest. Sit down between your heels with chest tall, elbows inside the knees at the bottom.'},
-    {name:'Smith Machine Squat',target:'3 x 8-12',m:['quads','glutes'],step:10,cue:'Feet slightly forward of the bar, bar across the upper back. Squat to parallel keeping the chest up; the rails keep you on track.'},
-    {name:'Dumbbell Step-up',target:'3 x 10-12/leg',m:['quads','glutes'],step:5,cue:'Box at knee height. Step up driving through the front heel, stand tall, then lower slowly. Do not push off the back foot.'},
-    {name:'Walking Lunge',target:'3 x 10-12/leg',m:['quads','glutes','hamstrings'],step:5,cue:'Long step forward, lower until the back knee nearly touches. Push through the front foot to step into the next lunge.'},
-    {name:'Leg Press (narrow stance)',target:'3 x 10-15',m:['quads','glutes'],step:10,cue:'Feet close together and lower on the platform to bias the quads. Do not let your lower back peel off the pad at the bottom.'},
+    {name:'Hack Squat',equip:'machine', target:'3 x 8-12',m:['quads','glutes'],step:10,cue:'Feet mid-platform, back flat on the pad. Lower until thighs are parallel or a bit below, drive up through the whole foot.'},
+    {name:'Goblet Squat',equip:'dumbbell', target:'3 x 10-15',m:['quads','glutes','abs'],step:5,cue:'Hold a dumbbell or kettlebell against your chest. Sit down between your heels with chest tall, elbows inside the knees at the bottom.'},
+    {name:'Smith Machine Squat',equip:'machine', target:'3 x 8-12',m:['quads','glutes'],step:10,cue:'Feet slightly forward of the bar, bar across the upper back. Squat to parallel keeping the chest up; the rails keep you on track.'},
+    {name:'Dumbbell Step-up',equip:'dumbbell', target:'3 x 10-12/leg',m:['quads','glutes'],step:5,cue:'Box at knee height. Step up driving through the front heel, stand tall, then lower slowly. Do not push off the back foot.'},
+    {name:'Walking Lunge',equip:'dumbbell', target:'3 x 10-12/leg',m:['quads','glutes','hamstrings'],step:5,cue:'Long step forward, lower until the back knee nearly touches. Push through the front foot to step into the next lunge.'},
+    {name:'Leg Press (narrow stance)',equip:'machine', target:'3 x 10-15',m:['quads','glutes'],step:10,cue:'Feet close together and lower on the platform to bias the quads. Do not let your lower back peel off the pad at the bottom.'},
   ],
   hamstrings:[
-    {name:'Lying Leg Curl',target:'3 x 10-12',m:['hamstrings'],step:5,cue:'Pad just above the ankles, hips pressed into the bench. Curl heels to your glutes, pause, lower slowly. Do not lift your hips.'},
-    {name:'Stiff-leg Dumbbell Deadlift',target:'3 x 10-12',m:['hamstrings','glutes','lowerback'],step:5,cue:'Legs nearly straight, hinge at the hips with a flat back until you feel the hamstrings load. Squeeze glutes to stand.'},
-    {name:'Cable Pull-through',target:'3 x 12-15',m:['hamstrings','glutes','lowerback'],step:5,cue:'Face away from a low cable, rope between your legs. Hinge forward, then drive hips forward and squeeze glutes to stand tall.'},
-    {name:'Nordic Curl (assisted)',target:'3 x 5-8',m:['hamstrings'],step:0,cue:'Kneel with ankles held. Lower your torso forward as slowly as possible, push back up with your hands as needed. Very hard, start small.'},
-    {name:'Glute-Ham Raise',target:'3 x 6-10',m:['hamstrings','glutes','lowerback'],step:0,cue:'Feet on the plate, knees just behind the pad. Lower to horizontal with a straight body, then curl yourself back up.'},
+    {name:'Lying Leg Curl',equip:'machine', target:'3 x 10-12',m:['hamstrings'],step:5,cue:'Pad just above the ankles, hips pressed into the bench. Curl heels to your glutes, pause, lower slowly. Do not lift your hips.'},
+    {name:'Stiff-leg Dumbbell Deadlift',equip:'dumbbell', target:'3 x 10-12',m:['hamstrings','glutes','lowerback'],step:5,cue:'Legs nearly straight, hinge at the hips with a flat back until you feel the hamstrings load. Squeeze glutes to stand.'},
+    {name:'Cable Pull-through',equip:'cable', target:'3 x 12-15',m:['hamstrings','glutes','lowerback'],step:5,cue:'Face away from a low cable, rope between your legs. Hinge forward, then drive hips forward and squeeze glutes to stand tall.'},
+    {name:'Nordic Curl (assisted)',equip:'bodyweight', target:'3 x 5-8',m:['hamstrings'],step:0,cue:'Kneel with ankles held. Lower your torso forward as slowly as possible, push back up with your hands as needed. Very hard, start small.'},
+    {name:'Glute-Ham Raise',equip:'bodyweight', target:'3 x 6-10',m:['hamstrings','glutes','lowerback'],step:0,cue:'Feet on the plate, knees just behind the pad. Lower to horizontal with a straight body, then curl yourself back up.'},
   ],
   glutes:[
-    {name:'Hip Thrust',target:'3 x 8-12',m:['glutes','hamstrings'],step:10,cue:'Upper back on a bench, bar or dumbbell on your hips. Drive hips up until your torso is flat, chin tucked, squeeze hard at the top.'},
-    {name:'Glute Bridge',target:'3 x 12-15',m:['glutes','hamstrings'],step:5,cue:'Lying on your back, heels close to your glutes. Push hips to the ceiling and squeeze for two seconds, lower without touching down.'},
-    {name:'Cable Glute Kickback',target:'3 x 12-15/side',m:['glutes'],step:5,cue:'Ankle strap on a low cable, slight forward lean. Kick straight back and up, squeeze the glute, return with control.'},
-    {name:'Reverse Lunge',target:'3 x 10-12/leg',m:['glutes','quads','hamstrings'],step:5,cue:'Step back and lower the rear knee toward the floor, keeping the front shin vertical. Drive through the front heel to return.'},
-    {name:'Hip Abduction Machine',target:'3 x 12-15',m:['glutes'],step:10,cue:'Sit tall, push the knees apart against the pads, pause at the widest point, return slowly.'},
+    {name:'Hip Thrust',equip:'barbell', target:'3 x 8-12',m:['glutes','hamstrings'],step:10,cue:'Upper back on a bench, bar or dumbbell on your hips. Drive hips up until your torso is flat, chin tucked, squeeze hard at the top.'},
+    {name:'Glute Bridge',equip:'bodyweight', target:'3 x 12-15',m:['glutes','hamstrings'],step:5,cue:'Lying on your back, heels close to your glutes. Push hips to the ceiling and squeeze for two seconds, lower without touching down.'},
+    {name:'Cable Glute Kickback',equip:'cable', target:'3 x 12-15/side',m:['glutes'],step:5,cue:'Ankle strap on a low cable, slight forward lean. Kick straight back and up, squeeze the glute, return with control.'},
+    {name:'Reverse Lunge',equip:'dumbbell', target:'3 x 10-12/leg',m:['glutes','quads','hamstrings'],step:5,cue:'Step back and lower the rear knee toward the floor, keeping the front shin vertical. Drive through the front heel to return.'},
+    {name:'Hip Abduction Machine',equip:'machine', target:'3 x 12-15',m:['glutes'],step:10,cue:'Sit tall, push the knees apart against the pads, pause at the widest point, return slowly.'},
   ],
   lowerback:[
-    {name:'Good Morning (light)',target:'3 x 10-12',m:['lowerback','hamstrings','glutes'],step:5,cue:'Light bar or bodyweight, hands behind head. Hinge at the hips with a flat back until your torso is near parallel, then stand tall.'},
-    {name:'Bird Dog',target:'3 x 8-10/side',m:['lowerback','abs','glutes'],step:0,cue:'On all fours, extend opposite arm and leg while keeping the hips level. Pause, return, switch sides. Slow and controlled.'},
-    {name:'Superman Hold',target:'3 x 20-30s',m:['lowerback','glutes'],step:0,cue:'Lie face down, lift arms and legs a few inches off the floor and hold. Keep the neck neutral.'},
-    {name:'Cable Pull-through',target:'3 x 12-15',m:['lowerback','glutes','hamstrings'],step:5,cue:'Face away from a low cable, rope between your legs. Hinge forward, then drive hips forward and squeeze glutes to stand tall.'},
+    {name:'Good Morning (light)',equip:'barbell', target:'3 x 10-12',m:['lowerback','hamstrings','glutes'],step:5,cue:'Light bar or bodyweight, hands behind head. Hinge at the hips with a flat back until your torso is near parallel, then stand tall.'},
+    {name:'Bird Dog',equip:'bodyweight', target:'3 x 8-10/side',m:['lowerback','abs','glutes'],step:0,cue:'On all fours, extend opposite arm and leg while keeping the hips level. Pause, return, switch sides. Slow and controlled.'},
+    {name:'Superman Hold',equip:'bodyweight', target:'3 x 20-30s',m:['lowerback','glutes'],step:0,cue:'Lie face down, lift arms and legs a few inches off the floor and hold. Keep the neck neutral.'},
+    {name:'Cable Pull-through',equip:'cable', target:'3 x 12-15',m:['lowerback','glutes','hamstrings'],step:5,cue:'Face away from a low cable, rope between your legs. Hinge forward, then drive hips forward and squeeze glutes to stand tall.'},
   ],
   calves:[
-    {name:'Leg Press Calf Raise',target:'3 x 15-20',m:['calves'],step:10,cue:'Toes on the bottom edge of the platform, legs straight but not locked. Push through the toes as far as you can, then let heels drop fully.'},
-    {name:'Single-leg Calf Raise',target:'3 x 12-15/leg',m:['calves'],step:5,cue:'Stand on one foot on a step, hold a dumbbell on the same side. Full range, pause at the top. Bodyweight is plenty at first.'},
-    {name:'Smith Machine Calf Raise',target:'3 x 12-15',m:['calves'],step:10,cue:'Bar across the upper back, toes on a block. Rise as high as possible, pause, lower until you feel a deep stretch.'},
-    {name:'Donkey Calf Raise',target:'3 x 15-20',m:['calves'],step:10,cue:'Hips bent forward with hands on a support, toes on a block. The bent-over position stretches the calves more; go full range.'},
-    {name:'Jump Rope',target:'3 x 60s',m:['calves'],step:0,cue:'Stay on the balls of your feet, small hops, wrists doing the work. Good finisher when calf machines are busy.'},
+    {name:'Leg Press Calf Raise',equip:'machine', target:'3 x 15-20',m:['calves'],step:10,cue:'Toes on the bottom edge of the platform, legs straight but not locked. Push through the toes as far as you can, then let heels drop fully.'},
+    {name:'Single-leg Calf Raise',equip:'dumbbell', target:'3 x 12-15/leg',m:['calves'],step:5,cue:'Stand on one foot on a step, hold a dumbbell on the same side. Full range, pause at the top. Bodyweight is plenty at first.'},
+    {name:'Smith Machine Calf Raise',equip:'machine', target:'3 x 12-15',m:['calves'],step:10,cue:'Bar across the upper back, toes on a block. Rise as high as possible, pause, lower until you feel a deep stretch.'},
+    {name:'Donkey Calf Raise',equip:'machine', target:'3 x 15-20',m:['calves'],step:10,cue:'Hips bent forward with hands on a support, toes on a block. The bent-over position stretches the calves more; go full range.'},
+    {name:'Jump Rope',equip:'bodyweight', target:'3 x 60s',m:['calves'],step:0,cue:'Stay on the balls of your feet, small hops, wrists doing the work. Good finisher when calf machines are busy.'},
   ],
   abs:[
-    {name:'Cable Crunch',target:'3 x 12-15',m:['abs'],step:5,cue:'Kneel facing a high cable, rope at your forehead. Crunch ribs toward hips by rounding the spine; do not pull with your arms or hips.'},
-    {name:'Ab Wheel Rollout',target:'3 x 8-12',m:['abs','lowerback'],step:0,cue:'Kneel, roll the wheel forward as far as you can hold a flat back, then pull back. Stop before the hips sag.'},
-    {name:'Dead Bug',target:'3 x 10/side',m:['abs'],step:0,cue:'On your back, arms up, knees at 90 degrees. Lower opposite arm and leg while pressing the lower back into the floor. Slow and steady.'},
-    {name:'Decline Sit-up',target:'3 x 10-15',m:['abs'],step:5,cue:'Feet hooked, lower slowly to the bench, then curl up one vertebra at a time. Hold a plate on your chest to add load.'},
-    {name:'Hanging Knee Raise',target:'3 x 10-15',m:['abs','forearms'],step:0,cue:'Hang from a bar, pull knees up toward your chest by curling the pelvis. No swinging; pause at the top.'},
-    {name:'Side Plank',target:'3 x 30-45s/side',m:['abs'],step:0,cue:'Elbow under the shoulder, body in a straight line, hips lifted. Hold for time; raise the top leg to make it harder.'},
+    {name:'Cable Crunch',equip:'cable', target:'3 x 12-15',m:['abs'],step:5,cue:'Kneel facing a high cable, rope at your forehead. Crunch ribs toward hips by rounding the spine; do not pull with your arms or hips.'},
+    {name:'Ab Wheel Rollout',equip:'bodyweight', target:'3 x 8-12',m:['abs','lowerback'],step:0,cue:'Kneel, roll the wheel forward as far as you can hold a flat back, then pull back. Stop before the hips sag.'},
+    {name:'Dead Bug',equip:'bodyweight', target:'3 x 10/side',m:['abs'],step:0,cue:'On your back, arms up, knees at 90 degrees. Lower opposite arm and leg while pressing the lower back into the floor. Slow and steady.'},
+    {name:'Decline Sit-up',equip:'bodyweight', target:'3 x 10-15',m:['abs'],step:5,cue:'Feet hooked, lower slowly to the bench, then curl up one vertebra at a time. Hold a plate on your chest to add load.'},
+    {name:'Hanging Knee Raise',equip:'bodyweight', target:'3 x 10-15',m:['abs','forearms'],step:0,cue:'Hang from a bar, pull knees up toward your chest by curling the pelvis. No swinging; pause at the top.'},
+    {name:'Side Plank',equip:'bodyweight', target:'3 x 30-45s/side',m:['abs'],step:0,cue:'Elbow under the shoulder, body in a straight line, hips lifted. Hold for time; raise the top leg to make it harder.'},
   ],
 };
 
 let PROGRAM = JSON.parse(JSON.stringify(DEFAULT_PROGRAM));
-let currentDay='d1', todayData={}, lastSessionData={}, sessionCount=0, recovery={}, hist={}, sessions=[], notes={}, bodyweight=[], settings={rest:90, auto:true, autoBackup:true, smartRest:true, unit:'lb'}, view='log';
+const EQUIP_TYPES=['barbell','dumbbell','cable','machine','bodyweight'];
+let currentDay='d1', todayData={}, lastSessionData={}, sessionCount=0, recovery={}, hist={}, sessions=[], notes={}, bodyweight=[], settings={rest:90, auto:true, autoBackup:true, smartRest:true, unit:'lb', autoRotate:false, rotateEvery:6, equipFilter:EQUIP_TYPES.slice()}, view='log';
 let dayStartTimes={}, arrivalActive={};
 let lastDeload=0, deloadStart=0;
 
@@ -725,6 +743,12 @@ function isPlateau(d,ex){
   const h=hist[histKey(d,ex)]; if(!h||h.length<3) return false;
   const last3=h.slice(-3); const first=last3[0].e1rm;
   return Math.max(...last3.map(x=>x.e1rm)) <= first*1.01;
+}
+// suggests a fresh variation after enough repeated exposure to build real progression data, never for the fixed anchor lifts the Strength tab's big-lift score depends on;
+// swapping resets the exercise's histKey so the count naturally restarts at 0 for whatever gets swapped in
+function rotationDue(d,ex){
+  if(!settings.autoRotate || BIG_LIFTS.includes(ex.name)) return false;
+  const h=hist[histKey(d,ex)]; return !!h && h.length>=(settings.rotateEvery||6);
 }
 // ---------- deload / periodization ----------
 function plateauCountAll(){ let n=0; PROGRAM.forEach(day=>day.exercises.forEach(ex=>{ if(ex.start!==0 && isPlateau(day.id,ex)) n++; })); return n; }
@@ -937,6 +961,7 @@ function render(){
     howto.querySelector('.howto-btn').onclick=()=>{ state.howto=!state.howto; render(); };
     howto.querySelector('.swap-btn').onclick=()=>openSwap(currentDay, ex); body.appendChild(howto);
     if(plat){ const pt=document.createElement('div'); pt.className='plateau-tip'; pt.innerHTML=`No progress in 3 sessions. Try a lighter week (about 10% less, same reps), then come back — or switch the rep range for a few weeks. If several lifts feel stuck at once, <span class="linkbtn" style="color:var(--amber)">consider a full deload week</span>.`; pt.querySelector('.linkbtn').onclick=openDeloadSheet; body.appendChild(pt); }
+    if(rotationDue(currentDay,ex)){ const rt=document.createElement('div'); rt.className='plateau-tip'; rt.innerHTML=`You've logged this one for ${(hist[histKey(currentDay,ex)]||[]).length} sessions straight. A fresh variation on the same muscles can help avoid staleness — <span class="linkbtn" style="color:var(--amber)">see alternatives</span>.`; rt.querySelector('.linkbtn').onclick=()=>openSwap(currentDay,ex); body.appendChild(rt); }
     if(sug===-1){ const fn=document.createElement('div'); fn.className='first-log-note'; fn.textContent='New lift — no history yet. Log a comfortable first set below; Lift Log will suggest a weight next time from what you log now.'; body.appendChild(fn); }
 
     const hr=document.createElement('div'); hr.className='setgrid head'; hr.innerHTML='<div>set</div><div>weight</div><div>reps</div><div></div>'; body.appendChild(hr);
@@ -1227,7 +1252,7 @@ function renderStrength(){
   renderConditioning();
   document.getElementById('bwUnitNote').textContent=unitLabel();
   const list=document.getElementById('strengthList'); list.innerHTML='';
-  let changes=[], bigTotal=0, bigBase=0, heroSeries=[]; const BIG=['Machine Chest Press','Machine Mid Row','Lat Pulldown','Converging Shoulder Press','Machine Leg Press'];
+  let changes=[], bigTotal=0, bigBase=0, heroSeries=[]; const BIG=BIG_LIFTS;
   PROGRAM.forEach(day=>{
     const gh=document.createElement('div'); gh.className='groupheader'; gh.textContent=`${day.name} · ${day.sub}`; list.appendChild(gh);
     day.exercises.forEach(ex=>{
@@ -1276,11 +1301,22 @@ document.getElementById('bwLog').onclick=async()=>{ const raw=parseFloat(documen
 
 // ---------- more: settings, editor, data ----------
 function renderSettings(){ document.getElementById('restSel').value=String(settings.rest); document.getElementById('autoTimer').checked=!!settings.auto; document.getElementById('autoBackup').checked=!!settings.autoBackup; document.getElementById('smartRestChk').checked=!!settings.smartRest; document.getElementById('restSelLbl').textContent=settings.smartRest?'fallback rest':'default rest'; document.getElementById('unitSel').value=settings.unit||'lb'; updateBackupUI();
-  document.getElementById('storageInfo').textContent = store.mode==='local'?'Data is saved on this device. Export a backup now and then so it is never trapped on one phone.':store.mode==='idb'?'Data is saved on this device (using this browser’s IndexedDB storage). Export a backup now and then so it is never trapped on one phone.':'Storage unavailable in this browser — nothing will be saved after you close the page.'; }
+  document.getElementById('storageInfo').textContent = store.mode==='local'?'Data is saved on this device. Export a backup now and then so it is never trapped on one phone.':store.mode==='idb'?'Data is saved on this device (using this browser’s IndexedDB storage). Export a backup now and then so it is never trapped on one phone.':'Storage unavailable in this browser — nothing will be saved after you close the page.';
+  document.querySelectorAll('#equipChks input').forEach(i=>i.checked=settings.equipFilter.includes(i.value));
+  document.getElementById('autoRotateChk').checked=!!settings.autoRotate; document.getElementById('rotateEverySel').value=String(settings.rotateEvery||6);
+  document.getElementById('rotateEveryRow').style.display=settings.autoRotate?'':'none';
+}
 document.getElementById('restSel').onchange=e=>{ settings.rest=parseInt(e.target.value); sset('settings',settings); };
 document.getElementById('autoTimer').onchange=e=>{ settings.auto=e.target.checked; sset('settings',settings); };
 document.getElementById('smartRestChk').onchange=e=>{ settings.smartRest=e.target.checked; sset('settings',settings); renderSettings(); };
 document.getElementById('unitSel').onchange=e=>{ settings.unit=e.target.value; sset('settings',settings); render(); renderHistory(); renderStrength(); };
+document.querySelectorAll('#equipChks input').forEach(i=>i.onchange=()=>{
+  const picked=[...document.querySelectorAll('#equipChks input:checked')].map(x=>x.value);
+  settings.equipFilter=picked.length?picked:EQUIP_TYPES.slice(); sset('settings',settings);
+  if(!picked.length){ showToast('at least one equipment type stays on'); renderSettings(); }
+});
+document.getElementById('autoRotateChk').onchange=e=>{ settings.autoRotate=e.target.checked; sset('settings',settings); renderSettings(); render(); };
+document.getElementById('rotateEverySel').onchange=e=>{ settings.rotateEvery=parseInt(e.target.value); sset('settings',settings); render(); };
 
 function renderEditor(){
   const sel=document.getElementById('edDay'); if(!sel.options.length){ PROGRAM.forEach(d=>{ const o=document.createElement('option'); o.value=d.id; o.textContent=`${d.name} · ${d.sub}`; sel.appendChild(o); }); sel.value=PROGRAM.some(d=>d.id===currentDay)?currentDay:PROGRAM[0].id; sel.onchange=renderEditor; }
@@ -1435,8 +1471,11 @@ function openSwap(dayId, ex){
   const seen=new Set([ex.name]);
   const pool=[...(ALTS[key]||[])];
   DEFAULT_PROGRAM.forEach(d=>d.exercises.forEach(e=>{ if(groupKeyFor(e)===key) pool.push(Object.assign({},e,{seed:null})); }));
-  let poolCount=0;
-  pool.forEach(a=>{ if(seen.has(a.name)||inUse.has(a.name)) return; seen.add(a.name); render1(a,null,true); poolCount++; });
+  // a custom exercise added via the editor has no equip tag — never hide those, only filter the tagged catalog
+  const equipOk=a=>!a.equip || settings.equipFilter.includes(a.equip);
+  let poolCount=0, hiddenByEquip=0;
+  pool.forEach(a=>{ if(seen.has(a.name)||inUse.has(a.name)) return; seen.add(a.name); if(!equipOk(a)){ hiddenByEquip++; return; } render1(a,null,true); poolCount++; });
+  if(poolCount===0 && hiddenByEquip>0){ const e=document.createElement('div'); e.className='empty'; e.textContent=`${hiddenByEquip} alternative${hiddenByEquip===1?'':'s'} hidden by your equipment settings in More — widen them there, or use Custom name below.`; list.insertBefore(e,h1.nextSibling); }
   const h2=document.createElement('div'); h2.className='alt-sec'; h2.textContent='Something else'; list.appendChild(h2);
   const c=document.createElement('div'); c.className='alt'; c.innerHTML=`<div class="an">Custom name</div><div class="am">Keeps this slot's muscles and rep range; just renames it (e.g. a different machine brand).</div><div class="ab"><button class="btn">rename</button></div>`;
   c.querySelector('button').onclick=()=>{ const n=prompt('New exercise name:',ex.name); if(n&&n.trim()){ ex.name=n.trim(); ex.seed=null; ex.start=ex.start===0?0:-1; saveProgram(); closeSheet(); showToast('renamed'); } };
@@ -1480,7 +1519,7 @@ document.getElementById('resetLink').onclick=async()=>{ todayData={}; await sset
   await store.init();
   sessionCount=(await sget('meta:sessionCount'))||0; document.getElementById('sessionCount').textContent=sessionCount;
   recovery=(await sget('recovery'))||{}; hist=(await sget('hist'))||{}; sessions=(await sget('sessions'))||[]; notes=(await sget('notes'))||{}; bodyweight=(await sget('bodyweight'))||[];
-  settings=Object.assign({rest:90,auto:true,autoBackup:true,smartRest:true,unit:'lb'},(await sget('settings'))||{});
+  settings=Object.assign({rest:90,auto:true,autoBackup:true,smartRest:true,unit:'lb',autoRotate:false,rotateEvery:6,equipFilter:EQUIP_TYPES.slice()},(await sget('settings'))||{});
   lastBackup=(await sget('lastBackup'))||0; updateBackupUI();
   lastDeload=(await sget('lastDeload'))||0; deloadStart=(await sget('deloadStart'))||0; updateDeloadUI(); updateBwUI();
   const custom=await sget('program'); if(custom&&Array.isArray(custom)&&custom.length===4) PROGRAM=custom;
