@@ -80,7 +80,9 @@
   .cue{display:none;font-size:12px;line-height:1.55;color:var(--text);margin-top:8px;padding:10px 12px;background:var(--panel-raised);border-left:2px solid var(--light);border-radius:3px;}
   .howto.open .cue{display:block;}
   .plateau-tip{font-size:11.5px;line-height:1.5;color:var(--amber);margin:0 0 10px;padding:8px 10px;background:rgba(214,160,58,.08);border-left:2px solid var(--amber);border-radius:3px;}
-  .setgrid{display:grid;grid-template-columns:28px 1fr 1fr 30px;gap:8px;align-items:center;margin-bottom:6px;font-size:13px;}
+  .setgrid{display:grid;grid-template-columns:28px 1fr 1fr 30px 20px;gap:8px;align-items:center;margin-bottom:6px;font-size:13px;}
+  .setrm{color:var(--text-dim);cursor:pointer;font-size:13px;text-align:center;}
+  .setrm:hover{color:var(--accent);}
   .setgrid.head{color:var(--text-dim);font-size:10px;} .setnum{color:var(--text-dim);}
   .setgrid input{width:100%;background:var(--panel-raised);border:1px solid var(--line);border-radius:3px;color:var(--text);padding:7px 6px;font-size:14px;text-align:center;}
   input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)!important;}
@@ -964,14 +966,15 @@ function render(){
     if(rotationDue(currentDay,ex)){ const rt=document.createElement('div'); rt.className='plateau-tip'; rt.innerHTML=`You've logged this one for ${(hist[histKey(currentDay,ex)]||[]).length} sessions straight. A fresh variation on the same muscles can help avoid staleness — <span class="linkbtn" style="color:var(--amber)">see alternatives</span>.`; rt.querySelector('.linkbtn').onclick=()=>openSwap(currentDay,ex); body.appendChild(rt); }
     if(sug===-1){ const fn=document.createElement('div'); fn.className='first-log-note'; fn.textContent='New lift — no history yet. Log a comfortable first set below; Lift Log will suggest a weight next time from what you log now.'; body.appendChild(fn); }
 
-    const hr=document.createElement('div'); hr.className='setgrid head'; hr.innerHTML='<div>set</div><div>weight</div><div>reps</div><div></div>'; body.appendChild(hr);
+    const hr=document.createElement('div'); hr.className='setgrid head'; hr.innerHTML='<div>set</div><div>weight</div><div>reps</div><div></div><div></div>'; body.appendChild(hr);
     state.sets.forEach((s,i)=>{
       const row=document.createElement('div'); row.className='setgrid';
-      row.innerHTML=`<div class="setnum">${i+1}</div><input type="number" inputmode="decimal" placeholder="${sug===null?'bw':sug===-1?unitLabel():dispWeight(sug)}" value="${s.w?dispWeight(s.w):s.w}"><input type="number" inputmode="numeric" placeholder="reps" value="${s.r}"><div class="setdone ${s.done?'on':''}">${s.done?'✓':''}</div>`;
+      row.innerHTML=`<div class="setnum">${i+1}</div><input type="number" inputmode="decimal" placeholder="${sug===null?'bw':sug===-1?unitLabel():dispWeight(sug)}" value="${s.w?dispWeight(s.w):s.w}"><input type="number" inputmode="numeric" placeholder="reps" value="${s.r}"><div class="setdone ${s.done?'on':''}">${s.done?'✓':''}</div><div class="setrm" title="remove set">✕</div>`;
       const [wI,rI]=row.querySelectorAll('input');
       wI.oninput=e=>{s.w=storeWeight(e.target.value); touchDayStart(); sset('today:'+currentDay,todayData);};
       rI.oninput=e=>{s.r=e.target.value; touchDayStart(); sset('today:'+currentDay,todayData);};
       row.querySelector('.setdone').onclick=()=>{ s.done=!s.done; touchDayStart(); if(s.done&&settings.auto) startTimer(settings.smartRest?suggestedRest(ex):settings.rest); sset('today:'+currentDay,todayData); render(); };
+      row.querySelector('.setrm').onclick=()=>{ if(state.sets.length<=1){ showToast('keep at least one set'); return; } state.sets.splice(i,1); touchDayStart(); sset('today:'+currentDay,todayData); render(); };
       body.appendChild(row);
       if(s.done){
         const rir=document.createElement('div'); rir.className='rir-row';
