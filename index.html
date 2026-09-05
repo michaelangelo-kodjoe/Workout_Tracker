@@ -284,10 +284,12 @@
           <path class="muscle" data-m="shoulders" d="M 124 58 Q 130 66 126 82 Q 118 78 112 64 Q 116 56 124 58 Z"/>
           <path class="muscle" data-m="shoulders" d="M24 66 Q19 80 27 93 Q33 89 34 82 Q30 68 36 58 Q28 60 24 66 Z"/>
           <path class="muscle" data-m="shoulders" d="M 136 66 Q 141 80 133 93 Q 127 89 126 82 Q 130 68 124 58 Q 132 60 136 66 Z"/>
-          <path class="muscle" data-m="chest" d="M48 64 L79 60 L79 76 L50 78 Q46 72 48 64 Z"/>
-          <path class="muscle" data-m="chest" d="M 112 64 L 81 60 L 81 76 L 110 78 Q 114 72 112 64 Z"/>
-          <path class="muscle" data-m="chest" d="M50 78 L79 76 L79 94 Q66 108 52 94 Q47 86 50 78 Z"/>
-          <path class="muscle" data-m="chest" d="M 110 78 L 81 76 L 81 94 Q 94 108 108 94 Q 113 86 110 78 Z"/>
+          <path class="muscle" data-m="chest-upper" d="M48 64 L79 60 L79 76 L50 78 Q46 72 48 64 Z"/>
+          <path class="muscle" data-m="chest-upper" d="M 112 64 L 81 60 L 81 76 L 110 78 Q 114 72 112 64 Z"/>
+          <path class="muscle" data-m="chest-mid" d="M50 78 L79 76 L79 94 L52 94 Z"/>
+          <path class="muscle" data-m="chest-mid" d="M 110 78 L 81 76 L 81 94 L 108 94 Z"/>
+          <path class="muscle" data-m="chest-lower" d="M52 94 L79 94 Q66 108 52 94 Z"/>
+          <path class="muscle" data-m="chest-lower" d="M 108 94 L 81 94 Q 94 108 108 94 Z"/>
           <path class="muscle" data-m="abs" d="M46 100 Q52 104 58 106 L58 150 Q52 148 46 138 Z"/>
           <path class="muscle" data-m="abs" d="M 114 100 Q 108 104 102 106 L 102 150 Q 108 148 114 138 Z"/>
           <path class="muscle" data-m="abs" d="M48 92 Q54 100 58 104 L58 96 Q54 92 48 92 Z"/>
@@ -544,8 +546,14 @@ const KEYS = ['lastBackup','program','recovery','hist','sessions','notes','bodyw
 // anchor lifts: excluded from auto-rotation so the Strength tab's big-lift composite stays on a fixed, comparable set of exercises
 const BIG_LIFTS=['Machine Chest Press','Machine Mid Row','Lat Pulldown','Converging Shoulder Press','Machine Leg Press'];
 
-const RECOVERY_HOURS = { chest:72, back:72, quads:72, hamstrings:72, glutes:72, lowerback:72, shoulders:48, biceps:48, triceps:48, forearms:48, calves:48, abs:36 };
+const RECOVERY_HOURS = { 'chest-upper':72, 'chest-mid':72, 'chest-lower':72, back:72, quads:72, hamstrings:72, glutes:72, lowerback:72, shoulders:48, biceps:48, triceps:48, forearms:48, calves:48, abs:36 };
 const MUSCLE_LABEL = { chest:'Chest', back:'Back', quads:'Quads', hamstrings:'Hamstrings', glutes:'Glutes', lowerback:'Lower back', shoulders:'Shoulders', biceps:'Biceps', triceps:'Triceps', forearms:'Forearms', calves:'Calves', abs:'Core' };
+// recovery-tracking display only (breakdown list, fatigue-conflict sheet) — kept separate from MUSCLE_LABEL
+// so the swap sheet and "add exercise" muscle checkboxes stay at the coarse 12-muscle level, not chest sub-regions
+const RECOVERY_LABEL = Object.assign({}, MUSCLE_LABEL, { 'chest-upper':'Upper chest', 'chest-mid':'Mid chest', 'chest-lower':'Lower chest' });
+// chest is the one muscle where exercise name reliably signals sub-region (incline/decline); everything else still tracks as one bucket.
+// ex.m keeps saying 'chest' generically everywhere (grouping, labels, editor) — only recovery tracking looks at ex.region to split it three ways.
+function recoveryKey(ex,m){ if(m!=='chest') return m; return ex.region==='upper chest'?'chest-upper':ex.region==='lower chest'?'chest-lower':'chest-mid'; }
 
 const DEFAULT_PROGRAM = [
   { id:'d1', name:'Upper', sub:'Heavy', badge:'heavy', factor:1.0,
@@ -569,7 +577,7 @@ const DEFAULT_PROGRAM = [
     ]},
   { id:'d3', name:'Upper', sub:'Volume', badge:'light', factor:0.85,
     exercises:[
-      { group:'Chest', name:'Incline Smith Machine Press', equip:'machine', target:'3 x 10-12', cue:'Bench at 30 degrees, bar touching upper chest. Elbows about 45 degrees from your body. Press up and slightly back, lower with control.', start:55, step:10, m:['chest','shoulders','triceps'], seed:[{w:55,r:12},{w:55,r:12},{w:55,r:8}] },
+      { group:'Chest', name:'Incline Smith Machine Press', equip:'machine', region:'upper chest', target:'3 x 10-12', cue:'Bench at 30 degrees, bar touching upper chest. Elbows about 45 degrees from your body. Press up and slightly back, lower with control.', start:55, step:10, m:['chest','shoulders','triceps'], seed:[{w:55,r:12},{w:55,r:12},{w:55,r:8}] },
       { group:'Chest', name:'Machine Pec Fly', equip:'machine', target:'3 x 12-15', cue:'Handles level with mid-chest, slight elbow bend. Bring hands together in front of you and squeeze, then open only until you feel a stretch, not strain.', start:130, step:10, m:['chest'], seed:[{w:145,r:10},{w:145,r:8},{w:145,r:10}] },
       { group:'Back', name:'Diverging Seated Row', equip:'machine', target:'3 x 10-12', cue:'Chest on the pad, grab handles, pull back and slightly out so elbows travel toward your hips. Squeeze the back, return until arms are straight.', start:110, step:10, m:['back','biceps'], seed:[{w:100,r:12},{w:100,r:12},{w:100,r:12}] },
       { group:'Shoulders', name:'Lateral Raise Machine', equip:'machine', target:'3 x 12-15', cue:'Pads just above elbows. Raise arms out to the side to shoulder height, lead with elbows not hands. Lower slowly; no swinging.', start:80, step:5, m:['shoulders'], seed:[{w:80,r:12},{w:80,r:12},{w:80,r:12}] },
@@ -596,11 +604,11 @@ const DEFAULT_PROGRAM = [
 const ALTS = {
   chest:[
     {name:'Dumbbell Bench Press',equip:'dumbbell', target:'3 x 8-12',m:['chest','shoulders','triceps'],step:5,cue:'Dumbbells over your chest, elbows about 45 degrees out. Lower until upper arms are level with the bench, press up and slightly in.'},
-    {name:'Incline Dumbbell Press',equip:'dumbbell', target:'3 x 8-12',m:['chest','shoulders','triceps'],step:5,cue:'Bench at 30 degrees. Press from upper chest, keep shoulder blades pinned back so the chest does the work, not the shoulders.'},
+    {name:'Incline Dumbbell Press',equip:'dumbbell', region:'upper chest', target:'3 x 8-12',m:['chest','shoulders','triceps'],step:5,cue:'Bench at 30 degrees. Press from upper chest, keep shoulder blades pinned back so the chest does the work, not the shoulders.'},
     {name:'Pec Deck',equip:'machine', target:'3 x 12-15',m:['chest'],step:5,cue:'Handles level with mid-chest, slight elbow bend. Squeeze the pads together and pause, open only to a comfortable stretch.'},
     {name:'Cable Chest Fly',equip:'cable', target:'3 x 12-15',m:['chest'],step:5,cue:'Cables at chest height, one step forward, slight lean. Bring hands together in an arc with soft elbows, squeeze, then control the return.'},
     {name:'Push-ups',equip:'bodyweight', target:'3 x 10-20',m:['chest','shoulders','triceps','abs'],step:0,cue:'Hands just outside shoulders, body straight from head to heels. Lower until chest nearly touches, press up. Elevate hands on a bench to make it easier.'},
-    {name:'Assisted Dip',equip:'machine', target:'3 x 8-12',m:['chest','triceps','shoulders'],step:10,cue:'Lean forward slightly to bias the chest. Lower until shoulders are level with elbows, press back up without locking out hard.'},
+    {name:'Assisted Dip',equip:'machine', region:'lower chest', target:'3 x 8-12',m:['chest','triceps','shoulders'],step:10,cue:'Lean forward slightly to bias the chest. Lower until shoulders are level with elbows, press back up without locking out hard.'},
     {name:'Smith Machine Flat Press',equip:'machine', target:'3 x 8-10',m:['chest','shoulders','triceps'],step:10,cue:'Bar over mid-chest, feet planted. Lower to touch the chest, press up. Set the safeties so you can go to failure safely.'},
   ],
   back:[
@@ -850,12 +858,12 @@ function renderBody(){
 
   const worst=active[0], wr=recovery[worst], leftH=Math.max(0,wr.hours-(Date.now()-wr.start)/3600000);
   const day=new Date(wr.start).toLocaleDateString(undefined,{weekday:'long'});
-  const readyNames=allMuscles.filter(m=>!active.includes(m)).map(m=>MUSCLE_LABEL[m]);
+  const readyNames=allMuscles.filter(m=>!active.includes(m)).map(m=>RECOVERY_LABEL[m]);
   const readyTxt=readyNames.length?`${readyNames.slice(0,3).join(', ')}${readyNames.length>3?' and more':''} ${readyNames.length===1?'is':'are'} fully recovered. `:'';
-  sub.textContent=`${readyTxt}${MUSCLE_LABEL[worst]} is still coming back from ${day} — light work only.`;
-  hint.innerHTML=`<b>${MUSCLE_LABEL[worst]}</b> ready in ${leftH<1?'<1':Math.ceil(leftH)}h`;
+  sub.textContent=`${readyTxt}${RECOVERY_LABEL[worst]} is still coming back from ${day} — light work only.`;
+  hint.innerHTML=`<b>${RECOVERY_LABEL[worst]}</b> ready in ${leftH<1?'<1':Math.ceil(leftH)}h`;
 
-  list.innerHTML=active.map(m=>{ const r=recovery[m]; const left=Math.max(0,r.hours-(Date.now()-r.start)/3600000); return `<b>${MUSCLE_LABEL[m]}</b> ${Math.round(recoveryProgress(m)*100)}% · ~${left<1?'<1':Math.ceil(left)}h left`; }).join('<br>');
+  list.innerHTML=active.map(m=>{ const r=recovery[m]; const left=Math.max(0,r.hours-(Date.now()-r.start)/3600000); return `<b>${RECOVERY_LABEL[m]}</b> ${Math.round(recoveryProgress(m)*100)}% · ~${left<1?'<1':Math.ceil(left)}h left`; }).join('<br>');
 }
 document.getElementById('recovDetailToggle').onclick=()=>{
   const l=document.getElementById('recovList'), t=document.getElementById('recovDetailToggle');
@@ -893,7 +901,7 @@ function renderTabs(){ const w=document.getElementById('dayTabs'); w.innerHTML='
 
 // ---------- fatigue disclaimer: warn (don't block) when picking a day whose muscles haven't recovered ----------
 function dayFatigueConflicts(day){
-  const muscles=new Set(); day.exercises.forEach(ex=>ex.m.forEach(m=>muscles.add(m)));
+  const muscles=new Set(); day.exercises.forEach(ex=>ex.m.forEach(m=>muscles.add(recoveryKey(ex,m))));
   return [...muscles].filter(m=>recoveryProgress(m)<1).map(m=>{
     const r=recovery[m]; const left=Math.max(0,r.hours-(Date.now()-r.start)/3600000);
     return {m,pct:Math.round(recoveryProgress(m)*100),left};
@@ -922,7 +930,7 @@ document.getElementById('cardioSuggestBg').onclick=closeCardioSuggest;
 function showFatigueWarning(day,conflicts,onProceed){
   document.getElementById('fatigueSub').textContent=`Switching to ${day.name} ${day.sub} instead of your suggested day`;
   const note=`Training a muscle again before it's recovered means fewer quality reps at your working weight, faster fatigue within the set, and — if it becomes a pattern — a higher risk of strain. Muscle rebuilds stronger during rest, not just during the lift, which is why these windows exist.`;
-  const rows=conflicts.map(c=>`<div class="edrow"><div><div>${MUSCLE_LABEL[c.m]}</div><div class="m">${c.pct}% recovered · ~${c.left<1?'<1':Math.ceil(c.left)}h left</div></div></div>`).join('');
+  const rows=conflicts.map(c=>`<div class="edrow"><div><div>${RECOVERY_LABEL[c.m]}</div><div class="m">${c.pct}% recovered · ~${c.left<1?'<1':Math.ceil(c.left)}h left</div></div></div>`).join('');
   document.getElementById('fatigueList').innerHTML=`<div class="plateau-tip" style="margin-bottom:4px">${note}</div>${rows}`;
   document.getElementById('fatigueBg').classList.add('on'); document.getElementById('fatigueSheet').classList.add('on');
   document.getElementById('fatigueProceed').onclick=()=>{ closeFatigue(); onProceed(); };
@@ -1058,7 +1066,7 @@ async function finishSession(){
 
   // recovery, scaled by how much of the planned work each muscle actually got
   const tally={};
-  day.exercises.forEach(ex=>{ const s=todayData[ex.name]; if(!s) return; const done=s.sets.filter(isLogged).length, total=s.sets.length; ex.m.forEach(m=>{ tally[m]=tally[m]||{d:0,t:0}; tally[m].d+=done; tally[m].t+=total; }); });
+  day.exercises.forEach(ex=>{ const s=todayData[ex.name]; if(!s) return; const done=s.sets.filter(isLogged).length, total=s.sets.length; ex.m.forEach(m=>{ const rk=recoveryKey(ex,m); tally[rk]=tally[rk]||{d:0,t:0}; tally[rk].d+=done; tally[rk].t+=total; }); });
   Object.keys(tally).forEach(m=>{ const f=tally[m].t?tally[m].d/tally[m].t:0; if(f<0.2) return; const hours=Math.round(RECOVERY_HOURS[m]*day.factor*f); const ex=recovery[m]; if(!ex||ex.start+ex.hours*3600000<now+hours*3600000) recovery[m]={start:now,hours}; });
   await sset('recovery',recovery);
 
@@ -1512,7 +1520,7 @@ function openSwap(dayId, ex){
     if(!matches.length){ libHint.textContent=`No full-library matches for "${search.value.trim()}" with your current equipment settings.`; return; }
     libHint.textContent=`From the full library:`;
     matches.forEach(a=>{
-      const alt={name:a.name, target:ex.target, m:a.m, cue:a.cue, step:a.equip==='bodyweight'?0:5, equip:a.equip};
+      const alt={name:a.name, target:ex.target, m:a.m, cue:a.cue, step:a.equip==='bodyweight'?0:5, equip:a.equip, region:a.region};
       const el=document.createElement('div'); el.className='alt';
       el.innerHTML=`<div class="an">${alt.name}</div><div class="am">${alt.target} · ${alt.m.map(k=>MUSCLE_LABEL[k]||k).join(', ')}</div><div class="ac">${alt.cue}</div><div class="ab"><button class="btn primary">use this</button></div>`;
       el.querySelector('button').onclick=()=>{ doSwap(day, idx, alt); };
@@ -1525,7 +1533,7 @@ function openSwap(dayId, ex){
 async function doSwap(day, idx, alt){
   const old=day.exercises[idx];
   const isOriginal = DEFAULT_PROGRAM.find(d=>d.id===day.id).exercises.some(e=>e.name===alt.name && e.group===alt.group);
-  const nu = isOriginal ? JSON.parse(JSON.stringify(alt)) : {group:old.group,name:alt.name,target:alt.target,m:alt.m.slice(),seed:null,start:(alt.step===0||alt.start===0)?0:-1,step:alt.step||5,cue:alt.cue||''};
+  const nu = isOriginal ? JSON.parse(JSON.stringify(alt)) : {group:old.group,name:alt.name,target:alt.target,m:alt.m.slice(),seed:null,start:(alt.step===0||alt.start===0)?0:-1,step:alt.step||5,cue:alt.cue||'',region:alt.region};
   day.exercises[idx]=nu;
   if(todayData[old.name]) { delete todayData[old.name]; await sset('today:'+day.id,todayData); }
   await saveProgram(); closeSheet(); showToast(`swapped in ${nu.name}`);
