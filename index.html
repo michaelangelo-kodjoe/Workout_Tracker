@@ -257,6 +257,7 @@
 </head>
 <body>
 <header>
+  <div class="banner info" id="updateBanner" style="display:none"><span>A new version of Lift Log is ready.</span><span class="linkbtn" id="updateBannerBtn">refresh now</span></div>
   <div class="title-row"><h1>Lift Log</h1>
     <div class="rhythm">
       <div class="rhythm-label">this week <b id="weekCount">0</b>/4<br><span class="rhythm-total"><span id="sessionCount">0</span> sessions total</span></div>
@@ -1647,6 +1648,7 @@ function bwWeeklyRate(){
   return ((latest.w-ref.w)/ref.w*100)/(days/7);
 }
 document.getElementById('bwBannerBtn').onclick=()=>{ setView('strength'); document.getElementById('bwInput').focus(); };
+document.getElementById('updateBannerBtn').onclick=()=>location.reload();
 function openDeloadSheet(){
   const wks=weeksSinceDeload().toFixed(1); const plat=plateauCountAll();
   document.getElementById('deloadStats').textContent=`${wks} weeks since your last deload · ${plat} exercise${plat===1?'':'s'} currently plateaued`;
@@ -1853,7 +1855,15 @@ document.getElementById('resetLink').onclick=async()=>{ todayData={}; await sset
   if(needsBuild && !settings.onboarded){ document.getElementById('onboardBg').classList.add('on'); renderOnboardStep(1); }
   setInterval(renderBody,60000);
 })();
-if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+if('serviceWorker' in navigator) window.addEventListener('load',()=>{
+  const hadController=!!navigator.serviceWorker.controller; // false on a first-ever install — nothing to "update" from yet
+  navigator.serviceWorker.register('sw.js').then(reg=>{
+    setInterval(()=>reg.update().catch(()=>{}), 60*60*1000); // catch updates during long-lived sessions, not just fresh loads
+  }).catch(()=>{});
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(hadController) document.getElementById('updateBanner').style.display='flex';
+  });
+});
 </script>
 </body>
 </html>
