@@ -116,7 +116,7 @@
   .alt .ac{font-size:11.5px;line-height:1.5;color:var(--text);margin-top:6px;opacity:.85;}
   .alt .ab{margin-top:8px;display:flex;gap:8px;}
   .alt-sec{font-size:11px;color:var(--text-dim);margin:12px 0 6px;}
-  .toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--panel-raised);border:1px solid var(--done-line);color:#cfe8cf;padding:10px 18px;border-radius:4px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:20;}
+  .toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--panel-raised);border:1px solid var(--done-line);color:#cfe8cf;padding:10px 18px;border-radius:4px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:20;max-width:88vw;text-align:center;}
   .toast.show{opacity:1;}
   .stats2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
   .stat{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:12px 14px;}
@@ -466,12 +466,12 @@
     </div>
     <div class="card">
       <h3>Equipment & variety</h3>
-      <div class="note-sm" style="margin-bottom:6px">Uncheck anything your gym doesn't have — swap alternatives and rotation suggestions will only draw from what's left checked.</div>
+      <div class="note-sm" style="margin-bottom:6px">Uncheck anything your gym doesn't have — swap alternatives and automatic rotation will only draw from what's left checked.</div>
       <div id="equipChks"></div>
-      <div class="row" style="margin-top:10px"><label class="chk"><input type="checkbox" id="autoRotateChk"> suggest a fresh variation after repeated sessions on the same exercise</label></div>
+      <div class="row" style="margin-top:10px"><label class="chk"><input type="checkbox" id="autoRotateChk"> automatically swap in a fresh variation after repeated sessions on the same exercise</label></div>
       <div class="row" style="margin-top:6px" id="rotateEveryRow"><span style="font-size:12px;color:var(--text-dim)">after</span>
         <select class="in" id="rotateEverySel"><option value="2">2 sessions</option><option value="4">4 sessions</option><option value="6">6 sessions</option><option value="8">8 sessions</option></select></div>
-      <div class="note-sm" style="margin-top:6px">On by default now that there's a full library to draw from — turn it off above if you'd rather stick with the same exercises. Either way, this only ever suggests a swap on the exercise card; nothing changes automatically.</div>
+      <div class="note-sm" style="margin-top:6px">On by default now that there's a full library to draw from — turn it off above if you'd rather stick with the same exercises. When it fires, the exercise itself changes — no approval needed — cycling through a handful of alternatives before eventually coming back around to where it started. You'll get a heads-up the moment it happens, and the newly swapped-in exercise carries an "undo" link back to what it replaced.</div>
     </div>
     <div class="card">
       <h3>Rest timer</h3>
@@ -788,6 +788,7 @@ const EQUIP_LABEL={barbell:'barbell',dumbbell:'dumbbell',kettlebell:'kettlebell'
 const FULL_CATALOG=JSON.parse(document.getElementById('fullCatalog').textContent);
 let currentDay='d1', todayData={}, lastSessionData={}, sessionCount=0, recovery={}, hist={}, sessions=[], notes={}, bodyweight=[], settings={rest:90, auto:true, autoBackup:true, smartRest:true, unit:'lb', autoRotate:true, rotateEvery:2, equipFilter:EQUIP_TYPES.slice(), name:'', onboarded:false}, view='home';
 let dayStartTimes={};
+let pendingRotationToast=null; // queued by finishSession() when an auto-rotation fires; shown once the celebration screen closes, since the toast would otherwise render underneath its full-screen overlay
 let lastDeload=0, deloadStart=0;
 
 // ---------- helpers ----------
@@ -839,11 +840,61 @@ function isPlateau(d,ex){
   const last3=h.slice(-3); const first=last3[0].e1rm;
   return Math.max(...last3.map(x=>x.e1rm)) <= first*1.01;
 }
-// suggests a fresh variation after enough repeated exposure to build real progression data;
-// swapping resets the exercise's histKey so the count naturally restarts at 0 for whatever gets swapped in.
-function rotationDue(d,ex){
-  if(!settings.autoRotate) return false;
-  const h=hist[histKey(d,ex)]; return !!h && h.length>=(settings.rotateEvery||6);
+// ---------- automatic exercise rotation ----------
+// after settings.rotateEvery sessions on the same exercise, finishSession() swaps it automatically (no manual
+// approval) to the next pick in a per-slot rotation sequence, cycling back to the original once the sequence is
+// exhausted. The sequence itself is built fresh each time (so equipment-filter changes take effect immediately):
+// the slot's curated alternatives first (already hand-ranked), then full-catalog matches ranked by name simplicity
+// — same heuristic bestPickFor() uses for the program builder — capped to a length that actually cycles back
+// within a reasonable training block rather than the 150+ raw catalog entries some muscles have.
+const ROTATION_POOL_SIZE=6;
+function rotationPool(key, exclude){
+  const simple=(a,b)=>(a.name.split(' ').length-b.name.split(' ').length)||(a.name.length-b.name.length);
+  const seen=new Set(exclude), pool=[];
+  (ALTS[key]||[]).forEach(a=>{ if(pool.length>=ROTATION_POOL_SIZE||seen.has(a.name)||!equipAllowed(a)) return; seen.add(a.name); pool.push(a); });
+  if(pool.length<ROTATION_POOL_SIZE){
+    FULL_CATALOG.filter(a=>a.key===key&&equipAllowed(a)&&!seen.has(a.name)).sort(simple).forEach(a=>{
+      if(pool.length>=ROTATION_POOL_SIZE) return; seen.add(a.name);
+      pool.push({name:a.name,equip:a.equip,m:[a.key,...a.m.filter(x=>x!==a.key)],cue:a.cue,step:a.equip==='bodyweight'?0:5,region:a.region});
+    });
+  }
+  return pool;
+}
+// checks every exercise in a just-finished day for a rotation-due threshold crossing (hist length is an exact
+// multiple of rotateEvery) and swaps it in place. Returns [{from,to}] for whichever exercises actually rotated,
+// so finishSession() can tell the user about it. ex.rotAnchor (the original pick, snapshotted once) anchors the
+// sequence at position 0 regardless of how many times it's rotated since; ex.rotStep tracks position in that
+// sequence; ex.rotPrev snapshots the immediately-prior exercise so a single undo can restore it.
+function applyAutoRotation(day){
+  if(!settings.autoRotate) return [];
+  const rotated=[]; const inUse=new Set(day.exercises.map(e=>e.name));
+  day.exercises.forEach((ex,i)=>{
+    const h=hist[histKey(day.id,ex)]||[];
+    const every=settings.rotateEvery||2;
+    if(!h.length||h.length%every!==0) return;
+    const anchor=ex.rotAnchor||{name:ex.name,equip:ex.equip,m:ex.m.slice(),cue:ex.cue,step:ex.step,region:ex.region,target:ex.target};
+    const key=groupKeyFor(ex);
+    const exclude=new Set(inUse); exclude.delete(ex.name); exclude.add(anchor.name);
+    const seq=[anchor, ...rotationPool(key, exclude)];
+    if(seq.length<2) return; // nothing else to rotate into under current equipment settings
+    const nextStep=(ex.rotStep||0)+1;
+    const pick=seq[nextStep%seq.length];
+    const prevSnapshot={group:ex.group,key,name:ex.name,equip:ex.equip,target:ex.target,m:ex.m.slice(),cue:ex.cue,step:ex.step,start:ex.start,seed:ex.seed,region:ex.region,rotAnchor:anchor,rotStep:ex.rotStep||0};
+    const nu={group:ex.group,key,name:pick.name,equip:pick.equip,target:pick.target||ex.target,m:pick.m.slice(),cue:pick.cue||'',step:pick.step==null?ex.step:pick.step,start:(pick.step===0||pick.start===0)?0:-1,seed:null,rotAnchor:anchor,rotStep:nextStep,rotPrev:prevSnapshot};
+    if(pick.region) nu.region=pick.region;
+    inUse.delete(ex.name); inUse.add(nu.name);
+    day.exercises[i]=nu;
+    if(todayData[ex.name]) delete todayData[ex.name];
+    rotated.push({from:ex.name,to:nu.name});
+  });
+  return rotated;
+}
+async function undoRotation(day,idx){
+  const ex=day.exercises[idx]; if(!ex.rotPrev) return;
+  const restored={...ex.rotPrev};
+  day.exercises[idx]=restored;
+  if(todayData[ex.name]) delete todayData[ex.name];
+  await saveProgram(); showToast(`reverted to ${restored.name}`);
 }
 // ---------- deload / periodization ----------
 function plateauCountAll(){ let n=0; PROGRAM.forEach(day=>day.exercises.forEach(ex=>{ if(ex.start!==0 && isPlateau(day.id,ex)) n++; })); return n; }
@@ -890,7 +941,7 @@ function sparklineHero(points){
   const color=points[points.length-1]>=points[0]?'var(--green)':'var(--accent)';
   return `<polyline fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${line}"/><polygon points="${area}" fill="${color}" opacity=".15"/>`;
 }
-function showToast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1800); }
+function showToast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); const dur=Math.max(1800,Math.min(5000,m.length*45)); clearTimeout(t._hideTimer); t._hideTimer=setTimeout(()=>t.classList.remove('show'),dur); }
 
 // ---------- rest timer ----------
 let timer={end:0,total:0,iv:null,ctx:null};
@@ -1064,7 +1115,7 @@ function render(){
     howto.querySelector('.howto-btn').onclick=()=>{ state.howto=!state.howto; render(); };
     howto.querySelector('.swap-btn').onclick=()=>openSwap(currentDay, ex); body.appendChild(howto);
     if(plat){ const pt=document.createElement('div'); pt.className='plateau-tip'; pt.innerHTML=`No progress in 3 sessions. Try a lighter week (about 10% less, same reps), then come back — or switch the rep range for a few weeks. If several lifts feel stuck at once, <span class="linkbtn" style="color:var(--amber)">consider a full deload week</span>.`; pt.querySelector('.linkbtn').onclick=openDeloadSheet; body.appendChild(pt); }
-    if(rotationDue(currentDay,ex)){ const rt=document.createElement('div'); rt.className='plateau-tip'; rt.innerHTML=`You've logged this one for ${(hist[histKey(currentDay,ex)]||[]).length} sessions straight. A fresh variation on the same muscles can help avoid staleness — <span class="linkbtn" style="color:var(--amber)">see alternatives</span>.`; rt.querySelector('.linkbtn').onclick=()=>openSwap(currentDay,ex); body.appendChild(rt); }
+    if(ex.rotPrev){ const idx=day.exercises.indexOf(ex); const rt=document.createElement('div'); rt.className='plateau-tip'; rt.innerHTML=`Automatically swapped from ${ex.rotPrev.name} after ${settings.rotateEvery||2} sessions straight. <span class="linkbtn" style="color:var(--amber)">undo</span>, or turn this off in Settings.`; rt.querySelector('.linkbtn').onclick=()=>undoRotation(day,idx); body.appendChild(rt); }
     if(sug===-1){ const fn=document.createElement('div'); fn.className='first-log-note'; fn.textContent='New lift — no history yet. Log a comfortable first set below; Lift Log will suggest a weight next time from what you log now.'; body.appendChild(fn); }
 
     const hr=document.createElement('div'); hr.className='setgrid head'; hr.innerHTML='<div>set</div><div>weight</div><div>reps</div><div></div><div></div>'; body.appendChild(hr);
@@ -1213,6 +1264,13 @@ async function finishSession(){
   await sset('last:'+currentDay,todayData); await sset('today:'+currentDay,{});
   sessionCount+=1; await sset('meta:sessionCount',sessionCount); document.getElementById('sessionCount').textContent=sessionCount;
   stopTimer();
+  const rotated=applyAutoRotation(day);
+  if(rotated.length){
+    await saveProgram();
+    pendingRotationToast=rotated.length===1
+      ? `Heads up — ${rotated[0].from} just swapped to ${rotated[0].to} after ${settings.rotateEvery||2} sessions straight. Turn this off in Settings any time.`
+      : `Heads up — ${rotated.length} exercises just swapped to fresh variations after ${settings.rotateEvery||2} sessions straight. Turn this off in Settings any time.`;
+  }
   const durationMin=Math.max(1,Math.round((now-(dayStartTimes[currentDay]||now))/60000)); delete dayStartTimes[currentDay];
   const topPR=prCandidates.length?prCandidates.sort((a,b)=>b.pct-a.pct)[0]:null;
   const rhythmCount=sessions.filter(s=>!s.isCardio && s.t>=now-7*864e5).length;
@@ -1246,7 +1304,7 @@ function showCelebration({day,worked,nsets,vol,durationMin,pr,rhythmCount}){
     </div>
     <button class="cel-cta" id="celBackBtn">return to home</button>`;
   bg.classList.add('on');
-  document.getElementById('celBackBtn').onclick=()=>{ bg.classList.remove('on'); setView('home'); };
+  document.getElementById('celBackBtn').onclick=()=>{ bg.classList.remove('on'); setView('home'); if(pendingRotationToast){ showToast(pendingRotationToast); pendingRotationToast=null; } };
 }
 
 // ---------- first-launch onboarding: welcome -> name -> body-map intro ----------
