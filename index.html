@@ -1236,9 +1236,9 @@ function showCelebration({day,worked,nsets,vol,durationMin,pr,rhythmCount}){
     <div class="rhythm-msg"><b>${ord(rhythmCount)} session this week</b> — ${rhythmRest}
       <div class="rhythm-dots">${Array.from({length:dotsTotal},(_,i)=>`<i class="${i<dotsOn?'on':''}"></i>`).join('')}</div>
     </div>
-    <button class="cel-cta" id="celBackBtn">back to log</button>`;
+    <button class="cel-cta" id="celBackBtn">return to home</button>`;
   bg.classList.add('on');
-  document.getElementById('celBackBtn').onclick=()=>bg.classList.remove('on');
+  document.getElementById('celBackBtn').onclick=()=>{ bg.classList.remove('on'); setView('home'); };
 }
 
 // ---------- first-launch onboarding: welcome -> name -> body-map intro ----------
