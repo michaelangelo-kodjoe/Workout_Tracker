@@ -505,6 +505,7 @@
 <div class="sheet" id="sheet"><div class="sheet-head"><div><div id="sheetTitle" style="font-size:15px">Swap exercise</div><div id="sheetSub" style="font-size:11px;color:var(--text-dim);margin-top:2px"></div></div><span class="linkbtn" id="sheetClose">close</span></div><input class="in" id="sheetSearch" placeholder="search alternatives…" style="width:100%;margin-bottom:12px"><div id="sheetList"></div></div>
 <div class="toast" id="toast">saved</div>
 <div class="celebrate-bg" id="celebrateBg"><div class="celebrate" id="celebrateInner"></div></div>
+<div class="celebrate-bg" id="onboardBg"><div class="celebrate" id="onboardInner"></div></div>
 <div class="sheet-bg" id="fatigueBg"></div>
 <div class="sheet" id="fatigueSheet">
   <div class="sheet-head"><div><div style="font-size:15px">Still recovering</div><div id="fatigueSub" style="font-size:11px;color:var(--text-dim);margin-top:2px"></div></div><span class="linkbtn" id="fatigueClose">close</span></div>
@@ -776,7 +777,7 @@ const EQUIP_LABEL={barbell:'barbell',dumbbell:'dumbbell',kettlebell:'kettlebell'
 // full exercise library (name/equip/muscles/cue), sourced from a third-party open dataset — no set/rep targets of its own.
 // offered as swap candidates via openSwap(), and as a last-resort fill in the builder when no curated pick passes the equipment filter
 const FULL_CATALOG=JSON.parse(document.getElementById('fullCatalog').textContent);
-let currentDay='d1', todayData={}, lastSessionData={}, sessionCount=0, recovery={}, hist={}, sessions=[], notes={}, bodyweight=[], settings={rest:90, auto:true, autoBackup:true, smartRest:true, unit:'lb', autoRotate:true, rotateEvery:2, equipFilter:EQUIP_TYPES.slice(), name:''}, view='home';
+let currentDay='d1', todayData={}, lastSessionData={}, sessionCount=0, recovery={}, hist={}, sessions=[], notes={}, bodyweight=[], settings={rest:90, auto:true, autoBackup:true, smartRest:true, unit:'lb', autoRotate:true, rotateEvery:2, equipFilter:EQUIP_TYPES.slice(), name:'', onboarded:false}, view='home';
 let dayStartTimes={};
 let lastDeload=0, deloadStart=0;
 
@@ -1238,6 +1239,44 @@ function showCelebration({day,worked,nsets,vol,durationMin,pr,rhythmCount}){
     <button class="cel-cta" id="celBackBtn">back to log</button>`;
   bg.classList.add('on');
   document.getElementById('celBackBtn').onclick=()=>bg.classList.remove('on');
+}
+
+// ---------- first-launch onboarding: welcome -> name -> body-map intro ----------
+// shown once, on top of whatever init() already rendered underneath (Home showing the program builder,
+// since this only fires when needsBuild is true). Reuses the celebration overlay's CSS, unrelated content.
+function renderOnboardStep(step){
+  const inner=document.getElementById('onboardInner');
+  if(step===1){
+    inner.innerHTML=`
+      <div class="cel-badge">💪</div>
+      <div class="cel-h1">Welcome to Lift Log</div>
+      <div class="cel-sub">Track your lifts, watch your body recover, and let the app learn your numbers as you go.</div>
+      <button class="cel-cta" id="onboardNext">Get started</button>`;
+    document.getElementById('onboardNext').onclick=()=>renderOnboardStep(2);
+  } else if(step===2){
+    inner.innerHTML=`
+      <div class="cel-h1">What should we call you?</div>
+      <div class="cel-sub">Optional — used to personalize your greeting. Change it any time in Settings.</div>
+      <input class="in" id="onboardName" placeholder="your name" style="width:100%;max-width:280px;text-align:center;margin-bottom:18px;position:relative;z-index:2" value="${settings.name||''}">
+      <button class="cel-cta" id="onboardNext">Continue</button>`;
+    document.getElementById('onboardName').oninput=e=>{ settings.name=e.target.value; };
+    document.getElementById('onboardNext').onclick=()=>renderOnboardStep(3);
+  } else {
+    inner.innerHTML=`
+      <div class="cel-h1">Meet your recovery map</div>
+      <div class="cel-sub">After a session, the muscles you trained show up red, then fade through amber to green as they recover. Check in here before every session.</div>
+      <div id="onboardBodymapSlot" style="width:100%;position:relative;z-index:2"></div>
+      <button class="cel-cta" id="onboardDone" style="margin-top:18px">Let's build your program</button>`;
+    document.getElementById('onboardBodymapSlot').appendChild(document.getElementById('bodymapCard'));
+    document.getElementById('onboardDone').onclick=finishOnboarding;
+  }
+}
+async function finishOnboarding(){
+  settings.onboarded=true;
+  await sset('settings',settings);
+  document.getElementById('arrivalPanel').insertAdjacentElement('afterend', document.getElementById('bodymapCard'));
+  document.getElementById('onboardBg').classList.remove('on');
+  renderHome();
 }
 
 // ---------- cardio ----------
@@ -1702,7 +1741,7 @@ document.getElementById('resetLink').onclick=async()=>{ todayData={}; await sset
   await store.init();
   sessionCount=(await sget('meta:sessionCount'))||0; document.getElementById('sessionCount').textContent=sessionCount;
   recovery=(await sget('recovery'))||{}; hist=(await sget('hist'))||{}; sessions=(await sget('sessions'))||[]; notes=(await sget('notes'))||{}; bodyweight=(await sget('bodyweight'))||[];
-  settings=Object.assign({rest:90,auto:true,autoBackup:true,smartRest:true,unit:'lb',autoRotate:true,rotateEvery:2,equipFilter:EQUIP_TYPES.slice(),name:''},(await sget('settings'))||{});
+  settings=Object.assign({rest:90,auto:true,autoBackup:true,smartRest:true,unit:'lb',autoRotate:true,rotateEvery:2,equipFilter:EQUIP_TYPES.slice(),name:'',onboarded:false},(await sget('settings'))||{});
   lastBackup=(await sget('lastBackup'))||0; updateBackupUI();
   lastDeload=(await sget('lastDeload'))||0; deloadStart=(await sget('deloadStart'))||0; updateDeloadUI(); updateBwUI();
   const custom=await sget('program');
@@ -1711,6 +1750,7 @@ document.getElementById('resetLink').onclick=async()=>{ todayData={}; await sset
   else { needsBuild=true; applyEquipPicks(PROGRAM); }
   await loadDay(suggestedDayId());
   if(currentDay==='cardio') setView('log'); // cardio is a decisive rotation call, not a day to choose from Home — go straight to logging it
+  if(needsBuild && !settings.onboarded){ document.getElementById('onboardBg').classList.add('on'); renderOnboardStep(1); }
   setInterval(renderBody,60000);
 })();
 </script>
