@@ -1369,7 +1369,6 @@ function renderStrength(){
   PROGRAM.forEach(day=>{
     const gh=document.createElement('div'); gh.className='groupheader'; gh.textContent=`${day.name} · ${day.sub}`; list.appendChild(gh);
     day.exercises.forEach(ex=>{
-      if(ex.start===-1 && !(hist[histKey(day.id,ex)]||[]).length) return;
       const base=baselineFor(day.id,ex), cur=currentFor(day.id,ex), h=hist[histKey(day.id,ex)]||[];
       const p=h.length?pct(base,cur):null; if(p!==null) changes.push(p);
       if(day.name==='Upper'){ upperTotal+=cur; upperBase+=base; }
