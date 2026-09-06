@@ -420,7 +420,7 @@
       <div class="str-hero-num" id="strHeroNum">—</div>
       <div class="str-hero-lbl">stronger than where you started<span class="bwlb" id="strBwPill" style="display:none"></span></div>
       <svg class="str-spark" id="strHeroSpark" viewBox="0 0 300 56" preserveAspectRatio="none"></svg>
-      <div class="str-hero-sub" id="strBigLifts"></div>
+      <div class="str-hero-sub" id="strUpperLower"></div>
     </div>
     <div class="card">
       <h3>Body weight</h3>
@@ -559,11 +559,6 @@ const store = {
     else this.mem[k]=v; }catch(e){ console.error(e); } }
 };
 const KEYS = ['lastBackup','program','recovery','hist','sessions','notes','bodyweight','settings','meta:sessionCount','today:d1','today:d2','today:d3','today:d4','last:d1','last:d2','last:d3','last:d4','lastDeload','deloadStart'];
-// anchor lifts for the Strength tab's big-lift composite: the first exercise of these groups on these days,
-// whatever the user picked for them — slot-based rather than name-based so a built or swapped program still has a composite
-const BIG_SLOTS=[['d1','Chest'],['d1','Back'],['d1','Shoulders'],['d2','Quads']];
-function isAnchorLift(day,ex){ return BIG_SLOTS.some(([d,g])=>d===day.id && g===ex.group && day.exercises.find(e=>e.group===g)===ex); }
-
 const RECOVERY_HOURS = { 'chest-upper':72, 'chest-mid':72, 'chest-lower':72, 'back-lats':72, 'back-traps':72, quads:72, hamstrings:72, glutes:72, lowerback:72, shoulders:48, biceps:48, 'triceps-lateral':48, 'triceps-long':48, forearms:48, 'calves-gastroc':48, 'calves-soleus':48, abs:36 };
 const MUSCLE_LABEL = { chest:'Chest', back:'Back', quads:'Quads', hamstrings:'Hamstrings', glutes:'Glutes', lowerback:'Lower back', shoulders:'Shoulders', biceps:'Biceps', triceps:'Triceps', forearms:'Forearms', calves:'Calves', abs:'Core' };
 // recovery-tracking display only (breakdown list, fatigue-conflict sheet) — kept separate from MUSCLE_LABEL
@@ -823,7 +818,6 @@ function isPlateau(d,ex){
 }
 // suggests a fresh variation after enough repeated exposure to build real progression data;
 // swapping resets the exercise's histKey so the count naturally restarts at 0 for whatever gets swapped in.
-// anchor lifts are no longer excluded — the Strength tab's big-lift score can fluctuate when one gets rotated, by choice
 function rotationDue(d,ex){
   if(!settings.autoRotate) return false;
   const h=hist[histKey(d,ex)]; return !!h && h.length>=(settings.rotateEvery||6);
@@ -1357,14 +1351,15 @@ function renderStrength(){
   renderConditioning();
   document.getElementById('bwUnitNote').textContent=unitLabel();
   const list=document.getElementById('strengthList'); list.innerHTML='';
-  let changes=[], bigTotal=0, bigBase=0, heroSeries=[];
+  let changes=[], upperTotal=0, upperBase=0, lowerTotal=0, lowerBase=0, heroSeries=[];
   PROGRAM.forEach(day=>{
     const gh=document.createElement('div'); gh.className='groupheader'; gh.textContent=`${day.name} · ${day.sub}`; list.appendChild(gh);
     day.exercises.forEach(ex=>{
       if(ex.start===-1 && !(hist[histKey(day.id,ex)]||[]).length) return;
       const base=baselineFor(day.id,ex), cur=currentFor(day.id,ex), h=hist[histKey(day.id,ex)]||[];
       const p=h.length?pct(base,cur):null; if(p!==null) changes.push(p);
-      if(isAnchorLift(day,ex)){ bigTotal+=cur; bigBase+=base; }
+      if(day.name==='Upper'){ upperTotal+=cur; upperBase+=base; }
+      else if(day.name==='Lower'){ lowerTotal+=cur; lowerBase+=base; }
       h.forEach(x=>heroSeries.push({t:x.t,p:pct(base,x.e1rm)}));
       const cls=p===null||Math.abs(p)<0.05?'flat':(p>0?'up':'down');
       const last=h.length?h[h.length-1]:null;
@@ -1376,18 +1371,21 @@ function renderStrength(){
       list.appendChild(row);
     });
   });
-  const avg=changes.length?changes.reduce((a,b)=>a+b,0)/changes.length:null; const bigP=pct(bigBase,bigTotal);
+  const avg=changes.length?changes.reduce((a,b)=>a+b,0)/changes.length:null;
+  const upperP=pct(upperBase,upperTotal), lowerP=pct(lowerBase,lowerTotal);
 
   const heroNum=document.getElementById('strHeroNum');
   heroNum.textContent=avg===null?'start':fmtPct(avg);
   heroNum.className='str-hero-num'+(avg!==null&&avg<-0.05?' down':'');
   const bwPill=document.getElementById('strBwPill');
-  if(bodyweight.length&&bigBase&&bigTotal){
+  const bodyTotal=upperTotal+lowerTotal, bodyBase=upperBase+lowerBase;
+  if(bodyweight.length&&bodyBase&&bodyTotal){
     const bw0=bodyweight[0].w, bw1=bodyweight[bodyweight.length-1].w;
-    const rel=((bigTotal/bw1)/(bigBase/bw0)-1)*100;
+    const rel=((bodyTotal/bw1)/(bodyBase/bw0)-1)*100;
     bwPill.textContent=`${rel>=0?'+':''}${Math.round(rel)}% per ${unitLabel()} bodyweight`; bwPill.style.display='inline-block';
   } else bwPill.style.display='none';
-  document.getElementById('strBigLifts').innerHTML=bigP===null?'':`Big lifts (first chest, back and shoulder lift on Upper Heavy, first quad lift on Lower Heavy): <b style="color:${bigP<-0.05?'var(--accent)':'var(--text)'}">${fmtPct(bigP)}</b>`;
+  const sideTxt=(p)=>p===null?'start':`<b style="color:${p<-0.05?'var(--accent)':'var(--text)'}">${fmtPct(p)}</b>`;
+  document.getElementById('strUpperLower').innerHTML=`Upper strength: ${sideTxt(upperP)} &nbsp;·&nbsp; Lower strength: ${sideTxt(lowerP)}`;
   const heroSpark=document.getElementById('strHeroSpark');
   heroSeries.sort((a,b)=>a.t-b.t);
   if(heroSeries.length>=2){
