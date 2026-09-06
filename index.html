@@ -5,7 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lift Log">
 <meta name="theme-color" content="#14161a">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Lift Log</title>
 <style>
   :root{--bg:#14161a;--panel:#1c1f25;--panel-raised:#22262e;--line:#2c3038;--text:#e8e9ec;--text-dim:#8b8f98;--accent:#ff5d3b;--heavy:#ff5d3b;--light:#4fa3d1;--done-bg:#1f2a20;--done-line:#3d5c3f;--green:#5cbb6f;--amber:#d6a03a;--gold:#e8b23d;}
@@ -1849,6 +1853,7 @@ document.getElementById('resetLink').onclick=async()=>{ todayData={}; await sset
   if(needsBuild && !settings.onboarded){ document.getElementById('onboardBg').classList.add('on'); renderOnboardStep(1); }
   setInterval(renderBody,60000);
 })();
+if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
 </body>
 </html>

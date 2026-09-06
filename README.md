@@ -2,7 +2,7 @@
 
 A mobile-first workout tracker for a 4-day Upper/Lower lifting split plus conditioning work. It's a single self-contained `index.html` — no build step, no framework, no backend. Open the file (or visit the hosted page) and it just works.
 
-**Live app:** https://michaelangelo-kodjoe.github.io/Workout_Tracker/
+**Live app:** https://michaelangelo-kodjoe.github.io/Workout_Tracker/ — installable to your home screen (Add to Home Screen / Install app), and works offline once installed.
 
 ## What it does
 
@@ -19,7 +19,7 @@ Everything is stored **locally on the device** — there's no backend and no syn
 
 ## Tech notes
 
-Single file, plain HTML/CSS/JS, no dependencies or build tooling. Keep changes consistent with that style unless a rewrite is explicitly requested.
+The app itself is a single file, plain HTML/CSS/JS, no dependencies or build tooling — keep changes consistent with that style unless a rewrite is explicitly requested. A few small supporting files make it installable as a PWA: `manifest.json`, `sw.js` (offline app-shell caching), and the icon PNGs — these can't be inlined into `index.html` since browsers require them as separate same-origin files.
 
 ## Running locally
 
