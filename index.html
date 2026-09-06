@@ -1261,6 +1261,17 @@ function renderOnboardStep(step){
       <button class="cel-cta" id="onboardNext">Continue</button>`;
     document.getElementById('onboardName').oninput=e=>{ settings.name=e.target.value; };
     document.getElementById('onboardNext').onclick=()=>renderOnboardStep(3);
+  } else if(step===3){
+    inner.innerHTML=`
+      <div class="cel-h1">What do you weigh today?</div>
+      <div class="cel-sub">Optional — body-weight exercises (push-ups, dips, and the like) start pre-filled with this instead of blank. Log it any time from Strength.</div>
+      <input class="in" id="onboardBw" type="number" inputmode="decimal" placeholder="${unitLabel()}" style="width:140px;text-align:center;margin-bottom:18px;position:relative;z-index:2">
+      <button class="cel-cta" id="onboardNext">Continue</button>`;
+    document.getElementById('onboardNext').onclick=async()=>{
+      const raw=parseFloat(document.getElementById('onboardBw').value);
+      if(raw){ bodyweight.push({t:Date.now(),w:storeBW(raw)}); await sset('bodyweight',bodyweight); updateBwUI(); }
+      renderOnboardStep(4);
+    };
   } else {
     inner.innerHTML=`
       <div class="cel-h1">Meet your recovery map</div>
