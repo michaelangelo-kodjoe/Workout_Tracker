@@ -37,9 +37,9 @@
   .bodymap{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:12px 12px 10px;margin-bottom:18px;}
   .recov-hero{background:linear-gradient(165deg,var(--panel-raised) 0%,#1a2b20 130%);border:1px solid var(--line);border-radius:6px;padding:14px 14px 12px;margin-bottom:14px;position:relative;overflow:hidden;}
   .recov-hero::after{content:"";position:absolute;top:-40px;right:-40px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(92,187,111,.22),transparent 70%);}
-  .recov-top{display:flex;align-items:center;gap:14px;position:relative;}
+  .recov-top{display:flex;align-items:center;justify-content:center;gap:14px;position:relative;}
   .recov-ring{flex:0 0 auto;}
-  .recov-score{font-family:'Menlo','SF Mono',monospace;font-size:13px;}
+  .recov-score{font-family:'Menlo','SF Mono',monospace;font-size:13px;text-align:left;}
   .recov-score b{font-size:26px;color:var(--green);display:block;line-height:1;}
   .recov-sub{font-size:11px;color:var(--text-dim);margin-top:8px;line-height:1.5;position:relative;}
   .figures{display:flex;justify-content:space-around;gap:8px;}
@@ -262,16 +262,17 @@
     </div>
   </div>
   <div class="viewtabs">
-    <span class="viewtab active" data-v="log">Log</span>
+    <span class="viewtab active" data-v="home">Home</span>
+    <span class="viewtab" data-v="log">Log</span>
     <span class="viewtab" data-v="history">History</span>
     <span class="viewtab" data-v="strength">Strength</span>
     <span class="viewtab" data-v="more">Settings</span>
   </div>
-  <div class="daytabs" id="dayTabs"></div>
+  <div class="daytabs" id="dayTabs" style="display:none"></div>
 </header>
 
 <main>
-  <section id="logView">
+  <section id="homeView">
     <div class="banner" id="backupBanner" style="display:none"><span>It's been a week since your last backup.</span><span class="linkbtn" id="bannerBtn">back up now</span></div>
     <div class="banner" id="deloadBanner" style="display:none"><span>It's been a while since your last deload — a lighter week can help you keep progressing.</span><span class="linkbtn" id="deloadBannerBtn">plan a deload week</span></div>
     <div class="banner info" id="deloadActiveBanner" style="display:none"></div>
@@ -400,6 +401,9 @@
       <div class="linkbtn" id="recovDetailToggle" style="display:none;text-align:center;margin-top:8px">see full breakdown</div>
       <div class="recov-list" id="recovList" style="display:none"></div>
     </div>
+  </section>
+
+  <section id="logView" style="display:none">
     <div class="daylabel" id="dayLabel"></div>
     <div id="exerciseList"></div>
     <div class="reset-link" id="resetLink">clear today's entries</div>
@@ -437,6 +441,10 @@
   </section>
 
   <section id="moreView" style="display:none">
+    <div class="card">
+      <h3>Your name</h3>
+      <div class="row"><input class="in" id="nameInput" placeholder="optional — used in your greeting" style="flex:1"></div>
+    </div>
     <div class="card">
       <h3>Units</h3>
       <div class="row"><span style="font-size:12px;color:var(--text-dim)">weight in</span>
@@ -489,7 +497,7 @@
   </section>
 </main>
 
-<footer><div class="footer-inner">
+<footer style="display:none"><div class="footer-inner">
   <div class="timer" id="timer"><div class="timer-row"><div class="t" id="timerT">1:30</div><div class="acts"><span id="tPlus">+30s</span><span id="tSkip">skip</span></div></div><div class="tbar"><i id="timerBar" style="width:100%"></i></div></div>
   <button class="finish-btn" id="finishBtn">mark session complete</button>
 </div></footer>
@@ -497,6 +505,7 @@
 <div class="sheet" id="sheet"><div class="sheet-head"><div><div id="sheetTitle" style="font-size:15px">Swap exercise</div><div id="sheetSub" style="font-size:11px;color:var(--text-dim);margin-top:2px"></div></div><span class="linkbtn" id="sheetClose">close</span></div><input class="in" id="sheetSearch" placeholder="search alternatives…" style="width:100%;margin-bottom:12px"><div id="sheetList"></div></div>
 <div class="toast" id="toast">saved</div>
 <div class="celebrate-bg" id="celebrateBg"><div class="celebrate" id="celebrateInner"></div></div>
+<div class="celebrate-bg" id="onboardBg"><div class="celebrate" id="onboardInner"></div></div>
 <div class="sheet-bg" id="fatigueBg"></div>
 <div class="sheet" id="fatigueSheet">
   <div class="sheet-head"><div><div style="font-size:15px">Still recovering</div><div id="fatigueSub" style="font-size:11px;color:var(--text-dim);margin-top:2px"></div></div><span class="linkbtn" id="fatigueClose">close</span></div>
@@ -768,8 +777,8 @@ const EQUIP_LABEL={barbell:'barbell',dumbbell:'dumbbell',kettlebell:'kettlebell'
 // full exercise library (name/equip/muscles/cue), sourced from a third-party open dataset — no set/rep targets of its own.
 // offered as swap candidates via openSwap(), and as a last-resort fill in the builder when no curated pick passes the equipment filter
 const FULL_CATALOG=JSON.parse(document.getElementById('fullCatalog').textContent);
-let currentDay='d1', todayData={}, lastSessionData={}, sessionCount=0, recovery={}, hist={}, sessions=[], notes={}, bodyweight=[], settings={rest:90, auto:true, autoBackup:true, smartRest:true, unit:'lb', autoRotate:true, rotateEvery:2, equipFilter:EQUIP_TYPES.slice()}, view='log';
-let dayStartTimes={}, arrivalActive={};
+let currentDay='d1', todayData={}, lastSessionData={}, sessionCount=0, recovery={}, hist={}, sessions=[], notes={}, bodyweight=[], settings={rest:90, auto:true, autoBackup:true, smartRest:true, unit:'lb', autoRotate:true, rotateEvery:2, equipFilter:EQUIP_TYPES.slice(), name:'', onboarded:false}, view='home';
+let dayStartTimes={};
 let lastDeload=0, deloadStart=0;
 
 // ---------- helpers ----------
@@ -949,10 +958,16 @@ function renderHeaderStats(){
   document.getElementById('weekCount').textContent=thisWeek;
   document.getElementById('sessionCount').textContent=sessionCount;
 }
-async function loadDay(d){ currentDay=d; renderHeaderStats(); if(d==='cardio'){ document.getElementById('arrivalPanel').innerHTML=''; document.getElementById('arrivalPanel').style.display='none'; document.getElementById('dayLabel').style.display=''; document.getElementById('exerciseList').style.display=''; document.getElementById('bodymapCard').style.display=''; renderTabs(); renderBody(); renderCardioForm(); return; } document.getElementById('finishBtn').style.display=''; document.getElementById('resetLink').style.display=''; todayData=(await sget('today:'+d))||{}; lastSessionData[d]=await sget('last:'+d); render(); }
+async function loadDay(d){
+  currentDay=d; renderHeaderStats();
+  if(d==='cardio'){ renderTabs(); renderBody(); renderCardioForm(); return; }
+  document.getElementById('finishBtn').style.display=''; document.getElementById('resetLink').style.display='';
+  todayData=(await sget('today:'+d))||{}; lastSessionData[d]=await sget('last:'+d);
+  render();
+  renderHome();
+}
 function ensureState(ex){ if(!todayData[ex.name]) todayData[ex.name]={open:false,sets:Array.from({length:setsCountFor(ex)},()=>({w:ex.start===0?(latestBW()??''):'',r:'',done:false,rir:null}))}; return todayData[ex.name]; }
 function touchDayStart(){ if(!dayStartTimes[currentDay]) dayStartTimes[currentDay]=Date.now(); }
-function hasLoggedAnything(state){ return Object.values(state).some(s=>s.sets.some(x=>x.w||x.r||x.done)); }
 function suggestedDayId(){
   const recent=[...sessions].sort((a,b)=>b.t-a.t);
   if(recent.length>=2 && !recent[0].isCardio && !recent[1].isCardio) return 'cardio';
@@ -975,22 +990,24 @@ function dayFatigueConflicts(day){
     return {m,pct:Math.round(recoveryProgress(m)*100),left};
   }).sort((a,b)=>a.pct-b.pct);
 }
-function attemptLoadDay(dayId){
-  if(dayId===currentDay){ return; }
+// andThen (optional) runs only once the day has actually loaded — used by Home to navigate to the Log tab
+// after a pick resolves, even when that pick goes through a confirmation sheet first (fatigue/cardio warnings).
+async function attemptLoadDay(dayId, andThen){
+  if(dayId===currentDay){ if(andThen) andThen(); return; }
   const suggested=suggestedDayId();
-  if(suggested==='cardio' && dayId!=='cardio'){ showCardioSuggestion(dayId); return; }
+  if(suggested==='cardio' && dayId!=='cardio'){ showCardioSuggestion(dayId, andThen); return; }
   const day=PROGRAM.find(d=>d.id===dayId);
-  if(!day || dayId===suggested){ loadDay(dayId); return; }
+  if(!day || dayId===suggested){ await loadDay(dayId); if(andThen) andThen(); return; }
   const conflicts=dayFatigueConflicts(day);
-  if(!conflicts.length){ loadDay(dayId); return; }
-  showFatigueWarning(day,conflicts,()=>loadDay(dayId));
+  if(!conflicts.length){ await loadDay(dayId); if(andThen) andThen(); return; }
+  showFatigueWarning(day,conflicts,async()=>{ await loadDay(dayId); if(andThen) andThen(); });
 }
-function showCardioSuggestion(dayId){
+function showCardioSuggestion(dayId, andThen){
   const day=PROGRAM.find(d=>d.id===dayId); if(!day) return;
   document.getElementById('cardioSuggestLift').textContent=`${day.name} ${day.sub} instead`;
   document.getElementById('cardioSuggestBg').classList.add('on'); document.getElementById('cardioSuggestSheet').classList.add('on');
-  document.getElementById('cardioSuggestGo').onclick=()=>{ closeCardioSuggest(); loadDay('cardio'); };
-  document.getElementById('cardioSuggestLift').onclick=()=>{ closeCardioSuggest(); loadDay(dayId); };
+  document.getElementById('cardioSuggestGo').onclick=async()=>{ closeCardioSuggest(); await loadDay('cardio'); if(andThen) andThen(); };
+  document.getElementById('cardioSuggestLift').onclick=async()=>{ closeCardioSuggest(); await loadDay(dayId); if(andThen) andThen(); };
 }
 function closeCardioSuggest(){ document.getElementById('cardioSuggestBg').classList.remove('on'); document.getElementById('cardioSuggestSheet').classList.remove('on'); }
 document.getElementById('cardioSuggestClose').onclick=closeCardioSuggest;
@@ -1070,7 +1087,6 @@ function render(){
     card.appendChild(body); list.appendChild(card);
   });
   document.getElementById('finishBtn').textContent=allComplete?'session complete — log it':'mark session complete';
-  renderArrival();
 }
 
 // ---------- first-launch program builder ----------
@@ -1095,29 +1111,33 @@ function renderBuilder(panel){
     renderBuilder(panel);
   });
   panel.querySelectorAll('.bc').forEach(b=>b.onclick=()=>{ const day=PROGRAM.find(d=>d.id===b.dataset.d); openSwap(day.id, day.exercises[+b.dataset.i]); });
-  document.getElementById('buildDone').onclick=async()=>{ await sset('program',PROGRAM); needsBuild=false; showToast('program saved — edit it any time in Settings'); render(); };
+  document.getElementById('buildDone').onclick=async()=>{ await sset('program',PROGRAM); needsBuild=false; showToast('program saved — edit it any time in Settings'); touchDayStart(); setView('log'); };
 }
 
-// ---------- arrival panel: greeting + day carousel (returning user), first-open hero (new user) ----------
-function renderArrival(){
+// ---------- home: greeting + day carousel (returning user), first-open hero (new user), program builder ----------
+// Home is the landing tab — picking a day here (or accepting a built program) hands off to the Log tab, which now
+// always shows the active day's exercise list with no arrival/dismiss state of its own.
+function renderHome(){
   const panel=document.getElementById('arrivalPanel');
-  const day=PROGRAM.find(d=>d.id===currentDay);
-  const dayLabelEl=document.getElementById('dayLabel'), listEl=document.getElementById('exerciseList'), bodymapEl=document.getElementById('bodymapCard'), resetEl=document.getElementById('resetLink'), finishEl=document.getElementById('finishBtn');
-  if(needsBuild){ renderBuilder(panel); dayLabelEl.style.display='none'; listEl.style.display='none'; bodymapEl.style.display='none'; resetEl.style.display='none'; finishEl.style.display='none'; return; }
-  const dismissed = arrivalActive[currentDay]===false || hasLoggedAnything(todayData);
-  if(dismissed){
-    panel.innerHTML=''; panel.style.display='none';
-    dayLabelEl.style.display=''; listEl.style.display=''; bodymapEl.style.display=''; resetEl.style.display=''; finishEl.style.display='';
+  if(needsBuild){ renderBuilder(panel); return; }
+  if(currentDay==='cardio'){
+    panel.innerHTML=`
+      <div class="greet-wrap">
+        <div class="greet-eyebrow">${new Date().toLocaleDateString(undefined,{weekday:'long'})}</div>
+        <div class="greet-h1">${settings.name?'Ready for cardio, '+settings.name+'?':'Ready for cardio?'}</div>
+        <div class="greet-sub">Two lifting sessions back to back — today's suggested as a lighter conditioning day.</div>
+      </div>
+      <button class="start-cta" id="arrivalStart">go to cardio log</button>`;
+    document.getElementById('arrivalStart').onclick=()=>setView('log');
     return;
   }
-  panel.style.display='block';
-  dayLabelEl.style.display='none'; listEl.style.display='none'; bodymapEl.style.display='none'; resetEl.style.display='none'; finishEl.style.display='none';
-
+  const day=PROGRAM.find(d=>d.id===currentDay);
   const previewRows=day.exercises.slice(0,5).map(ex=>`<div class="preview-row"><span class="pn">${ex.name}</span><span class="pt">${ex.target}</span></div>`).join('');
   const moreRow=day.exercises.length>5?`<div class="preview-row"><span class="pn" style="color:var(--text-dim)">+ ${day.exercises.length-5} more</span></div>`:'';
   const estMin=day.exercises.length*6;
 
   if(sessionCount===0){
+    const h1=settings.name?`Welcome, ${settings.name}! Your first session starts here`:'Your first session starts here';
     panel.innerHTML=`
       <div class="empty-hero">
         <svg width="56" height="56" viewBox="0 0 64 64" style="margin:0 auto" xmlns="http://www.w3.org/2000/svg">
@@ -1125,7 +1145,7 @@ function renderArrival(){
           <rect x="16" y="28" width="32" height="8" rx="2" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
           <rect x="48" y="22" width="8" height="20" rx="2" fill="var(--accent)" opacity=".85"/><rect x="56" y="26" width="4" height="12" rx="1.5" fill="var(--accent)"/>
         </svg>
-        <div class="empty-h1">Your first session starts here</div>
+        <div class="empty-h1">${h1}</div>
         <div class="empty-sub">No history yet — that's fine. Log one set at a time and Lift Log starts learning your numbers from today.</div>
         <div class="empty-plan"><b>${day.name}, ${day.sub}</b> · ${day.exercises.length} exercises · about ${estMin} minutes.</div>
         <button class="start-cta" id="arrivalStart">start ${day.name} — ${day.sub}</button>
@@ -1135,20 +1155,22 @@ function renderArrival(){
     const lastTxt=lastLift?`Last time: ${fmtDate(lastLift.t)}, ${lastLift.dayName} ${lastLift.sub}. `:'';
     const recovTxt=document.getElementById('recovSub').textContent;
     const rotationTxt=(day.id===suggestedDayId())?' Next up in your rotation.':'';
+    const h1=settings.name?`Ready to work out, ${settings.name}?`:`Ready for ${day.name} — ${day.sub}?`;
+    const dayLine=settings.name?`${day.name} — ${day.sub}. `:'';
     panel.innerHTML=`
       <div class="greet-wrap">
         <div class="greet-eyebrow">${new Date().toLocaleDateString(undefined,{weekday:'long'})}</div>
-        <div class="greet-h1">Ready for ${day.name} — ${day.sub}?</div>
-        <div class="greet-sub">${lastTxt}${recovTxt}${rotationTxt}</div>
+        <div class="greet-h1">${h1}</div>
+        <div class="greet-sub">${dayLine}${lastTxt}${recovTxt}${rotationTxt}</div>
       </div>
       <div class="day-carousel">
         ${PROGRAM.map(d=>`<div class="day-card${d.id===currentDay?' today':''}" data-day="${d.id}">${d.id===currentDay?'<div class="ddot"></div>':''}<div class="dtag">${d.id===currentDay?'Today':''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub} · ${d.exercises.length} exercises</div></div>`).join('')}
       </div>
       <div class="preview-list">${previewRows}${moreRow}</div>
       <button class="start-cta" id="arrivalStart">start ${day.name} — ${day.sub}</button>`;
-    panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day));
+    panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day, ()=>setView('log')));
   }
-  document.getElementById('arrivalStart').onclick=()=>{ touchDayStart(); arrivalActive[currentDay]=false; renderArrival(); };
+  document.getElementById('arrivalStart').onclick=()=>{ touchDayStart(); setView('log'); };
 }
 
 async function finishSession(){
@@ -1183,7 +1205,7 @@ async function finishSession(){
   await sset('last:'+currentDay,todayData); await sset('today:'+currentDay,{});
   sessionCount+=1; await sset('meta:sessionCount',sessionCount); document.getElementById('sessionCount').textContent=sessionCount;
   stopTimer();
-  const durationMin=Math.max(1,Math.round((now-(dayStartTimes[currentDay]||now))/60000)); delete dayStartTimes[currentDay]; delete arrivalActive[currentDay];
+  const durationMin=Math.max(1,Math.round((now-(dayStartTimes[currentDay]||now))/60000)); delete dayStartTimes[currentDay];
   const topPR=prCandidates.length?prCandidates.sort((a,b)=>b.pct-a.pct)[0]:null;
   const rhythmCount=sessions.filter(s=>!s.isCardio && s.t>=now-7*864e5).length;
   showCelebration({day,worked:worked.length,nsets,vol:Math.round(vol),durationMin,pr:topPR,rhythmCount});
@@ -1214,9 +1236,58 @@ function showCelebration({day,worked,nsets,vol,durationMin,pr,rhythmCount}){
     <div class="rhythm-msg"><b>${ord(rhythmCount)} session this week</b> — ${rhythmRest}
       <div class="rhythm-dots">${Array.from({length:dotsTotal},(_,i)=>`<i class="${i<dotsOn?'on':''}"></i>`).join('')}</div>
     </div>
-    <button class="cel-cta" id="celBackBtn">back to log</button>`;
+    <button class="cel-cta" id="celBackBtn">return to home</button>`;
   bg.classList.add('on');
-  document.getElementById('celBackBtn').onclick=()=>bg.classList.remove('on');
+  document.getElementById('celBackBtn').onclick=()=>{ bg.classList.remove('on'); setView('home'); };
+}
+
+// ---------- first-launch onboarding: welcome -> name -> body-map intro ----------
+// shown once, on top of whatever init() already rendered underneath (Home showing the program builder,
+// since this only fires when needsBuild is true). Reuses the celebration overlay's CSS, unrelated content.
+function renderOnboardStep(step){
+  const inner=document.getElementById('onboardInner');
+  if(step===1){
+    inner.innerHTML=`
+      <div class="cel-badge">💪</div>
+      <div class="cel-h1">Welcome to Lift Log</div>
+      <div class="cel-sub">Track your lifts, watch your body recover, and let the app learn your numbers as you go.</div>
+      <button class="cel-cta" id="onboardNext">Get started</button>`;
+    document.getElementById('onboardNext').onclick=()=>renderOnboardStep(2);
+  } else if(step===2){
+    inner.innerHTML=`
+      <div class="cel-h1">What should we call you?</div>
+      <div class="cel-sub">Optional — used to personalize your greeting. Change it any time in Settings.</div>
+      <input class="in" id="onboardName" placeholder="your name" style="width:100%;max-width:280px;text-align:center;margin-bottom:18px;position:relative;z-index:2" value="${settings.name||''}">
+      <button class="cel-cta" id="onboardNext">Continue</button>`;
+    document.getElementById('onboardName').oninput=e=>{ settings.name=e.target.value; };
+    document.getElementById('onboardNext').onclick=()=>renderOnboardStep(3);
+  } else if(step===3){
+    inner.innerHTML=`
+      <div class="cel-h1">What do you weigh today?</div>
+      <div class="cel-sub">Optional — body-weight exercises (push-ups, dips, and the like) start pre-filled with this instead of blank. Log it any time from Strength.</div>
+      <input class="in" id="onboardBw" type="number" inputmode="decimal" placeholder="${unitLabel()}" style="width:140px;text-align:center;margin-bottom:18px;position:relative;z-index:2">
+      <button class="cel-cta" id="onboardNext">Continue</button>`;
+    document.getElementById('onboardNext').onclick=async()=>{
+      const raw=parseFloat(document.getElementById('onboardBw').value);
+      if(raw){ bodyweight.push({t:Date.now(),w:storeBW(raw)}); await sset('bodyweight',bodyweight); updateBwUI(); }
+      renderOnboardStep(4);
+    };
+  } else {
+    inner.innerHTML=`
+      <div class="cel-h1">Meet your recovery map</div>
+      <div class="cel-sub">After a session, the muscles you trained show up red, then fade through amber to green as they recover. Check in here before every session.</div>
+      <div id="onboardBodymapSlot" style="width:100%;position:relative;z-index:2"></div>
+      <button class="cel-cta" id="onboardDone" style="margin-top:18px">Let's build your program</button>`;
+    document.getElementById('onboardBodymapSlot').appendChild(document.getElementById('bodymapCard'));
+    document.getElementById('onboardDone').onclick=finishOnboarding;
+  }
+}
+async function finishOnboarding(){
+  settings.onboarded=true;
+  await sset('settings',settings);
+  document.getElementById('arrivalPanel').insertAdjacentElement('afterend', document.getElementById('bodymapCard'));
+  document.getElementById('onboardBg').classList.remove('on');
+  renderHome();
 }
 
 // ---------- cardio ----------
@@ -1405,7 +1476,7 @@ function renderStrength(){
 document.getElementById('bwLog').onclick=async()=>{ const raw=parseFloat(document.getElementById('bwInput').value); if(!raw){ showToast('enter a weight'); return; } bodyweight.push({t:Date.now(),w:storeBW(raw)}); await sset('bodyweight',bodyweight); document.getElementById('bwInput').value=''; showToast('body weight logged'); renderStrength(); updateBwUI(); };
 
 // ---------- more: settings, editor, data ----------
-function renderSettings(){ document.getElementById('restSel').value=String(settings.rest); document.getElementById('autoTimer').checked=!!settings.auto; document.getElementById('autoBackup').checked=!!settings.autoBackup; document.getElementById('smartRestChk').checked=!!settings.smartRest; document.getElementById('restSelLbl').textContent=settings.smartRest?'fallback rest':'default rest'; document.getElementById('unitSel').value=settings.unit||'lb'; updateBackupUI();
+function renderSettings(){ document.getElementById('nameInput').value=settings.name||''; document.getElementById('nameInput').oninput=e=>{ settings.name=e.target.value; sset('settings',settings); }; document.getElementById('restSel').value=String(settings.rest); document.getElementById('autoTimer').checked=!!settings.auto; document.getElementById('autoBackup').checked=!!settings.autoBackup; document.getElementById('smartRestChk').checked=!!settings.smartRest; document.getElementById('restSelLbl').textContent=settings.smartRest?'fallback rest':'default rest'; document.getElementById('unitSel').value=settings.unit||'lb'; updateBackupUI();
   document.getElementById('storageInfo').textContent = store.mode==='local'?'Data is saved on this device. Export a backup now and then so it is never trapped on one phone.':store.mode==='idb'?'Data is saved on this device (using this browser’s IndexedDB storage). Export a backup now and then so it is never trapped on one phone.':'Storage unavailable in this browser — nothing will be saved after you close the page.';
   const eqBox=document.getElementById('equipChks');
   if(!eqBox.children.length) eqBox.innerHTML=EQUIP_TYPES.map(t=>`<label class="chk"><input type="checkbox" value="${t}"> ${EQUIP_LABEL[t]}</label>`).join('');
@@ -1439,7 +1510,7 @@ function renderEditor(){
   });
   const mus=document.getElementById('adMuscles'); if(!mus.children.length) mus.innerHTML=Object.keys(MUSCLE_LABEL).map(k=>`<label class="chk"><input type="checkbox" value="${k}">${MUSCLE_LABEL[k]}</label>`).join('');
 }
-async function saveProgram(){ await sset('program',PROGRAM); renderEditor(); if(view==='log') render(); }
+async function saveProgram(){ await sset('program',PROGRAM); renderEditor(); if(view==='log') render(); if(view==='home') renderHome(); }
 document.getElementById('adBtn').onclick=()=>{
   const name=document.getElementById('adName').value.trim(), group=document.getElementById('adGroup').value.trim()||'Other', target=document.getElementById('adTarget').value.trim()||'3 x 8-12';
   const startRaw=document.getElementById('adStart').value, stepRaw=document.getElementById('adStep').value;
@@ -1667,8 +1738,10 @@ async function doSwap(day, idx, alt){
 // ---------- views ----------
 function setView(v){
   view=v; document.querySelectorAll('.viewtab').forEach(t=>t.classList.toggle('active',t.dataset.v===v));
-  ['log','history','strength','more'].forEach(n=>document.getElementById(n+'View').style.display=(v===n?'':'none'));
+  ['home','log','history','strength','more'].forEach(n=>document.getElementById(n+'View').style.display=(v===n?'':'none'));
   document.getElementById('dayTabs').style.display=v==='log'?'':'none'; document.querySelector('footer').style.display=v==='log'?'':'none';
+  if(v==='home') renderHome();
+  if(v==='log' && currentDay!=='cardio') render();
   if(v==='history') renderHistory(); if(v==='strength') renderStrength(); if(v==='more'){ renderSettings(); renderEditor(); }
 }
 document.querySelectorAll('.viewtab').forEach(t=>t.onclick=()=>setView(t.dataset.v));
@@ -1679,14 +1752,17 @@ document.getElementById('resetLink').onclick=async()=>{ todayData={}; await sset
   await store.init();
   sessionCount=(await sget('meta:sessionCount'))||0; document.getElementById('sessionCount').textContent=sessionCount;
   recovery=(await sget('recovery'))||{}; hist=(await sget('hist'))||{}; sessions=(await sget('sessions'))||[]; notes=(await sget('notes'))||{}; bodyweight=(await sget('bodyweight'))||[];
-  settings=Object.assign({rest:90,auto:true,autoBackup:true,smartRest:true,unit:'lb',autoRotate:true,rotateEvery:2,equipFilter:EQUIP_TYPES.slice()},(await sget('settings'))||{});
+  settings=Object.assign({rest:90,auto:true,autoBackup:true,smartRest:true,unit:'lb',autoRotate:true,rotateEvery:2,equipFilter:EQUIP_TYPES.slice(),name:'',onboarded:false},(await sget('settings'))||{});
   lastBackup=(await sget('lastBackup'))||0; updateBackupUI();
   lastDeload=(await sget('lastDeload'))||0; deloadStart=(await sget('deloadStart'))||0; updateDeloadUI(); updateBwUI();
   const custom=await sget('program');
   if(custom&&Array.isArray(custom)&&custom.length===4) PROGRAM=custom;
   else if(sessionCount>0 || sessions.length>0){ await sset('program',PROGRAM); } // logged before a program was ever saved (the old fixed defaults): keep those exercises name-for-name so history keys still match, skip the builder
   else { needsBuild=true; applyEquipPicks(PROGRAM); }
-  await loadDay(suggestedDayId()); setInterval(renderBody,60000);
+  await loadDay(suggestedDayId());
+  if(currentDay==='cardio') setView('log'); // cardio is a decisive rotation call, not a day to choose from Home — go straight to logging it
+  if(needsBuild && !settings.onboarded){ document.getElementById('onboardBg').classList.add('on'); renderOnboardStep(1); }
+  setInterval(renderBody,60000);
 })();
 </script>
 </body>
