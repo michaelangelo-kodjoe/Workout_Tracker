@@ -431,7 +431,7 @@
   <section id="strengthView" style="display:none">
     <div class="str-hero">
       <div class="str-hero-num" id="strHeroNum">—</div>
-      <div class="str-hero-lbl">stronger than where you started<span class="bwlb" id="strBwPill" style="display:none"></span></div>
+      <div class="str-hero-lbl"><span id="strHeroLbl">current baseline</span><span class="bwlb" id="strBwPill" style="display:none"></span></div>
       <svg class="str-spark" id="strHeroSpark" viewBox="0 0 300 56" preserveAspectRatio="none"></svg>
     </div>
     <div class="str-split">
@@ -1539,6 +1539,7 @@ function renderStrength(){
   const heroNum=document.getElementById('strHeroNum');
   heroNum.textContent=avg===null?'start':fmtPct(avg);
   heroNum.className='str-hero-num'+(avg!==null&&avg<-0.05?' down':'');
+  document.getElementById('strHeroLbl').textContent=avg===null?'current baseline':'stronger than where you started';
   const bwPill=document.getElementById('strBwPill');
   const bodyTotal=upperTotal+lowerTotal, bodyBase=upperBase+lowerBase;
   if(bodyweight.length&&bodyBase&&bodyTotal){
