@@ -56,9 +56,14 @@
   .detail{fill:none;stroke:#101216;stroke-width:1.1;stroke-linecap:round;opacity:.7;}
   .m-worked{fill:#c94a3a;}
   .m-recovering{fill:#d6a03a;}
-  .m-ready{fill:#4a9e5c;filter:drop-shadow(0 0 5px rgba(92,187,111,.7));animation:glowpulse 2.6s ease-in-out infinite;}
-  @keyframes glowpulse{0%,100%{filter:drop-shadow(0 0 3px rgba(92,187,111,.5));}50%{filter:drop-shadow(0 0 9px rgba(92,187,111,.9));}}
-  @media (prefers-reduced-motion: reduce){ .m-ready,.setdone.on,.confetti{animation:none;} }
+  .m-ready{fill:#4a9e5c;}
+  /* iOS/Safari renders an animated CSS filter:drop-shadow() on SVG shapes unreliably (often not at all) —
+     so the glow is a separate blurred copy of the same path (via a static SVG <filter>, never animated)
+     sitting behind the original, with only its opacity animated. Opacity is universally safe to animate. */
+  .muscle-glow{pointer-events:none;opacity:0;transition:opacity .6s;}
+  .muscle-glow.m-ready{animation:glowpulse 2.6s ease-in-out infinite;}
+  @keyframes glowpulse{0%,100%{opacity:.5;}50%{opacity:1;}}
+  @media (prefers-reduced-motion: reduce){ .muscle-glow.m-ready,.setdone.on,.confetti{animation:none;opacity:.8;} }
   .tap-hint{font-size:10.5px;color:var(--text-dim);text-align:center;margin-top:8px;}
   .tap-hint b{color:var(--text);}
   .legend{display:flex;justify-content:center;gap:14px;margin-top:8px;font-size:10px;color:var(--text-dim);}
@@ -306,6 +311,7 @@
       </div>
       <div class="figures">
         <div class="fig"><svg viewBox="0 0 160 322" xmlns="http://www.w3.org/2000/svg">
+          <defs><filter id="muscleGlowFilter" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3.2"/></filter></defs>
           <ellipse class="skin" cx="80" cy="22" rx="14" ry="17"/>
           <path class="skin" d="M70 36 H90 V50 H70 Z"/>
           <path class="muscle" data-m="back-traps" d="M46 58 Q62 44 70 46 L70 52 Q56 55 48 64 Z"/>
@@ -997,7 +1003,21 @@ function fmtTimeLeft(h){
 }
 const RECOV_RING_C=169.6;
 function renderBody(){
-  document.querySelectorAll('.muscle').forEach(el=>{ el.classList.remove('m-ready','m-recovering','m-worked'); el.classList.add(recovClass(recoveryProgress(el.dataset.m))); });
+  document.querySelectorAll('.muscle').forEach(el=>{
+    const cls=recovClass(recoveryProgress(el.dataset.m));
+    el.classList.remove('m-ready','m-recovering','m-worked'); el.classList.add(cls);
+    // lazily create the blurred glow-twin behind this path the first time it's rendered (see .muscle-glow above)
+    let glow=el._glowTwin;
+    if(!glow){
+      glow=el.cloneNode(true);
+      glow.classList.remove('muscle'); glow.classList.add('muscle-glow');
+      glow.removeAttribute('data-m');
+      glow.setAttribute('filter','url(#muscleGlowFilter)');
+      el.parentNode.insertBefore(glow,el);
+      el._glowTwin=glow;
+    }
+    glow.classList.remove('m-ready','m-recovering','m-worked'); glow.classList.add(cls);
+  });
 
   const allMuscles=Object.keys(RECOVERY_HOURS);
   const avg=allMuscles.reduce((sum,m)=>sum+Math.min(1,recoveryProgress(m)),0)/allMuscles.length;
