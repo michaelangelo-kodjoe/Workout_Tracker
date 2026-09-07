@@ -1323,7 +1323,7 @@ function showCelebration({day,worked,nsets,vol,durationMin,pr,rhythmCount}){
   document.getElementById('celBackBtn').onclick=()=>{ bg.classList.remove('on'); setView('home'); if(pendingRotationToast){ showToast(pendingRotationToast); pendingRotationToast=null; } };
 }
 
-// ---------- first-launch onboarding: welcome -> name -> body-map intro ----------
+// ---------- first-launch onboarding: welcome -> name -> import? -> body weight -> body-map intro ----------
 // shown once, on top of whatever init() already rendered underneath (Home showing the program builder,
 // since this only fires when needsBuild is true). Reuses the celebration overlay's CSS, unrelated content.
 function renderOnboardStep(step){
@@ -1345,6 +1345,32 @@ function renderOnboardStep(step){
     document.getElementById('onboardNext').onclick=()=>renderOnboardStep(3);
   } else if(step===3){
     inner.innerHTML=`
+      <div class="cel-h1">Setting up a new device?</div>
+      <div class="cel-sub">If you've used Lift Log before, import your backup file to bring your program, history, and settings with you.</div>
+      <input type="file" id="onboardImportFile" accept="application/json" style="display:none">
+      <button class="cel-cta" id="onboardImportBtn">Import my data</button>
+      <div class="linkbtn" id="onboardImportSkip" style="margin-top:16px;position:relative;z-index:2">No backup — start fresh</div>
+      <div id="onboardImportError" style="display:none;margin-top:16px;position:relative;z-index:2"></div>`;
+    document.getElementById('onboardImportBtn').onclick=()=>document.getElementById('onboardImportFile').click();
+    document.getElementById('onboardImportSkip').onclick=()=>renderOnboardStep(4);
+    document.getElementById('onboardImportFile').onchange=async e=>{
+      const f=e.target.files[0]; if(!f) return;
+      try{
+        const j=JSON.parse(await f.text()); if(j.app!=='liftlog') throw 0;
+        const replaceKeys=KEYS.filter(k=>!k.startsWith('today:'));
+        for(const k of replaceKeys){ if(k in j.data) await sset(k,j.data[k]); }
+        showToast('restored — reloading');
+        setTimeout(()=>location.reload(),900);
+      }catch(err){
+        const err_=document.getElementById('onboardImportError');
+        err_.style.display='block';
+        err_.innerHTML=`<div class="plateau-tip">That doesn't look like a Lift Log backup file. Try a different file above, or <span class="linkbtn" id="onboardImportSkip2" style="color:var(--amber)">skip and start fresh</span>.</div>`;
+        document.getElementById('onboardImportSkip2').onclick=()=>renderOnboardStep(4);
+      }
+      e.target.value='';
+    };
+  } else if(step===4){
+    inner.innerHTML=`
       <div class="cel-h1">What do you weigh today?</div>
       <div class="cel-sub">Optional — body-weight exercises (push-ups, dips, and the like) start pre-filled with this instead of blank. Log it any time from Strength.</div>
       <input class="in" id="onboardBw" type="number" inputmode="decimal" placeholder="${unitLabel()}" style="width:140px;text-align:center;margin-bottom:18px;position:relative;z-index:2">
@@ -1352,7 +1378,7 @@ function renderOnboardStep(step){
     document.getElementById('onboardNext').onclick=async()=>{
       const raw=parseFloat(document.getElementById('onboardBw').value);
       if(raw){ bodyweight.push({t:Date.now(),w:storeBW(raw)}); await sset('bodyweight',bodyweight); updateBwUI(); }
-      renderOnboardStep(4);
+      renderOnboardStep(5);
     };
   } else {
     inner.innerHTML=`
