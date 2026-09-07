@@ -13,6 +13,7 @@
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Georgia','Iowan Old Style',serif;min-height:100vh;}
   button,input,textarea,select{font-family:'Menlo','SF Mono',monospace;}
   header{position:sticky;top:0;z-index:10;background:var(--bg);padding:calc(14px + env(safe-area-inset-top)) 18px 10px;border-bottom:1px solid var(--line);}
+  .header-inner{max-width:560px;margin:0 auto;}
   .title-row{display:flex;align-items:center;justify-content:space-between;}
   h1{font-size:22px;margin:0;font-weight:normal;letter-spacing:.3px;}
   .rhythm{display:flex;align-items:center;gap:8px;}
@@ -43,9 +44,9 @@
   .recov-score b{font-size:26px;color:var(--green);display:block;line-height:1;}
   .recov-sub{font-size:11px;color:var(--text-dim);margin-top:8px;line-height:1.5;position:relative;text-align:center;}
   .figures{display:flex;justify-content:space-around;gap:8px;}
-  .figures svg{height:310px;width:auto;}
+  .figures svg{width:100%;max-width:154px;height:auto;max-height:310px;}
   .figures .cap{text-align:center;font-size:10px;color:var(--text-dim);margin-top:2px;}
-  .figures .fig{display:flex;flex-direction:column;align-items:center;}
+  .figures .fig{display:flex;flex-direction:column;align-items:center;flex:1 1 0;min-width:0;}
   .muscle{stroke:#101216;stroke-width:1.6;stroke-linejoin:round;transition:fill .6s;}
   .skin{fill:#3b404b;stroke:#101216;stroke-width:1.6;stroke-linejoin:round;}
   .detail{fill:none;stroke:#101216;stroke-width:1.1;stroke-linecap:round;opacity:.7;}
@@ -252,7 +253,7 @@
 </style>
 </head>
 <body>
-<header>
+<header><div class="header-inner">
   <div class="title-row"><h1>Lift Log</h1>
     <div class="rhythm">
       <div class="rhythm-label">this week <b id="weekCount">0</b>/4<br><span class="rhythm-total"><span id="sessionCount">0</span> sessions total</span></div>
@@ -272,7 +273,7 @@
     <span class="viewtab" data-v="more">Settings</span>
   </div>
   <div class="daytabs" id="dayTabs" style="display:none"></div>
-</header>
+</div></header>
 
 <main>
   <section id="homeView">
