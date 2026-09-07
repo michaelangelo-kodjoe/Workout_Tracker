@@ -142,6 +142,12 @@
   .str-split-card{flex:1;min-width:0;}
   .str-split-num{font-family:'Menlo',monospace;font-size:22px;color:var(--green);line-height:1;margin-bottom:8px;}
   .str-split-num.down{color:var(--accent);}
+  .str-split-card{cursor:pointer;}
+  .str-card-hint{font-size:11px;color:var(--light);margin-top:8px;}
+  .str-card-exlist{margin-top:10px;border-top:1px solid var(--line);padding-top:6px;}
+  .str-card-exlist .srow{cursor:default;padding:8px 10px;}
+  .str-card-exlist .sn{font-size:12.5px;} .str-card-exlist .sd{font-size:9.5px;}
+  .str-card-exlist .sp{font-size:13px;}
   .bwlb{display:inline-block;font-size:9.5px;background:rgba(79,163,209,.15);color:var(--light);border:1px solid rgba(79,163,209,.4);padding:1px 6px;border-radius:9px;margin-left:6px;}
   .note-sm{font-size:10.5px;color:var(--text-dim);line-height:1.5;margin-top:14px;}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:12px 14px;margin-bottom:10px;}
@@ -435,15 +441,19 @@
       <svg class="str-spark" id="strHeroSpark" viewBox="0 0 300 56" preserveAspectRatio="none"></svg>
     </div>
     <div class="str-split">
-      <div class="card str-split-card">
+      <div class="card str-split-card" id="upperStrCard">
         <h3>Upper strength</h3>
         <div class="str-split-num" id="upperStrNum">—</div>
         <div id="upperStrSpark"></div>
+        <div class="str-card-hint" id="upperStrHint">see exercises</div>
+        <div class="str-card-exlist" id="upperStrList" style="display:none"></div>
       </div>
-      <div class="card str-split-card">
+      <div class="card str-split-card" id="lowerStrCard">
         <h3>Lower strength</h3>
         <div class="str-split-num" id="lowerStrNum">—</div>
         <div id="lowerStrSpark"></div>
+        <div class="str-card-hint" id="lowerStrHint">see exercises</div>
+        <div class="str-card-exlist" id="lowerStrList" style="display:none"></div>
       </div>
     </div>
     <div class="card">
@@ -456,7 +466,6 @@
       <h3>Conditioning</h3>
       <div id="condStats"></div>
     </div>
-    <div id="strengthList"></div>
     <div class="note-sm">Strength level compares each lift to the numbers you started with (100%). It weighs both the load and the reps, so adding reps at the same weight counts too. "Per <span id="bwUnitNote">lb</span> of body weight" divides that by your logged weight, so getting stronger while staying the same size counts extra.</div>
   </section>
 
@@ -1506,13 +1515,15 @@ function renderConditioning(){
     ${paceHtml}
     <div class="note-sm" style="margin-top:${paceHtml?'10px':'0'}">Same effort covering more distance, or the same pace feeling easier (lower RPE), is what real endurance improvement looks like — not just logging more minutes.</div>`;
 }
+let strCardOpen={upper:false,lower:false};
 function renderStrength(){
   renderConditioning();
   document.getElementById('bwUnitNote').textContent=unitLabel();
-  const list=document.getElementById('strengthList'); list.innerHTML='';
+  const upperList=document.getElementById('upperStrList'), lowerList=document.getElementById('lowerStrList');
+  upperList.innerHTML=''; lowerList.innerHTML='';
   let changes=[], upperTotal=0, upperBase=0, lowerTotal=0, lowerBase=0, heroSeries=[], upperSeries=[], lowerSeries=[];
   PROGRAM.forEach(day=>{
-    const gh=document.createElement('div'); gh.className='groupheader'; gh.textContent=`${day.name} · ${day.sub}`; list.appendChild(gh);
+    const targetList=day.name==='Upper'?upperList:day.name==='Lower'?lowerList:null;
     day.exercises.forEach(ex=>{
       const base=baselineFor(day.id,ex), cur=currentFor(day.id,ex), h=hist[histKey(day.id,ex)]||[];
       const p=h.length?pct(base,cur):null; if(p!==null) changes.push(p);
@@ -1530,9 +1541,13 @@ function renderStrength(){
       const breaks=plateauBreakIdx(h); const milestoneIdx=breaks.length?breaks[breaks.length-1]+1:null;
       const row=document.createElement('div'); row.className='srow';
       row.innerHTML=`<div><div class="sn">${ex.name}${plat?'<span class="badge plateau">plateau</span>':''}</div><div class="sd">best set ${bestTxt} · ${h.length?h.length+' session'+(h.length>1?'s':'')+' logged':'your starting numbers'}</div></div><div class="sp ${cls}">${p===null?'start':fmtPct(p)}</div>${sparkline([base,...h.map(x=>x.e1rm)],cls==='down'?'var(--amber)':'var(--green)',milestoneIdx)}`;
-      list.appendChild(row);
+      if(targetList) targetList.appendChild(row);
     });
   });
+  document.getElementById('upperStrList').style.display=strCardOpen.upper?'block':'none';
+  document.getElementById('lowerStrList').style.display=strCardOpen.lower?'block':'none';
+  document.getElementById('upperStrHint').textContent=strCardOpen.upper?'hide exercises':'see exercises';
+  document.getElementById('lowerStrHint').textContent=strCardOpen.lower?'hide exercises':'see exercises';
   const avg=changes.length?changes.reduce((a,b)=>a+b,0)/changes.length:null;
   const upperP=pct(upperBase,upperTotal), lowerP=pct(lowerBase,lowerTotal);
 
@@ -1574,6 +1589,8 @@ function renderStrength(){
   const bwRate=bwWeeklyRate();
   bwNote.innerHTML=(bwRate!==null && bwRate<=-1)?`<div class="plateau-tip" style="margin-top:10px">Losing about ${Math.abs(bwRate).toFixed(1)}% of body weight a week — research on rate of loss suggests staying closer to 0.5-1%/week better preserves strength and muscle. Fine if it's a short intentional push; worth easing off if it's not.</div>`:'';
 }
+document.getElementById('upperStrCard').onclick=()=>{ strCardOpen.upper=!strCardOpen.upper; renderStrength(); };
+document.getElementById('lowerStrCard').onclick=()=>{ strCardOpen.lower=!strCardOpen.lower; renderStrength(); };
 document.getElementById('bwLog').onclick=async()=>{ const raw=parseFloat(document.getElementById('bwInput').value); if(!raw){ showToast('enter a weight'); return; } bodyweight.push({t:Date.now(),w:storeBW(raw)}); await sset('bodyweight',bodyweight); document.getElementById('bwInput').value=''; showToast('body weight logged'); renderStrength(); updateBwUI(); };
 
 // ---------- more: settings, editor, data ----------
