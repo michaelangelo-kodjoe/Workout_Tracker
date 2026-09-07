@@ -1888,6 +1888,9 @@ if('serviceWorker' in navigator) window.addEventListener('load',()=>{
   const hadController=!!navigator.serviceWorker.controller; // false on a first-ever install — nothing to "update" from yet
   navigator.serviceWorker.register('sw.js').then(reg=>{
     setInterval(()=>reg.update().catch(()=>{}), 60*60*1000); // catch updates during long-lived sessions, not just fresh loads
+    // reopening an installed PWA usually resumes a suspended tab rather than firing a fresh 'load' —
+    // the interval above won't have ticked yet either if it was backgrounded, so check right away too
+    document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') reg.update().catch(()=>{}); });
   }).catch(()=>{});
   navigator.serviceWorker.addEventListener('controllerchange',()=>{
     if(hadController) document.getElementById('updateBanner').style.display='flex';
