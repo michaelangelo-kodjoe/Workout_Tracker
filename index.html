@@ -17,6 +17,7 @@
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Georgia','Iowan Old Style',serif;min-height:100vh;}
   button,input,textarea,select{font-family:'Menlo','SF Mono',monospace;}
   header{position:sticky;top:0;z-index:10;background:var(--bg);padding:calc(14px + env(safe-area-inset-top)) 18px 10px;border-bottom:1px solid var(--line);}
+  .header-inner{max-width:560px;margin:0 auto;}
   .title-row{display:flex;align-items:center;justify-content:space-between;}
   h1{font-size:22px;margin:0;font-weight:normal;letter-spacing:.3px;}
   .rhythm{display:flex;align-items:center;gap:8px;}
@@ -47,9 +48,9 @@
   .recov-score b{font-size:26px;color:var(--green);display:block;line-height:1;}
   .recov-sub{font-size:11px;color:var(--text-dim);margin-top:8px;line-height:1.5;position:relative;text-align:center;}
   .figures{display:flex;justify-content:space-around;gap:8px;}
-  .figures svg{height:310px;width:auto;}
+  .figures svg{width:100%;max-width:154px;height:auto;max-height:310px;}
   .figures .cap{text-align:center;font-size:10px;color:var(--text-dim);margin-top:2px;}
-  .figures .fig{display:flex;flex-direction:column;align-items:center;}
+  .figures .fig{display:flex;flex-direction:column;align-items:center;flex:1 1 0;min-width:0;}
   .muscle{stroke:#101216;stroke-width:1.6;stroke-linejoin:round;transition:fill .6s;}
   .skin{fill:#3b404b;stroke:#101216;stroke-width:1.6;stroke-linejoin:round;}
   .detail{fill:none;stroke:#101216;stroke-width:1.1;stroke-linecap:round;opacity:.7;}
@@ -256,7 +257,7 @@
 </style>
 </head>
 <body>
-<header>
+<header><div class="header-inner">
   <div class="banner info" id="updateBanner" style="display:none"><span>A new version of Lift Log is ready.</span><span class="linkbtn" id="updateBannerBtn">refresh now</span></div>
   <div class="title-row"><h1>Lift Log</h1>
     <div class="rhythm">
@@ -277,7 +278,7 @@
     <span class="viewtab" data-v="more">Settings</span>
   </div>
   <div class="daytabs" id="dayTabs" style="display:none"></div>
-</header>
+</div></header>
 
 <main>
   <section id="homeView">
@@ -976,17 +977,27 @@ document.getElementById('tPlus').onclick=()=>{ timer.end+=30000; timer.total+=30
 // ---------- recovery map ----------
 function recoveryProgress(m){ const r=recovery[m]; if(!r) return 1; return Math.min(1,Math.max(0,(Date.now()-r.start)/3600000/r.hours)); }
 function recovClass(p){ return p>=1?'m-ready':p>=0.5?'m-recovering':'m-worked'; }
+// minute-precision below an hour (so "58m left" reads accurately instead of a blanket "<1h"); whole hours
+// once there's more than ~10h left, since a to-the-minute countdown stops being meaningful that far out.
+function fmtTimeLeft(h){
+  const totalMin=Math.max(1,Math.round(h*60));
+  if(totalMin<60) return totalMin+'m';
+  const hh=Math.floor(totalMin/60), mm=totalMin%60;
+  if(hh>=10) return hh+'h';
+  return mm?`${hh}h ${mm}m`:`${hh}h`;
+}
 const RECOV_RING_C=169.6;
 function renderBody(){
   document.querySelectorAll('.muscle').forEach(el=>{ el.classList.remove('m-ready','m-recovering','m-worked'); el.classList.add(recovClass(recoveryProgress(el.dataset.m))); });
 
   const allMuscles=Object.keys(RECOVERY_HOURS);
   const avg=allMuscles.reduce((sum,m)=>sum+Math.min(1,recoveryProgress(m)),0)/allMuscles.length;
-  const pct=Math.round(avg*100);
+  const active=allMuscles.filter(m=>recoveryProgress(m)<1).sort((a,b)=>recoveryProgress(a)-recoveryProgress(b));
+  // a lagging muscle can be such a small share of the average that it rounds up to 100 anyway —
+  // never show "100%" while something is still listed as recovering below.
+  const pct=active.length?Math.min(99,Math.round(avg*100)):100;
   document.getElementById('recovPct').textContent=pct+'%';
   document.getElementById('recovRingArc').style.strokeDashoffset=(RECOV_RING_C*(1-avg)).toFixed(1);
-
-  const active=allMuscles.filter(m=>recoveryProgress(m)<1).sort((a,b)=>recoveryProgress(a)-recoveryProgress(b));
   const sub=document.getElementById('recovSub'), hint=document.getElementById('tapHint'), list=document.getElementById('recovList'), toggle=document.getElementById('recovDetailToggle');
 
   if(!active.length){
@@ -1002,9 +1013,9 @@ function renderBody(){
   const readyNames=allMuscles.filter(m=>!active.includes(m)).map(m=>RECOVERY_LABEL[m]);
   const readyTxt=readyNames.length?`${readyNames.slice(0,3).join(', ')}${readyNames.length>3?' and more':''} ${readyNames.length===1?'is':'are'} fully recovered. `:'';
   sub.textContent=`${readyTxt}${RECOVERY_LABEL[worst]} is still coming back from ${day} — light work only.`;
-  hint.innerHTML=`<b>${RECOVERY_LABEL[worst]}</b> ready in ${leftH<1?'<1':Math.ceil(leftH)}h`;
+  hint.innerHTML=`<b>${RECOVERY_LABEL[worst]}</b> ready in ${fmtTimeLeft(leftH)}`;
 
-  list.innerHTML=active.map(m=>{ const r=recovery[m]; const left=Math.max(0,r.hours-(Date.now()-r.start)/3600000); return `<b>${RECOVERY_LABEL[m]}</b> ${Math.round(recoveryProgress(m)*100)}% · ~${left<1?'<1':Math.ceil(left)}h left`; }).join('<br>');
+  list.innerHTML=active.map(m=>{ const r=recovery[m]; const left=Math.max(0,r.hours-(Date.now()-r.start)/3600000); return `<b>${RECOVERY_LABEL[m]}</b> ${Math.round(recoveryProgress(m)*100)}% · ~${fmtTimeLeft(left)} left`; }).join('<br>');
 }
 document.getElementById('recovDetailToggle').onclick=()=>{
   const l=document.getElementById('recovList'), t=document.getElementById('recovDetailToggle');
@@ -1079,7 +1090,7 @@ document.getElementById('cardioSuggestBg').onclick=closeCardioSuggest;
 function showFatigueWarning(day,conflicts,onProceed){
   document.getElementById('fatigueSub').textContent=`Switching to ${day.name} ${day.sub} instead of your suggested day`;
   const note=`Training a muscle again before it's recovered means fewer quality reps at your working weight, faster fatigue within the set, and — if it becomes a pattern — a higher risk of strain. Muscle rebuilds stronger during rest, not just during the lift, which is why these windows exist.`;
-  const rows=conflicts.map(c=>`<div class="edrow"><div><div>${RECOVERY_LABEL[c.m]}</div><div class="m">${c.pct}% recovered · ~${c.left<1?'<1':Math.ceil(c.left)}h left</div></div></div>`).join('');
+  const rows=conflicts.map(c=>`<div class="edrow"><div><div>${RECOVERY_LABEL[c.m]}</div><div class="m">${c.pct}% recovered · ~${fmtTimeLeft(c.left)} left</div></div></div>`).join('');
   document.getElementById('fatigueList').innerHTML=`<div class="plateau-tip" style="margin-bottom:4px">${note}</div>${rows}`;
   document.getElementById('fatigueBg').classList.add('on'); document.getElementById('fatigueSheet').classList.add('on');
   document.getElementById('fatigueProceed').onclick=()=>{ closeFatigue(); onProceed(); };
