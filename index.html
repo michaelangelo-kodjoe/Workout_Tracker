@@ -1166,18 +1166,21 @@ function render(){
     if(ex.group!==lastGroup){ const gh=document.createElement('div'); gh.className='groupheader'; gh.textContent=ex.group; list.appendChild(gh); lastGroup=ex.group; }
     const state=ensureState(ex); const complete=state.sets.every(s=>s.done); if(!complete) allComplete=false;
     const saved=lastSessionData[currentDay]&&lastSessionData[currentDay][ex.name];
-    const sug=suggestWeight(ex,saved); const sugTxt=sug===null?'log body weight in Strength to use here':sug===-1?'find a weight for the rep range':(dispWeight(sug)+' '+unitLabel()+(ex.start===0?' bodyweight':'')+(isDeloadActive()?' · deload':''));
+    const sug=suggestWeight(ex,saved);
+    // a bodyweight-loaded exercise already shows its (locked) weight in the set rows below —
+    // repeating "try 110 lb bodyweight" up here just restates the same number.
+    const sugTxt=(ex.start===0&&typeof sug==='number')?'':(sug===null?'log body weight in Strength to use here':sug===-1?'find a weight for the rep range':(dispWeight(sug)+' '+unitLabel()+(isDeloadActive()?' · deload':'')));
     const cur=currentFor(currentDay,ex), base=baselineFor(currentDay,ex);
     const lvl=(base&&cur)?Math.round(cur/base*100):0; const lvlTxt=lvl&&lvl!==100?` <span class="e1rm">· strength ${lvl}%</span>`:'';
     const plat=isPlateau(currentDay,ex);
     let deltaPill='';
-    if(typeof sug==='number' && saved && saved.sets){
+    if(ex.start!==0 && typeof sug==='number' && saved && saved.sets){
       const loggedLast=saved.sets.filter(s=>s.w!==''&&s.r!=='');
       if(loggedLast.length){ const lastW=Math.max(...loggedLast.map(s=>parseFloat(s.w)||0)); if(lastW && sug>lastW) deltaPill=`<div class="delta-pill">↑ +${Math.round((dispWeight(sug)-dispWeight(lastW))*10)/10} ${unitLabel()} vs last time</div>`; }
     }
     const card=document.createElement('div'); card.className='exercise'+(state.open?' open':'')+(complete?' complete':'');
     const head=document.createElement('div'); head.className='ex-head';
-    head.innerHTML=`<div><div class="ex-name">${ex.name}${plat?'<span class="badge plateau">plateau</span>':''}</div><div class="ex-target">${ex.target} <span class="sug">· try ${sugTxt}</span>${lvlTxt}</div>${deltaPill}</div><div class="ex-check">${complete?'✓':''}</div>`;
+    head.innerHTML=`<div><div class="ex-name">${ex.name}${plat?'<span class="badge plateau">plateau</span>':''}</div><div class="ex-target">${ex.target}${sugTxt?` <span class="sug">· try ${sugTxt}</span>`:''}${lvlTxt}</div>${deltaPill}</div><div class="ex-check">${complete?'✓':''}</div>`;
     head.onclick=()=>{ state.open=!state.open; render(); }; card.appendChild(head);
 
     const body=document.createElement('div'); body.className='ex-body';
