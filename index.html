@@ -265,6 +265,25 @@
   .heat-legend{display:flex;justify-content:flex-end;align-items:center;gap:4px;margin-top:10px;font-size:9px;color:var(--text-dim);}
   .heat-legend i{width:9px;height:9px;border-radius:2px;display:inline-block;background:var(--line);}
   .heat-legend i.h4{background:var(--accent);}
+
+  /* ---------- history calendar ---------- */
+  .cal-wrap{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:14px;margin-bottom:14px;}
+  .cal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .cal-title{font-size:13px;}
+  .cal-nav{color:var(--text-dim);cursor:pointer;font-size:16px;padding:0 8px;line-height:1;}
+  .cal-nav.dis{visibility:hidden;}
+  .cal-dow{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:9px;color:var(--text-dim);margin-bottom:5px;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+  .cal-cell{aspect-ratio:1;border-radius:3px;background:var(--panel-raised);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:10px;color:var(--text-dim);}
+  .cal-cell.pad{background:transparent;}
+  .cal-cell.today{box-shadow:inset 0 0 0 1px var(--accent);color:var(--text);}
+  .cal-dots{display:flex;gap:2px;}
+  .cal-dot{width:5px;height:5px;border-radius:50%;display:inline-block;}
+  .cal-dot.upper{background:var(--accent);}
+  .cal-dot.lower{background:var(--light);}
+  .cal-dot.cardio{background:var(--green);}
+  .cal-legend{display:flex;justify-content:center;gap:14px;margin-top:10px;font-size:9px;color:var(--text-dim);}
+  .cal-legend span{display:inline-flex;align-items:center;gap:4px;}
 </style>
 </head>
 <body>
@@ -435,6 +454,12 @@
       <div class="heat-head"><div class="heat-title">Training rhythm</div><div class="heat-stat" id="heatStat"></div></div>
       <div class="heat-scroll"><div class="heat-grid" id="heatGrid"></div></div>
       <div class="heat-legend">less<i></i><i class="h1"></i><i class="h2"></i><i class="h3"></i><i class="h4"></i>more</div>
+    </div>
+    <div class="cal-wrap">
+      <div class="cal-head"><span class="cal-nav" id="calPrev">‹</span><div class="cal-title" id="calTitle">—</div><span class="cal-nav" id="calNext">›</span></div>
+      <div class="cal-dow"><i>S</i><i>M</i><i>T</i><i>W</i><i>T</i><i>F</i><i>S</i></div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-legend"><span><i class="cal-dot upper"></i>Upper</span><span><i class="cal-dot lower"></i>Lower</span><span><i class="cal-dot cardio"></i>Cardio</span></div>
     </div>
     <div class="stats2" id="histStats"></div>
     <div id="sessList"></div>
@@ -1054,8 +1079,9 @@ document.getElementById('recovDetailToggle').onclick=()=>{
 };
 
 // ---------- log view ----------
+function weekStart(){ const d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-d.getDay()); return d.getTime(); }
 function renderHeaderStats(){
-  const week=Date.now()-7*864e5;
+  const week=weekStart();
   const thisWeek=sessions.filter(s=>!s.isCardio && s.t>=week).length;
   const c=75.4;
   document.getElementById('weekRingArc').style.strokeDashoffset=(c*(1-Math.min(1,thisWeek/4))).toFixed(1);
@@ -1505,8 +1531,37 @@ function buildHeatmap(){
   }
   document.getElementById('heatStat').innerHTML=`<b>${count}</b> sessions · 14 weeks`;
 }
+let calMonthOffset=0;
+function renderCalendar(){
+  const base=new Date(); base.setDate(1); base.setHours(0,0,0,0); base.setMonth(base.getMonth()+calMonthOffset);
+  const year=base.getFullYear(), month=base.getMonth();
+  document.getElementById('calTitle').textContent=base.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+  document.getElementById('calNext').classList.toggle('dis',calMonthOffset>=0);
+  const firstDow=base.getDay(), daysInMonth=new Date(year,month+1,0).getDate();
+  const byDay={};
+  sessions.forEach(s=>{
+    const d=new Date(s.t);
+    if(d.getFullYear()!==year||d.getMonth()!==month) return;
+    const type=s.isCardio?'cardio':(s.dayName==='Upper'?'upper':s.dayName==='Lower'?'lower':null);
+    if(!type) return;
+    (byDay[d.getDate()]=byDay[d.getDate()]||new Set()).add(type);
+  });
+  const grid=document.getElementById('calGrid'); grid.innerHTML='';
+  for(let i=0;i<firstDow;i++){ const pad=document.createElement('div'); pad.className='cal-cell pad'; grid.appendChild(pad); }
+  const today=new Date();
+  for(let day=1;day<=daysInMonth;day++){
+    const cell=document.createElement('div'); cell.className='cal-cell';
+    if(today.getFullYear()===year && today.getMonth()===month && today.getDate()===day) cell.classList.add('today');
+    const types=['upper','lower','cardio'].filter(t=>byDay[day]&&byDay[day].has(t));
+    cell.innerHTML=`<span>${day}</span>${types.length?`<div class="cal-dots">${types.map(t=>`<i class="cal-dot ${t}"></i>`).join('')}</div>`:''}`;
+    grid.appendChild(cell);
+  }
+}
+document.getElementById('calPrev').onclick=()=>{ calMonthOffset--; renderCalendar(); };
+document.getElementById('calNext').onclick=()=>{ if(calMonthOffset<0){ calMonthOffset++; renderCalendar(); } };
 function renderHistory(){
   buildHeatmap();
+  renderCalendar();
   const st=document.getElementById('histStats'), list=document.getElementById('sessList'); list.innerHTML='';
   const week=Date.now()-7*864e5, month=Date.now()-30*864e5;
   const lifts=sessions.filter(s=>!s.isCardio), cardio=sessions.filter(s=>s.isCardio);
