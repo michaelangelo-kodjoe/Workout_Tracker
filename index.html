@@ -1352,7 +1352,7 @@ async function finishSession(){
   const topPR=prCandidates.length?prCandidates.sort((a,b)=>b.pct-a.pct)[0]:null;
   const rhythmCount=sessions.filter(s=>!s.isCardio && s.t>=now-7*864e5).length;
   showCelebration({day,worked:worked.length,nsets,vol:Math.round(vol),durationMin,pr:topPR,rhythmCount});
-  await loadDay(currentDay);
+  await loadDay(suggestedDayId());
   updateDeloadUI();
   if(settings.autoBackup && backupDue()) setTimeout(()=>doExport(true), 1200); else updateBackupUI();
 }
