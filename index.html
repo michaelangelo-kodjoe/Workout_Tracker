@@ -628,7 +628,7 @@ const store = {
     });
     else this.mem[k]=v; }catch(e){ console.error(e); } }
 };
-const KEYS = ['lastBackup','program','recovery','hist','sessions','notes','bodyweight','settings','meta:sessionCount','today:d1','today:d2','today:d3','today:d4','last:d1','last:d2','last:d3','last:d4','lastDeload','deloadStart'];
+const KEYS = ['lastBackup','program','recovery','familiarity','hist','sessions','notes','bodyweight','settings','meta:sessionCount','today:d1','today:d2','today:d3','today:d4','last:d1','last:d2','last:d3','last:d4','lastDeload','deloadStart'];
 const RECOVERY_HOURS = { 'chest-upper':72, 'chest-mid':72, 'chest-lower':72, 'back-lats':72, 'back-traps':72, quads:72, hamstrings:72, glutes:72, lowerback:72, shoulders:48, biceps:48, 'triceps-lateral':48, 'triceps-long':48, forearms:48, 'calves-gastroc':48, 'calves-soleus':48, abs:36 };
 const MUSCLE_LABEL = { chest:'Chest', back:'Back', quads:'Quads', hamstrings:'Hamstrings', glutes:'Glutes', lowerback:'Lower back', shoulders:'Shoulders', biceps:'Biceps', triceps:'Triceps', forearms:'Forearms', calves:'Calves', abs:'Core' };
 // recovery-tracking display only (breakdown list, fatigue-conflict sheet) — kept separate from MUSCLE_LABEL
@@ -644,6 +644,24 @@ function recoveryKey(ex,m){
   if(m==='calves') return ex.region==='soleus'?'calves-soleus':'calves-gastroc';
   if(m==='triceps') return ex.region==='overhead'?'triceps-long':'triceps-lateral';
   return m;
+}
+// repeated-bout effect: a muscle trained repeatedly with a familiar stimulus needs measurably less recovery
+// than a first-time exposure (DOMS/recovery need tracks unfamiliarity, not a fixed per-muscle timer) — so a
+// muscle's actual recovery window shrinks as real exposures build up, and resets if training lapses long
+// enough that the adaptation would have faded. familiarity[muscleKey] = {count, last} lives alongside recovery.
+function familiarityMultiplier(count){
+  if(count>=10) return 0.7;
+  if(count>=6) return 0.8;
+  if(count>=3) return 0.9;
+  return 1.0;
+}
+const FAM_HALVE_DAYS=21, FAM_RESET_DAYS=42;
+function decayedFamiliarityCount(m,now){
+  const f=familiarity[m]; if(!f) return 0;
+  const days=(now-f.last)/864e5;
+  if(days>=FAM_RESET_DAYS) return 0;
+  if(days>=FAM_HALVE_DAYS) return Math.floor(f.count/2);
+  return f.count;
 }
 
 // program template: four fixed days, each a list of slots (muscle group + rep target). No exercise names, weights or
@@ -833,7 +851,7 @@ const EQUIP_LABEL={barbell:'barbell',dumbbell:'dumbbell',kettlebell:'kettlebell'
 // full exercise library (name/equip/muscles/cue), sourced from a third-party open dataset — no set/rep targets of its own.
 // offered as swap candidates via openSwap(), and as a last-resort fill in the builder when no curated pick passes the equipment filter
 const FULL_CATALOG=JSON.parse(document.getElementById('fullCatalog').textContent);
-let currentDay='d1', todayData={}, lastSessionData={}, sessionCount=0, recovery={}, hist={}, sessions=[], notes={}, bodyweight=[], settings={rest:90, auto:true, autoBackup:true, smartRest:true, unit:'lb', autoRotate:true, rotateEvery:2, equipFilter:EQUIP_TYPES.slice(), name:'', onboarded:false}, view='home';
+let currentDay='d1', todayData={}, lastSessionData={}, sessionCount=0, recovery={}, familiarity={}, hist={}, sessions=[], notes={}, bodyweight=[], settings={rest:90, auto:true, autoBackup:true, smartRest:true, unit:'lb', autoRotate:true, rotateEvery:2, equipFilter:EQUIP_TYPES.slice(), name:'', onboarded:false}, view='home';
 let dayStartTimes={};
 let pendingRotationToast=null; // queued by finishSession() when an auto-rotation fires; shown once the celebration screen closes, since the toast would otherwise render underneath its full-screen overlay
 let lastDeload=0, deloadStart=0;
@@ -1347,8 +1365,15 @@ async function finishSession(){
   // recovery, scaled by how much of the planned work each muscle actually got
   const tally={};
   day.exercises.forEach(ex=>{ const s=todayData[ex.name]; if(!s) return; const done=s.sets.filter(isLogged).length, total=s.sets.length; ex.m.forEach(m=>{ const rk=recoveryKey(ex,m); tally[rk]=tally[rk]||{d:0,t:0}; tally[rk].d+=done; tally[rk].t+=total; }); });
-  Object.keys(tally).forEach(m=>{ const f=tally[m].t?tally[m].d/tally[m].t:0; if(f<0.2) return; const hours=Math.round(RECOVERY_HOURS[m]*day.factor*f); const ex=recovery[m]; if(!ex||ex.start+ex.hours*3600000<now+hours*3600000) recovery[m]={start:now,hours}; });
+  Object.keys(tally).forEach(m=>{
+    const f=tally[m].t?tally[m].d/tally[m].t:0; if(f<0.2) return;
+    const priorCount=decayedFamiliarityCount(m,now);
+    const hours=Math.round(RECOVERY_HOURS[m]*day.factor*f*familiarityMultiplier(priorCount));
+    const ex=recovery[m]; if(!ex||ex.start+ex.hours*3600000<now+hours*3600000) recovery[m]={start:now,hours};
+    familiarity[m]={count:priorCount+1,last:now};
+  });
   await sset('recovery',recovery);
+  await sset('familiarity',familiarity);
 
   // strength history + session record
   let vol=0, nsets=0; const exRec={}; const prCandidates=[];
@@ -1848,6 +1873,10 @@ async function doMergeImport(d){
   Object.keys(importedRecovery).forEach(m=>{ const inc=importedRecovery[m]; if(!recovery[m]||inc.start>recovery[m].start) recovery[m]=inc; });
   await sset('recovery',recovery);
 
+  const importedFamiliarity=d.familiarity||{};
+  Object.keys(importedFamiliarity).forEach(m=>{ const inc=importedFamiliarity[m]; if(!familiarity[m]||inc.last>familiarity[m].last) familiarity[m]=inc; });
+  await sset('familiarity',familiarity);
+
   const importedNotes=d.notes||{};
   Object.keys(importedNotes).forEach(k=>{ if(!(k in notes)) notes[k]=importedNotes[k]; });
   await sset('notes',notes);
@@ -2006,7 +2035,7 @@ document.getElementById('resetLink').onclick=async()=>{ todayData={}; await sset
 (async function init(){
   await store.init();
   sessionCount=(await sget('meta:sessionCount'))||0; document.getElementById('sessionCount').textContent=sessionCount;
-  recovery=(await sget('recovery'))||{}; hist=(await sget('hist'))||{}; sessions=(await sget('sessions'))||[]; notes=(await sget('notes'))||{}; bodyweight=(await sget('bodyweight'))||[];
+  recovery=(await sget('recovery'))||{}; familiarity=(await sget('familiarity'))||{}; hist=(await sget('hist'))||{}; sessions=(await sget('sessions'))||[]; notes=(await sget('notes'))||{}; bodyweight=(await sget('bodyweight'))||[];
   settings=Object.assign({rest:90,auto:true,autoBackup:true,smartRest:true,unit:'lb',autoRotate:true,rotateEvery:2,equipFilter:EQUIP_TYPES.slice(),name:'',onboarded:false},(await sget('settings'))||{});
   lastBackup=(await sget('lastBackup'))||0; updateBackupUI();
   lastDeload=(await sget('lastDeload'))||0; deloadStart=(await sget('deloadStart'))||0; updateDeloadUI(); updateBwUI();
