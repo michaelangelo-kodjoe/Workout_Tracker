@@ -1099,7 +1099,16 @@ async function loadDay(d){
 }
 function ensureState(ex){ if(!todayData[ex.name]) todayData[ex.name]={open:false,sets:Array.from({length:setsCountFor(ex)},()=>({w:ex.start===0?(latestBW()??''):'',r:'',done:false,rir:null}))}; return todayData[ex.name]; }
 function touchDayStart(){ if(!dayStartTimes[currentDay]) dayStartTimes[currentDay]=Date.now(); }
-function dayMusclesRecovered(day){ return day.exercises.every(ex=>ex.m.every(m=>recoveryProgress(recoveryKey(ex,m))>=1)); }
+// only checks each exercise's own primary muscle (ex.key), not every secondary muscle it happens to also touch
+// (ex.m) — forearms/abs/lowerback get hit as a secondary target by all sorts of pulling and hinging exercises
+// on both upper and lower days, so checking those too meant an unrelated day's forearms wrist-curl slot could
+// look "not recovered" just because today's deadlifts happened to tax forearms as a side effect.
+// forearms/abs/calves are excluded even as a *primary* slot: they're the fast-recovering accessory muscles
+// that real programs also train near-daily (RECOVERY_HOURS gives them 36-48h vs. 72h for the big groups) and,
+// precisely because they're hit as a secondary mover in so many unrelated exercises, one of them lagging
+// shouldn't veto a whole day's worth of chest/back/shoulders/legs work in favor of cardio.
+const CARDIO_GATE_SKIP=new Set(['forearms','abs','calves-gastroc','calves-soleus']);
+function dayMusclesRecovered(day){ return day.exercises.every(ex=>{ const k=recoveryKey(ex,ex.key); return CARDIO_GATE_SKIP.has(k)||recoveryProgress(k)>=1; }); }
 // cardio gets suggested for one of two independent reasons, not a fixed "two lifts in a row" count (which broke
 // down across week boundaries and for once-a-week lifters): (1) the next lift day's own muscles genuinely
 // aren't recovered yet — a real back-to-back conflict regardless of calendar day/week, or (2) for someone who
