@@ -1108,7 +1108,16 @@ function touchDayStart(){ if(!dayStartTimes[currentDay]) dayStartTimes[currentDa
 // precisely because they're hit as a secondary mover in so many unrelated exercises, one of them lagging
 // shouldn't veto a whole day's worth of chest/back/shoulders/legs work in favor of cardio.
 const CARDIO_GATE_SKIP=new Set(['forearms','abs','calves-gastroc','calves-soleus']);
-function dayMusclesRecovered(day){ return day.exercises.every(ex=>{ const k=recoveryKey(ex,ex.key); return CARDIO_GATE_SKIP.has(k)||recoveryProgress(k)>=1; }); }
+// averaged across the day's unique gated muscles rather than requiring every single one at 100% — one lagging
+// muscle among many otherwise-fresh ones shouldn't veto a whole day's worth of training. 80% mirrors "good
+// enough to train" rather than "perfectly rested," which is closer to how real programming works anyway.
+function dayMusclesRecovered(day){
+  const keys=new Set();
+  day.exercises.forEach(ex=>{ const k=recoveryKey(ex,ex.key); if(!CARDIO_GATE_SKIP.has(k)) keys.add(k); });
+  if(!keys.size) return true;
+  const avg=[...keys].reduce((sum,k)=>sum+recoveryProgress(k),0)/keys.size;
+  return avg>=0.8;
+}
 // cardio gets suggested for one of two independent reasons, not a fixed "two lifts in a row" count (which broke
 // down across week boundaries and for once-a-week lifters): (1) the next lift day's own muscles genuinely
 // aren't recovered yet — a real back-to-back conflict regardless of calendar day/week, or (2) for someone who
