@@ -663,6 +663,17 @@ function decayedFamiliarityCount(m,now){
   if(days>=FAM_HALVE_DAYS) return Math.floor(f.count/2);
   return f.count;
 }
+// proximity-to-failure raises acute fatigue/repair demand independent of day-factor or volume completed —
+// average logged RIR (0=failure .. 4="4+" in reserve) nudges the window around a neutral RIR~2-3 band,
+// the effort level RECOVERY_HOURS's static defaults implicitly assume. Smaller swing than familiarity's
+// since RIR is a noisier, optional, single-session signal and shouldn't dominate the other two factors.
+function rirMultiplier(avg){
+  if(avg>=4) return 0.85;
+  if(avg>=3) return 0.925;
+  if(avg>=2) return 1.0;
+  if(avg>=1) return 1.075;
+  return 1.15;
+}
 
 // program template: four fixed days, each a list of slots (muscle group + rep target). No exercise names, weights or
 // history live here — a slot only names its recommended pick from the curated pool below, and buildProgram() resolves it.
@@ -1364,11 +1375,21 @@ async function finishSession(){
 
   // recovery, scaled by how much of the planned work each muscle actually got
   const tally={};
-  day.exercises.forEach(ex=>{ const s=todayData[ex.name]; if(!s) return; const done=s.sets.filter(isLogged).length, total=s.sets.length; ex.m.forEach(m=>{ const rk=recoveryKey(ex,m); tally[rk]=tally[rk]||{d:0,t:0}; tally[rk].d+=done; tally[rk].t+=total; }); });
+  day.exercises.forEach(ex=>{
+    const s=todayData[ex.name]; if(!s) return;
+    const loggedSets=s.sets.filter(isLogged);
+    const done=loggedSets.length, total=s.sets.length;
+    const rirVals=loggedSets.map(st=>st.rir).filter(v=>v!=null);
+    ex.m.forEach(m=>{ const rk=recoveryKey(ex,m); tally[rk]=tally[rk]||{d:0,t:0,rir:[]}; tally[rk].d+=done; tally[rk].t+=total; tally[rk].rir.push(...rirVals); });
+  });
   Object.keys(tally).forEach(m=>{
     const f=tally[m].t?tally[m].d/tally[m].t:0; if(f<0.2) return;
     const priorCount=decayedFamiliarityCount(m,now);
-    const hours=Math.round(RECOVERY_HOURS[m]*day.factor*f*familiarityMultiplier(priorCount));
+    const rirVals=tally[m].rir;
+    const rirAvg=rirVals.length?rirVals.reduce((a,b)=>a+b,0)/rirVals.length:null;
+    const rirMult=rirAvg==null?1.0:rirMultiplier(rirAvg);
+    const rawHours=RECOVERY_HOURS[m]*day.factor*f*familiarityMultiplier(priorCount)*rirMult;
+    const hours=Math.round(Math.min(RECOVERY_HOURS[m]*1.5, Math.max(RECOVERY_HOURS[m]*0.4, rawHours)));
     const ex=recovery[m]; if(!ex||ex.start+ex.hours*3600000<now+hours*3600000) recovery[m]={start:now,hours};
     familiarity[m]={count:priorCount+1,last:now};
   });
