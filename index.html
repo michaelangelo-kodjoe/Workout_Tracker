@@ -1102,9 +1102,10 @@ function touchDayStart(){ if(!dayStartTimes[currentDay]) dayStartTimes[currentDa
 function dayMusclesRecovered(day){ return day.exercises.every(ex=>ex.m.every(m=>recoveryProgress(recoveryKey(ex,m))>=1)); }
 // cardio gets suggested for one of two independent reasons, not a fixed "two lifts in a row" count (which broke
 // down across week boundaries and for once-a-week lifters): (1) the next lift day's own muscles genuinely
-// aren't recovered yet — a real back-to-back conflict regardless of calendar day/week, or (2) it's been a week
-// or more since the last logged cardio session (falling back to the very first session ever logged if cardio
-// has never been done), so infrequent lifters still get nudged toward conditioning occasionally.
+// aren't recovered yet — a real back-to-back conflict regardless of calendar day/week, or (2) for someone who
+// does use cardio tracking, it's been a week or more since their last logged cardio session. (2) only applies
+// once a cardio session has been logged at least once — otherwise it never clears without one, which isn't an
+// "occasional" nudge, it's a permanent override for anyone who simply doesn't track cardio in this app at all.
 function suggestedDayId(){
   const recent=[...sessions].sort((a,b)=>b.t-a.t);
   const lifts=recent.filter(s=>!s.isCardio);
@@ -1112,8 +1113,7 @@ function suggestedDayId(){
   const idx=PROGRAM.findIndex(d=>d.id===lifts[0].dayId);
   const nextDay=PROGRAM[idx<0?0:(idx+1)%PROGRAM.length];
   const lastCardio=recent.find(s=>s.isCardio);
-  const cardioBaseline=lastCardio?lastCardio.t:sessions[0].t;
-  const cardioStale=(Date.now()-cardioBaseline)>=7*864e5;
+  const cardioStale=!!lastCardio && (Date.now()-lastCardio.t)>=7*864e5;
   if(!dayMusclesRecovered(nextDay) || cardioStale) return 'cardio';
   return nextDay.id;
 }
