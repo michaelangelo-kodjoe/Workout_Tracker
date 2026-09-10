@@ -628,7 +628,8 @@ const store = {
     });
     else this.mem[k]=v; }catch(e){ console.error(e); } }
 };
-const KEYS = ['lastBackup','program','recovery','familiarity','hist','sessions','notes','bodyweight','settings','meta:sessionCount','today:d1','today:d2','today:d3','today:d4','last:d1','last:d2','last:d3','last:d4','lastDeload','deloadStart'];
+const KEYS = ['lastBackup','program','recovery','familiarity','recoveryLog','hist','sessions','notes','bodyweight','settings','meta:sessionCount','today:d1','today:d2','today:d3','today:d4','last:d1','last:d2','last:d3','last:d4','lastDeload','deloadStart'];
+const RECOVERY_LOG_CAP=2000;
 const RECOVERY_HOURS = { 'chest-upper':72, 'chest-mid':72, 'chest-lower':72, 'back-lats':72, 'back-traps':72, quads:72, hamstrings:72, glutes:72, lowerback:72, shoulders:48, biceps:48, 'triceps-lateral':48, 'triceps-long':48, forearms:48, 'calves-gastroc':48, 'calves-soleus':48, abs:36 };
 const MUSCLE_LABEL = { chest:'Chest', back:'Back', quads:'Quads', hamstrings:'Hamstrings', glutes:'Glutes', lowerback:'Lower back', shoulders:'Shoulders', biceps:'Biceps', triceps:'Triceps', forearms:'Forearms', calves:'Calves', abs:'Core' };
 // recovery-tracking display only (breakdown list, fatigue-conflict sheet) — kept separate from MUSCLE_LABEL
@@ -862,7 +863,7 @@ const EQUIP_LABEL={barbell:'barbell',dumbbell:'dumbbell',kettlebell:'kettlebell'
 // full exercise library (name/equip/muscles/cue), sourced from a third-party open dataset — no set/rep targets of its own.
 // offered as swap candidates via openSwap(), and as a last-resort fill in the builder when no curated pick passes the equipment filter
 const FULL_CATALOG=JSON.parse(document.getElementById('fullCatalog').textContent);
-let currentDay='d1', todayData={}, lastSessionData={}, sessionCount=0, recovery={}, familiarity={}, hist={}, sessions=[], notes={}, bodyweight=[], settings={rest:90, auto:true, autoBackup:true, smartRest:true, unit:'lb', autoRotate:true, rotateEvery:2, equipFilter:EQUIP_TYPES.slice(), name:'', onboarded:false}, view='home';
+let currentDay='d1', todayData={}, lastSessionData={}, sessionCount=0, recovery={}, familiarity={}, recoveryLog=[], hist={}, sessions=[], notes={}, bodyweight=[], settings={rest:90, auto:true, autoBackup:true, smartRest:true, unit:'lb', autoRotate:true, rotateEvery:2, equipFilter:EQUIP_TYPES.slice(), name:'', onboarded:false}, view='home';
 let dayStartTimes={};
 let pendingRotationToast=null; // queued by finishSession() when an auto-rotation fires; shown once the celebration screen closes, since the toast would otherwise render underneath its full-screen overlay
 let lastDeload=0, deloadStart=0;
@@ -1391,10 +1392,18 @@ async function finishSession(){
     const rawHours=RECOVERY_HOURS[m]*day.factor*f*familiarityMultiplier(priorCount)*rirMult;
     const hours=Math.round(Math.min(RECOVERY_HOURS[m]*1.5, Math.max(RECOVERY_HOURS[m]*0.4, rawHours)));
     const ex=recovery[m]; if(!ex||ex.start+ex.hours*3600000<now+hours*3600000) recovery[m]={start:now,hours};
+    // raw signal for a future empirical-recovery pass: the actual gap since this muscle was last trained is
+    // otherwise lost the instant familiarity[m].last gets overwritten below — everything else here (actual
+    // performance outcome) is already recoverable later by joining hist/sessions on this timestamp, so this
+    // is the one number worth capturing now rather than reconstructing after the fact.
+    const gapHours=familiarity[m]?Math.round((now-familiarity[m].last)/3600000):null;
+    recoveryLog.push({t:now,muscle:m,gapHours,rirAvg,completionFraction:Math.round(f*100)/100,dayFactor:day.factor});
+    if(recoveryLog.length>RECOVERY_LOG_CAP) recoveryLog.splice(0,recoveryLog.length-RECOVERY_LOG_CAP);
     familiarity[m]={count:priorCount+1,last:now};
   });
   await sset('recovery',recovery);
   await sset('familiarity',familiarity);
+  await sset('recoveryLog',recoveryLog);
 
   // strength history + session record
   let vol=0, nsets=0; const exRec={}; const prCandidates=[];
@@ -1898,6 +1907,14 @@ async function doMergeImport(d){
   Object.keys(importedFamiliarity).forEach(m=>{ const inc=importedFamiliarity[m]; if(!familiarity[m]||inc.last>familiarity[m].last) familiarity[m]=inc; });
   await sset('familiarity',familiarity);
 
+  // recoveryLog can have several entries sharing the same t (one per muscle from a single finished session),
+  // so dedupe on t+muscle rather than dedupeSortByT's t-only key, then re-apply the same cap used when logging.
+  const seenLog=new Set(); recoveryLog=[...recoveryLog, ...(d.recoveryLog||[])]
+    .sort((a,b)=>a.t-b.t)
+    .filter(e=>{ const k=e.t+':'+e.muscle; if(seenLog.has(k)) return false; seenLog.add(k); return true; });
+  if(recoveryLog.length>RECOVERY_LOG_CAP) recoveryLog=recoveryLog.slice(recoveryLog.length-RECOVERY_LOG_CAP);
+  await sset('recoveryLog',recoveryLog);
+
   const importedNotes=d.notes||{};
   Object.keys(importedNotes).forEach(k=>{ if(!(k in notes)) notes[k]=importedNotes[k]; });
   await sset('notes',notes);
@@ -2056,7 +2073,7 @@ document.getElementById('resetLink').onclick=async()=>{ todayData={}; await sset
 (async function init(){
   await store.init();
   sessionCount=(await sget('meta:sessionCount'))||0; document.getElementById('sessionCount').textContent=sessionCount;
-  recovery=(await sget('recovery'))||{}; familiarity=(await sget('familiarity'))||{}; hist=(await sget('hist'))||{}; sessions=(await sget('sessions'))||[]; notes=(await sget('notes'))||{}; bodyweight=(await sget('bodyweight'))||[];
+  recovery=(await sget('recovery'))||{}; familiarity=(await sget('familiarity'))||{}; recoveryLog=(await sget('recoveryLog'))||[]; hist=(await sget('hist'))||{}; sessions=(await sget('sessions'))||[]; notes=(await sget('notes'))||{}; bodyweight=(await sget('bodyweight'))||[];
   settings=Object.assign({rest:90,auto:true,autoBackup:true,smartRest:true,unit:'lb',autoRotate:true,rotateEvery:2,equipFilter:EQUIP_TYPES.slice(),name:'',onboarded:false},(await sget('settings'))||{});
   lastBackup=(await sget('lastBackup'))||0; updateBackupUI();
   lastDeload=(await sget('lastDeload'))||0; deloadStart=(await sget('deloadStart'))||0; updateDeloadUI(); updateBwUI();
