@@ -518,10 +518,13 @@
       <h3>Equipment & variety</h3>
       <div class="note-sm" style="margin-bottom:6px">Uncheck anything your gym doesn't have — swap alternatives and automatic rotation will only draw from what's left checked.</div>
       <div id="equipChks"></div>
-      <div class="row" style="margin-top:10px"><label class="chk"><input type="checkbox" id="autoRotateChk"> automatically swap in a fresh variation after repeated sessions on the same exercise</label></div>
+    </div>
+    <div class="card">
+      <h3>Session Type Frequency</h3>
+      <div class="row"><label class="chk"><input type="checkbox" id="autoRotateChk"> automatically swap in a fresh variation after repeated sessions on the same exercise</label></div>
       <div class="row" style="margin-top:6px" id="rotateEveryRow"><span style="font-size:12px;color:var(--text-dim)">after</span>
         <select class="in" id="rotateEverySel"><option value="2">2 sessions</option><option value="4">4 sessions</option><option value="6">6 sessions</option><option value="8">8 sessions</option></select></div>
-      <div class="note-sm" style="margin-top:6px">On by default now that there's a full library to draw from — turn it off above if you'd rather stick with the same exercises. When it fires, the exercise itself changes — no approval needed — cycling through a handful of alternatives before eventually coming back around to where it started. You'll get a heads-up the moment it happens, and the newly swapped-in exercise carries an "undo" link back to what it replaced.</div>
+      <div class="note-sm" style="margin-top:6px">Keeps your program from going stale by cycling in a different exercise for the same muscle on a schedule you set — you'll get a heads-up when it happens, with an "undo" back to what it replaced.</div>
     </div>
     <div class="card">
       <h3>Rest timer</h3>
