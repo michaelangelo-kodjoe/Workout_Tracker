@@ -1186,12 +1186,16 @@ function dayMusclesRecovered(day){
   const avg=[...keys].reduce((sum,k)=>sum+recoveryProgress(k),0)/keys.size;
   return avg>=0.8;
 }
-// cardio gets suggested for one of two independent reasons, not a fixed "two lifts in a row" count (which broke
-// down across week boundaries and for once-a-week lifters): (1) the next lift day's own muscles genuinely
-// aren't recovered yet — a real back-to-back conflict regardless of calendar day/week, or (2) for someone who
-// does use cardio tracking, it's been a week or more since their last logged cardio session. (2) only applies
-// once a cardio session has been logged at least once — otherwise it never clears without one, which isn't an
-// "occasional" nudge, it's a permanent override for anyone who simply doesn't track cardio in this app at all.
+// cardio gets suggested for one of three independent reasons: (1) two genuinely back-to-back sessions (within
+// BACK_TO_BACK_HOURS of each other) — deliberately NOT recovery-based, so it stays suggested regardless of how
+// fast the next day's specific muscles happen to bounce back, and only clears once a cardio session is actually
+// logged; bounded to a short window so it doesn't reintroduce the old bug where a once-a-week lifter's normal
+// weekly gap looked identical to "back-to-back." (2) the next lift day's own muscles genuinely aren't recovered
+// yet — a real conflict regardless of calendar day/week. (3) for someone who does use cardio tracking, it's been
+// a week or more since their last logged cardio session — only applies once cardio has been logged at least
+// once, otherwise it never clears without one, which isn't an "occasional" nudge, it's a permanent override for
+// anyone who simply doesn't track cardio in this app at all.
+const BACK_TO_BACK_HOURS=72;
 function suggestedDayId(){
   const recent=[...sessions].sort((a,b)=>b.t-a.t);
   const lifts=recent.filter(s=>!s.isCardio);
@@ -1200,7 +1204,8 @@ function suggestedDayId(){
   const nextDay=PROGRAM[idx<0?0:(idx+1)%PROGRAM.length];
   const lastCardio=recent.find(s=>s.isCardio);
   const cardioStale=!!lastCardio && (Date.now()-lastCardio.t)>=7*864e5;
-  if(!dayMusclesRecovered(nextDay) || cardioStale) return 'cardio';
+  const backToBack=recent.length>=2 && !recent[0].isCardio && !recent[1].isCardio && (recent[0].t-recent[1].t)<=BACK_TO_BACK_HOURS*3600000;
+  if(backToBack || !dayMusclesRecovered(nextDay) || cardioStale) return 'cardio';
   return nextDay.id;
 }
 function renderTabs(){ const w=document.getElementById('dayTabs'); w.innerHTML='';
@@ -1234,7 +1239,12 @@ function showCardioSuggestion(dayId, andThen){
   document.getElementById('cardioSuggestLift').textContent=`${day.name} ${day.sub} instead`;
   document.getElementById('cardioSuggestBg').classList.add('on'); document.getElementById('cardioSuggestSheet').classList.add('on');
   document.getElementById('cardioSuggestGo').onclick=async()=>{ closeCardioSuggest(); await loadDay('cardio'); if(andThen) andThen(); };
-  document.getElementById('cardioSuggestLift').onclick=async()=>{ closeCardioSuggest(); await loadDay(dayId); if(andThen) andThen(); };
+  document.getElementById('cardioSuggestLift').onclick=async()=>{
+    closeCardioSuggest();
+    const conflicts=dayFatigueConflicts(day);
+    if(conflicts.length){ showFatigueWarning(day,conflicts,async()=>{ await loadDay(dayId); if(andThen) andThen(); }); return; }
+    await loadDay(dayId); if(andThen) andThen();
+  };
 }
 function closeCardioSuggest(){ document.getElementById('cardioSuggestBg').classList.remove('on'); document.getElementById('cardioSuggestSheet').classList.remove('on'); }
 document.getElementById('cardioSuggestClose').onclick=closeCardioSuggest;
