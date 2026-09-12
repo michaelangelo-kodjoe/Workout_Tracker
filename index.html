@@ -1006,8 +1006,12 @@ function applyAutoRotation(day, workedNames){
     const exclude=new Set(inUse); exclude.delete(ex.name); exclude.add(anchor.name);
     const seq=[anchor, ...rotationPool(key, exclude)];
     if(seq.length<2) return; // nothing else to rotate into under current equipment settings
-    const nextStep=(ex.rotStep||0)+1;
+    // the pool is rebuilt each time, so the current exercise can sit at a different index than when it was
+    // picked — step past it rather than "rotating" a slot into the exercise it already holds
+    let nextStep=(ex.rotStep||0)+1;
+    if(seq[nextStep%seq.length].name===ex.name) nextStep++;
     const pick=seq[nextStep%seq.length];
+    if(pick.name===ex.name) return;
     const prevSnapshot={group:ex.group,key,name:ex.name,equip:ex.equip,target:ex.target,m:ex.m.slice(),cue:ex.cue,step:ex.step,start:ex.start,seed:ex.seed,region:ex.region,rotAnchor:anchor,rotStep:ex.rotStep||0};
     // target is a property of the day-slot (Heavy vs. Volume rep range), not of whichever exercise currently
     // fills it — always keep the slot's own target across a rotation. A curated ALTS pick carries its own
