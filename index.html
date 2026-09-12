@@ -1402,7 +1402,7 @@ function renderHome(){
         <div class="greet-sub">Two lifting sessions back to back — today's suggested as a lighter conditioning day.</div>
       </div>
       <button class="start-cta" id="arrivalStart">go to cardio log</button>
-      <div class="greet-sub" style="margin-top:-4px">Feeling fine? Tap a lift day to train it instead.</div>
+      <div class="greet-sub" style="margin-top:14px">Feeling fine? Tap a lift day to train it instead.</div>
       <div class="day-carousel">
         ${PROGRAM.map(d=>`<div class="day-card${d.id===currentDay?' today':''}" data-day="${d.id}">${d.id===currentDay?'<div class="ddot"></div>':''}<div class="dtag">${d.id===currentDay?'Today':''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub} · ${d.exercises.length} exercises</div></div>`).join('')}
       </div>`;
