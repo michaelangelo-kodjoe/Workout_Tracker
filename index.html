@@ -2251,6 +2251,17 @@ document.getElementById('resetLink').onclick=async()=>{ todayData={}; await sset
   if(custom&&Array.isArray(custom)&&custom.length===4) PROGRAM=custom;
   else if(sessionCount>0 || sessions.length>0){ await sset('program',PROGRAM); } // logged before a program was ever saved (the old fixed defaults): keep those exercises name-for-name so history keys still match, skip the builder
   else { needsBuild=true; applyEquipPicks(PROGRAM); }
+
+  // self-heal a slot's rep target against a past rotation-target bug: applyAutoRotation() used to take the
+  // newly-rotated-in exercise's own catalog target instead of keeping the slot's — rotAnchor.target (snapshotted
+  // once, before any rotation ever touched this slot) is the slot's real intended range. Idempotent: once
+  // corrected, target already matches and this is a no-op, so no migration flag is needed.
+  let programFixed=false;
+  PROGRAM.forEach(day=>day.exercises.forEach(ex=>{
+    if(ex.rotAnchor && ex.target!==ex.rotAnchor.target){ ex.target=ex.rotAnchor.target; programFixed=true; }
+  }));
+  if(programFixed) await sset('program',PROGRAM);
+
   await loadDay(suggestedDayId());
   if(currentDay==='cardio') setView('log'); // cardio is a decisive rotation call, not a day to choose from Home — go straight to logging it
   if(needsBuild && !settings.onboarded){ document.getElementById('onboardBg').classList.add('on'); renderOnboardStep(1); }
