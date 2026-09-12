@@ -655,7 +655,7 @@ const store = {
     });
     else this.mem[k]=v; }catch(e){ console.error(e); } }
 };
-const KEYS = ['lastBackup','program','recovery','familiarity','soreOverride','recoveryLog','hist','sessions','notes','lastByName','bodyweight','settings','meta:sessionCount','meta:histMigratedV2','today:d1','today:d2','today:d3','today:d4','last:d1','last:d2','last:d3','last:d4','lastDeload','deloadStart'];
+const KEYS = ['lastBackup','program','recovery','familiarity','soreOverride','recoveryLog','hist','sessions','notes','lastByName','bodyweight','settings','meta:sessionCount','meta:histMigratedV2','today:d1','today:d2','today:d3','today:d4','last:d1','last:d2','last:d3','last:d4','lastDeload','deloadStart','dayStart'];
 const RECOVERY_LOG_CAP=2000;
 const RECOVERY_HOURS = { 'chest-upper':72, 'chest-mid':72, 'chest-lower':72, 'back-lats':72, 'back-traps':72, quads:72, hamstrings:72, glutes:72, lowerback:72, 'delt-front':48, 'delt-lateral':48, 'delt-rear':48, biceps:48, brachialis:48, 'triceps-lateral':48, 'triceps-long':48, 'forearm-flexor':48, 'forearm-extensor':48, 'calves-gastroc':48, 'calves-soleus':48, abs:36, 'abs-upper':36, 'abs-lower':36, 'abs-obliques':36 };
 const MUSCLE_LABEL = { chest:'Chest', back:'Back', quads:'Quads', hamstrings:'Hamstrings', glutes:'Glutes', lowerback:'Lower back', shoulders:'Shoulders', biceps:'Biceps', triceps:'Triceps', forearms:'Forearms', calves:'Calves', abs:'Core' };
@@ -895,7 +895,7 @@ const EQUIP_LABEL={barbell:'barbell',dumbbell:'dumbbell',kettlebell:'kettlebell'
 // offered as swap candidates via openSwap(), and as a last-resort fill in the builder when no curated pick passes the equipment filter
 const FULL_CATALOG=JSON.parse(document.getElementById('fullCatalog').textContent);
 let currentDay='d1', todayData={}, lastSessionData={}, sessionCount=0, recovery={}, familiarity={}, soreOverride={}, recoveryLog=[], hist={}, sessions=[], notes={}, lastByName={}, bodyweight=[], settings={rest:90, auto:true, autoBackup:true, smartRest:true, unit:'lb', autoRotate:true, rotateEvery:2, equipFilter:EQUIP_TYPES.slice(), name:'', onboarded:false}, view='home';
-let dayStartTimes={};
+let dayStartTimes={}; // persisted under 'dayStart' so a reload mid-session doesn't reset the session duration to 1m
 let pendingRotationToast=null; // queued by finishSession() when an auto-rotation fires; shown once the celebration screen closes, since the toast would otherwise render underneath its full-screen overlay
 let lastDeload=0, deloadStart=0;
 
@@ -1230,7 +1230,7 @@ async function loadDay(d){
   renderHome();
 }
 function ensureState(ex){ if(!todayData[ex.name]) todayData[ex.name]={open:false,sets:Array.from({length:setsCountFor(ex)},()=>({w:ex.start===0?(latestBW()??''):'',r:'',done:false,rir:null}))}; return todayData[ex.name]; }
-function touchDayStart(){ if(!dayStartTimes[currentDay]) dayStartTimes[currentDay]=Date.now(); }
+function touchDayStart(){ if(!dayStartTimes[currentDay]){ dayStartTimes[currentDay]=Date.now(); sset('dayStart',dayStartTimes); } }
 // todayData persists to storage on every keystroke, so this survives a reload — unlike dayStartTimes, which is
 // in-memory only and would otherwise forget an in-progress session the moment the tab reloads.
 function sessionInProgress(){ return Object.values(todayData).some(s=>s.sets&&s.sets.some(x=>x.done||(x.w&&x.r))); }
@@ -1564,7 +1564,9 @@ async function finishSession(){
       ? `Heads up — ${rotated[0].from} just swapped to ${rotated[0].to} after ${settings.rotateEvery||2} sessions straight. Turn this off in Settings any time.`
       : `Heads up — ${rotated.length} exercises just swapped to fresh variations after ${settings.rotateEvery||2} sessions straight. Turn this off in Settings any time.`;
   }
-  const durationMin=Math.max(1,Math.round((now-(dayStartTimes[currentDay]||now))/60000)); delete dayStartTimes[currentDay];
+  // a start older than 12h is an abandoned draft that was picked back up, not a marathon session — treat as unknown
+  const started=dayStartTimes[currentDay]; const durationMin=Math.max(1,Math.round((now-((started&&now-started<12*3600000)?started:now))/60000));
+  delete dayStartTimes[currentDay]; await sset('dayStart',dayStartTimes);
   const topPR=prCandidates.length?prCandidates.sort((a,b)=>b.pct-a.pct)[0]:null;
   const rhythmCount=sessions.filter(s=>!s.isCardio && s.t>=now-7*864e5).length;
   showCelebration({day,worked:worked.length,nsets,vol:Math.round(vol),durationMin,pr:topPR,rhythmCount});
@@ -1634,7 +1636,7 @@ function renderOnboardStep(step){
       const f=e.target.files[0]; if(!f) return;
       try{
         const j=JSON.parse(await f.text()); if(j.app!=='liftlog') throw 0;
-        const replaceKeys=KEYS.filter(k=>!k.startsWith('today:'));
+        const replaceKeys=KEYS.filter(k=>!k.startsWith('today:')&&k!=='dayStart');
         for(const k of replaceKeys){ if(k in j.data) await sset(k,j.data[k]); }
         showToast('restored — reloading');
         setTimeout(()=>location.reload(),900);
@@ -2122,7 +2124,7 @@ document.getElementById('importFile').onchange=async e=>{
   try{
     const j=JSON.parse(await f.text()); if(j.app!=='liftlog') throw 0;
     if(importMode==='merge'){ await doMergeImport(j.data); showToast('merged — reloading'); }
-    else{ const replaceKeys=KEYS.filter(k=>!k.startsWith('today:')); for(const k of replaceKeys){ if(k in j.data) await sset(k,j.data[k]); } showToast('restored — reloading'); }
+    else{ const replaceKeys=KEYS.filter(k=>!k.startsWith('today:')&&k!=='dayStart'); for(const k of replaceKeys){ if(k in j.data) await sset(k,j.data[k]); } showToast('restored — reloading'); }
     setTimeout(()=>location.reload(),900);
   }catch(err){ showToast('that file is not a Lift Log backup'); }
   e.target.value='';
@@ -2251,11 +2253,12 @@ function setView(v){
 }
 document.querySelectorAll('.viewtab').forEach(t=>t.onclick=()=>setView(t.dataset.v));
 document.getElementById('finishBtn').onclick=finishSession;
-document.getElementById('resetLink').onclick=async()=>{ todayData={}; await sset('today:'+currentDay,{}); render(); };
+document.getElementById('resetLink').onclick=async()=>{ todayData={}; await sset('today:'+currentDay,{}); delete dayStartTimes[currentDay]; await sset('dayStart',dayStartTimes); render(); };
 
 (async function init(){
   await store.init();
   sessionCount=(await sget('meta:sessionCount'))||0; document.getElementById('sessionCount').textContent=sessionCount;
+  dayStartTimes=(await sget('dayStart'))||{};
   recovery=(await sget('recovery'))||{}; familiarity=(await sget('familiarity'))||{}; soreOverride=(await sget('soreOverride'))||{}; recoveryLog=(await sget('recoveryLog'))||[]; hist=(await sget('hist'))||{}; sessions=(await sget('sessions'))||[]; notes=(await sget('notes'))||{}; lastByName=(await sget('lastByName'))||{}; bodyweight=(await sget('bodyweight'))||[];
 
   // one-time: hist/notes used to be keyed per (day,exercise) — "d1|Hammer Curl" and "d3|Hammer Curl" were
