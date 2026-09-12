@@ -597,8 +597,8 @@
 </div>
 <div class="sheet-bg" id="cardioSuggestBg"></div>
 <div class="sheet" id="cardioSuggestSheet">
-  <div class="sheet-head"><div><div style="font-size:15px">Cardio's up next</div><div style="font-size:11px;color:var(--text-dim);margin-top:2px">Two lifting sessions in a row</div></div><span class="linkbtn" id="cardioSuggestClose">close</span></div>
-  <div class="plateau-tip" style="margin-bottom:14px">You've done two straight lifting sessions, so conditioning work is next in the rotation — it gives your joints and nervous system a break from heavy loading while still building your aerobic base. Totally fine to lift again today if that's what you'd rather do.</div>
+  <div class="sheet-head"><div><div style="font-size:15px">Cardio's up next</div><div style="font-size:11px;color:var(--text-dim);margin-top:2px" id="cardioSuggestSub">Two lifting sessions in a row</div></div><span class="linkbtn" id="cardioSuggestClose">close</span></div>
+  <div class="plateau-tip" style="margin-bottom:14px" id="cardioSuggestBody">You've done two straight lifting sessions, so conditioning work is next in the rotation — it gives your joints and nervous system a break from heavy loading while still building your aerobic base. Totally fine to lift again today if that's what you'd rather do.</div>
   <div class="row" style="gap:10px;flex-wrap:nowrap">
     <button class="btn" id="cardioSuggestLift" style="flex:1"></button>
     <button class="btn primary" id="cardioSuggestGo" style="flex:1">do cardio</button>
@@ -1302,18 +1302,31 @@ function dayMusclesRecovered(day){
 // once, otherwise it never clears without one, which isn't an "occasional" nudge, it's a permanent override for
 // anyone who simply doesn't track cardio in this app at all.
 const BACK_TO_BACK_HOURS=72;
-function suggestedDayId(){
+// returns {id, reason, nextDay}: reason is one of 'backToBack' | 'recovery' | 'cardioStale' when id is 'cardio'
+// (checked in that order), null otherwise — Home and the cardio sheet word their copy from it, since telling
+// someone who hasn't lifted in three days that they "just did two sessions back to back" reads as broken.
+function suggestedDay(){
   const recent=[...sessions].sort((a,b)=>b.t-a.t);
   const lifts=recent.filter(s=>!s.isCardio);
-  if(!lifts.length) return PROGRAM[0].id;
+  if(!lifts.length) return {id:PROGRAM[0].id, reason:null, nextDay:PROGRAM[0]};
   const idx=PROGRAM.findIndex(d=>d.id===lifts[0].dayId);
   const nextDay=PROGRAM[idx<0?0:(idx+1)%PROGRAM.length];
   const lastCardio=recent.find(s=>s.isCardio);
   const cardioStale=!!lastCardio && (Date.now()-lastCardio.t)>=7*864e5;
   const backToBack=recent.length>=2 && !recent[0].isCardio && !recent[1].isCardio && (recent[0].t-recent[1].t)<=BACK_TO_BACK_HOURS*3600000;
-  if(backToBack || !dayMusclesRecovered(nextDay) || cardioStale) return 'cardio';
-  return nextDay.id;
+  const reason=backToBack?'backToBack':!dayMusclesRecovered(nextDay)?'recovery':cardioStale?'cardioStale':null;
+  return {id:reason?'cardio':nextDay.id, reason, nextDay};
 }
+function suggestedDayId(){ return suggestedDay().id; }
+const CARDIO_REASON_COPY={
+  backToBack:{ sub:'Two lifting sessions in a row', home:"Two lifting sessions back to back — today's suggested as a lighter conditioning day.",
+    body:"You've done two straight lifting sessions, so conditioning work is next in the rotation — it gives your joints and nervous system a break from heavy loading while still building your aerobic base. Totally fine to lift again today if that's what you'd rather do." },
+  recovery:{ sub:'Your next lift day is still recovering', home:(d)=>`${d.name} ${d.sub} is next, but its muscles aren't recovered yet — today's suggested as a conditioning day instead.`,
+    body:(d)=>`The muscles ${d.name} ${d.sub} trains haven't finished recovering, so conditioning fills the gap without loading them again early. Totally fine to lift today if you feel ready — you'll get a heads-up on what's still recovering.` },
+  cardioStale:{ sub:"It's been a week since your last conditioning session", home:"It's been over a week since your last conditioning session — today's a good day to get one in.",
+    body:"Your last conditioning session was over a week ago. Two to three a week keeps the aerobic base you've built; a lighter day now also gives your joints a break. Totally fine to lift today if that's what you'd rather do." },
+};
+function cardioReasonCopy(){ const {reason,nextDay}=suggestedDay(); const c=CARDIO_REASON_COPY[reason]||CARDIO_REASON_COPY.backToBack; const f=v=>typeof v==='function'?v(nextDay):v; return {sub:f(c.sub),home:f(c.home),body:f(c.body)}; }
 function renderTabs(){ const w=document.getElementById('dayTabs'); w.innerHTML='';
   const suggested=suggestedDayId();
   PROGRAM.forEach(d=>{ const el=document.createElement('div'); el.className='daytab'+(d.id===currentDay?' active':'')+(d.id===suggested?' suggested':''); if(d.id===suggested) el.title='next up in your rotation'; el.innerHTML=`${d.name}<span class="dsub">${d.sub}</span>`; el.onclick=()=>attemptLoadDay(d.id); w.appendChild(el); });
@@ -1343,6 +1356,7 @@ async function attemptLoadDay(dayId, andThen){
 function showCardioSuggestion(dayId, andThen){
   const day=PROGRAM.find(d=>d.id===dayId); if(!day) return;
   document.getElementById('cardioSuggestLift').textContent=`${day.name} ${day.sub} instead`;
+  const copy=cardioReasonCopy(); document.getElementById('cardioSuggestSub').textContent=copy.sub; document.getElementById('cardioSuggestBody').textContent=copy.body;
   document.getElementById('cardioSuggestBg').classList.add('on'); document.getElementById('cardioSuggestSheet').classList.add('on');
   document.getElementById('cardioSuggestGo').onclick=async()=>{ closeCardioSuggest(); await loadDay('cardio'); if(andThen) andThen(); };
   document.getElementById('cardioSuggestLift').onclick=async()=>{
@@ -1485,7 +1499,7 @@ function renderHome(){
       <div class="greet-wrap">
         <div class="greet-eyebrow">${new Date().toLocaleDateString(undefined,{weekday:'long'})}</div>
         <div class="greet-h1">${settings.name?'Ready for cardio, '+settings.name+'?':'Ready for cardio?'}</div>
-        <div class="greet-sub">Two lifting sessions back to back — today's suggested as a lighter conditioning day.</div>
+        <div class="greet-sub">${cardioReasonCopy().home}</div>
       </div>
       <button class="start-cta" id="arrivalStart">go to cardio log</button>
       <div class="greet-sub" style="margin-top:14px">Feeling fine? Tap a lift day to train it instead.</div>
@@ -1776,7 +1790,10 @@ async function logCardio(){
   const rec={t:Date.now(), isCardio:true, ctype:cardioDraft.type, ctypeLabel:CARDIO_TYPES.find(x=>x.key===cardioDraft.type).label, duration:parseInt(cardioDraft.duration), distance:cardioDraft.distance, rpe:cardioDraft.rpe, notes:cardioDraft.notes};
   sessions.push(rec); await sset('sessions',sessions);
   cardioDraft={type:cardioDraft.type,duration:'',distance:'',rpe:0,notes:'',showHow:cardioDraft.showHow};
-  showToast('conditioning logged 🏃'); renderCardioForm();
+  // the suggestion usually moves on to the next lift day now — reload it so Home's greeting, its CTA and the
+  // day-tab marker stop pointing at a cardio day that has just been done (this used to persist until a reload)
+  await loadDay(suggestedDayId()); setView('home');
+  showToast('conditioning logged 🏃');
   if(settings.autoBackup && backupDue()) setTimeout(()=>doExport(true),1200); else updateBackupUI();
 }
 
