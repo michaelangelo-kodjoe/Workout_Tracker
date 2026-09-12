@@ -1329,6 +1329,10 @@ function closeFatigue(){ document.getElementById('fatigueBg').classList.remove('
 document.getElementById('fatigueClose').onclick=closeFatigue; document.getElementById('fatigueBg').onclick=closeFatigue;
 
 function render(){
+  // several settings handlers (unit, auto-rotate, rotate-every, deload start/end) re-render the log after a change
+  // without knowing which day is loaded — on the Cardio day there is no PROGRAM entry to draw, so hand off to
+  // the cardio form instead of crashing on day.badge below.
+  if(currentDay==='cardio'){ renderTabs(); renderBody(); renderCardioForm(); return; }
   renderTabs(); renderBody();
   const day=PROGRAM.find(d=>d.id===currentDay);
   document.getElementById('dayLabel').innerHTML=`<span><span class="badge ${day.badge}">${day.sub}</span>${day.name} Day</span><span class="linkbtn" id="editLink">edit</span>`;
