@@ -2246,10 +2246,11 @@ function openSwap(dayId, ex){
     el.querySelector('button').onclick=()=>{ doSwap(day, idx, alt); };
     list.appendChild(el);
   };
-  if(original && original.name!==ex.name){ const h=document.createElement('div'); h.className='alt-sec'; h.textContent='Original'; list.appendChild(h); render1(original,'back to the program'); }
+  // the original pick also lives in the curated pool — mark it seen so it isn't listed a second time below
+  const seen=new Set([ex.name]);
+  if(original && original.name!==ex.name){ const h=document.createElement('div'); h.className='alt-sec'; h.textContent='Original'; list.appendChild(h); render1(original,'back to the program'); seen.add(original.name); }
   const h1=document.createElement('div'); h1.className='alt-sec'; h1.textContent=`${ex.group} alternatives`; list.appendChild(h1);
   // same-group options: the curated pool for this group (the program's own recommended picks live there too)
-  const seen=new Set([ex.name]);
   const pool=[...(ALTS[key]||[])];
   const equipOk=equipAllowed;
   let poolCount=0, hiddenByEquip=0;
