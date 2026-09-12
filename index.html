@@ -985,18 +985,22 @@ function rotationPool(key, exclude){
   }
   return pool;
 }
-// checks every exercise in a just-finished day for a rotation-due threshold crossing (hist length is an exact
-// multiple of rotateEvery) and swaps it in place. Returns [{from,to}] for whichever exercises actually rotated,
-// so finishSession() can tell the user about it. ex.rotAnchor (the original pick, snapshotted once) anchors the
-// sequence at position 0 regardless of how many times it's rotated since; ex.rotStep tracks position in that
-// sequence; ex.rotPrev snapshots the immediately-prior exercise so a single undo can restore it.
-function applyAutoRotation(day){
+// checks every exercise worked in a just-finished day for a rotation-due count and swaps it in place. Returns
+// [{from,to}] for whichever exercises actually rotated, so finishSession() can tell the user about it.
+// ex.rotCount is the number of sessions this slot has been trained since the current exercise entered it —
+// a per-slot counter, deliberately NOT the name-wide hist length: history is shared by exercise name across
+// days, so counting it here meant an exercise done twice on Upper Volume rotated off Upper Heavy after zero
+// sessions there, and slots skipped in a partial session rotated anyway. Only exercises in `workedNames`
+// (the ones with a logged set this session) are eligible at all.
+// ex.rotAnchor (the original pick, snapshotted once) anchors the sequence at position 0 regardless of how many
+// times it's rotated since; ex.rotStep tracks position in that sequence; ex.rotPrev snapshots the
+// immediately-prior exercise so a single undo can restore it.
+function applyAutoRotation(day, workedNames){
   if(!settings.autoRotate) return [];
   const rotated=[]; const inUse=new Set(day.exercises.map(e=>e.name));
   day.exercises.forEach((ex,i)=>{
-    const h=hist[histKey(ex)]||[];
     const every=settings.rotateEvery||2;
-    if(!h.length||h.length%every!==0) return;
+    if(!workedNames.has(ex.name)||(ex.rotCount||0)<every) return;
     const anchor=ex.rotAnchor||{name:ex.name,equip:ex.equip,m:ex.m.slice(),cue:ex.cue,step:ex.step,region:ex.region,target:ex.target};
     const key=groupKeyFor(ex);
     const exclude=new Set(inUse); exclude.delete(ex.name); exclude.add(anchor.name);
@@ -1009,7 +1013,7 @@ function applyAutoRotation(day){
     // fills it — always keep the slot's own target across a rotation. A curated ALTS pick carries its own
     // target (usually authored for one specific day type), which must not leak in here; a FULL_CATALOG-built
     // candidate never sets one at all, so this used to work by accident for that path and not the other.
-    const nu={group:ex.group,key,name:pick.name,equip:pick.equip,target:ex.target,m:pick.m.slice(),cue:pick.cue||'',step:pick.step==null?ex.step:pick.step,start:(pick.step===0||pick.start===0)?0:-1,seed:null,rotAnchor:anchor,rotStep:nextStep,rotPrev:prevSnapshot};
+    const nu={group:ex.group,key,name:pick.name,equip:pick.equip,target:ex.target,m:pick.m.slice(),cue:pick.cue||'',step:pick.step==null?ex.step:pick.step,start:(pick.step===0||pick.start===0)?0:-1,seed:null,rotAnchor:anchor,rotStep:nextStep,rotPrev:prevSnapshot,rotCount:0};
     if(pick.region) nu.region=pick.region;
     inUse.delete(ex.name); inUse.add(nu.name);
     day.exercises[i]=nu;
@@ -1020,7 +1024,13 @@ function applyAutoRotation(day){
 }
 async function undoRotation(day,idx){
   const ex=day.exercises[idx]; if(!ex.rotPrev) return;
-  const restored={...ex.rotPrev};
+  // the exercise being restored may since have rotated into another slot on this same day (sequences share a
+  // pool); two cards with one name would share a single todayData entry and double-count volume and recovery.
+  if(day.exercises.some((e,i)=>i!==idx&&e.name===ex.rotPrev.name)){ showToast(`${ex.rotPrev.name} is already on this day — swap it manually instead`); return; }
+  // keep this slot's position in the rotation sequence (rather than the restored exercise's older one) and start
+  // its session counter fresh, so the next rotation moves on to a new pick instead of re-applying the exact swap
+  // that was just undone at the end of the very next session.
+  const restored={...ex.rotPrev, rotStep:ex.rotStep||0, rotCount:0};
   day.exercises[idx]=restored;
   if(todayData[ex.name]) delete todayData[ex.name];
   await saveProgram(); showToast(`reverted to ${restored.name}`);
@@ -1557,9 +1567,11 @@ async function finishSession(){
   await sset('last:'+currentDay,todayData); await sset('today:'+currentDay,{});
   sessionCount+=1; await sset('meta:sessionCount',sessionCount); document.getElementById('sessionCount').textContent=sessionCount;
   stopTimer();
-  const rotated=applyAutoRotation(day);
+  const workedNames=new Set(worked.map(ex=>ex.name));
+  worked.forEach(ex=>{ ex.rotCount=(ex.rotCount||0)+1; });
+  const rotated=applyAutoRotation(day, workedNames);
+  await saveProgram(); // counters changed even when nothing rotated
   if(rotated.length){
-    await saveProgram();
     pendingRotationToast=rotated.length===1
       ? `Heads up — ${rotated[0].from} just swapped to ${rotated[0].to} after ${settings.rotateEvery||2} sessions straight. Turn this off in Settings any time.`
       : `Heads up — ${rotated.length} exercises just swapped to fresh variations after ${settings.rotateEvery||2} sessions straight. Turn this off in Settings any time.`;
@@ -2293,6 +2305,14 @@ document.getElementById('resetLink').onclick=async()=>{ todayData={}; await sset
   let programFixed=false;
   PROGRAM.forEach(day=>day.exercises.forEach(ex=>{
     if(ex.rotAnchor && ex.target!==ex.rotAnchor.target){ ex.target=ex.rotAnchor.target; programFixed=true; }
+    // one-time backfill of the per-slot rotation counter from the session log: sessions on THIS day that
+    // included this exercise, and only those after the slot's previous occupant was last trained here (an
+    // exercise that rotated in may have been on the same day in a different slot before — those don't count).
+    if(ex.rotCount==null){
+      const onDay=sessions.filter(s=>s.dayId===day.id&&s.ex);
+      const since=ex.rotPrev?Math.max(0,...onDay.filter(s=>s.ex[ex.rotPrev.name]).map(s=>s.t)):0;
+      ex.rotCount=onDay.filter(s=>s.t>since&&s.ex[ex.name]).length; programFixed=true;
+    }
   }));
   if(programFixed) await sset('program',PROGRAM);
 
