@@ -1316,7 +1316,10 @@ function render(){
     let saved=daySaved, crossDaySub=null;
     if(sug===-1){
       const cw=crossDaySuggestedWeight(ex);
-      if(cw){ sug=cw; const cs=lastByName[ex.name]; if(cs){ saved=cs; const cd=PROGRAM.find(d=>d.id===cs.d); crossDaySub=cd?cd.sub:null; } }
+      // only label this "from X day" when the source is actually a different slot — the same exercise's own
+      // older session (found here because the most recent same-day one had no weight logged) isn't a cross-day
+      // borrow and would misleadingly read as if the exercise had rotated away and back.
+      if(cw){ sug=cw; const cs=lastByName[ex.name]; if(cs){ saved=cs; if(cs.d!==currentDay){ const cd=PROGRAM.find(d=>d.id===cs.d); crossDaySub=cd?cd.sub:null; } } }
     }
     // a bodyweight-loaded exercise already shows its (locked) weight in the set rows below —
     // repeating "try 110 lb bodyweight" up here just restates the same number.
@@ -1518,7 +1521,9 @@ async function finishSession(){
   });
   await sset('hist',hist);
   sessions.push({t:now,dayId:currentDay,dayName:day.name,sub:day.sub,vol:Math.round(vol),sets:nsets,ex:exRec}); await sset('sessions',sessions);
-  Object.keys(exRec).forEach(name=>{ if(exRec[name].length) lastByName[name]={sets:exRec[name],t:now,d:currentDay}; });
+  // gate on real weight+reps, not just a checked-off set — a session logged with weight left blank is exactly
+  // the case this cross-day fallback exists to see past, so it must not itself become the fallback's source.
+  Object.keys(exRec).forEach(name=>{ if(exRec[name].some(s=>s.w&&s.r)) lastByName[name]={sets:exRec[name],t:now,d:currentDay}; });
   await sset('lastByName',lastByName);
 
   await sset('last:'+currentDay,todayData); await sset('today:'+currentDay,{});
@@ -2220,7 +2225,7 @@ document.getElementById('resetLink').onclick=async()=>{ todayData={}; await sset
     notes=mergedNotes; await sset('notes',notes);
 
     const byName={};
-    [...sessions].sort((a,b)=>a.t-b.t).forEach(s=>{ Object.keys(s.ex||{}).forEach(name=>{ if(s.ex[name] && s.ex[name].length) byName[name]={sets:s.ex[name],t:s.t,d:s.dayId}; }); });
+    [...sessions].sort((a,b)=>a.t-b.t).forEach(s=>{ Object.keys(s.ex||{}).forEach(name=>{ const sets=s.ex[name]; if(sets && sets.some(x=>x.w&&x.r)) byName[name]={sets,t:s.t,d:s.dayId}; }); });
     lastByName=byName; await sset('lastByName',lastByName);
 
     await sset('meta:histMigratedV2',true);
