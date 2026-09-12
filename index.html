@@ -933,11 +933,20 @@ function suggestWeight(ex,last){
   return w;
 }
 // when a slot has no same-day history but this exact lift has been logged under a different day (rotation
-// collision, or an originally-duplicate pick), back-solve the unified e1rm into a weight for THIS slot's own
-// rep range rather than copying the other slot's raw weight — Heavy/Volume rep targets commonly differ.
+// collision, or an originally-duplicate pick), figure out what that OTHER slot's own suggestWeight() would
+// recommend right now (so a hit-top-of-range bump still carries over, instead of flatlining at whatever raw
+// weight was last performed) and convert that into an equivalent weight for THIS slot's own rep range —
+// Heavy/Volume rep targets commonly differ, though when they happen to match (as with an originally-duplicate
+// pick that landed on both slots) this reduces to exactly what the other slot itself would show.
 function crossDaySuggestedWeight(ex){
-  const cur=currentFor(ex); if(!cur) return null;
-  const raw=cur/(1+topRep(ex.target)/30);
+  const cs=lastByName[ex.name]; if(!cs) return null;
+  const srcDay=PROGRAM.find(d=>d.id===cs.d);
+  const srcEx=srcDay&&srcDay.exercises.find(e=>e.name===ex.name);
+  if(!srcEx || srcEx.start===0) return null;
+  const srcSug=suggestWeight(srcEx,cs);
+  if(typeof srcSug!=='number') return null;
+  const e1rmEquiv=srcSug*(1+topRep(srcEx.target)/30);
+  const raw=e1rmEquiv/(1+topRep(ex.target)/30);
   return ex.step?Math.round(raw/ex.step)*ex.step:Math.round(raw);
 }
 function isPlateau(ex){
