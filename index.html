@@ -457,6 +457,7 @@
   </section>
 
   <section id="historyView" style="display:none">
+    <div class="empty" id="histEmpty" style="display:none;margin-bottom:14px">No sessions yet. Finish a workout or log a conditioning session and it will show up here.</div>
     <div class="heat-wrap">
       <div class="heat-head"><div class="heat-title">Training rhythm</div><div class="heat-stat" id="heatStat"></div></div>
       <div class="heat-scroll"><div class="heat-grid" id="heatGrid"></div></div>
@@ -469,7 +470,6 @@
       <div class="cal-legend"><span><i class="cal-dot upper"></i>Upper</span><span><i class="cal-dot lower"></i>Lower</span><span><i class="cal-dot cardio"></i>Cardio</span></div>
     </div>
     <div class="stats2" id="histStats"></div>
-    <div id="sessList"></div>
   </section>
 
   <section id="strengthView" style="display:none">
@@ -1808,9 +1808,10 @@ function renderCalendar(){
 document.getElementById('calPrev').onclick=()=>{ calMonthOffset--; renderCalendar(); };
 document.getElementById('calNext').onclick=()=>{ if(calMonthOffset<0){ calMonthOffset++; renderCalendar(); } };
 function renderHistory(){
+  document.getElementById('histEmpty').style.display=sessions.length?'none':'block';
   buildHeatmap();
   renderCalendar();
-  const st=document.getElementById('histStats'), list=document.getElementById('sessList'); list.innerHTML='';
+  const st=document.getElementById('histStats');
   const week=Date.now()-7*864e5, month=Date.now()-30*864e5;
   const lifts=sessions.filter(s=>!s.isCardio), cardio=sessions.filter(s=>s.isCardio);
   const thisWeek=lifts.filter(s=>s.t>=week).length, thisMonth=lifts.filter(s=>s.t>=month).length;
@@ -1819,8 +1820,6 @@ function renderHistory(){
   st.innerHTML=`<div class="stat"><div class="v ${thisWeek>=4?'up':''}">${thisWeek}<span style="font-size:12px;color:var(--text-dim)"> / 4</span></div><div class="l">lifting sessions, last 7 days</div></div>
     <div class="stat"><div class="v">${thisMonth}</div><div class="l">lifting, last 30 days</div>${sparkline(wk,'var(--green)')}</div>
     <div class="stat" style="grid-column:1 / -1"><div class="v ${cardioWeekMin>=60?'up':''}">${cardioWeekMin} min</div><div class="l">conditioning this week (2-3 sessions/wk is the target)</div></div>`;
-  if(!sessions.length){ list.innerHTML='<div class="empty">No sessions yet. Finish a workout or log a conditioning session and it will show up here.</div>'; return; }
-  [...sessions].reverse().forEach(s=>list.appendChild(buildSessionItem(s)));
 }
 
 // ---------- strength view ----------
