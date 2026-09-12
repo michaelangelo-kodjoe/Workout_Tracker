@@ -924,13 +924,13 @@ function isDeloadActive(){ return !!deloadStart && (Date.now()-deloadStart < 7*8
 function suggestWeight(ex,last){
   if(ex.start===0) return latestBW();
   if(ex.start===-1 && !(last&&last.sets&&last.sets.some(x=>x.w&&x.r))) return -1;
-  let w;
+  let w, mw=0;
   if(!last||!last.sets) w=ex.start;
   else{
     const logged=last.sets.filter(s=>s.w!==''&&s.r!=='');
     if(!logged.length) w=ex.start;
     else{
-      const mw=Math.max(...logged.map(s=>parseFloat(s.w)||0));
+      mw=Math.max(...logged.map(s=>parseFloat(s.w)||0));
       if(!mw) w=ex.start;
       else if(logged.every(s=>parseInt(s.r)>=topRep(ex.target))){
         // hit the top of the rep range on every set — bump the weight, and bump it further if RIR says it was easy across the board
@@ -940,7 +940,9 @@ function suggestWeight(ex,last){
       } else w=mw;
     }
   }
-  if(w && isDeloadActive()) w=Math.round(w*0.9/2.5)*2.5;
+  // a deload is ~10% under what was actually lifted last time — not under the next progression step, which
+  // could otherwise land above last time's weight for a lift that just hit the top of its range
+  if(w && isDeloadActive()) w=Math.round((mw||w)*0.9/2.5)*2.5;
   return w;
 }
 // when a slot has no same-day history but this exact lift has been logged under a different day (rotation
@@ -952,12 +954,20 @@ function suggestWeight(ex,last){
 function crossDaySuggestedWeight(ex){
   const cs=lastByName[ex.name]; if(!cs) return null;
   const srcDay=PROGRAM.find(d=>d.id===cs.d);
-  const srcEx=srcDay&&srcDay.exercises.find(e=>e.name===ex.name);
-  if(!srcEx || srcEx.start===0) return null;
+  let srcEx=srcDay&&srcDay.exercises.find(e=>e.name===ex.name);
+  if(srcEx&&srcEx.start===0) return null;
+  // the slot it was last done in may since have rotated to something else — the lift's history is still real,
+  // so rebuild what that slot looked like from the target/step snapshotted alongside lastByName (older entries
+  // without one fall back to this slot's own range, which makes the conversion below a no-op).
+  if(!srcEx) srcEx={name:ex.name,target:cs.target||ex.target,step:cs.step==null?ex.step:cs.step,start:-1};
   const srcSug=suggestWeight(srcEx,cs);
   if(typeof srcSug!=='number') return null;
-  const e1rmEquiv=srcSug*(1+topRep(srcEx.target)/30);
-  const raw=e1rmEquiv/(1+topRep(ex.target)/30);
+  const srcTop=topRep(srcEx.target), dstTop=topRep(ex.target);
+  // same rep range (including the same slot seeing past a blank-weight session): the other slot's own number
+  // is exactly right — re-rounding it to the step here turned 185 into 190.
+  if(srcTop===dstTop) return srcSug;
+  const e1rmEquiv=srcSug*(1+srcTop/30);
+  const raw=e1rmEquiv/(1+dstTop/30);
   return ex.step?Math.round(raw/ex.step)*ex.step:Math.round(raw);
 }
 function isPlateau(ex){
@@ -1569,7 +1579,7 @@ async function finishSession(){
   sessions.push({t:now,dayId:currentDay,dayName:day.name,sub:day.sub,vol:Math.round(vol),sets:nsets,ex:exRec}); await sset('sessions',sessions);
   // gate on real weight+reps, not just a checked-off set — a session logged with weight left blank is exactly
   // the case this cross-day fallback exists to see past, so it must not itself become the fallback's source.
-  Object.keys(exRec).forEach(name=>{ if(exRec[name].some(s=>s.w&&s.r)) lastByName[name]={sets:exRec[name],t:now,d:currentDay}; });
+  worked.forEach(ex=>{ const sets=exRec[ex.name]; if(sets.some(s=>s.w&&s.r)) lastByName[ex.name]={sets,t:now,d:currentDay,target:ex.target,step:ex.step}; });
   await sset('lastByName',lastByName);
 
   await sset('last:'+currentDay,todayData); await sset('today:'+currentDay,{});
