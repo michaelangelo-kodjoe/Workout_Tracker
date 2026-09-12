@@ -1231,6 +1231,9 @@ async function loadDay(d){
 }
 function ensureState(ex){ if(!todayData[ex.name]) todayData[ex.name]={open:false,sets:Array.from({length:setsCountFor(ex)},()=>({w:ex.start===0?(latestBW()??''):'',r:'',done:false,rir:null}))}; return todayData[ex.name]; }
 function touchDayStart(){ if(!dayStartTimes[currentDay]) dayStartTimes[currentDay]=Date.now(); }
+// todayData persists to storage on every keystroke, so this survives a reload — unlike dayStartTimes, which is
+// in-memory only and would otherwise forget an in-progress session the moment the tab reloads.
+function sessionInProgress(){ return Object.values(todayData).some(s=>s.sets&&s.sets.some(x=>x.done||(x.w&&x.r))); }
 // only checks each exercise's own primary muscle (ex.key), not every secondary muscle it happens to also touch
 // (ex.m) — forearms/abs/lowerback get hit as a secondary target by all sorts of pulling and hinging exercises
 // on both upper and lower days, so checking those too meant an unrelated day's forearms wrist-curl slot could
@@ -1454,6 +1457,7 @@ function renderHome(){
   const previewRows=day.exercises.slice(0,5).map(ex=>`<div class="preview-row"><span class="pn">${ex.name}</span><span class="pt">${ex.target}</span></div>`).join('');
   const moreRow=day.exercises.length>5?`<div class="preview-row"><span class="pn" style="color:var(--text-dim)">+ ${day.exercises.length-5} more</span></div>`:'';
   const estMin=day.exercises.length*6;
+  const ctaTxt=sessionInProgress()?'return to log':`start ${day.name} — ${day.sub}`;
 
   if(sessionCount===0){
     const h1=settings.name?`Welcome, ${settings.name}! Your first session starts here`:'Your first session starts here';
@@ -1467,7 +1471,7 @@ function renderHome(){
         <div class="empty-h1">${h1}</div>
         <div class="empty-sub">No history yet — that's fine. Log one set at a time and Lift Log starts learning your numbers from today.</div>
         <div class="empty-plan"><b>${day.name}, ${day.sub}</b> · ${day.exercises.length} exercises · about ${estMin} minutes.</div>
-        <button class="start-cta" id="arrivalStart">start ${day.name} — ${day.sub}</button>
+        <button class="start-cta" id="arrivalStart">${ctaTxt}</button>
       </div>`;
   } else {
     const lastLift=[...sessions].reverse().find(s=>!s.isCardio);
@@ -1486,7 +1490,7 @@ function renderHome(){
         ${PROGRAM.map(d=>`<div class="day-card${d.id===currentDay?' today':''}" data-day="${d.id}">${d.id===currentDay?'<div class="ddot"></div>':''}<div class="dtag">${d.id===currentDay?'Today':''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub} · ${d.exercises.length} exercises</div></div>`).join('')}
       </div>
       <div class="preview-list">${previewRows}${moreRow}</div>
-      <button class="start-cta" id="arrivalStart">start ${day.name} — ${day.sub}</button>`;
+      <button class="start-cta" id="arrivalStart">${ctaTxt}</button>`;
     panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day, ()=>setView('log')));
   }
   document.getElementById('arrivalStart').onclick=()=>{ touchDayStart(); setView('log'); };
