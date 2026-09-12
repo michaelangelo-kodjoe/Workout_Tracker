@@ -1815,7 +1815,7 @@ function renderStrength(){
       const plat=isPlateau(day.id,ex);
       const breaks=plateauBreakIdx(h); const milestoneIdx=breaks.length?breaks[breaks.length-1]+1:null;
       const row=document.createElement('div'); row.className='srow';
-      row.innerHTML=`<div><div class="sn">${ex.name}${plat?'<span class="badge plateau">plateau</span>':''}</div><div class="sd">best set ${bestTxt} · ${h.length?h.length+' session'+(h.length>1?'s':'')+' logged':'your starting numbers'}</div></div><div class="sp ${cls}">${p===null?'start':fmtPct(p)}</div>${sparkline([base,...h.map(x=>x.e1rm)],cls==='down'?'var(--amber)':'var(--green)',milestoneIdx)}`;
+      row.innerHTML=`<div><div class="sn">${ex.name} <span class="badge ${day.badge}">${day.sub}</span>${plat?'<span class="badge plateau">plateau</span>':''}</div><div class="sd">best set ${bestTxt} · ${h.length?h.length+' session'+(h.length>1?'s':'')+' logged':'your starting numbers'}</div></div><div class="sp ${cls}">${p===null?'start':fmtPct(p)}</div>${sparkline([base,...h.map(x=>x.e1rm)],cls==='down'?'var(--amber)':'var(--green)',milestoneIdx)}`;
       if(targetList) targetList.appendChild(row);
     });
   });
