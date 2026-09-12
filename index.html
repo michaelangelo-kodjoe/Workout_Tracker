@@ -994,7 +994,11 @@ function applyAutoRotation(day){
     const nextStep=(ex.rotStep||0)+1;
     const pick=seq[nextStep%seq.length];
     const prevSnapshot={group:ex.group,key,name:ex.name,equip:ex.equip,target:ex.target,m:ex.m.slice(),cue:ex.cue,step:ex.step,start:ex.start,seed:ex.seed,region:ex.region,rotAnchor:anchor,rotStep:ex.rotStep||0};
-    const nu={group:ex.group,key,name:pick.name,equip:pick.equip,target:pick.target||ex.target,m:pick.m.slice(),cue:pick.cue||'',step:pick.step==null?ex.step:pick.step,start:(pick.step===0||pick.start===0)?0:-1,seed:null,rotAnchor:anchor,rotStep:nextStep,rotPrev:prevSnapshot};
+    // target is a property of the day-slot (Heavy vs. Volume rep range), not of whichever exercise currently
+    // fills it — always keep the slot's own target across a rotation. A curated ALTS pick carries its own
+    // target (usually authored for one specific day type), which must not leak in here; a FULL_CATALOG-built
+    // candidate never sets one at all, so this used to work by accident for that path and not the other.
+    const nu={group:ex.group,key,name:pick.name,equip:pick.equip,target:ex.target,m:pick.m.slice(),cue:pick.cue||'',step:pick.step==null?ex.step:pick.step,start:(pick.step===0||pick.start===0)?0:-1,seed:null,rotAnchor:anchor,rotStep:nextStep,rotPrev:prevSnapshot};
     if(pick.region) nu.region=pick.region;
     inUse.delete(ex.name); inUse.add(nu.name);
     day.exercises[i]=nu;
