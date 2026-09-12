@@ -880,7 +880,7 @@ const CURATED_BY_NAME=(()=>{ const m={}; Object.keys(ALTS).forEach(k=>ALTS[k].fo
 // weights always start unknown (-1) unless the lift is body-weight loaded — the first logged set becomes the suggestion baseline.
 function slotExercise(slot, entry){
   if(!entry) entry={name:slot.pick, equip:null, m:[slot.key], step:5, cue:''};
-  const ex={group:slot.group, key:slot.key, name:entry.name, equip:entry.equip, target:slot.target, cue:entry.cue||'', step:entry.step==null?5:entry.step, m:entry.m.slice(), start:(entry.start===0||entry.step===0)?0:-1, seed:null};
+  const ex={group:slot.group, key:slot.key, name:entry.name, equip:entry.equip, target:slotTargetFor(slot.target, entry), cue:entry.cue||'', step:entry.step==null?5:entry.step, m:entry.m.slice(), start:(entry.start===0||entry.step===0)?0:-1, seed:null};
   if(entry.region) ex.region=entry.region;
   if(entry.approx) ex.approx=true;
   return ex;
@@ -910,6 +910,21 @@ function pct(a,b){ return (!a||!b)?null:((b-a)/a)*100; }
 function fmtPct(p){ if(p===null) return '—'; const r=Math.round(p*10)/10; return (r>0?'+':'')+r+'%'; }
 function topRep(t){ const m=t.match(/x\s*(\d+)\s*[-–]?\s*(\d+)?/i); return m?parseInt(m[2]||m[1]):12; }
 function setsCountFor(ex){ if(ex.seed) return ex.seed.length; const m=ex.target.match(/^(\d+)/); return m?parseInt(m[1]):3; }
+// "3 x 30-45s" style targets are holds/carries measured in seconds — the number in the reps column isn't reps,
+// so it must never feed e1rm, volume, or PR detection (a 45s body-weight plank otherwise "moved" 7,500 lb).
+function isTimedTarget(t){ return /\d+\s*s(\/|\b)/i.test(t||''); }
+// a day-slot owns its rep range, but only within a kind: a timed pick landing in a rep slot (or a rep pick in a
+// timed slot) takes its own range instead, and a per-side suffix (/leg, /side) follows the pick, not the slot —
+// otherwise rotation produced "Hanging Leg Raise 3 x 30-45s", "Farmer's Carry 3 x 10" and "Leg Extension 3 x 10-12/leg".
+function slotTargetFor(slotTarget, pick){
+  const pt=(pick&&pick.target)||'';
+  const slotTimed=isTimedTarget(slotTarget), pickTimed=isTimedTarget(pt);
+  if(pt && slotTimed!==pickTimed) return pt;
+  if(!pt && slotTimed) return '3 x 10-15'; // library entries carry no target and are rep movements by nature
+  const side=/\/(leg|side|arm)\b/i;
+  const m=pt.match(side);
+  return slotTarget.replace(side,'')+(m?m[0]:'');
+}
 // research-informed default rest, since "3-5 low reps" and "12-15 high reps" don't recover the same way:
 // NSCA guidance is roughly 3-5min for strength-range work, 30-90s for hypertrophy-range, and shorter still for higher-rep/endurance work,
 // with isolation-style hold work (planks etc.) treated separately since the number in the target is seconds, not reps.
@@ -1009,7 +1024,7 @@ function applyAutoRotation(day){
     // fills it — always keep the slot's own target across a rotation. A curated ALTS pick carries its own
     // target (usually authored for one specific day type), which must not leak in here; a FULL_CATALOG-built
     // candidate never sets one at all, so this used to work by accident for that path and not the other.
-    const nu={group:ex.group,key,name:pick.name,equip:pick.equip,target:ex.target,m:pick.m.slice(),cue:pick.cue||'',step:pick.step==null?ex.step:pick.step,start:(pick.step===0||pick.start===0)?0:-1,seed:null,rotAnchor:anchor,rotStep:nextStep,rotPrev:prevSnapshot};
+    const nu={group:ex.group,key,name:pick.name,equip:pick.equip,target:slotTargetFor(anchor.target, pick),m:pick.m.slice(),cue:pick.cue||'',step:pick.step==null?ex.step:pick.step,start:(pick.step===0||pick.start===0)?0:-1,seed:null,rotAnchor:anchor,rotStep:nextStep,rotPrev:prevSnapshot};
     if(pick.region) nu.region=pick.region;
     inUse.delete(ex.name); inUse.add(nu.name);
     day.exercises[i]=nu;
@@ -1540,6 +1555,7 @@ async function finishSession(){
     const sets=todayData[ex.name].sets.filter(st=>st.w&&st.r);
     exRec[ex.name]=todayData[ex.name].sets.filter(isLogged).map(st=>({w:st.w,r:st.r,rir:st.rir??null}));
     nsets+=todayData[ex.name].sets.filter(isLogged).length;
+    if(isTimedTarget(ex.target)) return; // seconds, not reps: counted as sets done, never as weight moved or strength
     sets.forEach(st=>vol+=(parseFloat(st.w)||0)*(parseInt(st.r)||0));
     const b=bestE1rm(sets); if(!b) return;
     const k=histKey(ex);
@@ -1891,7 +1907,8 @@ function renderStrength(){
       const others=nameSlots[ex.name].filter(o=>!(o.name===day.name&&o.sub===day.sub));
       const shareTxt=others.length?` · shares history with ${others.map(o=>`${o.name} ${o.sub}`).join(', ')}`:'';
       const row=document.createElement('div'); row.className='srow';
-      row.innerHTML=`<div><div class="sn">${ex.name} <span class="badge ${day.badge}">${day.sub}</span>${plat?'<span class="badge plateau">plateau</span>':''}</div><div class="sd">best set ${bestTxt} · ${h.length?h.length+' session'+(h.length>1?'s':'')+' logged':'your starting numbers'}${shareTxt}</div></div><div class="sp ${cls}">${p===null?'start':fmtPct(p)}</div>${sparkline([base,...h.map(x=>x.e1rm)],cls==='down'?'var(--amber)':'var(--green)',milestoneIdx)}`;
+      const sdTxt=isTimedTarget(ex.target)?'timed hold — counted as sets, not scored for strength':`best set ${bestTxt} · ${h.length?h.length+' session'+(h.length>1?'s':'')+' logged':'your starting numbers'}`;
+      row.innerHTML=`<div><div class="sn">${ex.name} <span class="badge ${day.badge}">${day.sub}</span>${plat?'<span class="badge plateau">plateau</span>':''}</div><div class="sd">${sdTxt}${shareTxt}</div></div><div class="sp ${cls}">${p===null?'start':fmtPct(p)}</div>${sparkline([base,...h.map(x=>x.e1rm)],cls==='down'?'var(--amber)':'var(--green)',milestoneIdx)}`;
       if(targetList) targetList.appendChild(row);
     });
   });
@@ -2292,7 +2309,7 @@ document.getElementById('resetLink').onclick=async()=>{ todayData={}; await sset
   // corrected, target already matches and this is a no-op, so no migration flag is needed.
   let programFixed=false;
   PROGRAM.forEach(day=>day.exercises.forEach(ex=>{
-    if(ex.rotAnchor && ex.target!==ex.rotAnchor.target){ ex.target=ex.rotAnchor.target; programFixed=true; }
+    if(ex.rotAnchor){ const want=slotTargetFor(ex.rotAnchor.target, CURATED_BY_NAME[ex.name]||{}); if(ex.target!==want){ ex.target=want; programFixed=true; } }
   }));
   if(programFixed) await sset('program',PROGRAM);
 
