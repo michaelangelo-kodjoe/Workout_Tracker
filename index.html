@@ -322,6 +322,7 @@
     <div class="banner" id="backupBanner" style="display:none"><span>It's been a week since your last backup.</span><span class="linkbtn" id="bannerBtn">back up now</span></div>
     <div class="banner" id="deloadBanner" style="display:none"><span>It's been a while since your last deload — a lighter week can help you keep progressing.</span><span class="linkbtn" id="deloadBannerBtn">plan a deload week</span></div>
     <div class="banner info" id="deloadActiveBanner" style="display:none"></div>
+    <div class="banner" id="blockBanner" style="display:none"><span id="blockBannerTxt">Your training block is complete.</span><span class="linkbtn" id="blockBannerBtn">review what's changing</span></div>
     <div class="banner" id="bwBanner" style="display:none"><span>It's been a week since you last logged your weight.</span><span class="linkbtn" id="bwBannerBtn">log it now</span></div>
     <div id="arrivalPanel"></div>
     <div class="bodymap" id="bodymapCard">
@@ -519,15 +520,15 @@
     </div>
     <div class="card">
       <h3>Equipment & variety</h3>
-      <div class="note-sm" style="margin-bottom:6px">Uncheck anything your gym doesn't have — swap alternatives and automatic rotation will only draw from what's left checked.</div>
+      <div class="note-sm" style="margin-bottom:6px">Uncheck anything your gym doesn't have — swap alternatives and block rotation will only draw from what's left checked.</div>
       <div id="equipChks"></div>
     </div>
     <div class="card">
-      <h3>Session Type Frequency</h3>
-      <div class="row"><label class="chk"><input type="checkbox" id="autoRotateChk"> automatically swap in a fresh variation after repeated sessions on the same exercise</label></div>
-      <div class="row" style="margin-top:6px" id="rotateEveryRow"><span style="font-size:12px;color:var(--text-dim)">after</span>
-        <select class="in" id="rotateEverySel"><option value="2">2 sessions</option><option value="4">4 sessions</option><option value="6">6 sessions</option><option value="8">8 sessions</option></select></div>
-      <div class="note-sm" style="margin-top:6px">Keeps your program from going stale by cycling in a different exercise for the same muscle on a schedule you set — you'll get a heads-up when it happens, with an "undo" back to what it replaced.</div>
+      <h3>Exercise rotation</h3>
+      <div class="row"><label class="chk"><input type="checkbox" id="autoRotateChk"> suggest fresh variations at the end of each training block</label></div>
+      <div class="row" style="margin-top:6px" id="rotateEveryRow"><span style="font-size:12px;color:var(--text-dim)">block length</span>
+        <select class="in" id="blockWeeksSel"><option value="3">3 weeks</option><option value="4">4 weeks</option><option value="6">6 weeks</option></select></div>
+      <div class="note-sm" style="margin-top:6px">At the end of every block you get a review of what's changing before anything is applied. The first two exercises of each day are your primary lifts: they only change once they've been stuck for 3 sessions, or every other block. The rest are accessories and get a fresh variation each block. Nothing is repeated across your four days, and a pick's natural rep range always matches its slot.</div>
     </div>
     <div class="card">
       <h3>Rest timer</h3>
@@ -595,6 +596,16 @@
     <button class="btn primary" id="startDeloadBtn" style="flex:1">start deload week</button>
   </div>
 </div>
+<div class="sheet-bg" id="blockBg"></div>
+<div class="sheet" id="blockSheet">
+  <div class="sheet-head"><div><div style="font-size:15px" id="blockTitle">Block complete</div><div id="blockStats" style="font-size:11px;color:var(--text-dim);margin-top:2px"></div></div><span class="linkbtn" id="blockClose">close</span></div>
+  <div class="plateau-tip" style="margin-bottom:12px" id="blockIntro"></div>
+  <div id="blockList"></div>
+  <div class="row" style="gap:10px;flex-wrap:nowrap;margin-top:12px">
+    <button class="btn" id="blockNotNow" style="flex:1">not now</button>
+    <button class="btn primary" id="blockApply" style="flex:1">start next block</button>
+  </div>
+</div>
 <div class="sheet-bg" id="cardioSuggestBg"></div>
 <div class="sheet" id="cardioSuggestSheet">
   <div class="sheet-head"><div><div style="font-size:15px">Cardio's up next</div><div style="font-size:11px;color:var(--text-dim);margin-top:2px" id="cardioSuggestSub">Two lifting sessions in a row</div></div><span class="linkbtn" id="cardioSuggestClose">close</span></div>
@@ -655,7 +666,7 @@ const store = {
     });
     else this.mem[k]=v; }catch(e){ console.error(e); } }
 };
-const KEYS = ['lastBackup','program','recovery','familiarity','soreOverride','recoveryLog','hist','sessions','notes','lastByName','bodyweight','settings','meta:sessionCount','meta:histMigratedV2','today:d1','today:d2','today:d3','today:d4','last:d1','last:d2','last:d3','last:d4','lastDeload','deloadStart','dayStart'];
+const KEYS = ['lastBackup','program','recovery','familiarity','soreOverride','recoveryLog','hist','sessions','notes','lastByName','bodyweight','settings','meta:sessionCount','meta:histMigratedV2','today:d1','today:d2','today:d3','today:d4','last:d1','last:d2','last:d3','last:d4','lastDeload','deloadStart','dayStart','blockStart','blockNum'];
 const RECOVERY_LOG_CAP=2000;
 const RECOVERY_HOURS = { 'chest-upper':72, 'chest-mid':72, 'chest-lower':72, 'back-lats':72, 'back-traps':72, quads:72, hamstrings:72, glutes:72, lowerback:72, 'delt-front':48, 'delt-lateral':48, 'delt-rear':48, biceps:48, brachialis:48, 'triceps-lateral':48, 'triceps-long':48, 'forearm-flexor':48, 'forearm-extensor':48, 'calves-gastroc':48, 'calves-soleus':48, abs:36, 'abs-upper':36, 'abs-lower':36, 'abs-obliques':36 };
 const MUSCLE_LABEL = { chest:'Chest', back:'Back', quads:'Quads', hamstrings:'Hamstrings', glutes:'Glutes', lowerback:'Lower back', shoulders:'Shoulders', biceps:'Biceps', triceps:'Triceps', forearms:'Forearms', calves:'Calves', abs:'Core' };
@@ -894,9 +905,9 @@ const EQUIP_LABEL={barbell:'barbell',dumbbell:'dumbbell',kettlebell:'kettlebell'
 // full exercise library (name/equip/muscles/cue), sourced from a third-party open dataset — no set/rep targets of its own.
 // offered as swap candidates via openSwap(), and as a last-resort fill in the builder when no curated pick passes the equipment filter
 const FULL_CATALOG=JSON.parse(document.getElementById('fullCatalog').textContent);
-let currentDay='d1', todayData={}, lastSessionData={}, sessionCount=0, recovery={}, familiarity={}, soreOverride={}, recoveryLog=[], hist={}, sessions=[], notes={}, lastByName={}, bodyweight=[], settings={rest:90, auto:true, autoBackup:true, smartRest:true, unit:'lb', autoRotate:true, rotateEvery:2, equipFilter:EQUIP_TYPES.slice(), name:'', onboarded:false}, view='home';
+let currentDay='d1', todayData={}, lastSessionData={}, sessionCount=0, recovery={}, familiarity={}, soreOverride={}, recoveryLog=[], hist={}, sessions=[], notes={}, lastByName={}, bodyweight=[], settings={rest:90, auto:true, autoBackup:true, smartRest:true, unit:'lb', autoRotate:true, blockWeeks:4, equipFilter:EQUIP_TYPES.slice(), name:'', onboarded:false}, view='home';
 let dayStartTimes={}; // persisted under 'dayStart' so a reload mid-session doesn't reset the session duration to 1m
-let pendingRotationToast=null; // queued by finishSession() when an auto-rotation fires; shown once the celebration screen closes, since the toast would otherwise render underneath its full-screen overlay
+let pendingBlockReview=false; // set by finishSession() when the block is complete; the review sheet opens once the celebration screen closes rather than underneath its full-screen overlay
 let lastDeload=0, deloadStart=0;
 
 // ---------- helpers ----------
@@ -990,76 +1001,143 @@ function isPlateau(ex){
   const last3=h.slice(-3); const first=last3[0].e1rm;
   return Math.max(...last3.map(x=>x.e1rm)) <= first*1.01;
 }
-// ---------- automatic exercise rotation ----------
-// after settings.rotateEvery sessions on the same exercise, finishSession() swaps it automatically (no manual
-// approval) to the next pick in a per-slot rotation sequence, cycling back to the original once the sequence is
-// exhausted. The sequence itself is built fresh each time (so equipment-filter changes take effect immediately):
-// the slot's curated alternatives first (already hand-ranked), then full-catalog matches ranked by name simplicity
-// — same heuristic bestPickFor() uses for the program builder — capped to a length that actually cycles back
-// within a reasonable training block rather than the 150+ raw catalog entries some muscles have.
-const ROTATION_POOL_SIZE=6;
-function rotationPool(key, exclude){
-  const simple=(a,b)=>(a.name.split(' ').length-b.name.split(' ').length)||(a.name.length-b.name.length);
-  const seen=new Set(exclude), pool=[];
-  (ALTS[key]||[]).forEach(a=>{ if(pool.length>=ROTATION_POOL_SIZE||seen.has(a.name)||!equipAllowed(a)) return; seen.add(a.name); pool.push(a); });
-  if(pool.length<ROTATION_POOL_SIZE){
-    FULL_CATALOG.filter(a=>a.key===key&&equipAllowed(a)&&!seen.has(a.name)).sort(simple).forEach(a=>{
-      if(pool.length>=ROTATION_POOL_SIZE) return; seen.add(a.name);
-      pool.push({name:a.name,equip:a.equip,m:[a.key,...a.m.filter(x=>x!==a.key)],cue:a.cue,step:a.equip==='bodyweight'?0:5,region:a.region});
-    });
-  }
-  return pool;
+// ---------- exercise rotation: training blocks, tiered slots, rule-based picks ----------
+// Rotation happens at block boundaries (settings.blockWeeks, default 4), never silently mid-block: once a block
+// is complete, finishing a session (or the Home banner) opens a review listing every proposed change with a
+// keep/swap toggle, and only what's ticked is applied. Slots are tiered by position — the first two of each day
+// are primary lifts and only change when plateaued or after two full blocks; the rest are accessories and get a
+// fresh variation each block, provided they were actually trained during it. ex.rotBlocks counts completed
+// block reviews the exercise has survived in its slot; ex.rotCount counts sessions trained in the current block.
+// ex.rotAnchor (the slot's original pick, snapshotted once) carries the slot's intended rep range and region;
+// ex.rotPrev snapshots the immediately-prior exercise so a single undo can restore it.
+const PRIMARY_SLOTS=2;
+function isPrimarySlot(idx){ return idx<PRIMARY_SLOTS; }
+let blockStart=0, blockNum=1;
+function blockWeeks(){ return settings.blockWeeks||4; }
+function blockDue(){ return !!settings.autoRotate && !!blockStart && (Date.now()-blockStart)>=blockWeeks()*7*864e5; }
+// programs saved before region tags existed carry none on the exercise itself — fall back to the curated entry by
+// name, so a Face Pulls slot still reads as rear delt and a shoulder-press slot as front delt when picking
+function regionOf(ex){ return ex.region||(CURATED_BY_NAME[ex.name]||{}).region; }
+function anchorOf(ex){ const a=ex.rotAnchor||{name:ex.name,equip:ex.equip,m:ex.m.slice(),cue:ex.cue,step:ex.step,region:ex.region,target:ex.target}; if(!a.region){ const r=regionOf(a); if(r) a.region=r; } return a; }
+function naturalTopRep(pick){ return pick&&pick.target?topRep(pick.target):null; }
+// heavy slots (top rep 10 or under) only take lifts whose own range tops out at 12 or less; volume slots (top rep
+// 12 or over) only take lifts whose range reaches at least 10 — a lateral raise never lands in a 3 x 6-10 slot.
+function repCompatible(slotTarget, pick){
+  const nt=naturalTopRep(pick); if(nt==null) return true;
+  const st=topRep(slotTarget);
+  if(st<=10) return nt<=12;
+  if(st>=12) return nt>=10;
+  return true;
 }
-// checks every exercise worked in a just-finished day for a rotation-due count and swaps it in place. Returns
-// [{from,to}] for whichever exercises actually rotated, so finishSession() can tell the user about it.
-// ex.rotCount is the number of sessions this slot has been trained since the current exercise entered it —
-// a per-slot counter, deliberately NOT the name-wide hist length: history is shared by exercise name across
-// days, so counting it here meant an exercise done twice on Upper Volume rotated off Upper Heavy after zero
-// sessions there, and slots skipped in a partial session rotated anyway. Only exercises in `workedNames`
-// (the ones with a logged set this session) are eligible at all.
-// ex.rotAnchor (the original pick, snapshotted once) anchors the sequence at position 0 regardless of how many
-// times it's rotated since; ex.rotStep tracks position in that sequence; ex.rotPrev snapshots the
-// immediately-prior exercise so a single undo can restore it.
-function applyAutoRotation(day, workedNames){
-  if(!settings.autoRotate) return [];
-  const rotated=[]; const inUse=new Set(day.exercises.map(e=>e.name));
-  day.exercises.forEach((ex,i)=>{
-    const every=settings.rotateEvery||2;
-    if(!workedNames.has(ex.name)||(ex.rotCount||0)<every) return;
-    const anchor=ex.rotAnchor||{name:ex.name,equip:ex.equip,m:ex.m.slice(),cue:ex.cue,step:ex.step,region:ex.region,target:ex.target};
-    const key=groupKeyFor(ex);
-    const exclude=new Set(inUse); exclude.delete(ex.name); exclude.add(anchor.name);
-    const seq=[anchor, ...rotationPool(key, exclude)];
-    if(seq.length<2) return; // nothing else to rotate into under current equipment settings
-    // the pool is rebuilt each time, so the current exercise can sit at a different index than when it was
-    // picked — step past it rather than "rotating" a slot into the exercise it already holds
-    let nextStep=(ex.rotStep||0)+1;
-    if(seq[nextStep%seq.length].name===ex.name) nextStep++;
-    const pick=seq[nextStep%seq.length];
-    if(pick.name===ex.name) return;
-    const prevSnapshot={group:ex.group,key,name:ex.name,equip:ex.equip,target:ex.target,m:ex.m.slice(),cue:ex.cue,step:ex.step,start:ex.start,seed:ex.seed,region:ex.region,rotAnchor:anchor,rotStep:ex.rotStep||0};
-    // target is a property of the day-slot (Heavy vs. Volume rep range), not of whichever exercise currently
-    // fills it — always keep the slot's own target across a rotation. A curated ALTS pick carries its own
-    // target (usually authored for one specific day type), which must not leak in here; a FULL_CATALOG-built
-    // candidate never sets one at all, so this used to work by accident for that path and not the other.
-    const nu={group:ex.group,key,name:pick.name,equip:pick.equip,target:slotTargetFor(anchor.target, pick),m:pick.m.slice(),cue:pick.cue||'',step:pick.step==null?ex.step:pick.step,start:(pick.step===0||pick.start===0)?0:-1,seed:null,rotAnchor:anchor,rotStep:nextStep,rotPrev:prevSnapshot,rotCount:0};
-    if(pick.region) nu.region=pick.region;
-    inUse.delete(ex.name); inUse.add(nu.name);
-    day.exercises[i]=nu;
-    if(todayData[ex.name]) delete todayData[ex.name];
-    rotated.push({from:ex.name,to:nu.name});
+function allNamesInUse(){ const s=new Set(); PROGRAM.forEach(d=>d.exercises.forEach(e=>s.add(e.name))); return s; }
+// best replacement for a slot under the selection rules: never anything already on any day (or excluded by the
+// caller), never the exercise that just left, only equipment you have, rep-range compatible — then ranked to feel
+// different without changing what the slot is for: the slot's movement character is kept (a multi-joint anchor
+// gets a multi-joint pick, an isolation anchor an isolation pick), the anchor's region (lats, upper chest, rear
+// delt…) is kept when it has one and a region-specific pick is avoided when it hasn't, a different implement
+// scores up on accessory slots only (a heavy primary shouldn't trade a hack squat for a walking lunge just to
+// change implement), a mismatched kind (timed vs reps) scores down, the slot's original pick is welcome back once
+// it's been away, and the hand-ranked curated order breaks ties. Custom exercises with no pool never get a proposal.
+function pickForSlot(day, idx, exclude){
+  const ex=day.exercises[idx]; const anchor=anchorOf(ex); const key=groupKeyFor(ex); const primary=isPrimarySlot(idx);
+  const seen=new Set(); const cands=[];
+  [anchor, ...(ALTS[key]||[])].forEach((a,i)=>{ if(seen.has(a.name)) return; seen.add(a.name); cands.push({a,i}); });
+  const prevName=ex.rotPrev&&ex.rotPrev.name;
+  const multiJoint=x=>((x&&x.m)||[]).length>=2; const anchorMulti=multiJoint(anchor);
+  const scored=cands.filter(({a})=>a.name!==ex.name && a.name!==prevName && !exclude.has(a.name) && equipAllowed(a) && repCompatible(anchor.target,a)).map(({a,i})=>{
+    let sc=0;
+    if(multiJoint(a)===anchorMulti) sc+=3;
+    if(!primary && a.equip&&ex.equip&&a.equip!==ex.equip) sc+=2;
+    if(anchor.region){ if(a.region===anchor.region) sc+=3; else if(a.region) sc-=1; }
+    else if(a.region) sc-=1;
+    if(isTimedTarget(a.target||'')!==isTimedTarget(anchor.target)) sc-=3;
+    if(a.name===anchor.name) sc+=1;
+    return {a,i,sc};
+  }).sort((x,y)=>(y.sc-x.sc)||(x.i-y.i));
+  return scored.length?scored[0].a:null;
+}
+function slotReason(ex, idx){
+  if(isPrimarySlot(idx)) return isPlateau(ex)?'plateau':((ex.rotBlocks||0)>=1?'block2':null);
+  return (ex.rotCount||0)>=1?'block':null;
+}
+// one proposal per eligible slot; a pick is excluded for every later slot, and so are outgoing names, so two
+// slots can't simply trade places
+function buildBlockProposals(){
+  const exclude=allNamesInUse(); const out=[];
+  PROGRAM.forEach(day=>day.exercises.forEach((ex,idx)=>{
+    const reason=slotReason(ex,idx); if(!reason) return;
+    const pick=pickForSlot(day, idx, exclude); if(!pick) return;
+    exclude.add(pick.name);
+    out.push({dayId:day.id, idx, from:ex.name, pick, primary:isPrimarySlot(idx), reason, apply:true});
+  }));
+  return out;
+}
+// the slot keeps its own rep range (Heavy vs. Volume) across a swap — slotTargetFor() handles the cases where the
+// pick's kind differs (timed holds, per-side work)
+function rotatedExercise(ex, pick){
+  const anchor=anchorOf(ex);
+  const prevSnapshot={group:ex.group,key:groupKeyFor(ex),name:ex.name,equip:ex.equip,target:ex.target,m:ex.m.slice(),cue:ex.cue,step:ex.step,start:ex.start,seed:ex.seed,region:ex.region,rotAnchor:anchor,rotBlocks:ex.rotBlocks||0};
+  const nu={group:ex.group,key:groupKeyFor(ex),name:pick.name,equip:pick.equip,target:slotTargetFor(anchor.target, pick),m:pick.m.slice(),cue:pick.cue||'',step:pick.step==null?ex.step:pick.step,start:(pick.step===0||pick.start===0)?0:-1,seed:null,rotAnchor:anchor,rotPrev:prevSnapshot,rotCount:0,rotBlocks:0};
+  if(pick.region) nu.region=pick.region;
+  return nu;
+}
+async function applyBlock(proposals){
+  // every kept exercise has now survived one more block; per-block session counters start over
+  PROGRAM.forEach(day=>day.exercises.forEach(ex=>{ ex.rotBlocks=(ex.rotBlocks||0)+1; ex.rotCount=0; }));
+  let n=0;
+  proposals.forEach(p=>{
+    if(!p.apply) return;
+    const day=PROGRAM.find(d=>d.id===p.dayId); const ex=day&&day.exercises[p.idx];
+    if(!ex||ex.name!==p.from) return;
+    day.exercises[p.idx]=rotatedExercise(ex,p.pick);
+    if(day.id===currentDay&&todayData[ex.name]) delete todayData[ex.name];
+    n++;
   });
-  return rotated;
+  if(currentDay!=='cardio') await sset('today:'+currentDay,todayData);
+  blockNum+=1; blockStart=Date.now(); pendingBlockReview=false;
+  await sset('blockNum',blockNum); await sset('blockStart',blockStart);
+  await saveProgram(); updateBlockUI();
+  showToast(n?`Block ${blockNum} started — ${n} exercise${n===1?'':'s'} changed. Undo any of them from its card in the log.`:`Block ${blockNum} started — nothing changed`);
+}
+let blockProposals=[];
+function openBlockSheet(){
+  blockProposals=buildBlockProposals();
+  const weeks=blockStart?((Date.now()-blockStart)/(7*864e5)).toFixed(1):'0';
+  const n=blockProposals.length;
+  document.getElementById('blockTitle').textContent=`Block ${blockNum} complete`;
+  document.getElementById('blockStats').textContent=`${weeks} weeks · ${n} change${n===1?'':'s'} proposed`;
+  document.getElementById('blockIntro').textContent=n
+    ? `Untick anything you'd rather keep — everything not listed stays as it is. Primary lifts (the first two of each day) only change once they've stalled, or every other block; accessories get a fresh variation each block.`
+    : `Nothing needs to change yet — primary lifts stay until they stall or two blocks pass, and accessories only rotate once they've been trained. Starting the next block just resets the clock.`;
+  const list=document.getElementById('blockList'); list.innerHTML='';
+  blockProposals.forEach(p=>{
+    const day=PROGRAM.find(d=>d.id===p.dayId);
+    const why=p.reason==='plateau'?'stuck for 3 sessions':p.reason==='block2'?'two blocks on this lift':'fresh variation for the new block';
+    const row=document.createElement('div'); row.className='edrow';
+    row.innerHTML=`<div><label class="chk" style="font-size:12px;color:var(--text)"><input type="checkbox"${p.apply?' checked':''}> ${p.from} → <b>${p.pick.name}</b></label><div class="m">${day.name} ${day.sub}${p.primary?' · primary':''} · ${why} · ${slotTargetFor(anchorOf(day.exercises[p.idx]).target,p.pick)}</div></div>`;
+    row.querySelector('input').onchange=e=>{ p.apply=e.target.checked; };
+    list.appendChild(row);
+  });
+  document.getElementById('blockBg').classList.add('on'); document.getElementById('blockSheet').classList.add('on');
+}
+function closeBlockSheet(){ document.getElementById('blockBg').classList.remove('on'); document.getElementById('blockSheet').classList.remove('on'); }
+document.getElementById('blockClose').onclick=closeBlockSheet; document.getElementById('blockBg').onclick=closeBlockSheet; document.getElementById('blockNotNow').onclick=closeBlockSheet;
+document.getElementById('blockApply').onclick=async()=>{ closeBlockSheet(); await applyBlock(blockProposals); };
+document.getElementById('blockBannerBtn').onclick=openBlockSheet;
+function updateBlockUI(){
+  const due=blockDue();
+  document.getElementById('blockBanner').style.display=due?'flex':'none';
+  if(due) document.getElementById('blockBannerTxt').textContent=`Block ${blockNum} is complete — ${blockWeeks()} weeks in.`;
 }
 async function undoRotation(day,idx){
   const ex=day.exercises[idx]; if(!ex.rotPrev) return;
   // the exercise being restored may since have rotated into another slot on this same day (sequences share a
   // pool); two cards with one name would share a single todayData entry and double-count volume and recovery.
-  if(day.exercises.some((e,i)=>i!==idx&&e.name===ex.rotPrev.name)){ showToast(`${ex.rotPrev.name} is already on this day — swap it manually instead`); return; }
-  // keep this slot's position in the rotation sequence (rather than the restored exercise's older one) and start
-  // its session counter fresh, so the next rotation moves on to a new pick instead of re-applying the exact swap
-  // that was just undone at the end of the very next session.
-  const restored={...ex.rotPrev, rotStep:ex.rotStep||0, rotCount:0};
+  const clash=PROGRAM.find(d=>d.exercises.some((e,i)=>e.name===ex.rotPrev.name&&!(d.id===day.id&&i===idx)));
+  if(clash){ showToast(`${ex.rotPrev.name} is already on ${clash.name} ${clash.sub} — swap it manually instead`); return; }
+  // the restored exercise starts its per-block counters fresh; the next review's picker skips the exercise that
+  // just left (rotPrev is dropped here), so it won't propose the exact swap that was just undone
+  const restored={...ex.rotPrev, rotCount:0};
   day.exercises[idx]=restored;
   if(todayData[ex.name]) delete todayData[ex.name];
   await saveProgram(); showToast(`reverted to ${restored.name}`);
@@ -1427,8 +1505,8 @@ function render(){
     howto.innerHTML=`<div class="howto-row"><span><span class="howto-btn">${state.howto?'hide':'how to'}</span><span class="howto-btn swap-btn" style="margin-left:14px">swap ↔</span></span><a class="demo-link" href="${yt}" target="_blank" rel="noopener">watch demo ↗</a></div><div class="cue">${ex.cue||'No cue written yet.'}</div>`;
     howto.querySelector('.howto-btn').onclick=()=>{ state.howto=!state.howto; render(); };
     howto.querySelector('.swap-btn').onclick=()=>openSwap(currentDay, ex); body.appendChild(howto);
-    if(plat){ const pt=document.createElement('div'); pt.className='plateau-tip'; pt.innerHTML=`No progress in 3 sessions. Try a lighter week (about 10% less, same reps), then come back — or switch the rep range for a few weeks. If several lifts feel stuck at once, <span class="linkbtn" style="color:var(--amber)">consider a full deload week</span>.`; pt.querySelector('.linkbtn').onclick=openDeloadSheet; body.appendChild(pt); }
-    if(ex.rotPrev){ const idx=day.exercises.indexOf(ex); const rt=document.createElement('div'); rt.className='plateau-tip'; rt.innerHTML=`Automatically swapped from ${ex.rotPrev.name} after ${settings.rotateEvery||2} sessions straight. <span class="linkbtn" style="color:var(--amber)">undo</span>, or turn this off in Settings.`; rt.querySelector('.linkbtn').onclick=()=>undoRotation(day,idx); body.appendChild(rt); }
+    if(plat){ const pt=document.createElement('div'); pt.className='plateau-tip'; pt.innerHTML=`No progress in 3 sessions. <span class="linkbtn" style="color:var(--amber)" data-act="variation">Try a variation</span>, take a lighter week (about 10% less, same reps), or switch the rep range for a few weeks. If several lifts feel stuck at once, <span class="linkbtn" style="color:var(--amber)" data-act="deload">consider a full deload week</span>.`; pt.querySelector('[data-act="variation"]').onclick=()=>openSwap(currentDay, ex); pt.querySelector('[data-act="deload"]').onclick=openDeloadSheet; body.appendChild(pt); }
+    if(ex.rotPrev){ const idx=day.exercises.indexOf(ex); const rt=document.createElement('div'); rt.className='plateau-tip'; rt.innerHTML=`Swapped in at the start of this block (was ${ex.rotPrev.name}). <span class="linkbtn" style="color:var(--amber)">undo</span>`; rt.querySelector('.linkbtn').onclick=()=>undoRotation(day,idx); body.appendChild(rt); }
     if(sug===-1){ const fn=document.createElement('div'); fn.className='first-log-note'; fn.textContent='New lift — no history yet. Log a comfortable first set below; Lift Log will suggest a weight next time from what you log now.'; body.appendChild(fn); }
 
     const hr=document.createElement('div'); hr.className='setgrid head'; hr.innerHTML='<div>set</div><div>weight</div><div>reps</div><div></div><div></div>'; body.appendChild(hr);
@@ -1492,6 +1570,7 @@ function renderBuilder(panel){
 // Home is the landing tab — picking a day here (or accepting a built program) hands off to the Log tab, which now
 // always shows the active day's exercise list with no arrival/dismiss state of its own.
 function renderHome(){
+  updateBlockUI();
   const panel=document.getElementById('arrivalPanel');
   if(needsBuild){ renderBuilder(panel); return; }
   if(currentDay==='cardio'){
@@ -1615,15 +1694,10 @@ async function finishSession(){
   await sset('last:'+currentDay,todayData); await sset('today:'+currentDay,{});
   sessionCount+=1; await sset('meta:sessionCount',sessionCount); document.getElementById('sessionCount').textContent=sessionCount;
   stopTimer();
-  const workedNames=new Set(worked.map(ex=>ex.name));
-  worked.forEach(ex=>{ ex.rotCount=(ex.rotCount||0)+1; });
-  const rotated=applyAutoRotation(day, workedNames);
-  await saveProgram(); // counters changed even when nothing rotated
-  if(rotated.length){
-    pendingRotationToast=rotated.length===1
-      ? `Heads up — ${rotated[0].from} just swapped to ${rotated[0].to} after ${settings.rotateEvery||2} sessions straight. Turn this off in Settings any time.`
-      : `Heads up — ${rotated.length} exercises just swapped to fresh variations after ${settings.rotateEvery||2} sessions straight. Turn this off in Settings any time.`;
-  }
+  worked.forEach(ex=>{ ex.rotCount=(ex.rotCount||0)+1; }); // sessions trained this block, per slot
+  await saveProgram();
+  if(!blockStart){ blockStart=now; await sset('blockStart',blockStart); } // the first block starts with the first session
+  pendingBlockReview=blockDue(); updateBlockUI();
   // a start older than 12h is an abandoned draft that was picked back up, not a marathon session — treat as unknown
   const started=dayStartTimes[currentDay]; const durationMin=Math.max(1,Math.round((now-((started&&now-started<12*3600000)?started:now))/60000));
   delete dayStartTimes[currentDay]; await sset('dayStart',dayStartTimes);
@@ -1659,7 +1733,7 @@ function showCelebration({day,worked,nsets,vol,durationMin,pr,rhythmCount}){
     </div>
     <button class="cel-cta" id="celBackBtn">return to home</button>`;
   bg.classList.add('on');
-  document.getElementById('celBackBtn').onclick=()=>{ bg.classList.remove('on'); setView('home'); if(pendingRotationToast){ showToast(pendingRotationToast); pendingRotationToast=null; } };
+  document.getElementById('celBackBtn').onclick=()=>{ bg.classList.remove('on'); setView('home'); if(pendingBlockReview){ pendingBlockReview=false; openBlockSheet(); } };
 }
 
 // ---------- first-launch onboarding: welcome -> name -> import? -> body weight -> body-map intro ----------
@@ -2021,22 +2095,22 @@ function renderSettings(){ document.getElementById('nameInput').value=settings.n
     settings.equipFilter=picked.length?picked:EQUIP_TYPES.slice(); sset('settings',settings);
     if(!picked.length){ showToast('at least one equipment type stays on'); renderSettings(); }
   }; });
-  document.getElementById('autoRotateChk').checked=!!settings.autoRotate; document.getElementById('rotateEverySel').value=String(settings.rotateEvery||2);
+  document.getElementById('autoRotateChk').checked=!!settings.autoRotate; document.getElementById('blockWeeksSel').value=String(settings.blockWeeks||4);
   document.getElementById('rotateEveryRow').style.display=settings.autoRotate?'':'none';
 }
 document.getElementById('restSel').onchange=e=>{ settings.rest=parseInt(e.target.value); sset('settings',settings); };
 document.getElementById('autoTimer').onchange=e=>{ settings.auto=e.target.checked; sset('settings',settings); };
 document.getElementById('smartRestChk').onchange=e=>{ settings.smartRest=e.target.checked; sset('settings',settings); renderSettings(); };
 document.getElementById('unitSel').onchange=e=>{ settings.unit=e.target.value; sset('settings',settings); render(); renderHistory(); renderStrength(); };
-document.getElementById('autoRotateChk').onchange=e=>{ settings.autoRotate=e.target.checked; sset('settings',settings); renderSettings(); render(); };
-document.getElementById('rotateEverySel').onchange=e=>{ settings.rotateEvery=parseInt(e.target.value); sset('settings',settings); render(); };
+document.getElementById('autoRotateChk').onchange=e=>{ settings.autoRotate=e.target.checked; sset('settings',settings); renderSettings(); updateBlockUI(); };
+document.getElementById('blockWeeksSel').onchange=e=>{ settings.blockWeeks=parseInt(e.target.value); sset('settings',settings); updateBlockUI(); };
 
 function renderEditor(){
   const sel=document.getElementById('edDay'); if(!sel.options.length){ PROGRAM.forEach(d=>{ const o=document.createElement('option'); o.value=d.id; o.textContent=`${d.name} · ${d.sub}`; sel.appendChild(o); }); sel.value=PROGRAM.some(d=>d.id===currentDay)?currentDay:PROGRAM[0].id; sel.onchange=renderEditor; }
   const day=PROGRAM.find(d=>d.id===sel.value); const list=document.getElementById('edList'); list.innerHTML='';
   day.exercises.forEach((ex,i)=>{
     const r=document.createElement('div'); r.className='edrow';
-    r.innerHTML=`<div><div>${ex.name}</div><div class="m">${ex.group} · ${ex.target} · ${ex.m.map(k=>MUSCLE_LABEL[k]).join(', ')}</div></div><div class="acts"><span title="swap">↔</span><span>↑</span><span>↓</span><span class="x">✕</span></div>`;
+    r.innerHTML=`<div><div>${ex.name}</div><div class="m">${isPrimarySlot(i)?'primary · ':''}${ex.group} · ${ex.target} · ${ex.m.map(k=>MUSCLE_LABEL[k]).join(', ')}</div></div><div class="acts"><span title="swap">↔</span><span>↑</span><span>↓</span><span class="x">✕</span></div>`;
     const [ren,up,dn,x]=r.querySelectorAll('.acts span');
     ren.onclick=()=>openSwap(day.id, ex);
     up.onclick=()=>{ if(i>0){ day.exercises.splice(i-1,0,day.exercises.splice(i,1)[0]); saveProgram(); } };
@@ -2239,15 +2313,19 @@ function openSwap(dayId, ex){
   document.getElementById('sheetSub').textContent=`Replacing ${ex.name} · ${day.name} ${day.sub}`;
   const list=document.getElementById('sheetList'); list.innerHTML='';
   const original=(DEFAULT_PROGRAM.find(d=>d.id===dayId).exercises[idx]);
+  const slotTarget=anchorOf(ex).target;
   const render1=(alt,tag,searchable)=>{
     const el=document.createElement('div'); el.className='alt'+(searchable?' alt-searchable':'');
     if(searchable) el.dataset.name=alt.name.toLowerCase();
-    el.innerHTML=`<div class="an">${alt.name}${tag?` <span class="e1rm">· ${tag}</span>`:''}</div><div class="am">${alt.target} · ${alt.m.map(k=>MUSCLE_LABEL[k]).join(', ')}</div><div class="ac">${alt.cue||''}</div><div class="ab"><button class="btn primary">use this</button></div>`;
+    el.innerHTML=`<div class="an">${alt.name}${tag?` <span class="e1rm">· ${tag}</span>`:''}</div><div class="am">${slotTargetFor(slotTarget,alt)} · ${alt.m.map(k=>MUSCLE_LABEL[k]).join(', ')}</div><div class="ac">${alt.cue||''}</div><div class="ab"><button class="btn primary">use this</button></div>`;
     el.querySelector('button').onclick=()=>{ doSwap(day, idx, alt); };
     list.appendChild(el);
   };
   // the original pick also lives in the curated pool — mark it seen so it isn't listed a second time below
   const seen=new Set([ex.name]);
+  // the same rule-based pick a block review would make for this slot, shown first
+  const suggested=pickForSlot(day, idx, allNamesInUse());
+  if(suggested){ const h=document.createElement('div'); h.className='alt-sec'; h.textContent='Suggested for this slot'; list.appendChild(h); render1(suggested, isPlateau(ex)?'a fresh variation to break the stall':'a fresh variation'); seen.add(suggested.name); }
   if(original && original.name!==ex.name){ const h=document.createElement('div'); h.className='alt-sec'; h.textContent='Original'; list.appendChild(h); render1(original,'back to the program'); seen.add(original.name); }
   const h1=document.createElement('div'); h1.className='alt-sec'; h1.textContent=`${ex.group} alternatives`; list.appendChild(h1);
   // same-group options: the curated pool for this group (the program's own recommended picks live there too)
@@ -2301,7 +2379,9 @@ function openSwap(dayId, ex){
 async function doSwap(day, idx, alt){
   const old=day.exercises[idx];
   const isOriginal = DEFAULT_PROGRAM.find(d=>d.id===day.id).exercises.some(e=>e.name===alt.name && e.group===alt.group);
-  const nu = isOriginal ? JSON.parse(JSON.stringify(alt)) : {group:old.group,key:groupKeyFor(old),name:alt.name,target:alt.target,m:alt.m.slice(),seed:null,start:(alt.step===0||alt.start===0)?0:-1,step:alt.step||5,cue:alt.cue||'',region:alt.region};
+  // a manual swap keeps the slot's own rep range too (kind-aware), and carries the slot's anchor so block reviews
+  // still know its intended range and region
+  const nu = isOriginal ? JSON.parse(JSON.stringify(alt)) : {group:old.group,key:groupKeyFor(old),name:alt.name,target:slotTargetFor(anchorOf(old).target,alt),m:alt.m.slice(),seed:null,start:(alt.step===0||alt.start===0)?0:-1,step:alt.step||5,cue:alt.cue||'',region:alt.region,rotAnchor:anchorOf(old),rotCount:0,rotBlocks:0};
   day.exercises[idx]=nu;
   if(todayData[old.name]) { delete todayData[old.name]; await sset('today:'+day.id,todayData); }
   await saveProgram(); closeSheet(); showToast(`swapped in ${nu.name}`);
@@ -2346,7 +2426,8 @@ document.getElementById('resetLink').onclick=async()=>{ todayData={}; await sset
     await sset('meta:histMigratedV2',true);
   }
 
-  settings=Object.assign({rest:90,auto:true,autoBackup:true,smartRest:true,unit:'lb',autoRotate:true,rotateEvery:2,equipFilter:EQUIP_TYPES.slice(),name:'',onboarded:false},(await sget('settings'))||{});
+  settings=Object.assign({rest:90,auto:true,autoBackup:true,smartRest:true,unit:'lb',autoRotate:true,blockWeeks:4,equipFilter:EQUIP_TYPES.slice(),name:'',onboarded:false},(await sget('settings'))||{});
+  blockStart=(await sget('blockStart'))||0; blockNum=(await sget('blockNum'))||1;
   lastBackup=(await sget('lastBackup'))||0; updateBackupUI();
   lastDeload=(await sget('lastDeload'))||0; deloadStart=(await sget('deloadStart'))||0; updateDeloadUI(); updateBwUI();
   const custom=await sget('program');
@@ -2354,7 +2435,7 @@ document.getElementById('resetLink').onclick=async()=>{ todayData={}; await sset
   else if(sessionCount>0 || sessions.length>0){ await sset('program',PROGRAM); } // logged before a program was ever saved (the old fixed defaults): keep those exercises name-for-name so history keys still match, skip the builder
   else { needsBuild=true; applyEquipPicks(PROGRAM); }
 
-  // self-heal a slot's rep target against a past rotation-target bug: applyAutoRotation() used to take the
+  // self-heal a slot's rep target against a past rotation-target bug: the old per-session rotation used to take the
   // newly-rotated-in exercise's own catalog target instead of keeping the slot's — rotAnchor.target (snapshotted
   // once, before any rotation ever touched this slot) is the slot's real intended range. Idempotent: once
   // corrected, target already matches and this is a no-op, so no migration flag is needed.
@@ -2371,6 +2452,9 @@ document.getElementById('resetLink').onclick=async()=>{ todayData={}; await sset
     }
   }));
   if(programFixed) await sset('program',PROGRAM);
+  // existing users start block 1 the moment this version loads; new users start it with their first session
+  if(!blockStart && sessions.some(x=>!x.isCardio)){ blockStart=Date.now(); await sset('blockStart',blockStart); }
+  updateBlockUI();
 
   await loadDay(suggestedDayId());
   if(currentDay==='cardio') setView('log'); // cardio is a decisive rotation call, not a day to choose from Home — go straight to logging it
