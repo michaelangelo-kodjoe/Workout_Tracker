@@ -1031,19 +1031,23 @@ function repCompatible(slotTarget, pick){
 }
 function allNamesInUse(){ const s=new Set(); PROGRAM.forEach(d=>d.exercises.forEach(e=>s.add(e.name))); return s; }
 // best replacement for a slot under the selection rules: never anything already on any day (or excluded by the
-// caller), never the exercise that just left, only equipment you have, rep-range compatible — then ranked to
-// actually feel different: a different implement scores up, the anchor's region (lats, upper chest, rear delt…)
-// is kept when it has one and a region-specific pick is avoided when it hasn't, a mismatched kind (timed vs reps)
-// scores down, the slot's original pick is welcome back once it's been away, and the hand-ranked curated order
-// breaks ties. Custom exercises with no curated pool simply never get a proposal.
+// caller), never the exercise that just left, only equipment you have, rep-range compatible — then ranked to feel
+// different without changing what the slot is for: the slot's movement character is kept (a multi-joint anchor
+// gets a multi-joint pick, an isolation anchor an isolation pick), the anchor's region (lats, upper chest, rear
+// delt…) is kept when it has one and a region-specific pick is avoided when it hasn't, a different implement
+// scores up on accessory slots only (a heavy primary shouldn't trade a hack squat for a walking lunge just to
+// change implement), a mismatched kind (timed vs reps) scores down, the slot's original pick is welcome back once
+// it's been away, and the hand-ranked curated order breaks ties. Custom exercises with no pool never get a proposal.
 function pickForSlot(day, idx, exclude){
-  const ex=day.exercises[idx]; const anchor=anchorOf(ex); const key=groupKeyFor(ex);
+  const ex=day.exercises[idx]; const anchor=anchorOf(ex); const key=groupKeyFor(ex); const primary=isPrimarySlot(idx);
   const seen=new Set(); const cands=[];
   [anchor, ...(ALTS[key]||[])].forEach((a,i)=>{ if(seen.has(a.name)) return; seen.add(a.name); cands.push({a,i}); });
   const prevName=ex.rotPrev&&ex.rotPrev.name;
+  const multiJoint=x=>((x&&x.m)||[]).length>=2; const anchorMulti=multiJoint(anchor);
   const scored=cands.filter(({a})=>a.name!==ex.name && a.name!==prevName && !exclude.has(a.name) && equipAllowed(a) && repCompatible(anchor.target,a)).map(({a,i})=>{
     let sc=0;
-    if(a.equip&&ex.equip&&a.equip!==ex.equip) sc+=2;
+    if(multiJoint(a)===anchorMulti) sc+=3;
+    if(!primary && a.equip&&ex.equip&&a.equip!==ex.equip) sc+=2;
     if(anchor.region){ if(a.region===anchor.region) sc+=3; else if(a.region) sc-=1; }
     else if(a.region) sc-=1;
     if(isTimedTarget(a.target||'')!==isTimedTarget(anchor.target)) sc-=3;
@@ -1129,7 +1133,8 @@ async function undoRotation(day,idx){
   const ex=day.exercises[idx]; if(!ex.rotPrev) return;
   // the exercise being restored may since have rotated into another slot on this same day (sequences share a
   // pool); two cards with one name would share a single todayData entry and double-count volume and recovery.
-  if(day.exercises.some((e,i)=>i!==idx&&e.name===ex.rotPrev.name)){ showToast(`${ex.rotPrev.name} is already on this day — swap it manually instead`); return; }
+  const clash=PROGRAM.find(d=>d.exercises.some((e,i)=>e.name===ex.rotPrev.name&&!(d.id===day.id&&i===idx)));
+  if(clash){ showToast(`${ex.rotPrev.name} is already on ${clash.name} ${clash.sub} — swap it manually instead`); return; }
   // the restored exercise starts its per-block counters fresh; the next review's picker skips the exercise that
   // just left (rotPrev is dropped here), so it won't propose the exact swap that was just undone
   const restored={...ex.rotPrev, rotCount:0};
