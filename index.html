@@ -2181,39 +2181,50 @@ function renderStrength(){
   const nameSlots={};
   PROGRAM.forEach(day=>day.exercises.forEach(ex=>{ (nameSlots[ex.name]=nameSlots[ex.name]||[]).push({name:day.name,sub:day.sub}); }));
   const countedNames=new Set();
-  PROGRAM.forEach(day=>{
+  const renderRow=(ex, day)=>{
     const targetList=day.name==='Upper'?upperList:day.name==='Lower'?lowerList:null;
-    day.exercises.forEach(ex=>{
-      const base=baselineFor(ex), cur=currentFor(ex), h=histFrom(ex), fullH=hist[histKey(ex)]||[];
-      const p=h.length?pct(base,cur):null;
-      const firstOccurrence=!countedNames.has(ex.name); countedNames.add(ex.name);
-      if(firstOccurrence){
-        if(p!==null) changes.push(p);
-        if(day.name==='Upper'){ upperTotal+=cur; upperBase+=base; }
-        else if(day.name==='Lower'){ lowerTotal+=cur; lowerBase+=base; }
-        h.forEach(x=>{
-          const pt={t:x.t,p:pct(base,x.e1rm)};
-          heroSeries.push(pt);
-          if(day.name==='Upper') upperSeries.push(pt); else if(day.name==='Lower') lowerSeries.push(pt);
-        });
-      }
-      const cls=p===null||Math.abs(p)<0.05?'flat':(p>0?'up':'down');
-      const last=h.length?h[h.length-1]:null;
-      const bestTxt=last?`${dispWeight(last.w)} ${unitLabel()} × ${last.r}`:(ex.seed?(()=>{const b=ex.seed.filter(x=>x.w&&x.r).sort((a,b)=>e1rm(b.w,b.r)-e1rm(a.w,a.r))[0]; return b?`${dispWeight(b.w)} ${unitLabel()} × ${b.r}`:'—';})():'—');
-      const plat=isPlateau(ex);
-      const breaks=plateauBreakIdx(h); const milestoneIdx=breaks.length?breaks[breaks.length-1]+1:null;
-      const others=nameSlots[ex.name].filter(o=>!(o.name===day.name&&o.sub===day.sub));
-      const shareTxt=others.length?` · shares history with ${others.map(o=>`${o.name} ${o.sub}`).join(', ')}`:'';
-      const row=document.createElement('div'); row.className='srow';
-      const sdTxt=isTimedTarget(ex.target)?'timed hold — counted as sets, not scored for strength':`best set ${bestTxt} · ${fullH.length?fullH.length+' session'+(fullH.length>1?'s':'')+' logged':'your starting numbers'}`;
-      const k=histKey(ex);
-      const baseTxt=isTimedTarget(ex.target)?'':baselines[k]?` · <span class="linkbtn" data-act="baseline-undo">baseline reset ${fmtDate(baselines[k])} — undo</span>`:(fullH.length>=2?` · <span class="linkbtn" data-act="baseline">reset baseline</span>`:'');
-      row.innerHTML=`<div><div class="sn">${ex.name} <span class="badge ${day.badge}">${day.sub}</span>${plat?'<span class="badge plateau">plateau</span>':''}</div><div class="sd">${sdTxt}${shareTxt}${baseTxt}</div></div><div class="sp ${cls}">${p===null?'start':fmtPct(p)}</div>${sparkline([base,...h.map(x=>x.e1rm)],cls==='down'?'var(--amber)':'var(--green)',milestoneIdx)}`;
-      // the card itself toggles open/closed on click — keep these links from bubbling up to it
-      const rb=row.querySelector('[data-act="baseline"]'); if(rb) rb.onclick=async e=>{ e.stopPropagation(); baselines[k]=fullH[fullH.length-1].t; await sset('baselines',baselines); renderStrength(); if(view==='log') render(); showToast(`${ex.name}: progress now measured from your latest session`); };
-      const ru=row.querySelector('[data-act="baseline-undo"]'); if(ru) ru.onclick=async e=>{ e.stopPropagation(); delete baselines[k]; await sset('baselines',baselines); renderStrength(); if(view==='log') render(); showToast(`${ex.name}: baseline back to your first session`); };
-      if(targetList) targetList.appendChild(row);
-    });
+    const base=baselineFor(ex), cur=currentFor(ex), h=histFrom(ex), fullH=hist[histKey(ex)]||[];
+    const p=h.length?pct(base,cur):null;
+    const firstOccurrence=!countedNames.has(ex.name); countedNames.add(ex.name);
+    if(firstOccurrence){
+      if(p!==null) changes.push(p);
+      if(day.name==='Upper'){ upperTotal+=cur; upperBase+=base; }
+      else if(day.name==='Lower'){ lowerTotal+=cur; lowerBase+=base; }
+      h.forEach(x=>{
+        const pt={t:x.t,p:pct(base,x.e1rm)};
+        heroSeries.push(pt);
+        if(day.name==='Upper') upperSeries.push(pt); else if(day.name==='Lower') lowerSeries.push(pt);
+      });
+    }
+    const cls=p===null||Math.abs(p)<0.05?'flat':(p>0?'up':'down');
+    const last=h.length?h[h.length-1]:null;
+    const bestTxt=last?`${dispWeight(last.w)} ${unitLabel()} × ${last.r}`:(ex.seed?(()=>{const b=ex.seed.filter(x=>x.w&&x.r).sort((a,b)=>e1rm(b.w,b.r)-e1rm(a.w,a.r))[0]; return b?`${dispWeight(b.w)} ${unitLabel()} × ${b.r}`:'—';})():'—');
+    const plat=isPlateau(ex);
+    const breaks=plateauBreakIdx(h); const milestoneIdx=breaks.length?breaks[breaks.length-1]+1:null;
+    const others=(nameSlots[ex.name]||[]).filter(o=>!(o.name===day.name&&o.sub===day.sub));
+    const shareTxt=others.length?` · shares history with ${others.map(o=>`${o.name} ${o.sub}`).join(', ')}`:'';
+    const row=document.createElement('div'); row.className='srow';
+    const sdTxt=isTimedTarget(ex.target)?'timed hold — counted as sets, not scored for strength':`best set ${bestTxt} · ${fullH.length?fullH.length+' session'+(fullH.length>1?'s':'')+' logged':'your starting numbers'}`;
+    const pastTxt=day.past?` · last done ${fmtDate(fullH[fullH.length-1].t)}, not in your program now`:'';
+    const k=histKey(ex);
+    const baseTxt=isTimedTarget(ex.target)?'':baselines[k]?` · <span class="linkbtn" data-act="baseline-undo">baseline reset ${fmtDate(baselines[k])} — undo</span>`:(fullH.length>=2?` · <span class="linkbtn" data-act="baseline">reset baseline</span>`:'');
+    row.innerHTML=`<div><div class="sn">${ex.name} <span class="badge ${day.badge}">${day.sub}</span>${plat?'<span class="badge plateau">plateau</span>':''}</div><div class="sd">${sdTxt}${shareTxt}${pastTxt}${baseTxt}</div></div><div class="sp ${cls}">${p===null?'start':fmtPct(p)}</div>${sparkline([base,...h.map(x=>x.e1rm)],cls==='down'?'var(--amber)':'var(--green)',milestoneIdx)}`;
+    // the card itself toggles open/closed on click — keep these links from bubbling up to it
+    const rb=row.querySelector('[data-act="baseline"]'); if(rb) rb.onclick=async e=>{ e.stopPropagation(); baselines[k]=fullH[fullH.length-1].t; await sset('baselines',baselines); renderStrength(); if(view==='log') render(); showToast(`${ex.name}: progress now measured from your latest session`); };
+    const ru=row.querySelector('[data-act="baseline-undo"]'); if(ru) ru.onclick=async e=>{ e.stopPropagation(); delete baselines[k]; await sset('baselines',baselines); renderStrength(); if(view==='log') render(); showToast(`${ex.name}: baseline back to your first session`); };
+    if(targetList) targetList.appendChild(row);
+  };
+  PROGRAM.forEach(day=>day.exercises.forEach(ex=>renderRow(ex, day)));
+  // lifts with logged history that are no longer in the program (rotated or swapped out) — their sessions are
+  // just as real, so they stay in the stats, grouped under the day they were last done on (or by muscle for
+  // entries older than the day tag), marked "past" instead of Heavy/Volume
+  const UPPER_KEYS=new Set(['chest','back','shoulders','biceps','triceps','forearms']);
+  Object.keys(hist).filter(n=>!countedNames.has(n)&&hist[n].length).sort((a,b)=>hist[b][hist[b].length-1].t-hist[a][hist[a].length-1].t).forEach(name=>{
+    const en=entryFor(name)||{}; const key=keyOfEntry(en);
+    const lastTagged=[...hist[name]].reverse().find(x=>x.d); const srcDay=lastTagged&&PROGRAM.find(d=>d.id===lastTagged.d);
+    const half=srcDay?srcDay.name:(key&&!UPPER_KEYS.has(key)?'Lower':'Upper');
+    const ex={name, target:en.target||'3 x 8-12', seed:null, start:en.start===0?0:-1};
+    renderRow(ex, {name:half, sub:'past', badge:'light', past:true});
   });
   document.getElementById('upperStrList').style.display=strCardOpen.upper?'block':'none';
   document.getElementById('lowerStrList').style.display=strCardOpen.lower?'block':'none';
