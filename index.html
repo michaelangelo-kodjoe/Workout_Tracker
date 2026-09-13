@@ -2239,6 +2239,8 @@ function renderStrength(){
   document.getElementById('lowerStrList').style.display=strCardOpen.lower?'block':'none';
   document.getElementById('upperStrCard').classList.toggle('open',!!strCardOpen.upper);
   document.getElementById('lowerStrCard').classList.toggle('open',!!strCardOpen.lower);
+  document.getElementById('upperStrCard').style.display=strCardOpen.lower?'none':'';
+  document.getElementById('lowerStrCard').style.display=strCardOpen.upper?'none':'';
   document.getElementById('upperStrHint').textContent=strCardOpen.upper?'hide exercises':'see exercises';
   document.getElementById('lowerStrHint').textContent=strCardOpen.lower?'hide exercises':'see exercises';
   const avg=changes.length?changes.reduce((a,b)=>a+b,0)/changes.length:null;
@@ -2283,8 +2285,10 @@ function renderStrength(){
   const bwRate=bwWeeklyRate();
   bwNote.innerHTML=(bwRate!==null && bwRate<=-1)?`<div class="plateau-tip" style="margin-top:10px">Losing about ${Math.abs(bwRate).toFixed(1)}% of body weight a week — research on rate of loss suggests staying closer to 0.5-1%/week better preserves strength and muscle. Fine if it's a short intentional push; worth easing off if it's not.</div>`:'';
 }
-document.getElementById('upperStrCard').onclick=()=>{ strCardOpen.upper=!strCardOpen.upper; renderStrength(); };
-document.getElementById('lowerStrCard').onclick=()=>{ strCardOpen.lower=!strCardOpen.lower; renderStrength(); };
+// one card open at a time: opening Upper hides Lower (and vice versa) so the list you're reading has the whole
+// screen and stays put until you tap the card again. Taps inside the exercise list don't toggle the card.
+document.getElementById('upperStrCard').onclick=e=>{ if(e.target.closest('.str-card-exlist')) return; strCardOpen.upper=!strCardOpen.upper; strCardOpen.lower=false; renderStrength(); };
+document.getElementById('lowerStrCard').onclick=e=>{ if(e.target.closest('.str-card-exlist')) return; strCardOpen.lower=!strCardOpen.lower; strCardOpen.upper=false; renderStrength(); };
 document.getElementById('bwLog').onclick=async()=>{ const raw=parseFloat(document.getElementById('bwInput').value); if(!raw){ showToast('enter a weight'); return; } bodyweight.push({t:Date.now(),w:storeBW(raw)}); await sset('bodyweight',bodyweight); document.getElementById('bwInput').value=''; showToast('body weight logged'); renderStrength(); updateBwUI(); };
 
 // ---------- more: settings, editor, data ----------
