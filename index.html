@@ -667,7 +667,7 @@ const store = {
     });
     else this.mem[k]=v; }catch(e){ console.error(e); } }
 };
-const KEYS = ['lastBackup','program','recovery','familiarity','soreOverride','recoveryLog','hist','sessions','notes','lastByName','bodyweight','settings','meta:sessionCount','meta:histMigratedV2','today:d1','today:d2','today:d3','today:d4','last:d1','last:d2','last:d3','last:d4','lastDeload','deloadStart','dayStart','blockStart','blockNum'];
+const KEYS = ['lastBackup','program','recovery','familiarity','soreOverride','recoveryLog','hist','sessions','notes','lastByName','bodyweight','settings','meta:sessionCount','meta:histMigratedV2','today:d1','today:d2','today:d3','today:d4','last:d1','last:d2','last:d3','last:d4','lastDeload','deloadStart','dayStart','blockStart','blockNum','baselines'];
 const RECOVERY_LOG_CAP=2000;
 const RECOVERY_HOURS = { 'chest-upper':72, 'chest-mid':72, 'chest-lower':72, 'back-lats':72, 'back-traps':72, quads:72, hamstrings:72, glutes:72, lowerback:72, 'delt-front':48, 'delt-lateral':48, 'delt-rear':48, biceps:48, brachialis:48, 'triceps-lateral':48, 'triceps-long':48, 'forearm-flexor':48, 'forearm-extensor':48, 'calves-gastroc':48, 'calves-soleus':48, abs:36, 'abs-upper':36, 'abs-lower':36, 'abs-obliques':36 };
 const MUSCLE_LABEL = { chest:'Chest', back:'Back', quads:'Quads', hamstrings:'Hamstrings', glutes:'Glutes', lowerback:'Lower back', shoulders:'Shoulders', biceps:'Biceps', triceps:'Triceps', forearms:'Forearms', calves:'Calves', abs:'Core' };
@@ -916,7 +916,11 @@ const sget=(k)=>store.get(k), sset=(k,v)=>store.set(k,v);
 function e1rm(w,r){ w=parseFloat(w); r=parseInt(r); if(!w||!r) return 0; return r===1?w:w*(1+r/30); }
 function bestE1rm(sets){ return Math.max(0, ...sets.map(s=>e1rm(s.w,s.r))); }
 function histKey(ex){ return ex.name; }
-function baselineFor(ex){ if(ex.seed){ const b=bestE1rm(ex.seed); if(b) return b; } const h=hist[histKey(ex)]; if(h&&h.length) return h[0].e1rm; return 0; }
+// baselines[name] = timestamp of the history entry progress is measured from. Set by "reset baseline" on the
+// Strength tab; everything before it still counts as sessions logged, it just no longer anchors the strength %.
+let baselines={};
+function histFrom(ex){ const h=hist[histKey(ex)]||[]; const b=baselines[histKey(ex)]; return b?h.filter(x=>x.t>=b):h; }
+function baselineFor(ex){ const k=histKey(ex); if(baselines[k]){ const h=histFrom(ex); if(h.length) return h[0].e1rm; } if(ex.seed){ const b=bestE1rm(ex.seed); if(b) return b; } const h=hist[k]; if(h&&h.length) return h[0].e1rm; return 0; }
 function currentFor(ex){ const h=hist[histKey(ex)]; if(h&&h.length) return h[h.length-1].e1rm; return baselineFor(ex); }
 function pct(a,b){ return (!a||!b)?null:((b-a)/a)*100; }
 function fmtPct(p){ if(p===null) return '—'; const r=Math.round(p*10)/10; return (r>0?'+':'')+r+'%'; }
@@ -2088,7 +2092,7 @@ function renderStrength(){
   PROGRAM.forEach(day=>{
     const targetList=day.name==='Upper'?upperList:day.name==='Lower'?lowerList:null;
     day.exercises.forEach(ex=>{
-      const base=baselineFor(ex), cur=currentFor(ex), h=hist[histKey(ex)]||[];
+      const base=baselineFor(ex), cur=currentFor(ex), h=histFrom(ex), fullH=hist[histKey(ex)]||[];
       const p=h.length?pct(base,cur):null;
       const firstOccurrence=!countedNames.has(ex.name); countedNames.add(ex.name);
       if(firstOccurrence){
@@ -2109,8 +2113,13 @@ function renderStrength(){
       const others=nameSlots[ex.name].filter(o=>!(o.name===day.name&&o.sub===day.sub));
       const shareTxt=others.length?` · shares history with ${others.map(o=>`${o.name} ${o.sub}`).join(', ')}`:'';
       const row=document.createElement('div'); row.className='srow';
-      const sdTxt=isTimedTarget(ex.target)?'timed hold — counted as sets, not scored for strength':`best set ${bestTxt} · ${h.length?h.length+' session'+(h.length>1?'s':'')+' logged':'your starting numbers'}`;
-      row.innerHTML=`<div><div class="sn">${ex.name} <span class="badge ${day.badge}">${day.sub}</span>${plat?'<span class="badge plateau">plateau</span>':''}</div><div class="sd">${sdTxt}${shareTxt}</div></div><div class="sp ${cls}">${p===null?'start':fmtPct(p)}</div>${sparkline([base,...h.map(x=>x.e1rm)],cls==='down'?'var(--amber)':'var(--green)',milestoneIdx)}`;
+      const sdTxt=isTimedTarget(ex.target)?'timed hold — counted as sets, not scored for strength':`best set ${bestTxt} · ${fullH.length?fullH.length+' session'+(fullH.length>1?'s':'')+' logged':'your starting numbers'}`;
+      const k=histKey(ex);
+      const baseTxt=isTimedTarget(ex.target)?'':baselines[k]?` · <span class="linkbtn" data-act="baseline-undo">baseline reset ${fmtDate(baselines[k])} — undo</span>`:(fullH.length>=2?` · <span class="linkbtn" data-act="baseline">reset baseline</span>`:'');
+      row.innerHTML=`<div><div class="sn">${ex.name} <span class="badge ${day.badge}">${day.sub}</span>${plat?'<span class="badge plateau">plateau</span>':''}</div><div class="sd">${sdTxt}${shareTxt}${baseTxt}</div></div><div class="sp ${cls}">${p===null?'start':fmtPct(p)}</div>${sparkline([base,...h.map(x=>x.e1rm)],cls==='down'?'var(--amber)':'var(--green)',milestoneIdx)}`;
+      // the card itself toggles open/closed on click — keep these links from bubbling up to it
+      const rb=row.querySelector('[data-act="baseline"]'); if(rb) rb.onclick=async e=>{ e.stopPropagation(); baselines[k]=fullH[fullH.length-1].t; await sset('baselines',baselines); renderStrength(); if(view==='log') render(); showToast(`${ex.name}: progress now measured from your latest session`); };
+      const ru=row.querySelector('[data-act="baseline-undo"]'); if(ru) ru.onclick=async e=>{ e.stopPropagation(); delete baselines[k]; await sset('baselines',baselines); renderStrength(); if(view==='log') render(); showToast(`${ex.name}: baseline back to your first session`); };
       if(targetList) targetList.appendChild(row);
     });
   });
@@ -2317,6 +2326,9 @@ async function doMergeImport(d){
   if(recoveryLog.length>RECOVERY_LOG_CAP) recoveryLog=recoveryLog.slice(recoveryLog.length-RECOVERY_LOG_CAP);
   await sset('recoveryLog',recoveryLog);
 
+  Object.keys(d.baselines||{}).forEach(n=>{ if(!baselines[n]||d.baselines[n]>baselines[n]) baselines[n]=d.baselines[n]; });
+  await sset('baselines',baselines);
+
   const importedNotes=d.notes||{};
   Object.keys(importedNotes).forEach(k=>{
     const sep=k.indexOf('|'); const name=sep>=0?k.slice(sep+1):k;
@@ -2487,6 +2499,7 @@ document.getElementById('resetLink').onclick=async()=>{ todayData={}; await sset
   await store.init();
   sessionCount=(await sget('meta:sessionCount'))||0; document.getElementById('sessionCount').textContent=sessionCount;
   dayStartTimes=(await sget('dayStart'))||{};
+  baselines=(await sget('baselines'))||{};
   recovery=(await sget('recovery'))||{}; familiarity=(await sget('familiarity'))||{}; soreOverride=(await sget('soreOverride'))||{}; recoveryLog=(await sget('recoveryLog'))||[]; hist=(await sget('hist'))||{}; sessions=(await sget('sessions'))||[]; notes=(await sget('notes'))||{}; lastByName=(await sget('lastByName'))||{}; bodyweight=(await sget('bodyweight'))||[];
 
   // one-time: hist/notes used to be keyed per (day,exercise) — "d1|Hammer Curl" and "d3|Hammer Curl" were
