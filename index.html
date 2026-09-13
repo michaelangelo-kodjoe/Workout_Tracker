@@ -1979,24 +1979,110 @@ function buildHeatmap(){
 }
 let calMonthOffset=0;
 function sessionType(s){ return s.isCardio?'cardio':(s.dayName==='Upper'?'upper':s.dayName==='Lower'?'lower':null); }
-// shared by the History tab's full session list and the calendar's day-detail sheet, so the two never drift
-// apart. forceOpen skips the tap-to-expand step — worthwhile in the day sheet, where you already deliberately
-// asked to see this one day and there's normally just one or two sessions to show, not a long scrolling list.
-function buildSessionItem(s, forceOpen){
-  const el=document.createElement('div'); el.className='sess'+(forceOpen?' open':'');
+// ---------- editing and deleting logged sessions ----------
+// sessions[] is the source of truth; hist, lastByName, last:d# and the session counter are derived from it, so
+// every edit or delete re-derives those for the exercises and day involved. Recovery timers are left alone: they
+// expire on their own, and re-deriving them from an edited past would rarely change what today looks like.
+function sessionIndex(s){ return sessions.findIndex(x=>x.t===s.t && !!x.isCardio===!!s.isCardio); }
+async function rederiveAfterSessionChange(names, dayId, t){
+  names.forEach(name=>{
+    const src=sessions.find(x=>!x.isCardio&&x.t===t&&x.ex&&x.ex[name]);
+    let h=(hist[name]||[]).filter(x=>x.t!==t);
+    if(src){ const sets=src.ex[name].filter(x=>x.w&&x.r); const b=bestE1rm(sets); if(b) h.push({t,e1rm:Math.round(b*10)/10,w:Math.max(...sets.map(x=>parseFloat(x.w))),r:Math.max(...sets.map(x=>parseInt(x.r))),d:src.dayId}); }
+    h.sort((a,b)=>a.t-b.t); if(h.length) hist[name]=h; else delete hist[name];
+    const latest=[...sessions].filter(x=>!x.isCardio&&x.ex&&x.ex[name]&&x.ex[name].some(y=>y.w&&y.r)).sort((a,b)=>b.t-a.t)[0];
+    if(latest){ const prev=lastByName[name]||{}; lastByName[name]={sets:latest.ex[name],t:latest.t,d:latest.dayId,target:prev.target,step:prev.step}; } else delete lastByName[name];
+  });
+  await sset('hist',hist); await sset('lastByName',lastByName);
+  if(dayId){
+    // the day's "last time" data only needs rebuilding when the change touched its most recent session
+    const latestDay=[...sessions].filter(x=>!x.isCardio&&x.dayId===dayId).sort((a,b)=>b.t-a.t)[0];
+    if(!latestDay || t>=latestDay.t){
+      const draft=latestDay?Object.fromEntries(Object.entries(latestDay.ex).map(([n,sets])=>[n,{open:false,sets:sets.map(x=>({w:x.w,r:x.r,done:true,rir:x.rir??null}))}])):null;
+      await sset('last:'+dayId, draft); lastSessionData[dayId]=draft;
+    }
+  }
+  sessionCount=sessions.filter(x=>!x.isCardio).length; await sset('meta:sessionCount',sessionCount);
+  renderHeaderStats(); updateDeloadUI(); if(view==='log'&&currentDay!=='cardio') render();
+}
+async function deleteSession(s){
+  const label=s.isCardio?`${s.ctypeLabel} on ${fmtDate(s.t)}`:`${s.dayName} ${s.sub} on ${fmtDate(s.t)}`;
+  if(!confirm(`Delete ${label}? Its sets come out of your history and progress numbers. This cannot be undone.`)) return false;
+  const i=sessionIndex(s); if(i<0) return false;
+  sessions.splice(i,1); await sset('sessions',sessions);
+  if(s.isCardio){ renderHeaderStats(); } else await rederiveAfterSessionChange(Object.keys(s.ex||{}), s.dayId, s.t);
+  showToast('session deleted'); return true;
+}
+// edited: for a lift {ex:{name:[{w,r,rir}]}} (weights already in stored units), for cardio {duration,distance,rpe,notes}
+async function saveSessionEdit(s, edited){
+  const i=sessionIndex(s); if(i<0) return;
+  if(s.isCardio){ Object.assign(sessions[i], edited); await sset('sessions',sessions); showToast('session updated'); return; }
+  const before=Object.keys(s.ex||{});
+  const ex={}; Object.keys(edited.ex).forEach(n=>{ const sets=edited.ex[n].filter(x=>x.w!==''||x.r!==''); if(sets.length) ex[n]=sets; });
+  if(!Object.keys(ex).length){ sessions.splice(i,1); await sset('sessions',sessions); await rederiveAfterSessionChange(before, s.dayId, s.t); showToast('session deleted — nothing left in it'); return; }
+  let vol=0,nsets=0;
+  Object.entries(ex).forEach(([n,sets])=>{ const en=entryFor(n); const timed=!!(en&&en.target&&isTimedTarget(en.target)); sets.forEach(x=>{ nsets++; if(!timed) vol+=(parseFloat(x.w)||0)*(parseInt(x.r)||0); }); });
+  sessions[i]={...s, ex, vol:Math.round(vol), sets:nsets}; await sset('sessions',sessions);
+  await rederiveAfterSessionChange([...new Set([...before, ...Object.keys(ex)])], s.dayId, s.t);
+  showToast('session updated');
+}
+const RIR_OPTS=[['','RIR'],['0','0'],['1','1'],['2','2'],['3','3'],['4','4+']];
+function renderSessionEditForm(s, el, onDone){
+  const det=el.querySelector('.sdet'); el.classList.add('open'); det.style.display='block';
+  const grid='display:grid;grid-template-columns:22px 1fr 1fr 74px;gap:6px;margin-top:4px;align-items:center';
   if(s.isCardio){
-    el.innerHTML=`<div class="sh"><span>${fmtDate(s.t)}</span><span style="color:var(--text-dim)">${s.ctypeLabel}</span></div><div class="sm">${s.duration} min${s.distance?' · '+s.distance:''}${s.rpe?' · RPE '+s.rpe:''}</div>${s.notes?`<div class="sdet" style="display:block;border:none;padding-top:4px">${s.notes}</div>`:''}`;
+    det.innerHTML=`<div class="field-label">duration (minutes)</div><input class="in" id="seDur" type="number" inputmode="numeric" value="${s.duration||''}" style="width:100%">
+      <div class="field-label">distance (optional)</div><input class="in" id="seDist" type="text" value="${s.distance||''}" style="width:100%">
+      <div class="field-label">effort (RPE)</div><select class="in" id="seRpe" style="width:100%"><option value="0">—</option>${Array.from({length:10},(_,k)=>k+1).map(n=>`<option value="${n}"${s.rpe===n?' selected':''}>${n}</option>`).join('')}</select>
+      <textarea class="notes" id="seNotes" placeholder="notes">${s.notes||''}</textarea>
+      <div class="row" style="gap:8px;margin-top:10px;flex-wrap:nowrap"><button class="btn" data-act="cancel" style="flex:1">cancel</button><button class="btn primary" data-act="save" style="flex:1">save</button></div>`;
+    det.querySelector('[data-act="save"]').onclick=async e=>{ e.stopPropagation(); const dur=parseInt(det.querySelector('#seDur').value); if(!dur){ showToast('add a duration'); return; } await saveSessionEdit(s,{duration:dur,distance:det.querySelector('#seDist').value.trim(),rpe:parseInt(det.querySelector('#seRpe').value)||0,notes:det.querySelector('#seNotes').value}); onDone(); };
+  } else {
+    const removed=new Set();
+    det.innerHTML=Object.entries(s.ex).map(([n,sets])=>`<div class="se-ex" data-name="${n.replace(/"/g,'&quot;')}"><div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px"><b style="font-weight:normal;color:var(--text)">${n}</b><span class="linkbtn" data-act="rm">remove</span></div>
+      ${sets.map((x,k)=>`<div style="${grid}"><span style="color:var(--text-dim);font-size:11px">${k+1}</span><input class="in" type="number" inputmode="decimal" placeholder="${unitLabel()}" value="${x.w?dispWeight(x.w):''}"><input class="in" type="number" inputmode="numeric" placeholder="reps" value="${x.r||''}"><select class="in">${RIR_OPTS.map(([v,l])=>`<option value="${v}"${String(x.rir??'')===v?' selected':''}>${l}</option>`).join('')}</select></div>`).join('')}</div>`).join('')+
+      `<div class="note-sm" style="margin-top:8px">Blank both fields to drop a set. Weights are in ${unitLabel()}.</div>
+      <div class="row" style="gap:8px;margin-top:10px;flex-wrap:nowrap"><button class="btn" data-act="cancel" style="flex:1">cancel</button><button class="btn primary" data-act="save" style="flex:1">save</button></div>`;
+    det.querySelectorAll('.se-ex [data-act="rm"]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const box=b.closest('.se-ex'); removed.add(box.dataset.name); box.style.display='none'; });
+    det.querySelector('[data-act="save"]').onclick=async e=>{ e.stopPropagation(); const ex={};
+      det.querySelectorAll('.se-ex').forEach(box=>{ const n=box.dataset.name; if(removed.has(n)) return; ex[n]=[...box.querySelectorAll('div[style*="grid"]')].map(row=>{ const [wI,rI]=row.querySelectorAll('input'); const sel=row.querySelector('select'); return {w:wI.value===''?'':storeWeight(wI.value), r:rI.value, rir:sel.value===''?null:parseInt(sel.value)}; }); });
+      await saveSessionEdit(s,{ex}); onDone(); };
+  }
+  det.querySelector('[data-act="cancel"]').onclick=e=>{ e.stopPropagation(); onDone(); };
+  det.querySelectorAll('input,select,textarea').forEach(i=>i.onclick=e=>e.stopPropagation());
+}
+// shared by the History tab's full session list and the calendar's day-detail sheet, so the two never drift
+// apart. forceOpen skips the tap-to-expand step; editable adds edit/delete controls (the day sheet only).
+function buildSessionItem(s, forceOpen, editable){
+  const el=document.createElement('div'); el.className='sess'+(forceOpen?' open':'');
+  const acts=editable?`<span style="white-space:nowrap"><span class="linkbtn" data-act="edit">edit</span> · <span class="linkbtn" data-act="del">delete</span></span>`:'';
+  if(s.isCardio){
+    el.innerHTML=`<div class="sh"><span>${fmtDate(s.t)}</span><span style="color:var(--text-dim)">${s.ctypeLabel}${acts?' &nbsp;'+acts:''}</span></div><div class="sm">${s.duration} min${s.distance?' · '+s.distance:''}${s.rpe?' · RPE '+s.rpe:''}</div><div class="sdet" style="${s.notes?'display:block;':''}border:none;padding-top:4px">${s.notes||''}</div>`;
   } else {
     const det=Object.entries(s.ex).map(([n,sets])=>`<b style="font-weight:normal;color:var(--text)">${n}</b> — ${sets.map(x=>`${x.w?dispWeight(x.w):'bw'}×${x.r||'-'}${x.rir!=null?' (RIR '+x.rir+')':''}`).join(', ')}`).join('<br>');
-    el.innerHTML=`<div class="sh"><span>${fmtDate(s.t)}</span><span style="color:var(--text-dim)">${s.dayName} · ${s.sub}</span></div><div class="sm">${s.sets} sets · ${dispVol(s.vol).toLocaleString()} ${unitLabel()} moved</div><div class="sdet">${det}</div>`;
+    el.innerHTML=`<div class="sh"><span>${fmtDate(s.t)}</span><span style="color:var(--text-dim)">${s.dayName} · ${s.sub}${acts?' &nbsp;'+acts:''}</span></div><div class="sm">${s.sets} sets · ${dispVol(s.vol).toLocaleString()} ${unitLabel()} moved</div><div class="sdet">${det}</div>`;
     el.onclick=()=>el.classList.toggle('open');
+  }
+  if(editable){
+    el.querySelector('[data-act="edit"]').onclick=e=>{ e.stopPropagation(); renderSessionEditForm(s, el, ()=>refreshCalDaySheet()); };
+    el.querySelector('[data-act="del"]').onclick=async e=>{ e.stopPropagation(); if(await deleteSession(s)) refreshCalDaySheet(); };
   }
   return el;
 }
+let calSheetDate=null;
+function refreshCalDaySheet(){
+  renderHistory();
+  if(!calSheetDate) return;
+  const d0=new Date(calSheetDate); d0.setHours(0,0,0,0); const d1=d0.getTime()+864e5;
+  const ds=sessions.filter(s=>s.t>=d0.getTime()&&s.t<d1&&sessionType(s)).sort((a,b)=>a.t-b.t);
+  if(!ds.length){ closeCalDaySheet(); return; }
+  openCalDaySheet(calSheetDate, ds);
+}
 function openCalDaySheet(dateObj,daySessions){
+  calSheetDate=dateObj;
   document.getElementById('calDaySheetTitle').textContent=dateObj.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
   const body=document.getElementById('calDaySheetBody'); body.innerHTML='';
-  daySessions.forEach(s=>body.appendChild(buildSessionItem(s,true)));
+  daySessions.forEach(s=>body.appendChild(buildSessionItem(s,true,true)));
   document.getElementById('calDayBg').classList.add('on');
   document.getElementById('calDaySheet').classList.add('on');
 }
