@@ -1050,13 +1050,16 @@ function allNamesInUse(){ const s=new Set(); PROGRAM.forEach(d=>d.exercises.forE
 // options left are a worse fit (wrong character, same implement) or have run out.
 const LIB_HARD_EXCLUDE=/\b(stretch|stretching|pose|bike|ergometer|ropes?|climb|walk|walking|carry|jerk|clean|snatch|thruster|sled|partner|towel|plank)\b|v\.\s*\d|\(on knees\)|hyght|spell caster|judo|london bridge|landmine 180/i;
 const LIB_VARIANT_WORDS=/\b(one[- ]arm|single[- ]arm|one[- ]leg|single[- ]leg|alternate|alternating|twisting|twist|rotate|kneeling|lying|floor|assisted|weighted|band|ball|bosu|suspension|isometric|hold|pin|chain|deficit|pause|paused|jump|explosive|wide|narrow|close|reverse[- ]grip|underhand|overhand|neutral|zercher|wall|chair|bench|incline|decline|seated|standing)\b/gi;
+// a library name has to say what the movement is — the dataset also holds mobility drills and calisthenics
+// skills under plain labels ("Quads", "Flag", "Wrist Circles", "Sledge Hammer") that a shortest-name ranking loves
+const LIB_MOVEMENT=/\b(curls?|press|presses|raises?|rows?|pulldowns?|pull-?ups?|chin-?ups?|extensions?|pushdowns?|push-?downs?|kickbacks?|fly|flye|flyes|flies|crunch|crunches|sit-?ups?|squats?|lunges?|deadlifts?|thrusts?|bridges?|dips?|push-?ups?|shrugs?|pullovers?|crossovers?|good morning|hyperextensions?|step-?ups?|rollouts?|leg raise|knee raise|calf|toe|pull-?throughs?|face pull|upright)\b/i;
 const IMPLEMENT_WORDS=/\b(lever|machine|cable|dumbbell|dumbbells|barbell|smith|ez|ez-bar|kettlebell|band|weighted|assisted|with|the|a)\b/gi;
 function nameCore(n){ return n.toLowerCase().replace(/[()\/,.-]/g,' ').replace(IMPLEMENT_WORDS,' ').replace(/\s+/g,' ').trim(); }
 const CURATED_CORES=(()=>{ const s=new Set(); Object.keys(ALTS).forEach(k=>ALTS[k].forEach(a=>s.add(nameCore(a.name)))); return s; })();
 function libPick(a){ return {name:a.name,equip:a.equip,m:[a.key,...a.m.filter(x=>x!==a.key)],cue:a.cue,step:(a.equip==='bodyweight'&&!/^weighted\b/i.test(a.name))?0:5,region:a.region,lib:true}; }
 function libraryCandidates(key, seen, exclude){
   const simple=(a,b)=>(a.name.split(' ').length-b.name.split(' ').length)||(a.name.length-b.name.length);
-  return FULL_CATALOG.filter(a=>a.key===key && !seen.has(a.name) && !exclude.has(a.name) && equipAllowed(a) && !LIB_HARD_EXCLUDE.test(a.name) && !CURATED_CORES.has(nameCore(a.name)))
+  return FULL_CATALOG.filter(a=>a.key===key && !seen.has(a.name) && !exclude.has(a.name) && equipAllowed(a) && LIB_MOVEMENT.test(a.name) && !LIB_HARD_EXCLUDE.test(a.name) && !CURATED_CORES.has(nameCore(a.name)))
     .sort(simple).map((a,i)=>({a:libPick(a), i:1000+i, lib:true}));
 }
 function neverSuggested(){ return new Set(settings.neverSuggest||[]); }
@@ -1066,7 +1069,9 @@ function pickForSlot(day, idx, exclude){
   [anchor, ...(ALTS[key]||[])].forEach((a,i)=>{ if(seen.has(a.name)) return; seen.add(a.name); cands.push({a,i}); });
   if(!primary) cands.push(...libraryCandidates(key, seen, exclude));
   const never=neverSuggested();
-  const prevName=ex.rotPrev&&ex.rotPrev.name;
+  // the exercise that just left is off the table only while its replacement is in its first block — after that
+  // it's simply another option again, otherwise the slot's best curated fit could stay excluded for good
+  const prevName=(ex.rotPrev&&!(ex.rotBlocks||0))?ex.rotPrev.name:null;
   const multiJoint=x=>((x&&x.m)||[]).length>=2; const anchorMulti=multiJoint(anchor);
   const scored=cands.filter(({a})=>a.name!==ex.name && a.name!==prevName && !exclude.has(a.name) && !never.has(a.name) && equipAllowed(a) && repCompatible(anchor.target,a)).map(({a,i,lib})=>{
     let sc=0;
