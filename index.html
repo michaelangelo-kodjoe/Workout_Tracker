@@ -522,13 +522,14 @@
       <h3>Equipment & variety</h3>
       <div class="note-sm" style="margin-bottom:6px">Uncheck anything your gym doesn't have — swap alternatives and block rotation will only draw from what's left checked.</div>
       <div id="equipChks"></div>
+      <div class="note-sm" id="neverList" style="margin-top:8px;display:none"></div>
     </div>
     <div class="card">
       <h3>Exercise rotation</h3>
       <div class="row"><label class="chk"><input type="checkbox" id="autoRotateChk"> suggest fresh variations at the end of each training block</label></div>
       <div class="row" style="margin-top:6px" id="rotateEveryRow"><span style="font-size:12px;color:var(--text-dim)">block length</span>
         <select class="in" id="blockWeeksSel"><option value="3">3 weeks</option><option value="4">4 weeks</option><option value="6">6 weeks</option></select></div>
-      <div class="note-sm" style="margin-top:6px">At the end of every block you get a review of what's changing before anything is applied. The first two exercises of each day are your primary lifts: they only change once they've been stuck for 3 sessions, or every other block. The rest are accessories and get a fresh variation each block. Nothing is repeated across your four days, and a pick's natural rep range always matches its slot.</div>
+      <div class="note-sm" style="margin-top:6px">At the end of every block you get a review of what's changing before anything is applied. The first two exercises of each day are your primary lifts: they only change once they've been stuck for 3 sessions, or every other block. The rest are accessories and get a fresh variation each block, drawn from the curated picks and the full exercise library. Nothing is repeated across your four days, and a pick's natural rep range always matches its slot.</div>
     </div>
     <div class="card">
       <h3>Rest timer</h3>
@@ -905,7 +906,7 @@ const EQUIP_LABEL={barbell:'barbell',dumbbell:'dumbbell',kettlebell:'kettlebell'
 // full exercise library (name/equip/muscles/cue), sourced from a third-party open dataset — no set/rep targets of its own.
 // offered as swap candidates via openSwap(), and as a last-resort fill in the builder when no curated pick passes the equipment filter
 const FULL_CATALOG=JSON.parse(document.getElementById('fullCatalog').textContent);
-let currentDay='d1', todayData={}, lastSessionData={}, sessionCount=0, recovery={}, familiarity={}, soreOverride={}, recoveryLog=[], hist={}, sessions=[], notes={}, lastByName={}, bodyweight=[], settings={rest:90, auto:true, autoBackup:true, smartRest:true, unit:'lb', autoRotate:true, blockWeeks:4, equipFilter:EQUIP_TYPES.slice(), name:'', onboarded:false}, view='home';
+let currentDay='d1', todayData={}, lastSessionData={}, sessionCount=0, recovery={}, familiarity={}, soreOverride={}, recoveryLog=[], hist={}, sessions=[], notes={}, lastByName={}, bodyweight=[], settings={rest:90, auto:true, autoBackup:true, smartRest:true, unit:'lb', autoRotate:true, blockWeeks:4, neverSuggest:[], equipFilter:EQUIP_TYPES.slice(), name:'', onboarded:false}, view='home';
 let dayStartTimes={}; // persisted under 'dayStart' so a reload mid-session doesn't reset the session duration to 1m
 let pendingBlockReview=false; // set by finishSession() when the block is complete; the review sheet opens once the celebration screen closes rather than underneath its full-screen overlay
 let lastDeload=0, deloadStart=0;
@@ -1038,14 +1039,38 @@ function allNamesInUse(){ const s=new Set(); PROGRAM.forEach(d=>d.exercises.forE
 // scores up on accessory slots only (a heavy primary shouldn't trade a hack squat for a walking lunge just to
 // change implement), a mismatched kind (timed vs reps) scores down, the slot's original pick is welcome back once
 // it's been away, and the hand-ranked curated order breaks ties. Custom exercises with no pool never get a proposal.
+// ---- the full library as a source of accessory variations ----
+// The 1,293-entry library carries no rep range, step or hand-ranking, so it only feeds accessory slots (never a
+// primary), after the curated pool, and through three filters: (1) hard-excluded categories — stretches, cardio
+// machines, Olympic lifts, carries — that aren't slot fillers at all; (2) near-twins of curated lifts ("Lever Seated
+// Leg Curl", "Dumbbell Hammer Curl") are dropped by comparing names with the implement words stripped, so the
+// curated version stays the one canonical entry; (3) variant clutter (one-arm, alternating, lying, kneeling, band…)
+// is penalised so a plain version of a movement outranks its oddities. Library picks start a point behind
+// curated ones, so a curated candidate that fits the slot's character wins; a library one wins when the curated
+// options left are a worse fit (wrong character, same implement) or have run out.
+const LIB_HARD_EXCLUDE=/\b(stretch|stretching|pose|bike|ergometer|ropes?|climb|walk|walking|carry|jerk|clean|snatch|thruster|sled|partner|towel|plank)\b|v\.\s*\d|\(on knees\)|hyght|spell caster|judo|london bridge|landmine 180/i;
+const LIB_VARIANT_WORDS=/\b(one[- ]arm|single[- ]arm|one[- ]leg|single[- ]leg|alternate|alternating|twisting|twist|rotate|kneeling|lying|floor|assisted|weighted|band|ball|bosu|suspension|isometric|hold|pin|chain|deficit|pause|paused|jump|explosive|wide|narrow|close|reverse[- ]grip|underhand|overhand|neutral|zercher|wall|chair|bench|incline|decline|seated|standing)\b/gi;
+const IMPLEMENT_WORDS=/\b(lever|machine|cable|dumbbell|dumbbells|barbell|smith|ez|ez-bar|kettlebell|band|weighted|assisted|with|the|a)\b/gi;
+function nameCore(n){ return n.toLowerCase().replace(/[()\/,.-]/g,' ').replace(IMPLEMENT_WORDS,' ').replace(/\s+/g,' ').trim(); }
+const CURATED_CORES=(()=>{ const s=new Set(); Object.keys(ALTS).forEach(k=>ALTS[k].forEach(a=>s.add(nameCore(a.name)))); return s; })();
+function libPick(a){ return {name:a.name,equip:a.equip,m:[a.key,...a.m.filter(x=>x!==a.key)],cue:a.cue,step:(a.equip==='bodyweight'&&!/^weighted\b/i.test(a.name))?0:5,region:a.region,lib:true}; }
+function libraryCandidates(key, seen, exclude){
+  const simple=(a,b)=>(a.name.split(' ').length-b.name.split(' ').length)||(a.name.length-b.name.length);
+  return FULL_CATALOG.filter(a=>a.key===key && !seen.has(a.name) && !exclude.has(a.name) && equipAllowed(a) && !LIB_HARD_EXCLUDE.test(a.name) && !CURATED_CORES.has(nameCore(a.name)))
+    .sort(simple).map((a,i)=>({a:libPick(a), i:1000+i, lib:true}));
+}
+function neverSuggested(){ return new Set(settings.neverSuggest||[]); }
 function pickForSlot(day, idx, exclude){
   const ex=day.exercises[idx]; const anchor=anchorOf(ex); const key=groupKeyFor(ex); const primary=isPrimarySlot(idx);
   const seen=new Set(); const cands=[];
   [anchor, ...(ALTS[key]||[])].forEach((a,i)=>{ if(seen.has(a.name)) return; seen.add(a.name); cands.push({a,i}); });
+  if(!primary) cands.push(...libraryCandidates(key, seen, exclude));
+  const never=neverSuggested();
   const prevName=ex.rotPrev&&ex.rotPrev.name;
   const multiJoint=x=>((x&&x.m)||[]).length>=2; const anchorMulti=multiJoint(anchor);
-  const scored=cands.filter(({a})=>a.name!==ex.name && a.name!==prevName && !exclude.has(a.name) && equipAllowed(a) && repCompatible(anchor.target,a)).map(({a,i})=>{
+  const scored=cands.filter(({a})=>a.name!==ex.name && a.name!==prevName && !exclude.has(a.name) && !never.has(a.name) && equipAllowed(a) && repCompatible(anchor.target,a)).map(({a,i,lib})=>{
     let sc=0;
+    if(lib){ sc-=1; const v=(a.name.match(LIB_VARIANT_WORDS)||[]).length; sc-=2*v; }
     if(multiJoint(a)===anchorMulti) sc+=3;
     if(!primary && a.equip&&ex.equip&&a.equip!==ex.equip) sc+=2;
     if(anchor.region){ if(a.region===anchor.region) sc+=3; else if(a.region) sc-=1; }
@@ -1128,6 +1153,20 @@ function updateBlockUI(){
   const due=blockDue();
   document.getElementById('blockBanner').style.display=due?'flex':'none';
   if(due) document.getElementById('blockBannerTxt').textContent=`Block ${blockNum} is complete — ${blockWeeks()} weeks in.`;
+}
+// "never suggest this again": the name goes on a settings list every picker honours, and the slot is refilled
+// with the next pick right away (falling back to a plain undo when nothing else fits). The pre-block exercise is
+// kept as rotPrev so an undo still returns to what was there before the block, not to the rejected pick.
+async function neverSuggest(name){
+  const list=settings.neverSuggest||[]; if(!list.includes(name)) list.push(name); settings.neverSuggest=list; await sset('settings',settings);
+}
+async function rejectRotation(day,idx){
+  const ex=day.exercises[idx]; await neverSuggest(ex.name);
+  const exclude=allNamesInUse(); const pick=pickForSlot(day, idx, exclude);
+  if(!pick){ if(ex.rotPrev) await undoRotation(day,idx); else showToast(`won't suggest ${ex.name} again`); return; }
+  const nu=rotatedExercise(ex,pick); if(ex.rotPrev) nu.rotPrev=ex.rotPrev;
+  day.exercises[idx]=nu; if(day.id===currentDay&&todayData[ex.name]) delete todayData[ex.name];
+  await saveProgram(); showToast(`won't suggest ${ex.name} again — swapped in ${nu.name}`);
 }
 async function undoRotation(day,idx){
   const ex=day.exercises[idx]; if(!ex.rotPrev) return;
@@ -1506,7 +1545,7 @@ function render(){
     howto.querySelector('.howto-btn').onclick=()=>{ state.howto=!state.howto; render(); };
     howto.querySelector('.swap-btn').onclick=()=>openSwap(currentDay, ex); body.appendChild(howto);
     if(plat){ const pt=document.createElement('div'); pt.className='plateau-tip'; pt.innerHTML=`No progress in 3 sessions. <span class="linkbtn" style="color:var(--amber)" data-act="variation">Try a variation</span>, take a lighter week (about 10% less, same reps), or switch the rep range for a few weeks. If several lifts feel stuck at once, <span class="linkbtn" style="color:var(--amber)" data-act="deload">consider a full deload week</span>.`; pt.querySelector('[data-act="variation"]').onclick=()=>openSwap(currentDay, ex); pt.querySelector('[data-act="deload"]').onclick=openDeloadSheet; body.appendChild(pt); }
-    if(ex.rotPrev){ const idx=day.exercises.indexOf(ex); const rt=document.createElement('div'); rt.className='plateau-tip'; rt.innerHTML=`Swapped in at the start of this block (was ${ex.rotPrev.name}). <span class="linkbtn" style="color:var(--amber)">undo</span>`; rt.querySelector('.linkbtn').onclick=()=>undoRotation(day,idx); body.appendChild(rt); }
+    if(ex.rotPrev){ const idx=day.exercises.indexOf(ex); const rt=document.createElement('div'); rt.className='plateau-tip'; rt.innerHTML=`Swapped in at the start of this block (was ${ex.rotPrev.name}). <span class="linkbtn" style="color:var(--amber)" data-act="undo">undo</span> · <span class="linkbtn" style="color:var(--amber)" data-act="never">never suggest this</span>`; rt.querySelector('[data-act="undo"]').onclick=()=>undoRotation(day,idx); rt.querySelector('[data-act="never"]').onclick=()=>rejectRotation(day,idx); body.appendChild(rt); }
     if(sug===-1){ const fn=document.createElement('div'); fn.className='first-log-note'; fn.textContent='New lift — no history yet. Log a comfortable first set below; Lift Log will suggest a weight next time from what you log now.'; body.appendChild(fn); }
 
     const hr=document.createElement('div'); hr.className='setgrid head'; hr.innerHTML='<div>set</div><div>weight</div><div>reps</div><div></div><div></div>'; body.appendChild(hr);
@@ -2095,6 +2134,9 @@ function renderSettings(){ document.getElementById('nameInput').value=settings.n
     settings.equipFilter=picked.length?picked:EQUIP_TYPES.slice(); sset('settings',settings);
     if(!picked.length){ showToast('at least one equipment type stays on'); renderSettings(); }
   }; });
+  const nl=document.getElementById('neverList'); const never=settings.neverSuggest||[];
+  nl.style.display=never.length?'':'none';
+  if(never.length){ nl.innerHTML=`Never suggested: ${never.join(', ')} · <span class="linkbtn" id="neverClear">clear</span>`; document.getElementById('neverClear').onclick=async()=>{ settings.neverSuggest=[]; await sset('settings',settings); renderSettings(); showToast('cleared'); }; }
   document.getElementById('autoRotateChk').checked=!!settings.autoRotate; document.getElementById('blockWeeksSel').value=String(settings.blockWeeks||4);
   document.getElementById('rotateEveryRow').style.display=settings.autoRotate?'':'none';
 }
@@ -2325,7 +2367,8 @@ function openSwap(dayId, ex){
   const seen=new Set([ex.name]);
   // the same rule-based pick a block review would make for this slot, shown first
   const suggested=pickForSlot(day, idx, allNamesInUse());
-  if(suggested){ const h=document.createElement('div'); h.className='alt-sec'; h.textContent='Suggested for this slot'; list.appendChild(h); render1(suggested, isPlateau(ex)?'a fresh variation to break the stall':'a fresh variation'); seen.add(suggested.name); }
+  if(suggested){ const h=document.createElement('div'); h.className='alt-sec'; h.textContent='Suggested for this slot'; list.appendChild(h); render1(suggested, (isPlateau(ex)?'a fresh variation to break the stall':'a fresh variation')+(suggested.lib?' · from the full library':'')); seen.add(suggested.name);
+    const skip=document.createElement('div'); skip.className='note-sm'; skip.style.margin='-4px 0 10px'; skip.innerHTML=`Not for you? <span class="linkbtn">never suggest ${suggested.name}</span>`; skip.querySelector('.linkbtn').onclick=async()=>{ await neverSuggest(suggested.name); openSwap(dayId, ex); }; list.appendChild(skip); }
   if(original && original.name!==ex.name){ const h=document.createElement('div'); h.className='alt-sec'; h.textContent='Original'; list.appendChild(h); render1(original,'back to the program'); seen.add(original.name); }
   const h1=document.createElement('div'); h1.className='alt-sec'; h1.textContent=`${ex.group} alternatives`; list.appendChild(h1);
   // same-group options: the curated pool for this group (the program's own recommended picks live there too)
@@ -2426,7 +2469,7 @@ document.getElementById('resetLink').onclick=async()=>{ todayData={}; await sset
     await sset('meta:histMigratedV2',true);
   }
 
-  settings=Object.assign({rest:90,auto:true,autoBackup:true,smartRest:true,unit:'lb',autoRotate:true,blockWeeks:4,equipFilter:EQUIP_TYPES.slice(),name:'',onboarded:false},(await sget('settings'))||{});
+  settings=Object.assign({rest:90,auto:true,autoBackup:true,smartRest:true,unit:'lb',autoRotate:true,blockWeeks:4,neverSuggest:[],equipFilter:EQUIP_TYPES.slice(),name:'',onboarded:false},(await sget('settings'))||{});
   blockStart=(await sget('blockStart'))||0; blockNum=(await sget('blockNum'))||1;
   lastBackup=(await sget('lastBackup'))||0; updateBackupUI();
   lastDeload=(await sget('lastDeload'))||0; deloadStart=(await sget('deloadStart'))||0; updateDeloadUI(); updateBwUI();
