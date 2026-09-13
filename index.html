@@ -507,7 +507,7 @@
     </div>
     <div class="card">
       <h3>Body weight</h3>
-      <div class="row"><input class="in" type="number" inputmode="decimal" id="bwInput" placeholder="lb" style="width:90px"><button class="btn" id="bwLog">log today</button><span id="bwInfo" style="font-size:11px;color:var(--text-dim)"></span></div>
+      <div class="row"><input class="in" type="text" inputmode="decimal" autocomplete="off" id="bwInput" placeholder="lb" style="width:90px"><button class="btn" id="bwLog">log today</button><span id="bwInfo" style="font-size:11px;color:var(--text-dim)"></span></div>
       <div id="bwSpark"></div>
       <div id="bwNote"></div>
     </div>
@@ -923,6 +923,9 @@ let lastDeload=0, deloadStart=0;
 
 // ---------- helpers ----------
 const sget=(k)=>store.get(k), sset=(k,v)=>store.set(k,v);
+// "168,5" from a keyboard whose decimal key is a comma must read as 168.5 — a type=number field would silently
+// reject it, so the body-weight fields are plain text with the decimal keypad and go through this instead
+function parseNum(v){ const n=parseFloat(String(v??'').trim().replace(',','.')); return isNaN(n)?NaN:n; }
 function e1rm(w,r){ w=parseFloat(w); r=parseInt(r); if(!w||!r) return 0; return r===1?w:w*(1+r/30); }
 function bestE1rm(sets){ return Math.max(0, ...sets.map(s=>e1rm(s.w,s.r))); }
 function histKey(ex){ return ex.name; }
@@ -1257,7 +1260,7 @@ function unitLabel(){ return settings.unit==='kg'?'kg':'lb'; }
 function dispWeight(lb){ if(lb===''||lb==null) return lb; const n=parseFloat(lb); if(isNaN(n)) return lb; return settings.unit==='kg'?Math.round(n/LB_PER_KG*2)/2:n; }
 function storeWeight(val){ const n=parseFloat(val); if(isNaN(n)) return val; return settings.unit==='kg'?Math.round(n*LB_PER_KG*10)/10:n; }
 function dispBW(lb){ const n=parseFloat(lb); if(isNaN(n)) return lb; return settings.unit==='kg'?Math.round(n/LB_PER_KG*10)/10:Math.round(n*10)/10; }
-function storeBW(val){ const n=parseFloat(val); if(isNaN(n)) return val; return settings.unit==='kg'?Math.round(n*LB_PER_KG*100)/100:n; }
+function storeBW(val){ const n=parseNum(val); if(isNaN(n)) return val; return settings.unit==='kg'?Math.round(n*LB_PER_KG*100)/100:Math.round(n*100)/100; }
 function dispVol(lb){ return settings.unit==='kg'?Math.round(lb/LB_PER_KG):Math.round(lb); }
 function dedupeSortByT(arr){ const seen=new Set(); const out=[]; [...arr].sort((a,b)=>a.t-b.t).forEach(x=>{ if(!seen.has(x.t)){ seen.add(x.t); out.push(x); } }); return out; }
 function latestBW(){ return bodyweight.length?bodyweight[bodyweight.length-1].w:null; }
@@ -1885,11 +1888,11 @@ function renderOnboardStep(step){
     inner.innerHTML=`
       <div class="cel-h1">What do you weigh today?</div>
       <div class="cel-sub">Optional — body-weight exercises (push-ups, dips, and the like) start pre-filled with this instead of blank. Log it any time from Strength.</div>
-      <input class="in" id="onboardBw" type="number" inputmode="decimal" placeholder="${unitLabel()}" style="width:140px;text-align:center;margin-bottom:18px;position:relative;z-index:2">
+      <input class="in" id="onboardBw" type="text" inputmode="decimal" autocomplete="off" placeholder="${unitLabel()}" style="width:140px;text-align:center;margin-bottom:18px;position:relative;z-index:2">
       <button class="cel-cta" id="onboardNext">Continue</button>`;
     document.getElementById('onboardNext').onclick=async()=>{
-      const raw=parseFloat(document.getElementById('onboardBw').value);
-      if(raw){ bodyweight.push({t:Date.now(),w:storeBW(raw)}); await sset('bodyweight',bodyweight); updateBwUI(); }
+      const raw=parseNum(document.getElementById('onboardBw').value);
+      if(raw&&raw>0){ bodyweight.push({t:Date.now(),w:storeBW(raw)}); await sset('bodyweight',bodyweight); updateBwUI(); }
       renderOnboardStep(5);
     };
   } else {
@@ -2289,7 +2292,7 @@ function renderStrength(){
 // screen and stays put until you tap the card again. Taps inside the exercise list don't toggle the card.
 document.getElementById('upperStrCard').onclick=e=>{ if(e.target.closest('.str-card-exlist')) return; strCardOpen.upper=!strCardOpen.upper; strCardOpen.lower=false; renderStrength(); };
 document.getElementById('lowerStrCard').onclick=e=>{ if(e.target.closest('.str-card-exlist')) return; strCardOpen.lower=!strCardOpen.lower; strCardOpen.upper=false; renderStrength(); };
-document.getElementById('bwLog').onclick=async()=>{ const raw=parseFloat(document.getElementById('bwInput').value); if(!raw){ showToast('enter a weight'); return; } bodyweight.push({t:Date.now(),w:storeBW(raw)}); await sset('bodyweight',bodyweight); document.getElementById('bwInput').value=''; showToast('body weight logged'); renderStrength(); updateBwUI(); };
+document.getElementById('bwLog').onclick=async()=>{ const raw=parseNum(document.getElementById('bwInput').value); if(!raw||raw<=0){ showToast('enter a weight like 168.5'); return; } bodyweight.push({t:Date.now(),w:storeBW(raw)}); await sset('bodyweight',bodyweight); document.getElementById('bwInput').value=''; showToast('body weight logged'); renderStrength(); updateBwUI(); };
 
 // ---------- more: settings, editor, data ----------
 function renderSettings(){ document.getElementById('nameInput').value=settings.name||''; document.getElementById('nameInput').oninput=e=>{ settings.name=e.target.value; sset('settings',settings); }; document.getElementById('restSel').value=String(settings.rest); document.getElementById('autoTimer').checked=!!settings.auto; document.getElementById('autoBackup').checked=!!settings.autoBackup; document.getElementById('smartRestChk').checked=!!settings.smartRest; document.getElementById('restSelLbl').textContent=settings.smartRest?'fallback rest':'default rest'; document.getElementById('unitSel').value=settings.unit||'lb'; updateBackupUI();
