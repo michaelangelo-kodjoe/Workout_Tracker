@@ -1313,6 +1313,8 @@ function fmtTimeLeft(h){
   return mm?`${hh}h ${mm}m`:`${hh}h`;
 }
 const RECOV_RING_C=169.6;
+// muscle labels that read as plurals ("Quads are", not "Quads is")
+const PLURAL_MUSCLES=new Set(['quads','hamstrings','glutes','calves-gastroc','calves-soleus','abs-upper','abs-lower','abs-obliques']);
 // the status fragment shared by the breakdown list and the muscle-tap sheet — kept in one place so the two
 // surfaces can never show a % in one and a stale time-left in the other.
 function recovStatusText(m){
@@ -1359,7 +1361,7 @@ function renderBody(){
     const day=new Date(wr.start).toLocaleDateString(undefined,{weekday:'long'});
     const readyNames=allMuscles.filter(m=>!active.includes(m)).map(m=>RECOVERY_LABEL[m]);
     const readyTxt=readyNames.length?`${readyNames.slice(0,3).join(', ')}${readyNames.length>3?' and more':''} ${readyNames.length===1?'is':'are'} fully recovered. `:'';
-    sub.textContent=`${readyTxt}${RECOVERY_LABEL[worst]} is still coming back from ${day} — light work only.`;
+    sub.textContent=`${readyTxt}${RECOVERY_LABEL[worst]} ${PLURAL_MUSCLES.has(worst)?'are':'is'} still coming back from ${day} — light work only.`;
     hint.innerHTML=`<b>${RECOVERY_LABEL[worst]}</b> ready in ${fmtTimeLeft(leftH)}`;
   }
   renderRecovList();
@@ -1785,7 +1787,7 @@ async function finishSession(){
   const started=dayStartTimes[currentDay]; const durationMin=Math.max(1,Math.round((now-((started&&now-started<12*3600000)?started:now))/60000));
   delete dayStartTimes[currentDay]; await sset('dayStart',dayStartTimes);
   const topPR=prCandidates.length?prCandidates.sort((a,b)=>b.pct-a.pct)[0]:null;
-  const rhythmCount=sessions.filter(s=>!s.isCardio && s.t>=now-7*864e5).length;
+  const rhythmCount=sessions.filter(s=>!s.isCardio && s.t>=weekStart()).length; // same calendar week the header's "this week n/4" counts
   showCelebration({day,worked:worked.length,nsets,vol:Math.round(vol),durationMin,pr:topPR,rhythmCount});
   await loadDay(suggestedDayId());
   updateDeloadUI();
@@ -2069,12 +2071,12 @@ function renderConditioning(){
     const paceVals = paced.map(s=>s.duration/parsePace(s.distance)); // min per mile/km
     const p0=paceVals[0], p1=paceVals[paceVals.length-1];
     const paceChange = ((p0-p1)/p0*100); // positive = faster pace now
-    paceHtml = `<div class="srow" style="grid-template-columns:1fr 70px 64px"><div><div class="sn">Pace (min per mile/km)</div><div class="sd">${paced.length} sessions with distance logged</div></div><div class="se">${p1.toFixed(1)}</div><div class="sp ${paceChange>0.5?'up':paceChange<-0.5?'down':'flat'}">${paceChange>0?'faster':'slower'}</div>${sparkline(paceVals,'var(--light)')}</div>`;
+    paceHtml = `<div class="srow" style="grid-template-columns:1fr 70px 64px"><div><div class="sn">Pace (min per mile/km)</div><div class="sd">${paced.length} sessions with distance logged</div></div><div class="se">${p1.toFixed(1)}</div><div class="sp ${paceChange>0.5?'up':paceChange<-0.5?'down':'flat'}">${paceChange>0.5?'faster':paceChange<-0.5?'slower':'steady'}</div>${sparkline(paceVals,'var(--light)')}</div>`;
   }
   out.innerHTML = `
     <div class="stats2" style="margin-bottom:10px">
       <div class="stat"><div class="v">${wk[wk.length-1]} min</div><div class="l">this week</div>${sparkline(wk,'var(--green)')}</div>
-      <div class="stat"><div class="v ${rpeDelta!==null&&rpeDelta<-0.3?'up':''}">${avgRpeRecent?avgRpeRecent.toFixed(1):'—'}</div><div class="l">recent avg effort (RPE)${rpeDelta!==null?`, ${rpeDelta<0?'down':'up'} from ${avgRpeEarly.toFixed(1)} early on`:''}</div>${rpeTrend.length>1?sparkline(rpeTrend,'var(--amber)'):''}</div>
+      <div class="stat"><div class="v ${rpeDelta!==null&&rpeDelta<-0.3?'up':''}">${avgRpeRecent?avgRpeRecent.toFixed(1):'—'}</div><div class="l">recent avg effort (RPE)${rpeDelta!==null?(Math.abs(rpeDelta)<0.05?', same as early on':`, ${rpeDelta<0?'down':'up'} from ${avgRpeEarly.toFixed(1)} early on`):''}</div>${rpeTrend.length>1?sparkline(rpeTrend,'var(--amber)'):''}</div>
     </div>
     ${paceHtml}
     <div class="note-sm" style="margin-top:${paceHtml?'10px':'0'}">Same effort covering more distance, or the same pace feeling easier (lower RPE), is what real endurance improvement looks like — not just logging more minutes.</div>`;
