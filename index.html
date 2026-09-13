@@ -1457,6 +1457,10 @@ function dayMusclesRecovered(day){
 // once, otherwise it never clears without one, which isn't an "occasional" nudge, it's a permanent override for
 // anyone who simply doesn't track cardio in this app at all.
 const BACK_TO_BACK_HOURS=72;
+// …and the nudge itself only lasts this long after the more recent of the two sessions. Without a cap it stayed
+// suggested Sunday, Monday, Tuesday after a Friday+Saturday pair until a cardio session was actually logged — for
+// someone who doesn't track cardio that meant the "Cardio's up next" sheet on every single lift day.
+const BACK_TO_BACK_CLEAR_HOURS=48;
 // returns {id, reason, nextDay}: reason is one of 'backToBack' | 'recovery' | 'cardioStale' when id is 'cardio'
 // (checked in that order), null otherwise — Home and the cardio sheet word their copy from it, since telling
 // someone who hasn't lifted in three days that they "just did two sessions back to back" reads as broken.
@@ -1468,7 +1472,7 @@ function suggestedDay(){
   const nextDay=PROGRAM[idx<0?0:(idx+1)%PROGRAM.length];
   const lastCardio=recent.find(s=>s.isCardio);
   const cardioStale=!!lastCardio && (Date.now()-lastCardio.t)>=7*864e5;
-  const backToBack=recent.length>=2 && !recent[0].isCardio && !recent[1].isCardio && (recent[0].t-recent[1].t)<=BACK_TO_BACK_HOURS*3600000;
+  const backToBack=recent.length>=2 && !recent[0].isCardio && !recent[1].isCardio && (recent[0].t-recent[1].t)<=BACK_TO_BACK_HOURS*3600000 && (Date.now()-recent[0].t)<BACK_TO_BACK_CLEAR_HOURS*3600000;
   const reason=backToBack?'backToBack':!dayMusclesRecovered(nextDay)?'recovery':cardioStale?'cardioStale':null;
   return {id:reason?'cardio':nextDay.id, reason, nextDay};
 }
