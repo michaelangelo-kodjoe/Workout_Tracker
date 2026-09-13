@@ -1015,7 +1015,10 @@ function isPrimarySlot(idx){ return idx<PRIMARY_SLOTS; }
 let blockStart=0, blockNum=1;
 function blockWeeks(){ return settings.blockWeeks||4; }
 function blockDue(){ return !!settings.autoRotate && !!blockStart && (Date.now()-blockStart)>=blockWeeks()*7*864e5; }
-function anchorOf(ex){ return ex.rotAnchor||{name:ex.name,equip:ex.equip,m:ex.m.slice(),cue:ex.cue,step:ex.step,region:ex.region,target:ex.target}; }
+// programs saved before region tags existed carry none on the exercise itself — fall back to the curated entry by
+// name, so a Face Pulls slot still reads as rear delt and a shoulder-press slot as front delt when picking
+function regionOf(ex){ return ex.region||(CURATED_BY_NAME[ex.name]||{}).region; }
+function anchorOf(ex){ const a=ex.rotAnchor||{name:ex.name,equip:ex.equip,m:ex.m.slice(),cue:ex.cue,step:ex.step,region:ex.region,target:ex.target}; if(!a.region){ const r=regionOf(a); if(r) a.region=r; } return a; }
 function naturalTopRep(pick){ return pick&&pick.target?topRep(pick.target):null; }
 // heavy slots (top rep 10 or under) only take lifts whose own range tops out at 12 or less; volume slots (top rep
 // 12 or over) only take lifts whose range reaches at least 10 — a lateral raise never lands in a 3 x 6-10 slot.
