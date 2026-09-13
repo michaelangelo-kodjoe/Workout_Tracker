@@ -8,7 +8,7 @@
 // existing installs to notice (which, in practice, means every deploy). Skipping this means installed
 // users can sit on an old cached shell indefinitely with no "update available" banner ever appearing,
 // even though network-first would otherwise have served them the latest index.html on their next visit.
-const CACHE_VERSION = 'liftlog-v28';
+const CACHE_VERSION = 'liftlog-v29';
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e=>{
