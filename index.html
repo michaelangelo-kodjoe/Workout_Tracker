@@ -1009,7 +1009,7 @@ const CATALOG_BY_NAME=(()=>{ const m={}; FULL_CATALOG.forEach(a=>{ if(!m[a.name]
 function entryFor(name){ return PROGRAM.flatMap(d=>d.exercises).find(e=>e.name===name)||CURATED_BY_NAME[name]||CATALOG_BY_NAME[name]||null; }
 function keyOfEntry(en){ return en.key||GROUP_KEY[en.group]||(en.m&&en.m[0])||null; }
 function estimateFromRelated(ex){
-  if(ex.start===0) return null;
+  if(ex.start===0||ex.equip==='band'||ex.equip==='accessory') return null; // not loaded in pounds
   const tf=EQUIP_LOAD_FACTOR[ex.equip]||0.8; const key=groupKeyFor(ex);
   const cands=[];
   const consider=(name,prio)=>{
