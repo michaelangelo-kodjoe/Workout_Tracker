@@ -997,6 +997,39 @@ function crossDaySuggestedWeight(ex){
   const raw=e1rmEquiv/(1+dstTop/30);
   return ex.step?Math.round(raw/ex.step)*ex.step:Math.round(raw);
 }
+// ---------- starting-weight estimate for a lift with no history of its own ----------
+// A lift that just rotated or swapped in has nothing logged, but a related lift for the same muscle usually
+// does: the slot's previous occupant first, then the slot's original pick, then anything on the program (same
+// day preferred), then anything ever logged. Its best recent set is converted through estimated 1RM to this
+// slot's rep range, scaled for the implement (a machine stack loads far more than one dumbbell), and discounted
+// 20% for being a different movement — a deliberately conservative first number for the user to adjust from,
+// shown as an estimate and replaced by real suggestions the moment the lift is logged once.
+const EQUIP_LOAD_FACTOR={machine:1.0, cable:0.6, barbell:0.8, dumbbell:0.4, kettlebell:0.4};
+const CATALOG_BY_NAME=(()=>{ const m={}; FULL_CATALOG.forEach(a=>{ if(!m[a.name]) m[a.name]=a; }); return m; })();
+function entryFor(name){ return PROGRAM.flatMap(d=>d.exercises).find(e=>e.name===name)||CURATED_BY_NAME[name]||CATALOG_BY_NAME[name]||null; }
+function keyOfEntry(en){ return en.key||GROUP_KEY[en.group]||(en.m&&en.m[0])||null; }
+function estimateFromRelated(ex){
+  if(ex.start===0) return null;
+  const tf=EQUIP_LOAD_FACTOR[ex.equip]||0.8; const key=groupKeyFor(ex);
+  const cands=[];
+  const consider=(name,prio)=>{
+    const cs=lastByName[name]; if(!cs||name===ex.name) return;
+    const en=entryFor(name); if(!en||en.start===0||en.equip==='bodyweight'||keyOfEntry(en)!==key) return;
+    const logged=cs.sets.filter(x=>x.w&&x.r); if(!logged.length) return;
+    const best=logged.reduce((a,x)=>e1rm(x.w,x.r)>e1rm(a.w,a.r)?x:a);
+    cands.push({name,prio,t:cs.t,e1rm:e1rm(best.w,best.r),sf:EQUIP_LOAD_FACTOR[en.equip]||0.8});
+  };
+  if(ex.rotPrev) consider(ex.rotPrev.name,3);
+  if(ex.rotAnchor) consider(ex.rotAnchor.name,2);
+  PROGRAM.forEach(d=>d.exercises.forEach(e=>consider(e.name, d.id===currentDay?1.5:1)));
+  Object.keys(lastByName).forEach(n=>consider(n,0.5));
+  if(!cands.length) return null;
+  cands.sort((a,b)=>(b.prio-a.prio)||(b.t-a.t));
+  const src=cands[0];
+  const raw=src.e1rm/(1+topRep(ex.target)/30)*(tf/src.sf)*0.8;
+  const step=ex.step||5; const w=Math.max(step, Math.round(raw/step)*step);
+  return {w, from:src.name};
+}
 function isPlateau(ex){
   const h=hist[histKey(ex)]; if(!h||h.length<3) return false;
   const last3=h.slice(-3); const first=last3[0].e1rm;
@@ -1519,17 +1552,18 @@ function render(){
     const state=ensureState(ex); const complete=state.sets.every(s=>s.done); if(!complete) allComplete=false;
     const daySaved=lastSessionData[currentDay]&&lastSessionData[currentDay][ex.name];
     let sug=suggestWeight(ex,daySaved);
-    let saved=daySaved, crossDaySub=null;
+    let saved=daySaved, crossDaySub=null, estFrom=null;
     if(sug===-1){
       const cw=crossDaySuggestedWeight(ex);
       // only label this "from X day" when the source is actually a different slot — the same exercise's own
       // older session (found here because the most recent same-day one had no weight logged) isn't a cross-day
       // borrow and would misleadingly read as if the exercise had rotated away and back.
       if(cw){ sug=cw; const cs=lastByName[ex.name]; if(cs){ saved=cs; if(cs.d!==currentDay){ const cd=PROGRAM.find(d=>d.id===cs.d); crossDaySub=cd?cd.sub:null; } } }
+      else { const est=estimateFromRelated(ex); if(est){ sug=est.w; estFrom=est.from; } }
     }
     // a bodyweight-loaded exercise already shows its (locked) weight in the set rows below —
     // repeating "try 110 lb bodyweight" up here just restates the same number.
-    const sugTxt=(ex.start===0&&typeof sug==='number')?'':(sug===null?'log body weight in Strength to use here':sug===-1?'find a weight for the rep range':(dispWeight(sug)+' '+unitLabel()+(isDeloadActive()?' · deload':'')+(crossDaySub?` · from ${crossDaySub} day`:'')));
+    const sugTxt=(ex.start===0&&typeof sug==='number')?'':(sug===null?'log body weight in Strength to use here':sug===-1?'find a weight for the rep range':estFrom?`~${dispWeight(sug)} ${unitLabel()} · estimate from ${estFrom}`:(dispWeight(sug)+' '+unitLabel()+(isDeloadActive()?' · deload':'')+(crossDaySub?` · from ${crossDaySub} day`:'')));
     const cur=currentFor(ex), base=baselineFor(ex);
     const lvl=(base&&cur)?Math.round(cur/base*100):0; const lvlTxt=lvl&&lvl!==100?` <span class="e1rm">· strength ${lvl}%</span>`:'';
     const plat=isPlateau(ex);
@@ -1552,6 +1586,7 @@ function render(){
     if(plat){ const pt=document.createElement('div'); pt.className='plateau-tip'; pt.innerHTML=`No progress in 3 sessions. <span class="linkbtn" style="color:var(--amber)" data-act="variation">Try a variation</span>, take a lighter week (about 10% less, same reps), or switch the rep range for a few weeks. If several lifts feel stuck at once, <span class="linkbtn" style="color:var(--amber)" data-act="deload">consider a full deload week</span>.`; pt.querySelector('[data-act="variation"]').onclick=()=>openSwap(currentDay, ex); pt.querySelector('[data-act="deload"]').onclick=openDeloadSheet; body.appendChild(pt); }
     if(ex.rotPrev){ const idx=day.exercises.indexOf(ex); const rt=document.createElement('div'); rt.className='plateau-tip'; rt.innerHTML=`Swapped in at the start of this block (was ${ex.rotPrev.name}). <span class="linkbtn" style="color:var(--amber)" data-act="undo">undo</span> · <span class="linkbtn" style="color:var(--amber)" data-act="never">never suggest this</span>`; rt.querySelector('[data-act="undo"]').onclick=()=>undoRotation(day,idx); rt.querySelector('[data-act="never"]').onclick=()=>rejectRotation(day,idx); body.appendChild(rt); }
     if(sug===-1){ const fn=document.createElement('div'); fn.className='first-log-note'; fn.textContent='New lift — no history yet. Log a comfortable first set below; Lift Log will suggest a weight next time from what you log now.'; body.appendChild(fn); }
+    else if(estFrom){ const fn=document.createElement('div'); fn.className='first-log-note'; fn.textContent=`New lift — the weight is a conservative estimate from ${estFrom} (same muscle group, adjusted for the implement and rep range). Adjust it to what feels right; Lift Log learns from what you log.`; body.appendChild(fn); }
 
     const hr=document.createElement('div'); hr.className='setgrid head'; hr.innerHTML='<div>set</div><div>weight</div><div>reps</div><div></div><div></div>'; body.appendChild(hr);
     const bwLoaded=ex.start===0;
