@@ -170,6 +170,14 @@
   .sess .sh{display:flex;justify-content:space-between;font-size:13px;} .sess .sm{font-size:11px;color:var(--text-dim);margin-top:3px;}
   .sess .sdet{display:none;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);font-size:11.5px;line-height:1.7;}
   .sess.open .sdet{display:block;}
+  /* session edit form: grid columns must be allowed to shrink (minmax(0,…)) — number inputs otherwise keep an
+     intrinsic width on iOS and push the RIR column off the edge of the sheet */
+  .se-row{display:grid;grid-template-columns:18px minmax(0,1fr) minmax(0,1fr) 62px;gap:6px;margin-top:4px;align-items:center;}
+  .se-row .in{width:100%;min-width:0;box-sizing:border-box;padding:7px 4px;font-size:14px;text-align:center;font-family:'IBM Plex Mono',monospace;}
+  .se-row .n{color:var(--text-dim);font-size:11px;text-align:center;}
+  .se-head{display:flex;justify-content:space-between;align-items:center;margin-top:10px;}
+  .se-foot{position:sticky;bottom:0;background:var(--panel);padding:10px 0 4px;margin-top:10px;display:flex;gap:8px;}
+  .se-foot .btn{flex:1;}
   .edrow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line);font-size:13px;}
   .edrow .m{font-size:10.5px;color:var(--text-dim);}
   .edrow .acts span{cursor:pointer;color:var(--light);font-size:14px;margin-left:10px;}
@@ -2033,23 +2041,22 @@ async function saveSessionEdit(s, edited){
 const RIR_OPTS=[['','RIR'],['0','0'],['1','1'],['2','2'],['3','3'],['4','4+']];
 function renderSessionEditForm(s, el, onDone){
   const det=el.querySelector('.sdet'); el.classList.add('open'); det.style.display='block';
-  const grid='display:grid;grid-template-columns:22px 1fr 1fr 74px;gap:6px;margin-top:4px;align-items:center';
   if(s.isCardio){
     det.innerHTML=`<div class="field-label">duration (minutes)</div><input class="in" id="seDur" type="number" inputmode="numeric" value="${s.duration||''}" style="width:100%">
       <div class="field-label">distance (optional)</div><input class="in" id="seDist" type="text" value="${s.distance||''}" style="width:100%">
       <div class="field-label">effort (RPE)</div><select class="in" id="seRpe" style="width:100%"><option value="0">—</option>${Array.from({length:10},(_,k)=>k+1).map(n=>`<option value="${n}"${s.rpe===n?' selected':''}>${n}</option>`).join('')}</select>
       <textarea class="notes" id="seNotes" placeholder="notes">${s.notes||''}</textarea>
-      <div class="row" style="gap:8px;margin-top:10px;flex-wrap:nowrap"><button class="btn" data-act="cancel" style="flex:1">cancel</button><button class="btn primary" data-act="save" style="flex:1">save</button></div>`;
+      <div class="se-foot"><button class="btn" data-act="cancel">cancel</button><button class="btn primary" data-act="save">save</button></div>`;
     det.querySelector('[data-act="save"]').onclick=async e=>{ e.stopPropagation(); const dur=parseInt(det.querySelector('#seDur').value); if(!dur){ showToast('add a duration'); return; } await saveSessionEdit(s,{duration:dur,distance:det.querySelector('#seDist').value.trim(),rpe:parseInt(det.querySelector('#seRpe').value)||0,notes:det.querySelector('#seNotes').value}); onDone(); };
   } else {
     const removed=new Set();
-    det.innerHTML=Object.entries(s.ex).map(([n,sets])=>`<div class="se-ex" data-name="${n.replace(/"/g,'&quot;')}"><div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px"><b style="font-weight:normal;color:var(--text)">${n}</b><span class="linkbtn" data-act="rm">remove</span></div>
-      ${sets.map((x,k)=>`<div style="${grid}"><span style="color:var(--text-dim);font-size:11px">${k+1}</span><input class="in" type="number" inputmode="decimal" placeholder="${unitLabel()}" value="${x.w?dispWeight(x.w):''}"><input class="in" type="number" inputmode="numeric" placeholder="reps" value="${x.r||''}"><select class="in">${RIR_OPTS.map(([v,l])=>`<option value="${v}"${String(x.rir??'')===v?' selected':''}>${l}</option>`).join('')}</select></div>`).join('')}</div>`).join('')+
+    det.innerHTML=`<div class="se-row" style="margin-top:4px"><span></span><span class="n">${unitLabel()}</span><span class="n">reps</span><span class="n">RIR</span></div>`+Object.entries(s.ex).map(([n,sets])=>`<div class="se-ex" data-name="${n.replace(/"/g,'&quot;')}"><div class="se-head"><b style="font-weight:normal;color:var(--text)">${n}</b><span class="linkbtn" data-act="rm">remove</span></div>
+      ${sets.map((x,k)=>`<div class="se-row"><span class="n">${k+1}</span><input class="in" type="number" inputmode="decimal" placeholder="—" value="${x.w?dispWeight(x.w):''}"><input class="in" type="number" inputmode="numeric" placeholder="—" value="${x.r||''}"><select class="in">${RIR_OPTS.map(([v,l])=>`<option value="${v}"${String(x.rir??'')===v?' selected':''}>${l}</option>`).join('')}</select></div>`).join('')}</div>`).join('')+
       `<div class="note-sm" style="margin-top:8px">Blank both fields to drop a set. Weights are in ${unitLabel()}.</div>
-      <div class="row" style="gap:8px;margin-top:10px;flex-wrap:nowrap"><button class="btn" data-act="cancel" style="flex:1">cancel</button><button class="btn primary" data-act="save" style="flex:1">save</button></div>`;
+      <div class="se-foot"><button class="btn" data-act="cancel">cancel</button><button class="btn primary" data-act="save">save</button></div>`;
     det.querySelectorAll('.se-ex [data-act="rm"]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const box=b.closest('.se-ex'); removed.add(box.dataset.name); box.style.display='none'; });
     det.querySelector('[data-act="save"]').onclick=async e=>{ e.stopPropagation(); const ex={};
-      det.querySelectorAll('.se-ex').forEach(box=>{ const n=box.dataset.name; if(removed.has(n)) return; ex[n]=[...box.querySelectorAll('div[style*="grid"]')].map(row=>{ const [wI,rI]=row.querySelectorAll('input'); const sel=row.querySelector('select'); return {w:wI.value===''?'':storeWeight(wI.value), r:rI.value, rir:sel.value===''?null:parseInt(sel.value)}; }); });
+      det.querySelectorAll('.se-ex').forEach(box=>{ const n=box.dataset.name; if(removed.has(n)) return; ex[n]=[...box.querySelectorAll('.se-row')].map(row=>{ const [wI,rI]=row.querySelectorAll('input'); const sel=row.querySelector('select'); return {w:wI.value===''?'':storeWeight(wI.value), r:rI.value, rir:sel.value===''?null:parseInt(sel.value)}; }); });
       await saveSessionEdit(s,{ex}); onDone(); };
   }
   det.querySelector('[data-act="cancel"]').onclick=e=>{ e.stopPropagation(); onDone(); };
@@ -2063,7 +2070,7 @@ function buildSessionItem(s, forceOpen, editable){
   if(s.isCardio){
     el.innerHTML=`<div class="sh"><span>${fmtDate(s.t)}</span><span style="color:var(--text-dim)">${s.ctypeLabel}${acts?' &nbsp;'+acts:''}</span></div><div class="sm">${s.duration} min${s.distance?' · '+s.distance:''}${s.rpe?' · RPE '+s.rpe:''}</div><div class="sdet" style="${s.notes?'display:block;':''}border:none;padding-top:4px">${s.notes||''}</div>`;
   } else {
-    const det=Object.entries(s.ex).map(([n,sets])=>`<b style="font-weight:normal;color:var(--text)">${n}</b> — ${sets.map(x=>`${x.w?dispWeight(x.w):'bw'}×${x.r||'-'}${x.rir!=null?' (RIR '+x.rir+')':''}`).join(', ')}`).join('<br>');
+    const det=Object.entries(s.ex).map(([n,sets])=>{ const en=entryFor(n); const bwl=!!(en&&en.start===0); return `<b style="font-weight:normal;color:var(--text)">${n}</b> — ${sets.map(x=>`${x.w?dispWeight(x.w):(bwl?'bw':'—')}×${x.r||'-'}${x.rir!=null?' (RIR '+x.rir+')':''}`).join(', ')}`; }).join('<br>');
     el.innerHTML=`<div class="sh"><span>${fmtDate(s.t)}</span><span style="color:var(--text-dim)">${s.dayName} · ${s.sub}${acts?' &nbsp;'+acts:''}</span></div><div class="sm">${s.sets} sets · ${dispVol(s.vol).toLocaleString()} ${unitLabel()} moved</div><div class="sdet">${det}</div>`;
     el.onclick=()=>el.classList.toggle('open');
   }
