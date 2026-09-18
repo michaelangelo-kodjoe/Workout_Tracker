@@ -1315,7 +1315,7 @@ function stopTimer(){ clearInterval(timer.iv); document.getElementById('timer').
 // writes the running seconds into the set's field, beeps once at the target's top, and stop marks the set done
 // (kicking off the usual rest timer). One hold runs at a time; the element it draws into is re-found on every
 // render since render() rebuilds the DOM.
-let hold={key:null,start:0,iv:null,el:null,set:null,ex:null,target:0,beeped:false};
+let hold={key:null,start:0,iv:null,el:null,inp:null,set:null,ex:null,target:0,beeped:false};
 function holdKey(ex,i){ return currentDay+'|'+ex.name+'#'+i; }
 function holdElapsed(){ return Math.floor((Date.now()-hold.start)/1000); }
 function fmtHold(sec){ return `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`; }
@@ -1328,6 +1328,7 @@ function startHold(ex,i,s){
     const sec=holdElapsed();
     if(hold.el){ hold.el.textContent=fmtHold(sec); hold.el.classList.toggle('hit',sec>=hold.target); }
     if(hold.set) hold.set.r=String(sec);
+    if(hold.inp) hold.inp.value=sec; // the seconds field ticks live too
     if(!hold.beeped&&hold.target&&sec>=hold.target){ hold.beeped=true; beep(); }
   },250);
 }
@@ -1663,7 +1664,7 @@ function render(){
         const hrow=document.createElement('div'); hrow.className='hold-row';
         hrow.innerHTML=`<span class="hold-t${running&&holdElapsed()>=hold.target?' hit':''}">${fmtHold(running?holdElapsed():0)}</span><span class="hold-target">hold · target ${topRep(ex.target)}s${running?' · counting':''}</span><button class="btn${running?'':' primary'}">${running?'stop':'start hold'}</button>`;
         hrow.querySelector('button').onclick=()=>{ running?stopHold(true):startHold(ex,i,s); };
-        if(running) hold.el=hrow.querySelector('.hold-t');
+        if(running){ hold.el=hrow.querySelector('.hold-t'); hold.inp=row.querySelectorAll('input')[1]; }
         body.appendChild(hrow);
       }
       if(s.done){
