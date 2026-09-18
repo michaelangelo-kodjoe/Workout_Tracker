@@ -1570,7 +1570,12 @@ function render(){
   document.getElementById('editLink').onclick=()=>{ setView('more'); document.getElementById('edDay').value=currentDay; renderEditor(); };
   const list=document.getElementById('exerciseList'); list.innerHTML='';
   let allComplete=true,lastGroup=null;
-  day.exercises.forEach(ex=>{
+  // cards are shown grouped by muscle group (groups in order of first appearance, slot order within a group) so a
+  // day laid out quads / hamstrings / quads doesn't get two "Quads" headings — the program's own slot order is
+  // untouched, it only decides which slots are primary and how the editor lists them
+  const groupOrder=[]; day.exercises.forEach(ex=>{ if(!groupOrder.includes(ex.group)) groupOrder.push(ex.group); });
+  const ordered=groupOrder.flatMap(g=>day.exercises.filter(ex=>ex.group===g));
+  ordered.forEach(ex=>{
     if(ex.group!==lastGroup){ const gh=document.createElement('div'); gh.className='groupheader'; gh.textContent=ex.group; list.appendChild(gh); lastGroup=ex.group; }
     const state=ensureState(ex); const complete=state.sets.every(s=>s.done); if(!complete) allComplete=false;
     const daySaved=lastSessionData[currentDay]&&lastSessionData[currentDay][ex.name];
