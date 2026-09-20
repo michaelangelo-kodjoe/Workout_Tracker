@@ -1685,15 +1685,26 @@ function render(){
     howto.querySelector('.swap-btn').onclick=()=>openSwap(currentDay, ex); body.appendChild(howto);
     let updatePlates=null;
     if(barKind(ex)){
+      // some gyms rack pre-loaded fixed-weight barbells (curl bars, EZ bars) instead of a loadable bar and plates —
+      // exactly like a dumbbell, there's nothing to load, just a bar to grab closest to the target weight. Marked
+      // per exercise (not globally: a gym can have both loadable barbells and a fixed-weight curl-bar rack) and
+      // remembered in settings.fixedBar, same pattern as the assumed bar weight override.
       const pl=document.createElement('div'); pl.className='plates';
       const opts=settings.unit==='kg'?BAR_OPTIONS_KG:BAR_OPTIONS_LB; const curBar=dispWeight(barWeightLb(ex));
-      pl.innerHTML=`<span class="plates-txt"></span><span>·</span><select class="in bar-sel" title="bar weight">${opts.map(o=>`<option value="${o}"${Math.abs(o-curBar)<0.01?' selected':''}>${o} ${unitLabel()} bar</option>`).join('')}${opts.some(o=>Math.abs(o-curBar)<0.01)?'':`<option value="${curBar}" selected>${curBar} ${unitLabel()} bar</option>`}</select>`;
-      const txtEl=pl.querySelector('.plates-txt');
+      let fixed=!!(settings.fixedBar||{})[ex.name];
+      pl.innerHTML=`<span class="plates-txt"></span><select class="in bar-sel" title="bar weight">${opts.map(o=>`<option value="${o}"${Math.abs(o-curBar)<0.01?' selected':''}>${o} ${unitLabel()} bar</option>`).join('')}${opts.some(o=>Math.abs(o-curBar)<0.01)?'':`<option value="${curBar}" selected>${curBar} ${unitLabel()} bar</option>`}</select><label class="chk fixed-chk"><input type="checkbox"${fixed?' checked':''}> fixed-weight bar</label>`;
+      const txtEl=pl.querySelector('.plates-txt'), barSel=pl.querySelector('.bar-sel');
       // the weight in play: the last edited set weight, else the suggestion
       let liveLb=(state.sets.find(x=>x.w!=='')||{}).w; if(liveLb===undefined||liveLb==='') liveLb=(typeof sug==='number'&&sug>0)?sug:null;
-      updatePlates=lb=>{ if(lb!=null&&lb!=='') liveLb=lb; txtEl.innerHTML=(liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)))?plateText(parseFloat(liveLb),ex):'enter a weight to see plates per side'; };
-      pl.querySelector('.bar-sel').onchange=e=>{ settings.barWeights=settings.barWeights||{}; settings.barWeights[ex.name]=storeWeight(e.target.value); sset('settings',settings); updatePlates(); };
-      updatePlates(); body.appendChild(pl);
+      const syncFixedUI=()=>{ barSel.style.display=fixed?'none':''; };
+      updatePlates=lb=>{
+        if(lb!=null&&lb!=='') liveLb=lb;
+        if(fixed){ txtEl.textContent=(liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)))?`grab the fixed bar closest to ${dispWeight(parseFloat(liveLb))} ${unitLabel()}`:'enter a weight to see which fixed bar to grab'; return; }
+        txtEl.innerHTML=(liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)))?plateText(parseFloat(liveLb),ex):'enter a weight to see plates per side';
+      };
+      barSel.onchange=e=>{ settings.barWeights=settings.barWeights||{}; settings.barWeights[ex.name]=storeWeight(e.target.value); sset('settings',settings); updatePlates(); };
+      pl.querySelector('.fixed-chk input').onchange=e=>{ fixed=e.target.checked; settings.fixedBar=settings.fixedBar||{}; settings.fixedBar[ex.name]=fixed; sset('settings',settings); syncFixedUI(); updatePlates(); };
+      syncFixedUI(); updatePlates(); body.appendChild(pl);
     }
     if(plat){ const pt=document.createElement('div'); pt.className='plateau-tip'; pt.innerHTML=`No progress in 3 sessions. <span class="linkbtn" style="color:var(--amber)" data-act="variation">Try a variation</span>, take a lighter week (about 10% less, same reps), or switch the rep range for a few weeks. If several lifts feel stuck at once, <span class="linkbtn" style="color:var(--amber)" data-act="deload">consider a full deload week</span>.`; pt.querySelector('[data-act="variation"]').onclick=()=>openSwap(currentDay, ex); pt.querySelector('[data-act="deload"]').onclick=openDeloadSheet; body.appendChild(pt); }
     if(ex.rotPrev){ const idx=day.exercises.indexOf(ex); const rt=document.createElement('div'); rt.className='plateau-tip'; rt.innerHTML=`Swapped in at the start of this block (was ${ex.rotPrev.name}). <span class="linkbtn" style="color:var(--amber)" data-act="undo">undo</span> · <span class="linkbtn" style="color:var(--amber)" data-act="never">never suggest this</span>`; rt.querySelector('[data-act="undo"]').onclick=()=>undoRotation(day,idx); rt.querySelector('[data-act="never"]').onclick=()=>rejectRotation(day,idx); body.appendChild(rt); }
