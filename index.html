@@ -117,6 +117,8 @@
   .plates{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11.5px;color:var(--text-dim);margin:0 0 10px;}
   .plates b{color:var(--text);font-weight:normal;font-family:'Menlo',monospace;}
   .plates .bar-sel{padding:3px 6px;font-size:11px;}
+  .plates .mach-base{padding:3px 6px;font-size:11px;text-align:center;}
+  .plates .mach-plate-chk{font-size:11px;}
   footer{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));z-index:9;}
   .footer-inner{max-width:528px;margin:0 auto;}
   .finish-btn{width:100%;background:var(--accent);color:#1a0d08;border:none;border-radius:4px;padding:13px;font-size:13.5px;letter-spacing:.3px;cursor:pointer;}
@@ -1296,11 +1298,14 @@ function plateBreakdown(totalDisp, barDisp){
   const loaded=barDisp+2*out.reduce((a,b)=>a+b,0);
   return {plates:out, loaded, short:Math.abs(loaded-totalDisp)>0.01};
 }
-function plateText(totalLb, ex){
-  const barLb=barWeightLb(ex); const u=unitLabel();
+function plateText(totalLb, ex, baseLbOverride){
+  // baseLbOverride lets a plate-loaded machine (no standard "bar weight" to assume) pass its own typed-in base/sled
+  // weight instead of the barbell-family default lookup
+  const barLb=baseLbOverride!=null?baseLbOverride:barWeightLb(ex); const u=unitLabel();
+  const isMachine=baseLbOverride!=null;
   const total=dispWeight(totalLb), bar=dispWeight(barLb);
   const b=plateBreakdown(total,bar);
-  if(b.belowBar) return `${total} ${u} is under the ${bar} ${u} bar`;
+  if(b.belowBar) return `${total} ${u} is under the ${bar} ${u} ${isMachine?'base weight':'bar'}`;
   const per=b.plates.length?b.plates.join(' + '):'nothing';
   return `per side: <b>${per}</b>${b.short?` (loads ${b.loaded} ${u}, nearest to ${total})`:''}`;
 }
@@ -1705,6 +1710,30 @@ function render(){
       barSel.onchange=e=>{ settings.barWeights=settings.barWeights||{}; settings.barWeights[ex.name]=storeWeight(e.target.value); sset('settings',settings); updatePlates(); };
       pl.querySelector('.fixed-chk input').onchange=e=>{ fixed=e.target.checked; settings.fixedBar=settings.fixedBar||{}; settings.fixedBar[ex.name]=fixed; sset('settings',settings); syncFixedUI(); updatePlates(); };
       syncFixedUI(); updatePlates(); body.appendChild(pl);
+    } else if(ex.equip==='machine'){
+      // plate-loaded machines (leg press, some lever/row/press/curl machines, hack squat sleds) exist alongside
+      // plain pin-stack machines under the same generic equip type, and it's purely gym-specific which one you
+      // have — no name or dataset field says so reliably. Off by default; a small opt-in checkbox reveals a plate
+      // breakdown once switched on. Unlike a barbell there's no standard "bar weight" to assume for a machine's
+      // own base/sled weight, so it's a free-typed number defaulting to 0, remembered per exercise. This assumes
+      // 1:1 loading (what you load is what you lift) — some plate-loaded machines have a mechanical ratio instead
+      // (loading 45 lb can feel like 90), which this can't know without you telling it, so it's labeled an estimate.
+      const pl=document.createElement('div'); pl.className='plates';
+      let on=!!(settings.machinePlates||{})[ex.name];
+      const baseLb=(settings.machineBase||{})[ex.name]||0;
+      pl.innerHTML=`<label class="chk mach-plate-chk"><input type="checkbox"${on?' checked':''}> plate-loaded machine</label><span class="plates-txt"></span><input class="in mach-base" type="number" inputmode="decimal" placeholder="0" value="${baseLb?dispWeight(baseLb):''}" title="machine's own base/sled weight before plates" style="width:64px;display:${on?'':'none'}">`;
+      const txtEl=pl.querySelector('.plates-txt'), baseIn=pl.querySelector('.mach-base');
+      txtEl.style.display=on?'':'none';
+      let liveLb=(state.sets.find(x=>x.w!=='')||{}).w; if(liveLb===undefined||liveLb==='') liveLb=(typeof sug==='number'&&sug>0)?sug:null;
+      updatePlates=lb=>{
+        if(!on) return;
+        if(lb!=null&&lb!=='') liveLb=lb;
+        const base=parseFloat(baseIn.value)||0;
+        txtEl.innerHTML=(liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)))?plateText(parseFloat(liveLb),{...ex,step:5},storeWeight(base))+' <span class="note-sm" style="display:inline">(est., assumes 1:1 loading)</span>':'enter a weight to see plates per side';
+      };
+      pl.querySelector('.mach-plate-chk input').onchange=e=>{ on=e.target.checked; settings.machinePlates=settings.machinePlates||{}; settings.machinePlates[ex.name]=on; sset('settings',settings); txtEl.style.display=on?'':'none'; baseIn.style.display=on?'':'none'; updatePlates(); };
+      baseIn.oninput=e=>{ settings.machineBase=settings.machineBase||{}; settings.machineBase[ex.name]=storeWeight(e.target.value); sset('settings',settings); updatePlates(); };
+      updatePlates(); body.appendChild(pl);
     }
     if(plat){ const pt=document.createElement('div'); pt.className='plateau-tip'; pt.innerHTML=`No progress in 3 sessions. <span class="linkbtn" style="color:var(--amber)" data-act="variation">Try a variation</span>, take a lighter week (about 10% less, same reps), or switch the rep range for a few weeks. If several lifts feel stuck at once, <span class="linkbtn" style="color:var(--amber)" data-act="deload">consider a full deload week</span>.`; pt.querySelector('[data-act="variation"]').onclick=()=>openSwap(currentDay, ex); pt.querySelector('[data-act="deload"]').onclick=openDeloadSheet; body.appendChild(pt); }
     if(ex.rotPrev){ const idx=day.exercises.indexOf(ex); const rt=document.createElement('div'); rt.className='plateau-tip'; rt.innerHTML=`Swapped in at the start of this block (was ${ex.rotPrev.name}). <span class="linkbtn" style="color:var(--amber)" data-act="undo">undo</span> · <span class="linkbtn" style="color:var(--amber)" data-act="never">never suggest this</span>`; rt.querySelector('[data-act="undo"]').onclick=()=>undoRotation(day,idx); rt.querySelector('[data-act="never"]').onclick=()=>rejectRotation(day,idx); body.appendChild(rt); }
