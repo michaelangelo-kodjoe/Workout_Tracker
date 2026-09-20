@@ -113,6 +113,10 @@
   .addset{font-size:11px;color:var(--text-dim);cursor:pointer;text-decoration:underline;margin-top:2px;}
   .notes{width:100%;margin-top:10px;background:var(--panel-raised);border:1px solid var(--line);border-radius:3px;color:var(--text);padding:8px;font-size:12px;font-family:'Georgia',serif;resize:vertical;min-height:34px;}
   .last-time{font-size:10.5px;color:var(--text-dim);margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);}
+  /* plate breakdown for bar-loaded lifts: what to put on each side for the weight in play */
+  .plates{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11.5px;color:var(--text-dim);margin:0 0 10px;}
+  .plates b{color:var(--text);font-weight:normal;font-family:'Menlo',monospace;}
+  .plates .bar-sel{padding:3px 6px;font-size:11px;}
   footer{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));z-index:9;}
   .footer-inner{max-width:528px;margin:0 auto;}
   .finish-btn{width:100%;background:var(--accent);color:#1a0d08;border:none;border-radius:4px;padding:13px;font-size:13.5px;letter-spacing:.3px;cursor:pointer;}
@@ -1267,6 +1271,39 @@ function storeWeight(val){ const n=parseFloat(val); if(isNaN(n)) return val; ret
 function dispBW(lb){ const n=parseFloat(lb); if(isNaN(n)) return lb; return settings.unit==='kg'?Math.round(n/LB_PER_KG*10)/10:Math.round(n*10)/10; }
 function storeBW(val){ const n=parseNum(val); if(isNaN(n)) return val; return settings.unit==='kg'?Math.round(n*LB_PER_KG*100)/100:Math.round(n*100)/100; }
 function dispVol(lb){ return settings.unit==='kg'?Math.round(lb/LB_PER_KG):Math.round(lb); }
+// ---------- plate math for bar-loaded lifts ----------
+// which lifts get a per-side breakdown, and the bar they're assumed to use (stored in lb, overridable per
+// exercise from the card). Smith bars vary a lot between gyms, hence the low default and the override.
+const PLATES_LB=[45,35,25,10,5,2.5], PLATES_KG=[25,20,15,10,5,2.5,1.25];
+const BAR_OPTIONS_LB=[45,35,25,20,15,10], BAR_OPTIONS_KG=[20,15,10,7.5,5];
+function barKind(ex){
+  const n=ex.name||'';
+  if(/ez[- ]?bar/i.test(n)) return 'ez';
+  if(/smith/i.test(n)) return 'smith';
+  if(/trap bar|hex bar/i.test(n)) return 'trap';
+  if(/landmine/i.test(n)) return null; // one end pinned — not a per-side load
+  if(ex.equip==='barbell'||/barbell/i.test(n)) return 'barbell';
+  return null;
+}
+const BAR_DEFAULT_LB={barbell:45, ez:20, smith:15, trap:60};
+function barWeightLb(ex){ const o=(settings.barWeights||{})[ex.name]; return o!=null?o:BAR_DEFAULT_LB[barKind(ex)]; }
+// per-side plates for a total (in display units) on a bar (display units); greedy from the biggest plate.
+// Returns {plates:[…], loaded:total actually reachable, short:true when the total isn't loadable exactly}
+function plateBreakdown(totalDisp, barDisp){
+  const plates=settings.unit==='kg'?PLATES_KG:PLATES_LB;
+  let side=(totalDisp-barDisp)/2; if(side<0) return {plates:[],loaded:barDisp,short:true,belowBar:true};
+  const out=[]; for(const pl of plates){ while(side>=pl-1e-9){ out.push(pl); side-=pl; } }
+  const loaded=barDisp+2*out.reduce((a,b)=>a+b,0);
+  return {plates:out, loaded, short:Math.abs(loaded-totalDisp)>0.01};
+}
+function plateText(totalLb, ex){
+  const barLb=barWeightLb(ex); const u=unitLabel();
+  const total=dispWeight(totalLb), bar=dispWeight(barLb);
+  const b=plateBreakdown(total,bar);
+  if(b.belowBar) return `${total} ${u} is under the ${bar} ${u} bar`;
+  const per=b.plates.length?b.plates.join(' + '):'nothing';
+  return `per side: <b>${per}</b>${b.short?` (loads ${b.loaded} ${u}, nearest to ${total})`:''}`;
+}
 function dedupeSortByT(arr){ const seen=new Set(); const out=[]; [...arr].sort((a,b)=>a.t-b.t).forEach(x=>{ if(!seen.has(x.t)){ seen.add(x.t); out.push(x); } }); return out; }
 function latestBW(){ return bodyweight.length?bodyweight[bodyweight.length-1].w:null; }
 function sparkline(points,color,milestoneIdx){
@@ -1646,6 +1683,29 @@ function render(){
     howto.innerHTML=`<div class="howto-row"><span><span class="howto-btn">${state.howto?'hide':'how to'}</span><span class="howto-btn swap-btn" style="margin-left:14px">swap ↔</span></span><a class="demo-link" href="${yt}" target="_blank" rel="noopener">watch demo ↗</a></div><div class="cue">${ex.cue||'No cue written yet.'}</div>`;
     howto.querySelector('.howto-btn').onclick=()=>{ state.howto=!state.howto; render(); };
     howto.querySelector('.swap-btn').onclick=()=>openSwap(currentDay, ex); body.appendChild(howto);
+    let updatePlates=null;
+    if(barKind(ex)){
+      // some gyms rack pre-loaded fixed-weight barbells (curl bars, EZ bars) instead of a loadable bar and plates —
+      // exactly like a dumbbell, there's nothing to load, just a bar to grab closest to the target weight. Marked
+      // per exercise (not globally: a gym can have both loadable barbells and a fixed-weight curl-bar rack) and
+      // remembered in settings.fixedBar, same pattern as the assumed bar weight override.
+      const pl=document.createElement('div'); pl.className='plates';
+      const opts=settings.unit==='kg'?BAR_OPTIONS_KG:BAR_OPTIONS_LB; const curBar=dispWeight(barWeightLb(ex));
+      let fixed=!!(settings.fixedBar||{})[ex.name];
+      pl.innerHTML=`<span class="plates-txt"></span><select class="in bar-sel" title="bar weight">${opts.map(o=>`<option value="${o}"${Math.abs(o-curBar)<0.01?' selected':''}>${o} ${unitLabel()} bar</option>`).join('')}${opts.some(o=>Math.abs(o-curBar)<0.01)?'':`<option value="${curBar}" selected>${curBar} ${unitLabel()} bar</option>`}</select><label class="chk fixed-chk"><input type="checkbox"${fixed?' checked':''}> fixed-weight bar</label>`;
+      const txtEl=pl.querySelector('.plates-txt'), barSel=pl.querySelector('.bar-sel');
+      // the weight in play: the last edited set weight, else the suggestion
+      let liveLb=(state.sets.find(x=>x.w!=='')||{}).w; if(liveLb===undefined||liveLb==='') liveLb=(typeof sug==='number'&&sug>0)?sug:null;
+      const syncFixedUI=()=>{ barSel.style.display=fixed?'none':''; };
+      updatePlates=lb=>{
+        if(lb!=null&&lb!=='') liveLb=lb;
+        if(fixed){ txtEl.textContent=(liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)))?`grab the fixed bar closest to ${dispWeight(parseFloat(liveLb))} ${unitLabel()}`:'enter a weight to see which fixed bar to grab'; return; }
+        txtEl.innerHTML=(liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)))?plateText(parseFloat(liveLb),ex):'enter a weight to see plates per side';
+      };
+      barSel.onchange=e=>{ settings.barWeights=settings.barWeights||{}; settings.barWeights[ex.name]=storeWeight(e.target.value); sset('settings',settings); updatePlates(); };
+      pl.querySelector('.fixed-chk input').onchange=e=>{ fixed=e.target.checked; settings.fixedBar=settings.fixedBar||{}; settings.fixedBar[ex.name]=fixed; sset('settings',settings); syncFixedUI(); updatePlates(); };
+      syncFixedUI(); updatePlates(); body.appendChild(pl);
+    }
     if(plat){ const pt=document.createElement('div'); pt.className='plateau-tip'; pt.innerHTML=`No progress in 3 sessions. <span class="linkbtn" style="color:var(--amber)" data-act="variation">Try a variation</span>, take a lighter week (about 10% less, same reps), or switch the rep range for a few weeks. If several lifts feel stuck at once, <span class="linkbtn" style="color:var(--amber)" data-act="deload">consider a full deload week</span>.`; pt.querySelector('[data-act="variation"]').onclick=()=>openSwap(currentDay, ex); pt.querySelector('[data-act="deload"]').onclick=openDeloadSheet; body.appendChild(pt); }
     if(ex.rotPrev){ const idx=day.exercises.indexOf(ex); const rt=document.createElement('div'); rt.className='plateau-tip'; rt.innerHTML=`Swapped in at the start of this block (was ${ex.rotPrev.name}). <span class="linkbtn" style="color:var(--amber)" data-act="undo">undo</span> · <span class="linkbtn" style="color:var(--amber)" data-act="never">never suggest this</span>`; rt.querySelector('[data-act="undo"]').onclick=()=>undoRotation(day,idx); rt.querySelector('[data-act="never"]').onclick=()=>rejectRotation(day,idx); body.appendChild(rt); }
     if(sug===-1){ const fn=document.createElement('div'); fn.className='first-log-note'; fn.textContent='New lift — no history yet. Log a comfortable first set below; Lift Log will suggest a weight next time from what you log now.'; body.appendChild(fn); }
@@ -1659,7 +1719,7 @@ function render(){
       const row=document.createElement('div'); row.className='setgrid';
       row.innerHTML=`<div class="setnum">${i+1}</div><input type="number" inputmode="decimal" placeholder="${sug===null?'bw':sug===-1?unitLabel():dispWeight(sug)}" value="${s.w?dispWeight(s.w):s.w}"${bwLoaded?' disabled title="bodyweight — logged in Strength"':''}><input type="number" inputmode="numeric" placeholder="${timed?'sec':'reps'}" value="${s.r}"><div class="setdone ${s.done?'on':''}">${s.done?'✓':''}</div><div class="setrm" title="remove set">✕</div>`;
       const [wI,rI]=row.querySelectorAll('input');
-      if(!bwLoaded) wI.oninput=e=>{s.w=storeWeight(e.target.value); touchDayStart(); sset('today:'+currentDay,todayData);};
+      if(!bwLoaded) wI.oninput=e=>{s.w=storeWeight(e.target.value); touchDayStart(); sset('today:'+currentDay,todayData); if(updatePlates) updatePlates(s.w);};
       rI.oninput=e=>{s.r=e.target.value; touchDayStart(); sset('today:'+currentDay,todayData);};
       row.querySelector('.setdone').onclick=()=>{ if(hold.key===holdKey(ex,i)) stopHold(false); s.done=!s.done; touchDayStart(); if(s.done&&settings.auto) startTimer(settings.smartRest?suggestedRest(ex):settings.rest); sset('today:'+currentDay,todayData); render(); };
       row.querySelector('.setrm').onclick=()=>{ if(state.sets.length<=1){ showToast('keep at least one set'); return; } state.sets.splice(i,1); touchDayStart(); sset('today:'+currentDay,todayData); render(); };
