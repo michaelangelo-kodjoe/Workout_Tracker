@@ -608,6 +608,15 @@
     <button class="btn primary" id="fatigueProceed" style="flex:1">do it anyway</button>
   </div>
 </div>
+<div class="sheet-bg" id="confirmBg"></div>
+<div class="sheet" id="confirmSheet">
+  <div class="sheet-head"><div style="font-size:15px" id="confirmTitle">Are you sure?</div></div>
+  <div class="plateau-tip" id="confirmMsg" style="margin-bottom:14px"></div>
+  <div class="row" style="gap:10px;flex-wrap:nowrap">
+    <button class="btn" id="confirmCancelBtn" style="flex:1">cancel</button>
+    <button class="btn primary" id="confirmOkBtn" style="flex:1">confirm</button>
+  </div>
+</div>
 <div class="sheet-bg" id="deloadBg"></div>
 <div class="sheet" id="deloadSheet">
   <div class="sheet-head"><div><div style="font-size:15px">Plan a deload week</div><div id="deloadStats" style="font-size:11px;color:var(--text-dim);margin-top:2px"></div></div><span class="linkbtn" id="deloadClose">close</span></div>
@@ -1329,6 +1338,21 @@ function sparklineHero(points){
   return `<polyline fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${line}"/><polygon points="${area}" fill="${color}" opacity=".15"/>`;
 }
 function showToast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); const dur=Math.max(1800,Math.min(5000,m.length*45)); clearTimeout(t._hideTimer); t._hideTimer=setTimeout(()=>t.classList.remove('show'),dur); }
+// in-app stand-in for window.confirm(): iOS Safari silently no-ops the native confirm()/alert()/prompt() dialogs
+// for a web app added to the home screen (standalone display mode) — the call returns immediately with no dialog
+// ever shown, which looks exactly like a dead button. Every yes/no confirmation in the app goes through this sheet
+// instead, so it behaves the same whether Lift Log is a browser tab or installed to the home screen.
+function confirmSheet(message, okLabel, cancelLabel){
+  return new Promise(resolve=>{
+    document.getElementById('confirmMsg').textContent=message;
+    const okBtn=document.getElementById('confirmOkBtn'), cancelBtn=document.getElementById('confirmCancelBtn');
+    okBtn.textContent=okLabel||'confirm'; cancelBtn.textContent=cancelLabel||'cancel';
+    const bg=document.getElementById('confirmBg'), sheet=document.getElementById('confirmSheet');
+    const done=v=>{ bg.classList.remove('on'); sheet.classList.remove('on'); okBtn.onclick=null; cancelBtn.onclick=null; bg.onclick=null; resolve(v); };
+    okBtn.onclick=()=>done(true); cancelBtn.onclick=()=>done(false); bg.onclick=()=>done(false);
+    bg.classList.add('on'); sheet.classList.add('on');
+  });
+}
 
 // ---------- rest timer ----------
 let timer={end:0,total:0,iv:null,ctx:null};
@@ -1750,7 +1774,11 @@ function render(){
       const [wI,rI]=row.querySelectorAll('input');
       if(!bwLoaded) wI.oninput=e=>{s.w=storeWeight(e.target.value); touchDayStart(); sset('today:'+currentDay,todayData); if(updatePlates) updatePlates(s.w);};
       rI.oninput=e=>{s.r=e.target.value; touchDayStart(); sset('today:'+currentDay,todayData);};
-      row.querySelector('.setdone').onclick=()=>{ if(hold.key===holdKey(ex,i)) stopHold(false); s.done=!s.done; touchDayStart(); if(s.done&&settings.auto) startTimer(settings.smartRest?suggestedRest(ex):settings.rest); sset('today:'+currentDay,todayData); render(); };
+      row.querySelector('.setdone').onclick=()=>{
+        if(hold.key===holdKey(ex,i)) stopHold(false); // fills s.r with the elapsed seconds before the check below
+        if(!s.done && s.r===''){ showToast(timed?'add the seconds first':'add reps first'); return; }
+        s.done=!s.done; touchDayStart(); if(s.done&&settings.auto) startTimer(settings.smartRest?suggestedRest(ex):settings.rest); sset('today:'+currentDay,todayData); render();
+      };
       row.querySelector('.setrm').onclick=()=>{ if(state.sets.length<=1){ showToast('keep at least one set'); return; } state.sets.splice(i,1); touchDayStart(); sset('today:'+currentDay,todayData); render(); };
       body.appendChild(row);
       if(timed&&!s.done){
@@ -1877,6 +1905,17 @@ async function finishSession(){
   const isLogged=st=>st.done||(st.w&&st.r);
   const worked=day.exercises.filter(ex=>{ const s=todayData[ex.name]; return s&&s.sets.some(isLogged); });
   if(!worked.length){ showToast('log at least one set first'); return; }
+  // every exercise's every set checked off is the same "done" the exercise list's own checkmark uses — anything
+  // less (a skipped exercise, or a set left unchecked) gets a confirm rather than silently closing out the day,
+  // since finishing also fires recovery, rotation-count and progress bookkeeping for the whole day at once.
+  const allSetsDone=day.exercises.every(ex=>{ const s=todayData[ex.name]; return s&&s.sets.every(x=>x.done); });
+  if(!allSetsDone){
+    const skipped=day.exercises.filter(ex=>{ const s=todayData[ex.name]; return !s||!s.sets.some(isLogged); }).length;
+    const msg=skipped
+      ? `${skipped} exercise${skipped===1?'':'s'} still ${skipped===1?"hasn't":"haven't"} been logged. Log this session anyway?`
+      : `Not every set is checked off yet. Log this session as-is?`;
+    if(!await confirmSheet(msg, 'log it anyway')) return;
+  }
   const now=Date.now();
 
   // recovery, scaled by how much of the planned work each muscle actually got
@@ -2162,7 +2201,7 @@ async function rederiveAfterSessionChange(names, dayId, t){
 }
 async function deleteSession(s){
   const label=s.isCardio?`${s.ctypeLabel} on ${fmtDate(s.t)}`:`${s.dayName} ${s.sub} on ${fmtDate(s.t)}`;
-  if(!confirm(`Delete ${label}? Its sets come out of your history and progress numbers. This cannot be undone.`)) return false;
+  if(!await confirmSheet(`Delete ${label}? Its sets come out of your history and progress numbers. This cannot be undone.`, 'delete')) return false;
   const i=sessionIndex(s); if(i<0) return false;
   sessions.splice(i,1); await sset('sessions',sessions);
   if(s.isCardio){ renderHeaderStats(); } else await rederiveAfterSessionChange(Object.keys(s.ex||{}), s.dayId, s.t);
@@ -2465,7 +2504,7 @@ function renderEditor(){
     ren.onclick=()=>openSwap(day.id, ex);
     up.onclick=()=>{ if(i>0){ day.exercises.splice(i-1,0,day.exercises.splice(i,1)[0]); saveProgram(); } };
     dn.onclick=()=>{ if(i<day.exercises.length-1){ day.exercises.splice(i+1,0,day.exercises.splice(i,1)[0]); saveProgram(); } };
-    x.onclick=()=>{ if(confirm(`Remove ${ex.name} from ${day.name} ${day.sub}?`)){ day.exercises.splice(i,1); saveProgram(); } };
+    x.onclick=async()=>{ if(await confirmSheet(`Remove ${ex.name} from ${day.name} ${day.sub}?`, 'remove')){ day.exercises.splice(i,1); saveProgram(); } };
     list.appendChild(r);
   });
   const mus=document.getElementById('adMuscles'); if(!mus.children.length) mus.innerHTML=Object.keys(MUSCLE_LABEL).map(k=>`<label class="chk"><input type="checkbox" value="${k}">${MUSCLE_LABEL[k]}</label>`).join('');
@@ -2481,7 +2520,7 @@ document.getElementById('adBtn').onclick=()=>{
   day.exercises.push({group,name,target,m,seed:null,start,step,cue}); saveProgram();
   ['adName','adGroup','adTarget','adStart','adStep','adCue'].forEach(id=>document.getElementById(id).value=''); document.querySelectorAll('#adMuscles input').forEach(i=>i.checked=false); showToast('added');
 };
-document.getElementById('edReset').onclick=async()=>{ if(confirm('Reset all four days to the recommended program for your equipment? Your logged data stays.')){ PROGRAM=buildProgram(); applyEquipPicks(PROGRAM); await sset('program',PROGRAM); document.getElementById('edDay').innerHTML=''; renderEditor(); showToast('program reset'); } };
+document.getElementById('edReset').onclick=async()=>{ if(await confirmSheet('Reset all four days to the recommended program for your equipment? Your logged data stays.', 'reset')){ PROGRAM=buildProgram(); applyEquipPicks(PROGRAM); await sset('program',PROGRAM); document.getElementById('edDay').innerHTML=''; renderEditor(); showToast('program reset'); } };
 
 let lastBackup=0;
 async function doExport(silent){
@@ -2620,7 +2659,7 @@ document.getElementById('importFile').onchange=async e=>{
   }catch(err){ showToast('that file is not a Lift Log backup'); }
   e.target.value='';
 };
-document.getElementById('wipeBtn').onclick=async()=>{ if(confirm('Erase all workouts, history and settings on this device?')&&confirm('Really erase? This cannot be undone.')){ for(const k of KEYS) await sset(k,null); location.reload(); } };
+document.getElementById('wipeBtn').onclick=async()=>{ if(await confirmSheet('Erase all workouts, history and settings on this device?', 'erase')&&await confirmSheet('Really erase? This cannot be undone.', 'erase everything')){ for(const k of KEYS) await sset(k,null); location.reload(); } };
 
 // ---------- swap ----------
 function closeSheet(){ document.getElementById('sheet').classList.remove('on'); document.getElementById('sheetBg').classList.remove('on'); }
