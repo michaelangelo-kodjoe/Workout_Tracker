@@ -133,6 +133,11 @@
   .tbar i{display:block;height:100%;background:var(--accent);transition:width 1s linear,background 1s linear;}
   .reset-link{text-align:center;margin-top:24px;font-size:11px;color:var(--text-dim);text-decoration:underline;cursor:pointer;}
   .sheet-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:30;}
+  /* the confirm sheet can be opened from inside another already-open sheet (deleting a session from the calendar
+     day sheet, removing an exercise from the editor) — same z-index as a regular sheet means whichever is later in
+     the DOM wins, which put it behind the day sheet. It always needs to win, so it sits above every other overlay,
+     including the celebration screen's z-index:40. */
+  #confirmBg{z-index:50;} #confirmSheet{z-index:51;}
   .sheet{display:none;position:fixed;left:0;right:0;bottom:0;max-height:78vh;overflow-y:auto;background:var(--panel);border-top:1px solid var(--line);border-radius:10px 10px 0 0;padding:14px 16px calc(16px + env(safe-area-inset-bottom));z-index:31;}
   .sheet.on,.sheet-bg.on{display:block;}
   .sheet-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
