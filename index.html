@@ -1774,7 +1774,11 @@ function render(){
       const [wI,rI]=row.querySelectorAll('input');
       if(!bwLoaded) wI.oninput=e=>{s.w=storeWeight(e.target.value); touchDayStart(); sset('today:'+currentDay,todayData); if(updatePlates) updatePlates(s.w);};
       rI.oninput=e=>{s.r=e.target.value; touchDayStart(); sset('today:'+currentDay,todayData);};
-      row.querySelector('.setdone').onclick=()=>{ if(hold.key===holdKey(ex,i)) stopHold(false); s.done=!s.done; touchDayStart(); if(s.done&&settings.auto) startTimer(settings.smartRest?suggestedRest(ex):settings.rest); sset('today:'+currentDay,todayData); render(); };
+      row.querySelector('.setdone').onclick=()=>{
+        if(hold.key===holdKey(ex,i)) stopHold(false); // fills s.r with the elapsed seconds before the check below
+        if(!s.done && s.r===''){ showToast(timed?'add the seconds first':'add reps first'); return; }
+        s.done=!s.done; touchDayStart(); if(s.done&&settings.auto) startTimer(settings.smartRest?suggestedRest(ex):settings.rest); sset('today:'+currentDay,todayData); render();
+      };
       row.querySelector('.setrm').onclick=()=>{ if(state.sets.length<=1){ showToast('keep at least one set'); return; } state.sets.splice(i,1); touchDayStart(); sset('today:'+currentDay,todayData); render(); };
       body.appendChild(row);
       if(timed&&!s.done){
