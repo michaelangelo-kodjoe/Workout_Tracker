@@ -1877,6 +1877,17 @@ async function finishSession(){
   const isLogged=st=>st.done||(st.w&&st.r);
   const worked=day.exercises.filter(ex=>{ const s=todayData[ex.name]; return s&&s.sets.some(isLogged); });
   if(!worked.length){ showToast('log at least one set first'); return; }
+  // every exercise's every set checked off is the same "done" the exercise list's own checkmark uses — anything
+  // less (a skipped exercise, or a set left unchecked) gets a confirm rather than silently closing out the day,
+  // since finishing also fires recovery, rotation-count and progress bookkeeping for the whole day at once.
+  const allSetsDone=day.exercises.every(ex=>{ const s=todayData[ex.name]; return s&&s.sets.every(x=>x.done); });
+  if(!allSetsDone){
+    const skipped=day.exercises.filter(ex=>{ const s=todayData[ex.name]; return !s||!s.sets.some(isLogged); }).length;
+    const msg=skipped
+      ? `${skipped} exercise${skipped===1?'':'s'} still ${skipped===1?"hasn't":"haven't"} been logged. Log this session anyway?`
+      : `Not every set is checked off yet. Log this session as-is?`;
+    if(!confirm(msg)) return;
+  }
   const now=Date.now();
 
   // recovery, scaled by how much of the planned work each muscle actually got
