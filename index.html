@@ -1727,10 +1727,11 @@ function render(){
     const yt='https://www.youtube.com/results?search_query='+encodeURIComponent(ex.name.replace('/',' ')+' exercise form');
     const howto=document.createElement('div'); howto.className='howto'+(state.howto?' open':'');
     const exGif=gifFor(ex);
-    // the card body is always built for every exercise on the day (same as the cue text below it), just hidden
-    // by CSS when closed — fine for text, but an <img> tag starts a real network request the moment it exists in
-    // the DOM regardless of visibility, so this only creates the two image tags once the card is actually open
-    const gifHtml=(exGif&&state.open)?`<div class="exgif"><img src="${exGif[0]}" loading="lazy" alt=""><img src="${exGif[1]}" loading="lazy" alt=""></div>`:'';
+    // shown alongside the cue text, both revealed by the same "how to" toggle — not the instant the card opens.
+    // An <img> tag starts a real network request the moment it exists in the DOM regardless of CSS visibility, so
+    // (matching how the cue text itself only becomes true content once "how to" has actually been clicked) this
+    // only creates the two image tags once state.howto is true, never just from the card being open.
+    const gifHtml=(exGif&&state.howto)?`<div class="exgif"><img src="${exGif[0]}" loading="lazy" alt=""><img src="${exGif[1]}" loading="lazy" alt=""></div>`:'';
     howto.innerHTML=`<div class="howto-row"><span><span class="howto-btn">${state.howto?'hide':'how to'}</span><span class="howto-btn swap-btn" style="margin-left:14px">swap ↔</span></span><a class="demo-link" href="${yt}" target="_blank" rel="noopener">watch demo ↗</a></div>${gifHtml}<div class="cue">${ex.cue||'No cue written yet.'}</div>`;
     howto.querySelector('.howto-btn').onclick=()=>{ state.howto=!state.howto; render(); };
     howto.querySelector('.swap-btn').onclick=()=>openSwap(currentDay, ex); body.appendChild(howto);
