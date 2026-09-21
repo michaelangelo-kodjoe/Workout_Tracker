@@ -95,7 +95,12 @@
      to fake motion between a start and end position — the same trick most fitness apps use for "exercise gifs".
      Pure CSS so it needs no JS timer to track across render()'s constant full-card DOM rebuilds; the animation
      simply restarts for free every time a fresh <img> pair is created. */
-  .exgif{position:relative;width:100%;max-width:260px;aspect-ratio:3/2;border-radius:5px;overflow:hidden;margin:8px 0;background:var(--panel-raised);}
+  /* the demo image and cue text sit side by side — the image is sized to leave real room for the text next to
+     it rather than the full card width, and wraps to stacked (image above text) if the viewport is too narrow
+     to fit both legibly */
+  .howto-demo{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;margin-top:8px;}
+  .howto-demo .cue{margin-top:0;flex:1 1 160px;}
+  .exgif{position:relative;flex:0 0 130px;width:130px;aspect-ratio:3/2;border-radius:5px;overflow:hidden;background:var(--panel-raised);}
   .exgif img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
   .exgif img:last-child{animation:exgifFlip 1.4s steps(1) infinite;}
   @keyframes exgifFlip{0%,49.9%{opacity:0;}50%,100%{opacity:1;}}
@@ -1732,7 +1737,7 @@ function render(){
     // (matching how the cue text itself only becomes true content once "how to" has actually been clicked) this
     // only creates the two image tags once state.howto is true, never just from the card being open.
     const gifHtml=(exGif&&state.howto)?`<div class="exgif"><img src="${exGif[0]}" loading="lazy" alt=""><img src="${exGif[1]}" loading="lazy" alt=""></div>`:'';
-    howto.innerHTML=`<div class="howto-row"><span><span class="howto-btn">${state.howto?'hide':'how to'}</span><span class="howto-btn swap-btn" style="margin-left:14px">swap ↔</span></span><a class="demo-link" href="${yt}" target="_blank" rel="noopener">watch demo ↗</a></div>${gifHtml}<div class="cue">${ex.cue||'No cue written yet.'}</div>`;
+    howto.innerHTML=`<div class="howto-row"><span><span class="howto-btn">${state.howto?'hide':'how to'}</span><span class="howto-btn swap-btn" style="margin-left:14px">swap ↔</span></span><a class="demo-link" href="${yt}" target="_blank" rel="noopener">watch demo ↗</a></div><div class="howto-demo">${gifHtml}<div class="cue">${ex.cue||'No cue written yet.'}</div></div>`;
     howto.querySelector('.howto-btn').onclick=()=>{ state.howto=!state.howto; render(); };
     howto.querySelector('.swap-btn').onclick=()=>openSwap(currentDay, ex); body.appendChild(howto);
     let updatePlates=null;
