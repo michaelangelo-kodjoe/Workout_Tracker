@@ -1371,13 +1371,45 @@ function sparkline(points,color,milestoneIdx){
   const dot=(milestoneIdx!=null&&coords[milestoneIdx])?`<circle class="milestone" cx="${coords[milestoneIdx][0]}" cy="${coords[milestoneIdx][1]}" r="2.6"/>`:'';
   return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline fill="none" stroke="${color||'var(--light)'}" stroke-width="1.6" points="${pts}"/>${dot}</svg>`;
 }
-function sparklineHero(points){
+// isDown comes from the caller's already-computed aggregate percentage (the same one the number beside this
+// chart uses), not from comparing this series' own first/last points — those points interleave every exercise's
+// individual percent-of-its-own-baseline in time order, so whichever exercise happens to land on the sampled
+// endpoints decided the color, independent of whether the real aggregate was actually up or down.
+// Turns a set of exercises' individual session events into one coherent trend line, instead of concatenating
+// each exercise's own percent-of-its-baseline points in time order (which produces a series that jumps between
+// unrelated exercises' numbers at every step — e.g. a strong early point from lift A right next to a weak recent
+// point from lift B — visually indistinguishable from a real decline even when every lift is individually up).
+// mode 'sum' mirrors a weighted total like upperP/lowerP (pct of combined current vs combined baseline, each
+// exercise contributing its own baseline until its first real event updates it); mode 'avg' mirrors the hero
+// number (plain mean of each exercise's own pct, only counting exercises that have logged at least one session
+// so far). Either way the series' last point exactly matches the already-computed number it sits beside.
+function buildAggregateSeries(events,baseByName,mode){
+  const names=Object.keys(baseByName);
+  if(!names.length) return [];
+  const sorted=[...events].sort((a,b)=>a.t-b.t);
+  const latestE1rm={}, latestPct={};
+  names.forEach(n=>{ latestE1rm[n]=baseByName[n]; });
+  const baseSum=names.reduce((a,n)=>a+baseByName[n],0);
+  return sorted.map(ev=>{
+    latestE1rm[ev.name]=ev.e1rm;
+    latestPct[ev.name]=pct(baseByName[ev.name],ev.e1rm);
+    let p;
+    if(mode==='avg'){
+      const vals=Object.values(latestPct).filter(v=>v!==null);
+      p=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
+    } else {
+      p=pct(baseSum,names.reduce((a,n)=>a+latestE1rm[n],0));
+    }
+    return {t:ev.t,p};
+  });
+}
+function sparklineHero(points,isDown){
   if(!points||points.length<2) return '';
   const w=300,h=56,pad=3,min=Math.min(...points),max=Math.max(...points),span=(max-min)||1;
   const coords=points.map((v,i)=>[pad+(i/(points.length-1))*(w-2*pad),h-pad-((v-min)/span)*(h-2*pad)]);
   const line=coords.map(c=>c.join(',')).join(' ');
   const area=`${coords[0][0]},${h} ${line} ${coords[coords.length-1][0]},${h}`;
-  const color=points[points.length-1]>=points[0]?'var(--green)':'var(--accent)';
+  const color=isDown?'var(--accent)':'var(--green)';
   return `<polyline fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${line}"/><polygon points="${area}" fill="${color}" opacity=".15"/>`;
 }
 function showToast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); const dur=Math.max(1800,Math.min(5000,m.length*45)); clearTimeout(t._hideTimer); t._hideTimer=setTimeout(()=>t.classList.remove('show'),dur); }
@@ -2415,7 +2447,8 @@ function renderStrength(){
   document.getElementById('bwUnitNote').textContent=unitLabel();
   const upperList=document.getElementById('upperStrList'), lowerList=document.getElementById('lowerStrList');
   upperList.innerHTML=''; lowerList.innerHTML='';
-  let changes=[], upperTotal=0, upperBase=0, lowerTotal=0, lowerBase=0, heroSeries=[], upperSeries=[], lowerSeries=[];
+  let changes=[], upperTotal=0, upperBase=0, lowerTotal=0, lowerBase=0;
+  let heroEvents=[], upperEvents=[], lowerEvents=[], heroBaseByName={}, upperBaseByName={}, lowerBaseByName={};
   const nameSlots={};
   PROGRAM.forEach(day=>day.exercises.forEach(ex=>{ (nameSlots[ex.name]=nameSlots[ex.name]||[]).push({name:day.name,sub:day.sub}); }));
   const countedNames=new Set();
@@ -2428,11 +2461,11 @@ function renderStrength(){
       if(p!==null) changes.push(p);
       if(day.name==='Upper'){ upperTotal+=cur; upperBase+=base; }
       else if(day.name==='Lower'){ lowerTotal+=cur; lowerBase+=base; }
-      h.forEach(x=>{
-        const pt={t:x.t,p:pct(base,x.e1rm)};
-        heroSeries.push(pt);
-        if(day.name==='Upper') upperSeries.push(pt); else if(day.name==='Lower') lowerSeries.push(pt);
-      });
+      heroBaseByName[ex.name]=base;
+      const events=h.map(x=>({t:x.t,name:ex.name,e1rm:x.e1rm}));
+      heroEvents.push(...events);
+      if(day.name==='Upper'){ upperBaseByName[ex.name]=base; upperEvents.push(...events); }
+      else if(day.name==='Lower'){ lowerBaseByName[ex.name]=base; lowerEvents.push(...events); }
     }
     const cls=p===null||Math.abs(p)<0.05?'flat':(p>0?'up':'down');
     const last=h.length?h[h.length-1]:null;
@@ -2490,22 +2523,25 @@ function renderStrength(){
     const numEl=document.getElementById(numId);
     numEl.textContent=p===null?'start':fmtPct(p);
     numEl.className='str-split-num'+(p!==null&&p<-0.05?' down':'');
-    series.sort((a,b)=>a.t-b.t);
+    const vals=series.map(x=>x.p).filter(v=>v!=null);
     const sparkEl=document.getElementById(sparkId);
-    if(series.length>=2){
-      const n=Math.min(10,series.length);
-      const pts=Array.from({length:n},(_,i)=>series[Math.round(i*(series.length-1)/(n-1))].p);
-      sparkEl.innerHTML=sparkline(pts,pts[pts.length-1]<pts[0]?'var(--accent)':'var(--green)');
+    if(vals.length>=2){
+      const n=Math.min(10,vals.length);
+      const pts=Array.from({length:n},(_,i)=>vals[Math.round(i*(vals.length-1)/(n-1))]);
+      // color from the same aggregate p driving numEl above, not from this series' own first/last sampled
+      // points — see buildAggregateSeries/sparklineHero for why that comparison used to be unreliable.
+      sparkEl.innerHTML=sparkline(pts,(p!==null&&p<-0.05)?'var(--accent)':'var(--green)');
     } else sparkEl.innerHTML='';
   };
-  renderSplitCard(upperP,upperSeries,'upperStrNum','upperStrSpark');
-  renderSplitCard(lowerP,lowerSeries,'lowerStrNum','lowerStrSpark');
+  renderSplitCard(upperP,buildAggregateSeries(upperEvents,upperBaseByName,'sum'),'upperStrNum','upperStrSpark');
+  renderSplitCard(lowerP,buildAggregateSeries(lowerEvents,lowerBaseByName,'sum'),'lowerStrNum','lowerStrSpark');
   const heroSpark=document.getElementById('strHeroSpark');
-  heroSeries.sort((a,b)=>a.t-b.t);
-  if(heroSeries.length>=2){
-    const n=Math.min(10,heroSeries.length);
-    const pts=Array.from({length:n},(_,i)=>heroSeries[Math.round(i*(heroSeries.length-1)/(n-1))].p);
-    heroSpark.innerHTML=sparklineHero(pts);
+  const heroSeries=buildAggregateSeries(heroEvents,heroBaseByName,'avg');
+  const heroVals=heroSeries.map(x=>x.p).filter(v=>v!=null);
+  if(heroVals.length>=2){
+    const n=Math.min(10,heroVals.length);
+    const pts=Array.from({length:n},(_,i)=>heroVals[Math.round(i*(heroVals.length-1)/(n-1))]);
+    heroSpark.innerHTML=sparklineHero(pts,avg!==null&&avg<-0.05);
   } else heroSpark.innerHTML='';
   // bodyweight card
   const info=document.getElementById('bwInfo'), sp=document.getElementById('bwSpark'), bwNote=document.getElementById('bwNote');
