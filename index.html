@@ -1371,13 +1371,17 @@ function sparkline(points,color,milestoneIdx){
   const dot=(milestoneIdx!=null&&coords[milestoneIdx])?`<circle class="milestone" cx="${coords[milestoneIdx][0]}" cy="${coords[milestoneIdx][1]}" r="2.6"/>`:'';
   return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline fill="none" stroke="${color||'var(--light)'}" stroke-width="1.6" points="${pts}"/>${dot}</svg>`;
 }
-function sparklineHero(points){
+// isDown comes from the caller's already-computed aggregate percentage (the same one the number beside this
+// chart uses), not from comparing this series' own first/last points — those points interleave every exercise's
+// individual percent-of-its-own-baseline in time order, so whichever exercise happens to land on the sampled
+// endpoints decided the color, independent of whether the real aggregate was actually up or down.
+function sparklineHero(points,isDown){
   if(!points||points.length<2) return '';
   const w=300,h=56,pad=3,min=Math.min(...points),max=Math.max(...points),span=(max-min)||1;
   const coords=points.map((v,i)=>[pad+(i/(points.length-1))*(w-2*pad),h-pad-((v-min)/span)*(h-2*pad)]);
   const line=coords.map(c=>c.join(',')).join(' ');
   const area=`${coords[0][0]},${h} ${line} ${coords[coords.length-1][0]},${h}`;
-  const color=points[points.length-1]>=points[0]?'var(--green)':'var(--accent)';
+  const color=isDown?'var(--accent)':'var(--green)';
   return `<polyline fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${line}"/><polygon points="${area}" fill="${color}" opacity=".15"/>`;
 }
 function showToast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); const dur=Math.max(1800,Math.min(5000,m.length*45)); clearTimeout(t._hideTimer); t._hideTimer=setTimeout(()=>t.classList.remove('show'),dur); }
@@ -2495,7 +2499,9 @@ function renderStrength(){
     if(series.length>=2){
       const n=Math.min(10,series.length);
       const pts=Array.from({length:n},(_,i)=>series[Math.round(i*(series.length-1)/(n-1))].p);
-      sparkEl.innerHTML=sparkline(pts,pts[pts.length-1]<pts[0]?'var(--accent)':'var(--green)');
+      // color from the same aggregate p driving numEl above, not from this merged multi-exercise series'
+      // own first/last sampled points — see the note on sparklineHero for why that comparison is unreliable.
+      sparkEl.innerHTML=sparkline(pts,(p!==null&&p<-0.05)?'var(--accent)':'var(--green)');
     } else sparkEl.innerHTML='';
   };
   renderSplitCard(upperP,upperSeries,'upperStrNum','upperStrSpark');
@@ -2505,7 +2511,7 @@ function renderStrength(){
   if(heroSeries.length>=2){
     const n=Math.min(10,heroSeries.length);
     const pts=Array.from({length:n},(_,i)=>heroSeries[Math.round(i*(heroSeries.length-1)/(n-1))].p);
-    heroSpark.innerHTML=sparklineHero(pts);
+    heroSpark.innerHTML=sparklineHero(pts,avg!==null&&avg<-0.05);
   } else heroSpark.innerHTML='';
   // bodyweight card
   const info=document.getElementById('bwInfo'), sp=document.getElementById('bwSpark'), bwNote=document.getElementById('bwNote');
