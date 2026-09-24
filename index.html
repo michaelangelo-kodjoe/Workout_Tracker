@@ -998,12 +998,13 @@ function suggestWeight(ex,last){
   }
   // a deload is ~10% under what was actually lifted last time — not under the next progression step, which
   // could otherwise land above last time's weight for a lift that just hit the top of its range. Rounded to the
-  // lift's own step (a 10 lb machine stack can't do 212.5) and always at least one step lighter — rounding to the
-  // nearest 2.5 left a 12.5 lb lift at 12.5 for the whole deload week.
+  // lift's own step (a 10 lb machine stack can't do 212.5) and at least one step lighter — rounding to the nearest
+  // 2.5 left a 12.5 lb lift at 12.5 for the whole deload week. Forcing that step only while it's a fifth of the load
+  // or less: on a 7.5 lb curl with 2.5 lb jumps it would be a 33% cut, well past the ~10% the banner promises.
   if(w && isDeloadActive()){
     const base=mw||w, step=ex.step||2.5;
     w=Math.round(base*0.9/step)*step;
-    if(w>=base) w=base-step;
+    if(w>=base) w=step/base<=0.2?base-step:base;
     if(w<=0) w=base;
   }
   return w;
@@ -1138,6 +1139,9 @@ function libraryCandidates(key, seen, exclude){
     .sort(simple).map((a,i)=>({a:libPick(a), i:1000+i, lib:true}));
 }
 function neverSuggested(){ return new Set(settings.neverSuggest||[]); }
+// isolation vs compound by movement name: muscle tags can't tell them apart (a fly lists the front delt it recruits,
+// same as a press does), and neither can the library's over-inclusive, alphabetical m lists
+const ISOLATION_MOVE=/\b(fly|flye|flyes|flies|pec deck|crossovers?|raises?|curls?|extensions?|pushdowns?|push-?downs?|kickbacks?|shrugs?|pullovers?|straight[- ]arm|calf|crunch(es)?|sit-?ups?|twists?|side bend|wrist|finger|holds?|planks?|pallof|face pulls?|abduction|adduction)\b/i;
 function pickForSlot(day, idx, exclude){
   const ex=day.exercises[idx]; const anchor=anchorOf(ex); const key=groupKeyFor(ex); const primary=isPrimarySlot(idx);
   const seen=new Set(); const cands=[];
@@ -1147,8 +1151,7 @@ function pickForSlot(day, idx, exclude){
   // the exercise that just left is off the table only while its replacement is in its first block — after that
   // it's simply another option again, otherwise the slot's best curated fit could stay excluded for good
   const prevName=(ex.rotPrev&&!(ex.rotBlocks||0))?ex.rotPrev.name:null;
-  // muscle tags, not m: library m lists are alphabetical and over-inclusive (a calf press listing hamstrings)
-  const multiJoint=x=>recoveryKeysFor(x||{}).length>=2; const anchorMulti=multiJoint(anchor);
+  const multiJoint=x=>!ISOLATION_MOVE.test((x&&x.name)||''); const anchorMulti=multiJoint(anchor);
   // the slot's job is its current exercise's primary sub-muscle (rear delt, forearm extensors, brachialis…), not just
   // its coarse group — so a rear-delt slot can't drift into an upright row while a rear-delt option exists. The
   // current exercise rather than the anchor, so a manual swap (wrist curl → reverse wrist curl) is what rotation keeps.
@@ -2830,15 +2833,21 @@ function equipAllowed(a){ return !a.equip || settings.equipFilter.includes(a.equ
 // both passes prefer a pick training the same primary sub-muscle as the slot's own pick (a rear-delt slot stays
 // rear delt when cables and machines are ruled out) before falling back to anything for the muscle group.
 function bestPickFor(slot, exclude){
-  const want=recoveryKeysFor(CURATED_BY_NAME[slot.pick]||{name:slot.pick})[0];
-  const same=a=>want&&recoveryKeysFor(a)[0]===want;
+  const anchorName=(CURATED_BY_NAME[slot.pick]||{name:slot.pick}).name;
+  const want=recoveryKeysFor(CURATED_BY_NAME[slot.pick]||{name:slot.pick})[0], wantIso=ISOLATION_MOVE.test(anchorName);
+  const same=a=>!!want&&recoveryKeysFor(a)[0]===want;
+  const fit=a=>same(a)&&ISOLATION_MOVE.test(a.name)===wantIso; // same sub-muscle AND same kind of movement (a fly stays a fly)
   const ok=a=>equipAllowed(a)&&!exclude.has(a.name);
   const curated=(ALTS[slot.key]||[]).filter(ok);
-  const simple=(a,b)=>(same(b)-same(a))||(a.name.split(' ').length-b.name.split(' ').length)||(a.name.length-b.name.length);
-  const cur=curated.find(same); if(cur) return cur;
-  // a same-sub-muscle library lift beats a curated one for the wrong sub-muscle, but only a real movement —
-  // the unfiltered library passes below would happily hand back a stretch
-  const libSame=want&&FULL_CATALOG.filter(a=>a.key===slot.key&&ok(a)&&same(a)&&LIB_MOVEMENT.test(a.name)&&!LIB_HARD_EXCLUDE.test(a.name)).sort(simple)[0];
+  const simple=(a,b)=>(fit(b)-fit(a))||(same(b)-same(a))||(a.name.split(' ').length-b.name.split(' ').length)||(a.name.length-b.name.length);
+  // a library lift that fits beats a curated one that doesn't, but only a real movement — the unfiltered library
+  // passes below would happily hand back a stretch. Order: curated fit, library fit, curated same sub-muscle,
+  // library same sub-muscle, then anything for the muscle group.
+  const realLib=a=>a.key===slot.key&&ok(a)&&LIB_MOVEMENT.test(a.name)&&!LIB_HARD_EXCLUDE.test(a.name);
+  const cur=curated.find(fit); if(cur) return cur;
+  const libFit=FULL_CATALOG.filter(a=>realLib(a)&&fit(a)).sort(simple)[0];
+  if(!libFit){ const cs=curated.find(same); if(cs) return cs; }
+  const libSame=libFit||FULL_CATALOG.filter(a=>realLib(a)&&same(a)).sort(simple)[0];
   if(!libSame&&curated[0]) return curated[0];
   const direct=libSame||FULL_CATALOG.filter(a=>a.key===slot.key&&ok(a)).sort(simple)[0];
   const lib=direct || FULL_CATALOG.filter(a=>a.key!==slot.key&&a.m.includes(slot.key)&&ok(a)).sort(simple)[0];
