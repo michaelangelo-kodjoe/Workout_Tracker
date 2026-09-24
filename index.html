@@ -1116,8 +1116,8 @@ function allNamesInUse(){ const s=new Set(); PROGRAM.forEach(d=>d.exercises.forE
 // change implement), a mismatched kind (timed vs reps) scores down, the slot's original pick is welcome back once
 // it's been away, and the hand-ranked curated order breaks ties. Custom exercises with no pool never get a proposal.
 // ---- the full library as a source of accessory variations ----
-// The 1,293-entry library carries no rep range, step or hand-ranking, so it only feeds accessory slots (never a
-// primary), after the curated pool, and through three filters: (1) hard-excluded categories — stretches, cardio
+// The 1,293-entry library carries no rep range, step or hand-ranking, so it feeds accessory slots after the curated
+// pool, and primary slots only once the curated pool has run out of lifts that fit — through three filters: (1) hard-excluded categories — stretches, cardio
 // machines, Olympic lifts, carries — that aren't slot fillers at all; (2) near-twins of curated lifts ("Lever Seated
 // Leg Curl", "Dumbbell Hammer Curl") are dropped by comparing names with the implement words stripped, so the
 // curated version stays the one canonical entry; (3) variant clutter (one-arm, alternating, lying, kneeling, band…)
@@ -1142,6 +1142,8 @@ function neverSuggested(){ return new Set(settings.neverSuggest||[]); }
 // isolation vs compound by movement name: muscle tags can't tell them apart (a fly lists the front delt it recruits,
 // same as a press does), and neither can the library's over-inclusive, alphabetical m lists
 const ISOLATION_MOVE=/\b(fly|flye|flyes|flies|pec deck|crossovers?|raises?|curls?|extensions?|pushdowns?|push-?downs?|kickbacks?|shrugs?|pullovers?|straight[- ]arm|calf|crunch(es)?|sit-?ups?|twists?|side bend|wrist|finger|holds?|planks?|pallof|face pulls?|abduction|adduction)\b/i;
+const HEAVY_EQUIP=['barbell','dumbbell','machine','cable','kettlebell'];
+const PRIMARY_LIB_EXCLUDE=/\b(ball|bosu|plyo|jump|explosive|overhead squat|guillotine)\b/i;
 function pickForSlot(day, idx, exclude){
   const ex=day.exercises[idx]; const anchor=anchorOf(ex); const key=groupKeyFor(ex); const primary=isPrimarySlot(idx);
   const seen=new Set(); const cands=[];
@@ -1157,15 +1159,29 @@ function pickForSlot(day, idx, exclude){
   // current exercise rather than the anchor, so a manual swap (wrist curl → reverse wrist curl) is what rotation keeps.
   // It ranks ahead of every other score: as one term among several it could still lose on a tie-break.
   const wantPrimary=recoveryKeysFor(ex)[0];
-  const scored=cands.filter(({a})=>a.name!==ex.name && a.name!==prevName && !exclude.has(a.name) && !never.has(a.name) && equipAllowed(a) && repCompatible(anchor.target,a)).map(({a,i,lib})=>{
+  // on a primary slot a word the slot's own lift already carries isn't an oddity — "incline" is the point of an incline slot
+  const ownWords=new Set(((anchor.name||'')+' '+ex.name).toLowerCase().match(LIB_VARIANT_WORDS)||[]);
+  const score=list=>list.filter(({a})=>a.name!==ex.name && a.name!==prevName && !exclude.has(a.name) && !never.has(a.name) && equipAllowed(a) && repCompatible(anchor.target,a)).map(({a,i,lib})=>{
     let sc=0;
-    if(lib){ sc-=1; const v=(a.name.match(LIB_VARIANT_WORDS)||[]).length; sc-=2*v; }
+    if(lib){ sc-=1; const v=(a.name.match(LIB_VARIANT_WORDS)||[]).filter(w=>!(primary&&ownWords.has(w.toLowerCase()))).length; sc-=2*v; }
     if(multiJoint(a)===anchorMulti) sc+=3;
     if(!primary && a.equip&&ex.equip&&a.equip!==ex.equip) sc+=2;
     if(isTimedTarget(a.target||'')!==isTimedTarget(anchor.target)) sc-=3;
     if(a.name===anchor.name) sc+=1;
-    return {a,i,sc,same:!!wantPrimary&&recoveryKeysFor(a)[0]===wantPrimary};
+    return {a,i,sc,same:!!wantPrimary&&recoveryKeysFor(a)[0]===wantPrimary,fit:multiJoint(a)===anchorMulti};
   }).sort((x,y)=>(y.same-x.same)||(y.sc-x.sc)||(x.i-y.i));
+  let scored=score(cands);
+  // a primary slot draws on the library only once the curated pool has nothing left that does the slot's job (same
+  // sub-muscle, same movement character) — e.g. every curated upper-chest press is already on a day, so an incline
+  // slot takes a library incline press rather than falling back to a flat one. Curated picks still win any tie.
+  if(primary && !scored.some(c=>c.same&&c.fit)){
+    // a heavy slot needs something you can load: bodyweight, band and stability-ball moves only stand in for an anchor
+    // on the same kit, gimmicks (plyo, overhead squat) never, and ties go to a pick that keeps the slot's implement
+    const loadable=a=>(HEAVY_EQUIP.includes(a.equip)||a.equip===anchor.equip) && !PRIMARY_LIB_EXCLUDE.test(a.name);
+    const lib=libraryCandidates(key, seen, exclude).filter(({a})=>multiJoint(a)===anchorMulti&&loadable(a))
+      .map(c=>({...c,i:c.i-(c.a.equip===anchor.equip?500:0)}));
+    if(lib.length) scored=score(cands.concat(lib));
+  }
   return scored.length?scored[0].a:null;
 }
 function slotReason(ex, idx){
