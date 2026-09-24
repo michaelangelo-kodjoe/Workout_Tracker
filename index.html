@@ -2916,6 +2916,25 @@ if('serviceWorker' in navigator) window.addEventListener('load',()=>{
     if(hadController) document.getElementById('updateBanner').style.display='flex';
   });
 });
+// Belt-and-suspenders update check, independent of the service worker update lifecycle above: that lifecycle
+// has proven unreliable on iOS home-screen PWAs specifically — a tab that's suspended rather than fully closed
+// can sit on old JS indefinitely, since resuming it fires neither 'load' nor a guaranteed SW update check. This
+// instead diffs the live sw.js against whatever this page itself loaded with, which stays correct across a
+// suspend/resume cycle because the comparison variable is only ever set once, when this script first ran.
+// On resume/foreground it reloads immediately, before the user's seen anything (indistinguishable from a normal
+// launch); mid-session it only raises the same dismissible banner so it never yanks the screen out from under a set.
+let initialSwText=null, reloadedForUpdate=false;
+fetch('sw.js',{cache:'reload'}).then(r=>r.text()).then(t=>{ initialSwText=t; }).catch(()=>{});
+function checkSwDrift(forceReload){
+  if(initialSwText==null) return;
+  fetch('sw.js',{cache:'reload'}).then(r=>r.text()).then(txt=>{
+    if(txt===initialSwText) return;
+    if(forceReload && !reloadedForUpdate){ reloadedForUpdate=true; location.reload(); }
+    else document.getElementById('updateBanner').style.display='flex';
+  }).catch(()=>{});
+}
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') checkSwDrift(true); });
+setInterval(()=>checkSwDrift(false), 5*60*1000);
 </script>
 </body>
 </html>
