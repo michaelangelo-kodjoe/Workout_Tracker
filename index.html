@@ -1612,6 +1612,26 @@ document.getElementById('recovDetailToggle').onclick=()=>{
 
 // ---------- log view ----------
 function weekStart(){ const d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-d.getDay()); return d.getTime(); }
+// the last n Sunday-start calendar weeks as [start,end) pairs, oldest first, the current (partial) week last — the
+// same weeks the header's "this week n/4" counts, so every weekly figure in the app agrees. Date arithmetic rather
+// than 7*864e5 steps so a daylight-saving change can't shift a boundary by an hour.
+function weekRanges(n){
+  const out=[], s=new Date(weekStart());
+  for(let i=n-1;i>=0;i--){ const a=new Date(s); a.setDate(a.getDate()-7*i); const b=new Date(a); b.setDate(b.getDate()+7); out.push([a.getTime(),b.getTime()]); }
+  return out;
+}
+// typical lifting sessions per week, learned from history: the median over up to the last 8 complete calendar weeks,
+// counting only weeks that start after the first session (a first week begun midweek undercounts). It takes 3 such
+// weeks to mean anything; before that the program's own days per week is the reference, and the copy says "plan".
+function weeklyRhythm(){
+  const lifts=sessions.filter(s=>!s.isCardio); if(!lifts.length) return {n:PROGRAM.length, learned:false};
+  const first=Math.min(...lifts.map(s=>s.t));
+  const weeks=weekRanges(9).slice(0,-1).filter(([a])=>a>first);
+  if(weeks.length<3) return {n:PROGRAM.length, learned:false};
+  const counts=weeks.map(([a,b])=>lifts.filter(s=>s.t>=a&&s.t<b).length).sort((x,y)=>x-y);
+  const mid=counts.length>>1, med=counts.length%2?counts[mid]:(counts[mid-1]+counts[mid])/2;
+  return {n:Math.max(1,Math.round(med)), learned:true};
+}
 function renderHeaderStats(){
   const week=weekStart();
   const thisWeek=sessions.filter(s=>!s.isCardio && s.t>=week).length;
@@ -2101,9 +2121,11 @@ function showCelebration({day,worked,nsets,vol,durationMin,pr,rhythmCount}){
   const colors=['#ff5d3b','#e8b23d','#4fa3d1','#5cbb6f'];
   const confetti=Array.from({length:12},(_,i)=>{ const left=Math.round(5+Math.random()*90); const delay=(Math.random()*2).toFixed(1); return `<div class="confetti" style="left:${left}%;background:${colors[i%colors.length]};animation-delay:${delay}s"></div>`; }).join('');
   const prHtml=pr?`<div class="pr-card"><div class="pr-eyebrow">New PR</div><div class="pr-name">${pr.name}</div><div class="pr-detail">${dispWeight(pr.w)} ${unitLabel()} × ${pr.r} &nbsp;—&nbsp; <b>est. 1RM up ${Math.round(pr.pct)}%</b></div></div>`:'';
-  const dotsTotal=4, dotsOn=Math.min(rhythmCount,dotsTotal);
+  // measured against what this lifter actually does week to week (or the plan, until there's enough history) —
+  // a flat 4 told a twice-a-week lifter their 1st session was "right on your usual rhythm"
+  const rh=weeklyRhythm(), dotsTotal=rh.n, dotsOn=Math.min(rhythmCount,dotsTotal), ref=rh.learned?'your usual rhythm':'plan';
   const ord=n=>n===1?'1st':n===2?'2nd':n===3?'3rd':n+'th';
-  const rhythmRest=rhythmCount>dotsTotal?'ahead of your usual rhythm.':'right on your usual rhythm.';
+  const rhythmRest=rhythmCount>dotsTotal?`ahead of ${ref}.`:rhythmCount===dotsTotal?`right on ${ref}.`:rh.learned?`you usually get in ${dotsTotal} a week.`:`your plan is ${dotsTotal} a week.`;
   inner.innerHTML=`${confetti}
     <div class="cel-badge">💪</div>
     <div class="cel-h1">${day.name} — ${day.sub}, logged</div>
@@ -2265,15 +2287,16 @@ function buildHeatmap(){
   const days=98; const today=new Date(); today.setHours(0,0,0,0);
   const start=new Date(today); start.setDate(start.getDate()-(days-1));
   for(let i=0;i<start.getDay();i++){ const pad=document.createElement('i'); pad.style.visibility='hidden'; grid.appendChild(pad); }
-  const byDay={};
-  sessions.forEach(s=>{ const d=new Date(s.t); d.setHours(0,0,0,0); const key=d.getTime(); byDay[key]=(byDay[key]||0)+(s.isCardio?(s.duration||0)*100:(s.vol||0)); });
+  // shading is by volume, but a day counts as trained because a session was logged on it — a session logged with
+  // its weights left blank (0 lb moved) used to leave its day empty and drop out of the count. The count is
+  // sessions, as the label says, not distinct days.
+  const byDay={}, trained=new Set(), startT=start.getTime(); let count=0;
+  sessions.forEach(s=>{ const d=new Date(s.t); d.setHours(0,0,0,0); const key=d.getTime(); byDay[key]=(byDay[key]||0)+(s.isCardio?(s.duration||0)*100:(s.vol||0)); trained.add(key); if(s.t>=startT) count++; });
   const maxV=Math.max(1,...Object.values(byDay));
-  let count=0;
   for(let i=0;i<days;i++){
     const d=new Date(start); d.setDate(d.getDate()+i); const key=d.getTime();
-    const v=byDay[key]||0; if(v>0) count++;
     const cell=document.createElement('i');
-    if(v>0){ const lvl=Math.max(1,Math.min(4,Math.ceil(v/maxV*4))); cell.className='h'+lvl; }
+    if(trained.has(key)){ const lvl=Math.max(1,Math.min(4,Math.ceil((byDay[key]||0)/maxV*4))); cell.className='h'+lvl; }
     grid.appendChild(cell);
   }
   document.getElementById('heatStat').innerHTML=`<b>${count}</b> sessions · 14 weeks`;
@@ -2426,12 +2449,12 @@ function renderHistory(){
   buildHeatmap();
   renderCalendar();
   const st=document.getElementById('histStats');
-  const week=Date.now()-7*864e5, month=Date.now()-30*864e5;
+  const week=weekStart(), month=Date.now()-30*864e5;
   const lifts=sessions.filter(s=>!s.isCardio), cardio=sessions.filter(s=>s.isCardio);
   const thisWeek=lifts.filter(s=>s.t>=week).length, thisMonth=lifts.filter(s=>s.t>=month).length;
   const cardioWeekMin=cardio.filter(s=>s.t>=week).reduce((a,b)=>a+(b.duration||0),0);
-  const wk=[]; for(let i=7;i>=0;i--){ const a=Date.now()-(i+1)*7*864e5,b=Date.now()-i*7*864e5; wk.push(lifts.filter(s=>s.t>=a&&s.t<b).length); }
-  st.innerHTML=`<div class="stat"><div class="v ${thisWeek>=4?'up':''}">${thisWeek}<span style="font-size:12px;color:var(--text-dim)"> / 4</span></div><div class="l">lifting sessions, last 7 days</div></div>
+  const wk=weekRanges(8).map(([a,b])=>lifts.filter(s=>s.t>=a&&s.t<b).length);
+  st.innerHTML=`<div class="stat"><div class="v ${thisWeek>=4?'up':''}">${thisWeek}<span style="font-size:12px;color:var(--text-dim)"> / 4</span></div><div class="l">lifting sessions this week</div></div>
     <div class="stat"><div class="v">${thisMonth}</div><div class="l">lifting, last 30 days</div>${sparkline(wk,'var(--green)')}</div>
     <div class="stat" style="grid-column:1 / -1"><div class="v ${cardioWeekMin>=60?'up':''}">${cardioWeekMin} min</div><div class="l">conditioning this week (2-3 sessions/wk is the target)</div></div>`;
 }
@@ -2444,7 +2467,7 @@ function renderConditioning(){
   if(!cardio.length){ card.style.display='none'; return; }
   card.style.display='';
   // weekly minutes for last 8 weeks
-  const wk=[]; for(let i=7;i>=0;i--){ const a=Date.now()-(i+1)*7*864e5,b=Date.now()-i*7*864e5; wk.push(cardio.filter(s=>s.t>=a&&s.t<b).reduce((x,y)=>x+(y.duration||0),0)); }
+  const wk=weekRanges(8).map(([a,b])=>cardio.filter(s=>s.t>=a&&s.t<b).reduce((x,y)=>x+(y.duration||0),0));
   const first4=cardio.slice(0,Math.max(1,Math.ceil(cardio.length/2))), recent4=cardio.slice(-Math.max(1,Math.ceil(cardio.length/2)));
   const avgRpeEarly=first4.filter(s=>s.rpe).length?first4.filter(s=>s.rpe).reduce((a,b)=>a+b.rpe,0)/first4.filter(s=>s.rpe).length:null;
   const avgRpeRecent=recent4.filter(s=>s.rpe).length?recent4.filter(s=>s.rpe).reduce((a,b)=>a+b.rpe,0)/recent4.filter(s=>s.rpe).length:null;
