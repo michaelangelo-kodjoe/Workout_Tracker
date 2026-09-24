@@ -2869,6 +2869,27 @@ document.getElementById('resetLink').onclick=async()=>{ todayData={}; await sset
     await sset('meta:histMigratedV2',true);
   }
 
+  // one-time: before the abs recovery-key fix (cac508e), any core exercise with no explicit region wrote
+  // its recovery/familiarity under a dead 'abs' key that nothing has read since — the body diagram has no
+  // 'abs' SVG path and RECOVERY_HOURS has no 'abs' entry, so a muscle actually just trained would sit
+  // showing "ready" forever. Backfill the three granular keys from that legacy entry (using the exact
+  // start/hours the old code already computed correctly, just filed under the wrong name) and drop it.
+  // Self-terminating: once recovery.abs is gone this block is a no-op on every future boot.
+  if(recovery.abs){
+    const legacy=recovery.abs;
+    ['abs-upper','abs-lower','abs-obliques'].forEach(k=>{
+      const cur=recovery[k]; if(!cur||cur.start+cur.hours*3600000<legacy.start+legacy.hours*3600000) recovery[k]={start:legacy.start,hours:legacy.hours};
+    });
+    delete recovery.abs; await sset('recovery',recovery);
+  }
+  if(familiarity.abs){
+    const legacy=familiarity.abs;
+    ['abs-upper','abs-lower','abs-obliques'].forEach(k=>{
+      const cur=familiarity[k]; if(!cur||cur.last<legacy.last) familiarity[k]={count:(cur?cur.count:0)+legacy.count,last:legacy.last};
+    });
+    delete familiarity.abs; await sset('familiarity',familiarity);
+  }
+
   settings=Object.assign({rest:90,auto:true,autoBackup:true,smartRest:true,unit:'lb',autoRotate:true,blockWeeks:4,neverSuggest:[],equipFilter:EQUIP_TYPES.slice(),name:'',onboarded:false},(await sget('settings'))||{});
   blockStart=(await sget('blockStart'))||0; blockNum=(await sget('blockNum'))||1;
   lastBackup=(await sget('lastBackup'))||0; updateBackupUI();
