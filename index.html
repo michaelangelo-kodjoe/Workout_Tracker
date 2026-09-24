@@ -1008,12 +1008,20 @@ function slotTargetFor(slotTarget, pick){
 // research-informed default rest, since "3-5 low reps" and "12-15 high reps" don't recover the same way:
 // NSCA guidance is roughly 3-5min for strength-range work, 30-90s for hypertrophy-range, and shorter still for higher-rep/endurance work,
 // with isolation-style hold work (planks etc.) treated separately since the number in the target is seconds, not reps.
+// Trained muscle resynthesizes phosphocreatine faster (higher oxidative capacity + creatine kinase activity), so the same
+// familiarity build-up/decay that shrinks the long recovery window (familiarityMultiplier, see above) also trims this
+// short inter-set default — using the primary muscle only, and the least-familiar of its sub-regions when it has several.
 function suggestedRest(ex){
-  if(/\d+s(\/|\b)/.test(ex.target)) return 60;
-  const hi=topRep(ex.target);
-  if(hi<=10) return 150;
-  if(hi<=12) return 90;
-  return 60;
+  let base;
+  if(/\d+s(\/|\b)/.test(ex.target)) base=60;
+  else{
+    const hi=topRep(ex.target);
+    base=hi<=10?150:hi<=12?90:60;
+  }
+  if(!ex.m||!ex.m.length) return base;
+  const now=Date.now();
+  const count=Math.min(...recoveryKey(ex,ex.m[0]).map(k=>decayedFamiliarityCount(k,now)));
+  return Math.round(base*familiarityMultiplier(count));
 }
 function isDeloadActive(){ return !!deloadStart && (Date.now()-deloadStart < 7*864e5); }
 function suggestWeight(ex,last){
