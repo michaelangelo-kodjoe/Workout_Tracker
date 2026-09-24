@@ -2869,26 +2869,50 @@ document.getElementById('resetLink').onclick=async()=>{ todayData={}; await sset
     await sset('meta:histMigratedV2',true);
   }
 
-  // one-time: before the abs recovery-key fix (cac508e), any core exercise with no explicit region wrote
-  // its recovery/familiarity under a dead 'abs' key that nothing has read since — the body diagram has no
-  // 'abs' SVG path and RECOVERY_HOURS has no 'abs' entry, so a muscle actually just trained would sit
-  // showing "ready" forever. Backfill the three granular keys from that legacy entry (using the exact
-  // start/hours the old code already computed correctly, just filed under the wrong name) and drop it.
-  // Self-terminating: once recovery.abs is gone this block is a no-op on every future boot.
-  if(recovery.abs){
-    const legacy=recovery.abs;
-    ['abs-upper','abs-lower','abs-obliques'].forEach(k=>{
-      const cur=recovery[k]; if(!cur||cur.start+cur.hours*3600000<legacy.start+legacy.hours*3600000) recovery[k]={start:legacy.start,hours:legacy.hours};
+  // General safety net for the whole class of bug the abs recovery-key fix (cac508e) fixed one instance of:
+  // any recovery/familiarity entry keyed by something that isn't a real granular muscle (not in RECOVERY_HOURS)
+  // is orphaned dead data nothing reads — the body diagram has no matching SVG path, so a muscle actually just
+  // trained would sit showing "ready" forever. This device's own data turned out to already have three more
+  // examples (shoulders/triceps/back, predating the region split entirely) alongside abs, which is exactly why
+  // this is a general reconciler rather than another one-off migration: nothing rules out a similar coarse-key
+  // slip for some other muscle group in a future change either.
+  //
+  // The mapping from a coarse name to its granular keys is derived straight from recoveryKey() itself — every
+  // MUSCLE_LABEL coarse name, run through every region recoveryKey() ever branches on — rather than guessed
+  // from string prefixes, because the naming doesn't always line up (coarse 'shoulders' -> 'delt-*', coarse
+  // 'forearms' -> singular 'forearm-*'; a prefix guess would silently miss both and just drop that data).
+  // An orphan with no mapped target at all (nowhere sensible to put it) is just dropped.
+  //
+  // Runs every boot but is a no-op once nothing's orphaned, so it self-heals any future recurrence of this bug
+  // class on its own, without needing a new fix shipped and a new migration written each time.
+  const MUSCLE_KEY_MAP=(()=>{
+    const regions=[undefined,'upper chest','lower chest','lats','soleus','overhead','front delt','rear delt','extensor','brachialis','upper abs','lower abs','obliques'];
+    const map={};
+    Object.keys(MUSCLE_LABEL).forEach(coarse=>{
+      const set=new Set();
+      regions.forEach(region=>recoveryKey({region},coarse).forEach(k=>set.add(k)));
+      map[coarse]=[...set];
     });
-    delete recovery.abs; await sset('recovery',recovery);
-  }
-  if(familiarity.abs){
-    const legacy=familiarity.abs;
-    ['abs-upper','abs-lower','abs-obliques'].forEach(k=>{
-      const cur=familiarity[k]; if(!cur||cur.last<legacy.last) familiarity[k]={count:(cur?cur.count:0)+legacy.count,last:legacy.last};
+    return map;
+  })();
+  function backfillOrphanedMuscleKeys(bag,validKeys){
+    let changed=false;
+    Object.keys(bag).forEach(k=>{
+      if(validKeys.has(k)) return;
+      const targets=MUSCLE_KEY_MAP[k]||[];
+      const legacy=bag[k];
+      targets.forEach(tk=>{
+        const cur=bag[tk];
+        if('hours' in legacy){ if(!cur||cur.start+cur.hours*3600000<legacy.start+legacy.hours*3600000) bag[tk]={start:legacy.start,hours:legacy.hours}; }
+        else{ if(!cur||cur.last<legacy.last) bag[tk]={count:(cur?cur.count:0)+legacy.count,last:legacy.last}; }
+      });
+      delete bag[k]; changed=true;
     });
-    delete familiarity.abs; await sset('familiarity',familiarity);
+    return changed;
   }
+  const validMuscleKeys=new Set(Object.keys(RECOVERY_HOURS));
+  if(backfillOrphanedMuscleKeys(recovery,validMuscleKeys)) await sset('recovery',recovery);
+  if(backfillOrphanedMuscleKeys(familiarity,validMuscleKeys)) await sset('familiarity',familiarity);
 
   settings=Object.assign({rest:90,auto:true,autoBackup:true,smartRest:true,unit:'lb',autoRotate:true,blockWeeks:4,neverSuggest:[],equipFilter:EQUIP_TYPES.slice(),name:'',onboarded:false},(await sget('settings'))||{});
   blockStart=(await sget('blockStart'))||0; blockNum=(await sget('blockNum'))||1;
