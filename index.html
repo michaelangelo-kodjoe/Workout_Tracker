@@ -190,6 +190,7 @@
   .scrub:focus-visible{outline:1px solid var(--light);outline-offset:2px;border-radius:3px;}
   /* the split-card line is only 28px tall — pad the touch target past the painted line without moving the layout */
   .str-split-card .scrub{padding:8px 0;margin:-8px 0;}
+  .srow .scrub{grid-column:1 / -1;padding:6px 0;margin:-6px 0;}
   .scrub-line{position:absolute;width:1px;margin-left:-.5px;background:var(--text-dim);pointer-events:none;display:none;}
   .scrub-dot{position:absolute;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;box-shadow:0 0 0 2px var(--panel);pointer-events:none;display:none;}
   .str-card-exlist{margin-top:10px;border-top:1px solid var(--line);padding-top:6px;}
@@ -2531,7 +2532,25 @@ function renderStrength(){
     const pastTxt=day.past?` · last done ${fmtDate(fullH[fullH.length-1].t)}, not in your program now`:'';
     const k=histKey(ex);
     const baseTxt=isTimedTarget(ex.target)?'':baselines[k]?` · <span class="linkbtn" data-act="baseline-undo">baseline reset ${fmtDate(baselines[k])} — undo</span>`:(fullH.length>=2?` · <span class="linkbtn" data-act="baseline">reset baseline</span>`:'');
-    row.innerHTML=`<div><div class="sn">${ex.name} <span class="badge ${day.badge}">${day.sub}</span>${plat?'<span class="badge plateau">plateau</span>':''}</div><div class="sd">${sdTxt}${shareTxt}${pastTxt}${baseTxt}</div></div><div class="sp ${cls}">${p===null?'start':fmtPct(p)}</div>${sparkline([base,...h.map(x=>x.e1rm)],cls==='down'?'var(--amber)':'var(--green)',milestoneIdx)}`;
+    row.innerHTML=`<div><div class="sn">${ex.name} <span class="badge ${day.badge}">${day.sub}</span>${plat?'<span class="badge plateau">plateau</span>':''}</div><div class="sd">${sdTxt}${shareTxt}${pastTxt}${baseTxt}</div><div class="sd" data-scrub-readout style="display:none"></div></div><div class="sp ${cls}">${p===null?'start':fmtPct(p)}</div>${h.length?`<div class="scrub" tabindex="0" aria-label="${ex.name} trend. Drag across it, or use the arrow keys, to see each session.">${sparkline([base,...h.map(x=>x.e1rm)],cls==='down'?'var(--amber)':'var(--green)',milestoneIdx)}</div>`:''}`;
+    const rowWrap=row.querySelector('.scrub');
+    if(rowWrap){
+      // point 0 is the baseline itself (from pre-app seed numbers or the first session), so it has no set to show.
+      // The readout is its own element rather than a rewrite of .sd, which holds live baseline-reset links.
+      const sdEl=row.querySelector('.sd'), readout=row.querySelector('[data-scrub-readout]'), spEl=row.querySelector('.sp');
+      const rest={txt:spEl.textContent,cls:spEl.className};
+      const pts=[{t:null,p:0},...h.map(x=>({t:x.t,p:pct(base,x.e1rm),w:x.w,r:x.r}))];
+      const vals=[base,...h.map(x=>x.e1rm)];
+      bindScrub(rowWrap);
+      rowWrap._scrub={pts,coords:sparkCoords(vals,300,26,2),w:300,h:26,pad:2,color:cls==='down'?'var(--amber)':'var(--green)',
+        onShow:pt=>{
+          spEl.textContent=pt.t===null?'start':fmtPct(pt.p);
+          spEl.className='sp '+(pt.p===null||Math.abs(pt.p)<0.05?'flat':pt.p>0?'up':'down');
+          readout.textContent=pt.t===null?'your starting numbers':`${fmtDate(pt.t)} · best set ${dispWeight(pt.w)} ${unitLabel()} × ${pt.r}`;
+          sdEl.style.display='none'; readout.style.display='';
+        },
+        onReset:()=>{ spEl.textContent=rest.txt; spEl.className=rest.cls; readout.style.display='none'; sdEl.style.display=''; }};
+    }
     // the card itself toggles open/closed on click — keep these links from bubbling up to it
     const rb=row.querySelector('[data-act="baseline"]'); if(rb) rb.onclick=async e=>{ e.stopPropagation(); baselines[k]=fullH[fullH.length-1].t; await sset('baselines',baselines); renderStrength(); if(view==='log') render(); showToast(`${ex.name}: progress now measured from your latest session`); };
     const ru=row.querySelector('[data-act="baseline-undo"]'); if(ru) ru.onclick=async e=>{ e.stopPropagation(); delete baselines[k]; await sset('baselines',baselines); renderStrength(); if(view==='log') render(); showToast(`${ex.name}: baseline back to your first session`); };
