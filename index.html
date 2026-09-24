@@ -184,6 +184,14 @@
   .str-split-num.down{color:var(--accent);}
   .str-split-card{cursor:pointer;}
   .str-card-hint{font-size:11px;color:var(--light);margin-top:8px;}
+  .str-card-hint.scrub-date{color:var(--text-dim);}
+  /* pan-y: vertical drags still scroll the page, horizontal drags scrub the chart */
+  .scrub{position:relative;touch-action:pan-y;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;outline:none;}
+  .scrub:focus-visible{outline:1px solid var(--light);outline-offset:2px;border-radius:3px;}
+  /* the split-card line is only 28px tall — pad the touch target past the painted line without moving the layout */
+  .str-split-card .scrub{padding:8px 0;margin:-8px 0;}
+  .scrub-line{position:absolute;width:1px;margin-left:-.5px;background:var(--text-dim);pointer-events:none;display:none;}
+  .scrub-dot{position:absolute;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;box-shadow:0 0 0 2px var(--panel);pointer-events:none;display:none;}
   .str-card-exlist{margin-top:10px;border-top:1px solid var(--line);padding-top:6px;}
   .str-card-exlist .srow{cursor:default;padding:8px 10px;}
   .str-card-exlist .sn{font-size:12.5px;} .str-card-exlist .sd{font-size:9.5px;}
@@ -516,20 +524,20 @@
     <div class="str-hero">
       <div class="str-hero-num" id="strHeroNum">—</div>
       <div class="str-hero-lbl"><span id="strHeroLbl">current baseline</span><span class="bwlb" id="strBwPill" style="display:none"></span></div>
-      <svg class="str-spark" id="strHeroSpark" viewBox="0 0 300 56" preserveAspectRatio="none"></svg>
+      <div class="scrub" id="strHeroScrub" tabindex="0" aria-label="Overall strength trend. Drag across it, or use the arrow keys, to see each session."><svg class="str-spark" id="strHeroSpark" viewBox="0 0 300 56" preserveAspectRatio="none"></svg></div>
     </div>
     <div class="str-split">
       <div class="card str-split-card" id="upperStrCard">
         <h3>Upper strength</h3>
         <div class="str-split-num" id="upperStrNum">—</div>
-        <div id="upperStrSpark"></div>
+        <div class="scrub" id="upperStrScrub" tabindex="0" aria-label="Upper strength trend. Drag across it, or use the arrow keys, to see each session."><div id="upperStrSpark"></div></div>
         <div class="str-card-hint" id="upperStrHint">see exercises</div>
         <div class="str-card-exlist" id="upperStrList" style="display:none"></div>
       </div>
       <div class="card str-split-card" id="lowerStrCard">
         <h3>Lower strength</h3>
         <div class="str-split-num" id="lowerStrNum">—</div>
-        <div id="lowerStrSpark"></div>
+        <div class="scrub" id="lowerStrScrub" tabindex="0" aria-label="Lower strength trend. Drag across it, or use the arrow keys, to see each session."><div id="lowerStrSpark"></div></div>
         <div class="str-card-hint" id="lowerStrHint">see exercises</div>
         <div class="str-card-exlist" id="lowerStrList" style="display:none"></div>
       </div>
@@ -1365,8 +1373,8 @@ function dedupeSortByT(arr){ const seen=new Set(); const out=[]; [...arr].sort((
 function latestBW(){ return bodyweight.length?bodyweight[bodyweight.length-1].w:null; }
 function sparkline(points,color,milestoneIdx){
   if(!points||points.length<2) return '';
-  const w=300,h=26,pad=2,min=Math.min(...points),max=Math.max(...points),span=(max-min)||1;
-  const coords=points.map((v,i)=>[pad+(i/(points.length-1))*(w-2*pad),h-pad-((v-min)/span)*(h-2*pad)]);
+  const w=300,h=26,pad=2;
+  const coords=sparkCoords(points,w,h,pad);
   const pts=coords.map(c=>c.join(',')).join(' ');
   const dot=(milestoneIdx!=null&&coords[milestoneIdx])?`<circle class="milestone" cx="${coords[milestoneIdx][0]}" cy="${coords[milestoneIdx][1]}" r="2.6"/>`:'';
   return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline fill="none" stroke="${color||'var(--light)'}" stroke-width="1.6" points="${pts}"/>${dot}</svg>`;
@@ -1403,10 +1411,54 @@ function buildAggregateSeries(events,baseByName,mode){
     return {t:ev.t,p};
   });
 }
+// one point per logged session: every exercise in a session shares its timestamp, so without this a single
+// session would be several stacked points and the scrub would step through one workout exercise by exercise
+function perSession(series){ const m=new Map(); series.forEach(x=>{ if(x.p!=null) m.set(x.t,x.p); }); return [...m].map(([t,p])=>({t,p})); }
+function sparkCoords(points,w,h,pad){
+  const min=Math.min(...points),max=Math.max(...points),span=(max-min)||1;
+  return points.map((v,i)=>[pad+(i/(points.length-1))*(w-2*pad),h-pad-((v-min)/span)*(h-2*pad)]);
+}
+// Stock-app-style scrub: drag a finger (or hover a mouse) across a chart and a crosshair snaps to the nearest
+// session while the card's own headline swaps to that session's value and date; letting go puts it back.
+// Listeners bind once per wrapper and read whatever the latest render stored in wrap._scrub, since
+// renderStrength() rebuilds the chart itself on every visit. The crosshair and dot are HTML overlays, not SVG
+// marks, because these charts stretch with preserveAspectRatio="none" and would squash a circle into an ellipse.
+function bindScrub(wrap){
+  if(wrap._scrubBound) return; wrap._scrubBound=true;
+  const line=document.createElement('div'); line.className='scrub-line';
+  const dot=document.createElement('div'); dot.className='scrub-dot';
+  wrap.append(line,dot);
+  let idx=null, pressed=false;
+  const show=i=>{
+    const s=wrap._scrub, svg=wrap.querySelector('svg'); if(!s||s.pts.length<2||!svg) return;
+    idx=Math.max(0,Math.min(s.pts.length-1,i));
+    const r=svg.getBoundingClientRect(), wr=wrap.getBoundingClientRect(), [cx,cy]=s.coords[idx];
+    const x=r.left-wr.left+cx/s.w*r.width, y=r.top-wr.top+cy/s.h*r.height;
+    line.style.cssText=`display:block;left:${x}px;top:${r.top-wr.top}px;height:${r.height}px`;
+    dot.style.cssText=`display:block;left:${x}px;top:${y}px;background:${s.color}`;
+    s.onShow(s.pts[idx]);
+  };
+  const hide=()=>{ if(idx===null) return; idx=null; line.style.display='none'; dot.style.display='none'; if(wrap._scrub) wrap._scrub.onReset(); };
+  const at=e=>{ const s=wrap._scrub, svg=wrap.querySelector('svg'); if(!s||!svg) return; const r=svg.getBoundingClientRect(); show(Math.round(((e.clientX-r.left)/r.width*s.w-s.pad)/(s.w-2*s.pad)*(s.pts.length-1))); };
+  wrap.addEventListener('pointerdown',e=>{ pressed=true; try{ wrap.setPointerCapture(e.pointerId); }catch(_){} at(e); });
+  wrap.addEventListener('pointermove',e=>{ if(pressed||e.pointerType==='mouse') at(e); });
+  wrap.addEventListener('pointerup',e=>{ pressed=false; if(e.pointerType!=='mouse') hide(); });
+  wrap.addEventListener('pointercancel',()=>{ pressed=false; hide(); });
+  wrap.addEventListener('pointerleave',e=>{ if(e.pointerType==='mouse'&&!pressed) hide(); });
+  // a tap on the chart is a scrub, not a request to expand the Upper/Lower card it sits in
+  wrap.addEventListener('click',e=>e.stopPropagation());
+  wrap.addEventListener('focus',()=>{ if(wrap.matches(':focus-visible')&&wrap._scrub) show(wrap._scrub.pts.length-1); });
+  wrap.addEventListener('keydown',e=>{
+    const s=wrap._scrub; if(!s||s.pts.length<2) return;
+    if(e.key==='ArrowLeft'||e.key==='ArrowRight'){ e.preventDefault(); show((idx??s.pts.length-1)+(e.key==='ArrowLeft'?-1:1)); }
+    else if(e.key==='Escape') hide();
+  });
+  wrap.addEventListener('blur',hide);
+}
 function sparklineHero(points,isDown){
   if(!points||points.length<2) return '';
-  const w=300,h=56,pad=3,min=Math.min(...points),max=Math.max(...points),span=(max-min)||1;
-  const coords=points.map((v,i)=>[pad+(i/(points.length-1))*(w-2*pad),h-pad-((v-min)/span)*(h-2*pad)]);
+  const w=300,h=56,pad=3;
+  const coords=sparkCoords(points,w,h,pad);
   const line=coords.map(c=>c.join(',')).join(' ');
   const area=`${coords[0][0]},${h} ${line} ${coords[coords.length-1][0]},${h}`;
   const color=isDown?'var(--accent)':'var(--green)';
@@ -2519,30 +2571,31 @@ function renderStrength(){
     const rel=((bodyTotal/bw1)/(bodyBase/bw0)-1)*100;
     bwPill.textContent=`${rel>=0?'+':''}${Math.round(rel)}% per ${unitLabel()} bodyweight`; bwPill.style.display='inline-block';
   } else bwPill.style.display='none';
-  const renderSplitCard=(p,series,numId,sparkId)=>{
-    const numEl=document.getElementById(numId);
+  const renderSplitCard=(p,series,numId,sparkId,scrubId,hintId)=>{
+    const numEl=document.getElementById(numId), hintEl=document.getElementById(hintId);
     numEl.textContent=p===null?'start':fmtPct(p);
     numEl.className='str-split-num'+(p!==null&&p<-0.05?' down':'');
-    const vals=series.map(x=>x.p).filter(v=>v!=null);
-    const sparkEl=document.getElementById(sparkId);
-    if(vals.length>=2){
-      const n=Math.min(10,vals.length);
-      const pts=Array.from({length:n},(_,i)=>vals[Math.round(i*(vals.length-1)/(n-1))]);
-      // color from the same aggregate p driving numEl above, not from this series' own first/last sampled
-      // points — see buildAggregateSeries/sparklineHero for why that comparison used to be unreliable.
-      sparkEl.innerHTML=sparkline(pts,(p!==null&&p<-0.05)?'var(--accent)':'var(--green)');
-    } else sparkEl.innerHTML='';
+    const sess=perSession(series), vals=sess.map(x=>x.p);
+    // color from the same aggregate p driving numEl above, not from this series' own first/last points —
+    // see buildAggregateSeries/sparklineHero for why that comparison used to be unreliable.
+    const color=(p!==null&&p<-0.05)?'var(--accent)':'var(--green)';
+    document.getElementById(sparkId).innerHTML=vals.length>=2?sparkline(vals,color):'';
+    const wrap=document.getElementById(scrubId); bindScrub(wrap);
+    const rest={num:numEl.textContent,cls:numEl.className,hint:hintEl.textContent};
+    wrap._scrub={pts:sess,coords:vals.length>=2?sparkCoords(vals,300,26,2):[],w:300,h:26,pad:2,color,
+      onShow:pt=>{ numEl.textContent=fmtPct(pt.p); numEl.className='str-split-num'+(pt.p<-0.05?' down':''); hintEl.textContent=fmtDate(pt.t); hintEl.classList.add('scrub-date'); },
+      onReset:()=>{ numEl.textContent=rest.num; numEl.className=rest.cls; hintEl.textContent=rest.hint; hintEl.classList.remove('scrub-date'); }};
   };
-  renderSplitCard(upperP,buildAggregateSeries(upperEvents,upperBaseByName,'sum'),'upperStrNum','upperStrSpark');
-  renderSplitCard(lowerP,buildAggregateSeries(lowerEvents,lowerBaseByName,'sum'),'lowerStrNum','lowerStrSpark');
-  const heroSpark=document.getElementById('strHeroSpark');
-  const heroSeries=buildAggregateSeries(heroEvents,heroBaseByName,'avg');
-  const heroVals=heroSeries.map(x=>x.p).filter(v=>v!=null);
-  if(heroVals.length>=2){
-    const n=Math.min(10,heroVals.length);
-    const pts=Array.from({length:n},(_,i)=>heroVals[Math.round(i*(heroVals.length-1)/(n-1))]);
-    heroSpark.innerHTML=sparklineHero(pts,avg!==null&&avg<-0.05);
-  } else heroSpark.innerHTML='';
+  renderSplitCard(upperP,buildAggregateSeries(upperEvents,upperBaseByName,'sum'),'upperStrNum','upperStrSpark','upperStrScrub','upperStrHint');
+  renderSplitCard(lowerP,buildAggregateSeries(lowerEvents,lowerBaseByName,'sum'),'lowerStrNum','lowerStrSpark','lowerStrScrub','lowerStrHint');
+  const heroSess=perSession(buildAggregateSeries(heroEvents,heroBaseByName,'avg')), heroVals=heroSess.map(x=>x.p);
+  const heroDown=avg!==null&&avg<-0.05;
+  document.getElementById('strHeroSpark').innerHTML=heroVals.length>=2?sparklineHero(heroVals,heroDown):'';
+  const heroWrap=document.getElementById('strHeroScrub'), heroLbl=document.getElementById('strHeroLbl'); bindScrub(heroWrap);
+  const heroRest={num:heroNum.textContent,cls:heroNum.className,lbl:heroLbl.textContent};
+  heroWrap._scrub={pts:heroSess,coords:heroVals.length>=2?sparkCoords(heroVals,300,56,3):[],w:300,h:56,pad:3,color:heroDown?'var(--accent)':'var(--green)',
+    onShow:pt=>{ heroNum.textContent=fmtPct(pt.p); heroNum.className='str-hero-num'+(pt.p<-0.05?' down':''); heroLbl.textContent=fmtDate(pt.t); bwPill.style.visibility='hidden'; },
+    onReset:()=>{ heroNum.textContent=heroRest.num; heroNum.className=heroRest.cls; heroLbl.textContent=heroRest.lbl; bwPill.style.visibility=''; }};
   // bodyweight card
   const info=document.getElementById('bwInfo'), sp=document.getElementById('bwSpark'), bwNote=document.getElementById('bwNote');
   if(bodyweight.length){ const f=bodyweight[0].w,l=bodyweight[bodyweight.length-1].w; const dl=dispBW(l), delta=dispBW(l)-dispBW(f); info.textContent=`${dl} ${unitLabel()} now · ${delta>=0?'+':''}${Math.round(delta*10)/10} since ${fmtDate(bodyweight[0].t)}`; sp.innerHTML=bodyweight.length>1?sparkline(bodyweight.map(b=>dispBW(b.w)),'var(--amber)'):''; document.getElementById('bwInput').placeholder=String(dl); }
