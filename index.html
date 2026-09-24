@@ -717,7 +717,7 @@ const store = {
 };
 const KEYS = ['lastBackup','program','recovery','familiarity','soreOverride','recoveryLog','hist','sessions','notes','lastByName','bodyweight','settings','meta:sessionCount','meta:histMigratedV2','today:d1','today:d2','today:d3','today:d4','last:d1','last:d2','last:d3','last:d4','lastDeload','deloadStart','dayStart','blockStart','blockNum','baselines'];
 const RECOVERY_LOG_CAP=2000;
-const RECOVERY_HOURS = { 'chest-upper':72, 'chest-mid':72, 'chest-lower':72, 'back-lats':72, 'back-traps':72, quads:72, hamstrings:72, glutes:72, lowerback:72, 'delt-front':48, 'delt-lateral':48, 'delt-rear':48, biceps:48, brachialis:48, 'triceps-lateral':48, 'triceps-long':48, 'forearm-flexor':48, 'forearm-extensor':48, 'calves-gastroc':48, 'calves-soleus':48, abs:36, 'abs-upper':36, 'abs-lower':36, 'abs-obliques':36 };
+const RECOVERY_HOURS = { 'chest-upper':72, 'chest-mid':72, 'chest-lower':72, 'back-lats':72, 'back-traps':72, quads:72, hamstrings:72, glutes:72, lowerback:72, 'delt-front':48, 'delt-lateral':48, 'delt-rear':48, biceps:48, brachialis:48, 'triceps-lateral':48, 'triceps-long':48, 'forearm-flexor':48, 'forearm-extensor':48, 'calves-gastroc':48, 'calves-soleus':48, 'abs-upper':36, 'abs-lower':36, 'abs-obliques':36 };
 const MUSCLE_LABEL = { chest:'Chest', back:'Back', quads:'Quads', hamstrings:'Hamstrings', glutes:'Glutes', lowerback:'Lower back', shoulders:'Shoulders', biceps:'Biceps', triceps:'Triceps', forearms:'Forearms', calves:'Calves', abs:'Core' };
 // recovery-tracking display only (breakdown list, fatigue-conflict sheet) — kept separate from MUSCLE_LABEL
 // so the swap sheet and "add exercise" muscle checkboxes stay at the coarse 12-muscle level, not sub-regions
@@ -726,16 +726,29 @@ const RECOVERY_LABEL = Object.assign({}, MUSCLE_LABEL, { 'chest-upper':'Upper ch
 // pulldown/pull-up vs. row/shrug; seated vs. standing; overhead extensions bias the long head) — everything else still
 // tracks as one bucket. ex.m keeps saying the coarse muscle name everywhere (grouping, labels, editor) — only recovery
 // tracking looks at ex.region to split them further.
+// returns an array of one or more keys — every one of them has to be an actual key the recovery map (and the
+// body diagram's SVG paths) knows about, since a key nothing reads back leaves that muscle showing "ready"
+// forever no matter how much work it gets credited under that name. Every other muscle here already resolves
+// to a real sub-region even without a region tag (chest falls back to chest-mid, back to back-traps, and so
+// on) — abs used to be the one exception, falling back to a bare 'abs' that has no drawn path at all, so an
+// exercise like Hanging Leg Raise or Plank (no region set) recorded its recovery under a key the body diagram
+// could never show: real work, invisible result. Lacking a specific region to point to, a compound core
+// exercise plausibly hits all three drawn zones, so it credits all three rather than guessing just one.
 function recoveryKey(ex,m){
-  if(m==='chest') return ex.region==='upper chest'?'chest-upper':ex.region==='lower chest'?'chest-lower':'chest-mid';
-  if(m==='back') return ex.region==='lats'?'back-lats':'back-traps';
-  if(m==='calves') return ex.region==='soleus'?'calves-soleus':'calves-gastroc';
-  if(m==='triceps') return ex.region==='overhead'?'triceps-long':'triceps-lateral';
-  if(m==='shoulders') return ex.region==='front delt'?'delt-front':ex.region==='rear delt'?'delt-rear':'delt-lateral';
-  if(m==='forearms') return ex.region==='extensor'?'forearm-extensor':'forearm-flexor';
-  if(m==='biceps') return ex.region==='brachialis'?'brachialis':'biceps';
-  if(m==='abs') return ex.region==='upper abs'?'abs-upper':ex.region==='lower abs'?'abs-lower':ex.region==='obliques'?'abs-obliques':'abs';
-  return m;
+  if(m==='chest') return [ex.region==='upper chest'?'chest-upper':ex.region==='lower chest'?'chest-lower':'chest-mid'];
+  if(m==='back') return [ex.region==='lats'?'back-lats':'back-traps'];
+  if(m==='calves') return [ex.region==='soleus'?'calves-soleus':'calves-gastroc'];
+  if(m==='triceps') return [ex.region==='overhead'?'triceps-long':'triceps-lateral'];
+  if(m==='shoulders') return [ex.region==='front delt'?'delt-front':ex.region==='rear delt'?'delt-rear':'delt-lateral'];
+  if(m==='forearms') return [ex.region==='extensor'?'forearm-extensor':'forearm-flexor'];
+  if(m==='biceps') return [ex.region==='brachialis'?'brachialis':'biceps'];
+  if(m==='abs'){
+    if(ex.region==='upper abs') return ['abs-upper'];
+    if(ex.region==='lower abs') return ['abs-lower'];
+    if(ex.region==='obliques') return ['abs-obliques'];
+    return ['abs-upper','abs-lower','abs-obliques'];
+  }
+  return [m];
 }
 // repeated-bout effect: a muscle trained repeatedly with a familiar stimulus needs measurably less recovery
 // than a first-time exposure (DOMS/recovery need tracks unfamiliarity, not a fixed per-muscle timer) — so a
@@ -1578,13 +1591,13 @@ function sessionInProgress(){ return Object.values(todayData).some(s=>s.sets&&s.
 // that real programs also train near-daily (RECOVERY_HOURS gives them 36-48h vs. 72h for the big groups) and,
 // precisely because they're hit as a secondary mover in so many unrelated exercises, one of them lagging
 // shouldn't veto a whole day's worth of chest/back/shoulders/legs work in favor of cardio.
-const CARDIO_GATE_SKIP=new Set(['forearm-flexor','forearm-extensor','abs','abs-upper','abs-lower','abs-obliques','calves-gastroc','calves-soleus']);
+const CARDIO_GATE_SKIP=new Set(['forearm-flexor','forearm-extensor','abs-upper','abs-lower','abs-obliques','calves-gastroc','calves-soleus']);
 // averaged across the day's unique gated muscles rather than requiring every single one at 100% — one lagging
 // muscle among many otherwise-fresh ones shouldn't veto a whole day's worth of training. 80% mirrors "good
 // enough to train" rather than "perfectly rested," which is closer to how real programming works anyway.
 function dayMusclesRecovered(day){
   const keys=new Set();
-  day.exercises.forEach(ex=>{ const k=recoveryKey(ex,ex.key); if(!CARDIO_GATE_SKIP.has(k)) keys.add(k); });
+  day.exercises.forEach(ex=>{ recoveryKey(ex,ex.key).forEach(k=>{ if(!CARDIO_GATE_SKIP.has(k)) keys.add(k); }); });
   if(!keys.size) return true;
   const avg=[...keys].reduce((sum,k)=>sum+recoveryProgress(k),0)/keys.size;
   return avg>=0.8;
@@ -1636,7 +1649,7 @@ function renderTabs(){ const w=document.getElementById('dayTabs'); w.innerHTML='
 
 // ---------- fatigue disclaimer: warn (don't block) when picking a day whose muscles haven't recovered ----------
 function dayFatigueConflicts(day){
-  const muscles=new Set(); day.exercises.forEach(ex=>ex.m.forEach(m=>muscles.add(recoveryKey(ex,m))));
+  const muscles=new Set(); day.exercises.forEach(ex=>ex.m.forEach(m=>recoveryKey(ex,m).forEach(k=>muscles.add(k))));
   return [...muscles].filter(m=>recoveryProgress(m)<1).map(m=>{
     const r=effectiveRecovery(m); const left=Math.max(0,r.hours-(Date.now()-r.start)/3600000);
     return {m,pct:Math.round(recoveryProgress(m)*100),left};
@@ -1953,7 +1966,7 @@ async function finishSession(){
     const loggedSets=s.sets.filter(isLogged);
     const done=loggedSets.length, total=s.sets.length;
     const rirVals=loggedSets.map(st=>st.rir).filter(v=>v!=null);
-    ex.m.forEach(m=>{ const rk=recoveryKey(ex,m); tally[rk]=tally[rk]||{d:0,t:0,rir:[]}; tally[rk].d+=done; tally[rk].t+=total; tally[rk].rir.push(...rirVals); });
+    ex.m.forEach(m=>{ recoveryKey(ex,m).forEach(rk=>{ tally[rk]=tally[rk]||{d:0,t:0,rir:[]}; tally[rk].d+=done; tally[rk].t+=total; tally[rk].rir.push(...rirVals); }); });
   });
   Object.keys(tally).forEach(m=>{
     const f=tally[m].t?tally[m].d/tally[m].t:0; if(f<0.2) return;
