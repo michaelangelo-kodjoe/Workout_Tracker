@@ -109,6 +109,7 @@
   .setrm{color:var(--text-dim);cursor:pointer;font-size:13px;text-align:center;}
   .setrm:hover{color:var(--accent);}
   .setgrid.head{color:var(--text-dim);font-size:10px;} .setnum{color:var(--text-dim);}
+  .setgrid.head .bw-note{opacity:.75;margin-left:3px;white-space:nowrap;}
   /* hold counter for timed sets (planks etc.): a stopwatch under the set row that fills the seconds field */
   .hold-row{display:flex;align-items:center;gap:10px;margin:-2px 0 10px 36px;font-size:12px;}
   .hold-t{font-family:'Menlo',monospace;font-size:20px;color:var(--light);min-width:56px;}
@@ -747,7 +748,7 @@ const TEMPLATE = [
     { group:'Hamstrings', key:'hamstrings', target:'3 x 10', pick:'45° Back Extension' },
     { group:'Quads', key:'quads', target:'3 x 8-10', pick:'Leg Extension' },
     { group:'Calves', key:'calves', target:'3 x 12-15', pick:'Standing Calf Raise' },
-    { group:'Core', key:'abs', target:'3 x 12-15', pick:'Hanging Leg Raise / Cable Crunch' },
+    { group:'Core', key:'abs', target:'3 x 12-15', pick:'Hanging Leg Raise' },
   ]},
   { id:'d3', name:'Upper', sub:'Volume', badge:'light', factor:0.85, slots:[
     { group:'Chest', key:'chest', target:'3 x 10-12', pick:'Incline Smith Machine Press' },
@@ -885,7 +886,7 @@ const ALTS = {
     {name:'Jump Rope',equip:'bodyweight', target:'3 x 60s',m:['calves'],rk:['calves-gastroc','calves-soleus'],step:0,cue:'Stay on the balls of your feet, small hops, wrists doing the work. Good finisher when calf machines are busy.'},
   ],
   abs:[
-    {name:'Hanging Leg Raise / Cable Crunch',equip:'cable', target:'3 x 12-15',m:['abs'],rk:['abs-lower','abs-upper','forearm-flexor'],step:5,start:0,cue:'Leg raise: hang, keep shoulders down, curl knees toward chest without swinging. Cable crunch: kneel, hold rope at forehead, crunch ribs toward hips. Do not pull with the arms.',gif:["https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Hanging_Leg_Raise/0.jpg","https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Hanging_Leg_Raise/1.jpg"]},
+    {name:'Hanging Leg Raise',equip:'bodyweight', target:'3 x 12-15',m:['abs'],rk:['abs-lower','forearm-flexor'],step:5,start:0,cue:'Hang with shoulders pulled down and away from your ears. Curl your pelvis to raise the legs, lower slowly, no swinging. Bend the knees to make it easier.',gif:["https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Hanging_Leg_Raise/0.jpg","https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Hanging_Leg_Raise/1.jpg"]},
     {name:'Plank / Pallof Press',equip:'bodyweight', target:'3 x 30-45s',m:['abs'],rk:['abs-upper','abs-lower','abs-obliques'],step:5,start:0,cue:'Plank: forearms down, body a straight line, squeeze glutes and brace. Pallof: cable at chest height, stand sideways, press it straight out and resist the rotation.',gif:["https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Plank/0.jpg","https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Plank/1.jpg"]},
     {name:'Cable Crunch',equip:'cable', region:'upper abs', target:'3 x 12-15',m:['abs'],rk:['abs-upper'],step:5,cue:'Kneel facing a high cable, rope at your forehead. Crunch ribs toward hips by rounding the spine; do not pull with your arms or hips.',gif:["https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Cable_Crunch/0.jpg","https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Cable_Crunch/1.jpg"]},
     {name:'Ab Wheel Rollout',equip:'bodyweight', region:'lower abs', target:'3 x 8-12',m:['abs','lowerback'],rk:['abs-upper','abs-lower','abs-obliques'],step:0,cue:'Kneel, roll the wheel forward as far as you can hold a flat back, then pull back. Stop before the hips sag.'},
@@ -896,7 +897,12 @@ const ALTS = {
   ],
 };
 
-const CURATED_BY_NAME=(()=>{ const m={}; Object.keys(ALTS).forEach(k=>ALTS[k].forEach(a=>{ if(!m[a.name]) m[a.name]=a; })); return m; })();
+// retired from the pool (so never offered again) but still looked up by name for programs saved while it was in it.
+// The leg raise / cable crunch combo couldn't log a cable stack: it was bodyweight-loaded for both halves.
+const RETIRED_CURATED=[
+  {name:'Hanging Leg Raise / Cable Crunch',equip:'cable', target:'3 x 12-15',m:['abs'],rk:['abs-lower','abs-upper','forearm-flexor'],step:5,start:0,cue:'Leg raise: hang, keep shoulders down, curl knees toward chest without swinging. Cable crunch: kneel, hold rope at forehead, crunch ribs toward hips. Do not pull with the arms.',gif:["https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Hanging_Leg_Raise/0.jpg","https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Hanging_Leg_Raise/1.jpg"]}
+];
+const CURATED_BY_NAME=(()=>{ const m={}; [...Object.keys(ALTS).flatMap(k=>ALTS[k]), ...RETIRED_CURATED].forEach(a=>{ if(!m[a.name]) m[a.name]=a; }); return m; })();
 // turn a curated-pool entry (or a synthesized full-library entry) into a program exercise for a given template slot.
 // weights always start unknown (-1) unless the lift is body-weight loaded — the first logged set becomes the suggestion baseline.
 function slotExercise(slot, entry){
@@ -991,8 +997,16 @@ function suggestWeight(ex,last){
     }
   }
   // a deload is ~10% under what was actually lifted last time — not under the next progression step, which
-  // could otherwise land above last time's weight for a lift that just hit the top of its range
-  if(w && isDeloadActive()) w=Math.round((mw||w)*0.9/2.5)*2.5;
+  // could otherwise land above last time's weight for a lift that just hit the top of its range. Rounded to the
+  // lift's own step (a 10 lb machine stack can't do 212.5) and at least one step lighter — rounding to the nearest
+  // 2.5 left a 12.5 lb lift at 12.5 for the whole deload week. Forcing that step only while it's a fifth of the load
+  // or less: on a 7.5 lb curl with 2.5 lb jumps it would be a 33% cut, well past the ~10% the banner promises.
+  if(w && isDeloadActive()){
+    const base=mw||w, step=ex.step||2.5;
+    w=Math.round(base*0.9/step)*step;
+    if(w>=base) w=step/base<=0.2?base-step:base;
+    if(w<=0) w=base;
+  }
   return w;
 }
 // when a slot has no same-day history but this exact lift has been logged under a different day (rotation
@@ -1125,6 +1139,9 @@ function libraryCandidates(key, seen, exclude){
     .sort(simple).map((a,i)=>({a:libPick(a), i:1000+i, lib:true}));
 }
 function neverSuggested(){ return new Set(settings.neverSuggest||[]); }
+// isolation vs compound by movement name: muscle tags can't tell them apart (a fly lists the front delt it recruits,
+// same as a press does), and neither can the library's over-inclusive, alphabetical m lists
+const ISOLATION_MOVE=/\b(fly|flye|flyes|flies|pec deck|crossovers?|raises?|curls?|extensions?|pushdowns?|push-?downs?|kickbacks?|shrugs?|pullovers?|straight[- ]arm|calf|crunch(es)?|sit-?ups?|twists?|side bend|wrist|finger|holds?|planks?|pallof|face pulls?|abduction|adduction)\b/i;
 function pickForSlot(day, idx, exclude){
   const ex=day.exercises[idx]; const anchor=anchorOf(ex); const key=groupKeyFor(ex); const primary=isPrimarySlot(idx);
   const seen=new Set(); const cands=[];
@@ -1134,8 +1151,7 @@ function pickForSlot(day, idx, exclude){
   // the exercise that just left is off the table only while its replacement is in its first block — after that
   // it's simply another option again, otherwise the slot's best curated fit could stay excluded for good
   const prevName=(ex.rotPrev&&!(ex.rotBlocks||0))?ex.rotPrev.name:null;
-  // muscle tags, not m: library m lists are alphabetical and over-inclusive (a calf press listing hamstrings)
-  const multiJoint=x=>recoveryKeysFor(x||{}).length>=2; const anchorMulti=multiJoint(anchor);
+  const multiJoint=x=>!ISOLATION_MOVE.test((x&&x.name)||''); const anchorMulti=multiJoint(anchor);
   // the slot's job is its current exercise's primary sub-muscle (rear delt, forearm extensors, brachialis…), not just
   // its coarse group — so a rear-delt slot can't drift into an upright row while a rear-delt option exists. The
   // current exercise rather than the anchor, so a manual swap (wrist curl → reverse wrist curl) is what rotation keeps.
@@ -1599,6 +1615,26 @@ document.getElementById('recovDetailToggle').onclick=()=>{
 
 // ---------- log view ----------
 function weekStart(){ const d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-d.getDay()); return d.getTime(); }
+// the last n Sunday-start calendar weeks as [start,end) pairs, oldest first, the current (partial) week last — the
+// same weeks the header's "this week n/4" counts, so every weekly figure in the app agrees. Date arithmetic rather
+// than 7*864e5 steps so a daylight-saving change can't shift a boundary by an hour.
+function weekRanges(n){
+  const out=[], s=new Date(weekStart());
+  for(let i=n-1;i>=0;i--){ const a=new Date(s); a.setDate(a.getDate()-7*i); const b=new Date(a); b.setDate(b.getDate()+7); out.push([a.getTime(),b.getTime()]); }
+  return out;
+}
+// typical lifting sessions per week, learned from history: the median over up to the last 8 complete calendar weeks,
+// counting only weeks that start after the first session (a first week begun midweek undercounts). It takes 3 such
+// weeks to mean anything; before that the program's own days per week is the reference, and the copy says "plan".
+function weeklyRhythm(){
+  const lifts=sessions.filter(s=>!s.isCardio); if(!lifts.length) return {n:PROGRAM.length, learned:false};
+  const first=Math.min(...lifts.map(s=>s.t));
+  const weeks=weekRanges(9).slice(0,-1).filter(([a])=>a>first);
+  if(weeks.length<3) return {n:PROGRAM.length, learned:false};
+  const counts=weeks.map(([a,b])=>lifts.filter(s=>s.t>=a&&s.t<b).length).sort((x,y)=>x-y);
+  const mid=counts.length>>1, med=counts.length%2?counts[mid]:(counts[mid-1]+counts[mid])/2;
+  return {n:Math.max(1,Math.round(med)), learned:true};
+}
 function renderHeaderStats(){
   const week=weekStart();
   const thisWeek=sessions.filter(s=>!s.isCardio && s.t>=week).length;
@@ -1660,8 +1696,15 @@ function suggestedDay(){
   const recent=[...sessions].sort((a,b)=>b.t-a.t);
   const lifts=recent.filter(s=>!s.isCardio);
   if(!lifts.length) return {id:PROGRAM[0].id, reason:null, nextDay:PROGRAM[0]};
+  // the day that has waited longest, not simply the one after the last lift: doing Upper Heavy when Lower
+  // Volume was suggested used to drop Lower Volume from that cycle entirely. In an unbroken cycle the two agree;
+  // ties (days never done yet) go in cycle order from the last lift (sort is stable). Among waiting days, one whose
+  // muscles have recovered comes first — otherwise picking a lower day out of turn made the next "overdue" day
+  // another lower day, and the recovery gate below turned that into cardio instead of the recovered upper day.
   const idx=PROGRAM.findIndex(d=>d.id===lifts[0].dayId);
-  const nextDay=PROGRAM[idx<0?0:(idx+1)%PROGRAM.length];
+  const lastDone=id=>{ const s=lifts.find(x=>x.dayId===id); return s?s.t:-Infinity; };
+  const byWait=PROGRAM.map((_,k)=>PROGRAM[(idx+1+k)%PROGRAM.length]).sort((a,b)=>lastDone(a.id)-lastDone(b.id));
+  const nextDay=byWait.find(dayMusclesRecovered)||byWait[0];
   const lastCardio=recent.find(s=>s.isCardio);
   const cardioStale=!!lastCardio && (Date.now()-lastCardio.t)>=7*864e5;
   const backToBack=recent.length>=2 && !recent[0].isCardio && !recent[1].isCardio && (recent[0].t-recent[1].t)<=BACK_TO_BACK_HOURS*3600000 && (Date.now()-recent[0].t)<BACK_TO_BACK_CLEAR_HOURS*3600000;
@@ -1843,14 +1886,20 @@ function render(){
     else if(estFrom){ const fn=document.createElement('div'); fn.className='first-log-note'; fn.textContent=`New lift — the weight is a conservative estimate from ${estFrom} (same muscle group, adjusted for the implement and rep range). Adjust it to what feels right; Lift Log learns from what you log.`; body.appendChild(fn); }
 
     const timed=isTimedTarget(ex.target);
-    const hr=document.createElement('div'); hr.className='setgrid head'; hr.innerHTML=`<div>set</div><div>weight</div><div>${timed?'seconds':'reps'}</div><div></div><div></div>`; body.appendChild(hr);
-    const bwLoaded=ex.start===0;
+    // bodyweight lifts (split squats, dips, pull-ups…) log bodyweight plus whatever is held or worn: s.add is that
+    // extra load, s.w the total, so every weight-based calculation — and the lift's bodyweight-only history — carries on
+    const bwLoaded=ex.start===0, bwNow=bwLoaded?latestBW():null;
+    const lastAdd=bwLoaded?Math.max(0,...((lastByName[ex.name]||{}).sets||[]).map(x=>parseFloat(x.add)||0)):0;
+    const hr=document.createElement('div'); hr.className='setgrid head'; hr.innerHTML=`<div>set</div><div>${bwLoaded?`+ added${bwNow!=null?` <span class="bw-note">bw ${dispWeight(bwNow)}</span>`:''}`:'weight'}</div><div>${timed?'seconds':'reps'}</div><div></div><div></div>`; body.appendChild(hr);
+    const bwTotal=s=>bwNow==null?'':Math.round((bwNow+(parseFloat(s.add)||0))*10)/10;
     state.sets.forEach((s,i)=>{
-      if(bwLoaded) s.w=latestBW()??'';
+      if(bwLoaded) s.w=bwTotal(s);
+      const addHint=bwLoaded?(state.sets.slice(0,i).map(x=>parseFloat(x.add)||0).filter(Boolean).pop()||lastAdd):0;
       const row=document.createElement('div'); row.className='setgrid';
-      row.innerHTML=`<div class="setnum">${i+1}</div><input type="number" inputmode="decimal" placeholder="${sug===null?'bw':sug===-1?unitLabel():dispWeight(sug)}" value="${s.w?dispWeight(s.w):s.w}"${bwLoaded?' disabled title="bodyweight — logged in Strength"':''}><input type="number" inputmode="numeric" placeholder="${timed?'sec':'reps'}" value="${s.r}"><div class="setdone ${s.done?'on':''}">${s.done?'✓':''}</div><div class="setrm" title="remove set">✕</div>`;
+      row.innerHTML=`<div class="setnum">${i+1}</div><input type="number" inputmode="decimal" placeholder="${bwLoaded?'+'+dispWeight(addHint):sug===null?'bw':sug===-1?unitLabel():dispWeight(sug)}" value="${bwLoaded?(s.add?dispWeight(s.add):''):(s.w?dispWeight(s.w):s.w)}"${bwLoaded?' title="extra weight held or worn (dumbbells, a dip belt) — leave blank for bodyweight only"':''}><input type="number" inputmode="numeric" placeholder="${timed?'sec':'reps'}" value="${s.r}"><div class="setdone ${s.done?'on':''}">${s.done?'✓':''}</div><div class="setrm" title="remove set">✕</div>`;
       const [wI,rI]=row.querySelectorAll('input');
-      if(!bwLoaded) wI.oninput=e=>{s.w=storeWeight(e.target.value); touchDayStart(); sset('today:'+currentDay,todayData); if(updatePlates) updatePlates(s.w);};
+      if(bwLoaded) wI.oninput=e=>{s.add=e.target.value===''?'':storeWeight(e.target.value); s.w=bwTotal(s); touchDayStart(); sset('today:'+currentDay,todayData);};
+      else wI.oninput=e=>{s.w=storeWeight(e.target.value); touchDayStart(); sset('today:'+currentDay,todayData); if(updatePlates) updatePlates(s.w);};
       rI.oninput=e=>{s.r=e.target.value; touchDayStart(); sset('today:'+currentDay,todayData);};
       row.querySelector('.setdone').onclick=()=>{
         if(hold.key===holdKey(ex,i)) stopHold(false); // fills s.r with the elapsed seconds before the check below
@@ -1875,7 +1924,7 @@ function render(){
       }
     });
     const addset=document.createElement('div'); addset.className='addset'; addset.textContent='+ add a set';
-    addset.onclick=()=>{ state.sets.push({w:ex.start===0?(latestBW()??''):'',r:'',done:false,rir:null}); sset('today:'+currentDay,todayData); render(); }; body.appendChild(addset);
+    addset.onclick=()=>{ const prev=state.sets[state.sets.length-1]; state.sets.push({w:ex.start===0?(latestBW()??''):'',r:'',done:false,rir:null,...(ex.start===0&&prev&&prev.add?{add:prev.add}:{})}); sset('today:'+currentDay,todayData); render(); }; body.appendChild(addset);
 
     const ta=document.createElement('textarea'); ta.className='notes'; ta.placeholder='notes (seat setting, how it felt…)'; ta.value=notes[histKey(ex)]||'';
     ta.oninput=e=>{ notes[histKey(ex)]=e.target.value; sset('notes',notes); }; body.appendChild(ta);
@@ -2031,15 +2080,18 @@ async function finishSession(){
   let vol=0, nsets=0; const exRec={}; const prCandidates=[];
   worked.forEach(ex=>{
     const sets=todayData[ex.name].sets.filter(st=>st.w&&st.r);
-    exRec[ex.name]=todayData[ex.name].sets.filter(isLogged).map(st=>({w:st.w,r:st.r,rir:st.rir??null}));
+    exRec[ex.name]=todayData[ex.name].sets.filter(isLogged).map(st=>({w:st.w,r:st.r,rir:st.rir??null,...(parseFloat(st.add)?{add:st.add}:{})}));
     nsets+=todayData[ex.name].sets.filter(isLogged).length;
     if(isTimedTarget(ex.target)) return; // seconds, not reps: counted as sets done, never as weight moved or strength
     sets.forEach(st=>vol+=(parseFloat(st.w)||0)*(parseInt(st.r)||0));
     const b=bestE1rm(sets); if(!b) return;
     const k=histKey(ex);
     const priorBest=(hist[k]&&hist[k].length)?Math.max(...hist[k].map(x=>x.e1rm)):baselineFor(ex);
-    if(priorBest && b>priorBest*1.0001) prCandidates.push({name:ex.name, w:Math.max(...sets.map(st=>parseFloat(st.w))), r:Math.max(...sets.map(st=>parseInt(st.r))), pct:pct(priorBest,b)});
-    (hist[k]=hist[k]||[]).push({t:now,e1rm:Math.round(b*10)/10,w:Math.max(...sets.map(st=>parseFloat(st.w))),r:Math.max(...sets.map(st=>parseInt(st.r))),d:currentDay});
+    // the set that produced the best e1RM, not the heaviest weight and the most reps taken from different sets —
+    // with sets at different loads (e.g. bodyweight plus some added) that pairing described a set never lifted
+    const top=sets.reduce((a,s)=>e1rm(s.w,s.r)>e1rm(a.w,a.r)?s:a), topW=parseFloat(top.w), topR=parseInt(top.r);
+    if(priorBest && b>priorBest*1.0001) prCandidates.push({name:ex.name, w:topW, r:topR, pct:pct(priorBest,b)});
+    (hist[k]=hist[k]||[]).push({t:now,e1rm:Math.round(b*10)/10,w:topW,r:topR,d:currentDay});
   });
   await sset('hist',hist);
   sessions.push({t:now,dayId:currentDay,dayName:day.name,sub:day.sub,vol:Math.round(vol),sets:nsets,ex:exRec}); await sset('sessions',sessions);
@@ -2072,9 +2124,11 @@ function showCelebration({day,worked,nsets,vol,durationMin,pr,rhythmCount}){
   const colors=['#ff5d3b','#e8b23d','#4fa3d1','#5cbb6f'];
   const confetti=Array.from({length:12},(_,i)=>{ const left=Math.round(5+Math.random()*90); const delay=(Math.random()*2).toFixed(1); return `<div class="confetti" style="left:${left}%;background:${colors[i%colors.length]};animation-delay:${delay}s"></div>`; }).join('');
   const prHtml=pr?`<div class="pr-card"><div class="pr-eyebrow">New PR</div><div class="pr-name">${pr.name}</div><div class="pr-detail">${dispWeight(pr.w)} ${unitLabel()} × ${pr.r} &nbsp;—&nbsp; <b>est. 1RM up ${Math.round(pr.pct)}%</b></div></div>`:'';
-  const dotsTotal=4, dotsOn=Math.min(rhythmCount,dotsTotal);
+  // measured against what this lifter actually does week to week (or the plan, until there's enough history) —
+  // a flat 4 told a twice-a-week lifter their 1st session was "right on your usual rhythm"
+  const rh=weeklyRhythm(), dotsTotal=rh.n, dotsOn=Math.min(rhythmCount,dotsTotal), ref=rh.learned?'your usual rhythm':'plan';
   const ord=n=>n===1?'1st':n===2?'2nd':n===3?'3rd':n+'th';
-  const rhythmRest=rhythmCount>dotsTotal?'ahead of your usual rhythm.':'right on your usual rhythm.';
+  const rhythmRest=rhythmCount>dotsTotal?`ahead of ${ref}.`:rhythmCount===dotsTotal?`right on ${ref}.`:rh.learned?`you usually get in ${dotsTotal} a week.`:`your plan is ${dotsTotal} a week.`;
   inner.innerHTML=`${confetti}
     <div class="cel-badge">💪</div>
     <div class="cel-h1">${day.name} — ${day.sub}, logged</div>
@@ -2236,15 +2290,16 @@ function buildHeatmap(){
   const days=98; const today=new Date(); today.setHours(0,0,0,0);
   const start=new Date(today); start.setDate(start.getDate()-(days-1));
   for(let i=0;i<start.getDay();i++){ const pad=document.createElement('i'); pad.style.visibility='hidden'; grid.appendChild(pad); }
-  const byDay={};
-  sessions.forEach(s=>{ const d=new Date(s.t); d.setHours(0,0,0,0); const key=d.getTime(); byDay[key]=(byDay[key]||0)+(s.isCardio?(s.duration||0)*100:(s.vol||0)); });
+  // shading is by volume, but a day counts as trained because a session was logged on it — a session logged with
+  // its weights left blank (0 lb moved) used to leave its day empty and drop out of the count. The count is
+  // sessions, as the label says, not distinct days.
+  const byDay={}, trained=new Set(), startT=start.getTime(); let count=0;
+  sessions.forEach(s=>{ const d=new Date(s.t); d.setHours(0,0,0,0); const key=d.getTime(); byDay[key]=(byDay[key]||0)+(s.isCardio?(s.duration||0)*100:(s.vol||0)); trained.add(key); if(s.t>=startT) count++; });
   const maxV=Math.max(1,...Object.values(byDay));
-  let count=0;
   for(let i=0;i<days;i++){
     const d=new Date(start); d.setDate(d.getDate()+i); const key=d.getTime();
-    const v=byDay[key]||0; if(v>0) count++;
     const cell=document.createElement('i');
-    if(v>0){ const lvl=Math.max(1,Math.min(4,Math.ceil(v/maxV*4))); cell.className='h'+lvl; }
+    if(trained.has(key)){ const lvl=Math.max(1,Math.min(4,Math.ceil((byDay[key]||0)/maxV*4))); cell.className='h'+lvl; }
     grid.appendChild(cell);
   }
   document.getElementById('heatStat').innerHTML=`<b>${count}</b> sessions · 14 weeks`;
@@ -2397,12 +2452,12 @@ function renderHistory(){
   buildHeatmap();
   renderCalendar();
   const st=document.getElementById('histStats');
-  const week=Date.now()-7*864e5, month=Date.now()-30*864e5;
+  const week=weekStart(), month=Date.now()-30*864e5;
   const lifts=sessions.filter(s=>!s.isCardio), cardio=sessions.filter(s=>s.isCardio);
   const thisWeek=lifts.filter(s=>s.t>=week).length, thisMonth=lifts.filter(s=>s.t>=month).length;
   const cardioWeekMin=cardio.filter(s=>s.t>=week).reduce((a,b)=>a+(b.duration||0),0);
-  const wk=[]; for(let i=7;i>=0;i--){ const a=Date.now()-(i+1)*7*864e5,b=Date.now()-i*7*864e5; wk.push(lifts.filter(s=>s.t>=a&&s.t<b).length); }
-  st.innerHTML=`<div class="stat"><div class="v ${thisWeek>=4?'up':''}">${thisWeek}<span style="font-size:12px;color:var(--text-dim)"> / 4</span></div><div class="l">lifting sessions, last 7 days</div></div>
+  const wk=weekRanges(8).map(([a,b])=>lifts.filter(s=>s.t>=a&&s.t<b).length);
+  st.innerHTML=`<div class="stat"><div class="v ${thisWeek>=4?'up':''}">${thisWeek}<span style="font-size:12px;color:var(--text-dim)"> / 4</span></div><div class="l">lifting sessions this week</div></div>
     <div class="stat"><div class="v">${thisMonth}</div><div class="l">lifting, last 30 days</div>${sparkline(wk,'var(--green)')}</div>
     <div class="stat" style="grid-column:1 / -1"><div class="v ${cardioWeekMin>=60?'up':''}">${cardioWeekMin} min</div><div class="l">conditioning this week (2-3 sessions/wk is the target)</div></div>`;
 }
@@ -2415,7 +2470,7 @@ function renderConditioning(){
   if(!cardio.length){ card.style.display='none'; return; }
   card.style.display='';
   // weekly minutes for last 8 weeks
-  const wk=[]; for(let i=7;i>=0;i--){ const a=Date.now()-(i+1)*7*864e5,b=Date.now()-i*7*864e5; wk.push(cardio.filter(s=>s.t>=a&&s.t<b).reduce((x,y)=>x+(y.duration||0),0)); }
+  const wk=weekRanges(8).map(([a,b])=>cardio.filter(s=>s.t>=a&&s.t<b).reduce((x,y)=>x+(y.duration||0),0));
   const first4=cardio.slice(0,Math.max(1,Math.ceil(cardio.length/2))), recent4=cardio.slice(-Math.max(1,Math.ceil(cardio.length/2)));
   const avgRpeEarly=first4.filter(s=>s.rpe).length?first4.filter(s=>s.rpe).reduce((a,b)=>a+b.rpe,0)/first4.filter(s=>s.rpe).length:null;
   const avgRpeRecent=recent4.filter(s=>s.rpe).length?recent4.filter(s=>s.rpe).reduce((a,b)=>a+b.rpe,0)/recent4.filter(s=>s.rpe).length:null;
@@ -2778,15 +2833,21 @@ function equipAllowed(a){ return !a.equip || settings.equipFilter.includes(a.equ
 // both passes prefer a pick training the same primary sub-muscle as the slot's own pick (a rear-delt slot stays
 // rear delt when cables and machines are ruled out) before falling back to anything for the muscle group.
 function bestPickFor(slot, exclude){
-  const want=recoveryKeysFor(CURATED_BY_NAME[slot.pick]||{name:slot.pick})[0];
-  const same=a=>want&&recoveryKeysFor(a)[0]===want;
+  const anchorName=(CURATED_BY_NAME[slot.pick]||{name:slot.pick}).name;
+  const want=recoveryKeysFor(CURATED_BY_NAME[slot.pick]||{name:slot.pick})[0], wantIso=ISOLATION_MOVE.test(anchorName);
+  const same=a=>!!want&&recoveryKeysFor(a)[0]===want;
+  const fit=a=>same(a)&&ISOLATION_MOVE.test(a.name)===wantIso; // same sub-muscle AND same kind of movement (a fly stays a fly)
   const ok=a=>equipAllowed(a)&&!exclude.has(a.name);
   const curated=(ALTS[slot.key]||[]).filter(ok);
-  const simple=(a,b)=>(same(b)-same(a))||(a.name.split(' ').length-b.name.split(' ').length)||(a.name.length-b.name.length);
-  const cur=curated.find(same); if(cur) return cur;
-  // a same-sub-muscle library lift beats a curated one for the wrong sub-muscle, but only a real movement —
-  // the unfiltered library passes below would happily hand back a stretch
-  const libSame=want&&FULL_CATALOG.filter(a=>a.key===slot.key&&ok(a)&&same(a)&&LIB_MOVEMENT.test(a.name)&&!LIB_HARD_EXCLUDE.test(a.name)).sort(simple)[0];
+  const simple=(a,b)=>(fit(b)-fit(a))||(same(b)-same(a))||(a.name.split(' ').length-b.name.split(' ').length)||(a.name.length-b.name.length);
+  // a library lift that fits beats a curated one that doesn't, but only a real movement — the unfiltered library
+  // passes below would happily hand back a stretch. Order: curated fit, library fit, curated same sub-muscle,
+  // library same sub-muscle, then anything for the muscle group.
+  const realLib=a=>a.key===slot.key&&ok(a)&&LIB_MOVEMENT.test(a.name)&&!LIB_HARD_EXCLUDE.test(a.name);
+  const cur=curated.find(fit); if(cur) return cur;
+  const libFit=FULL_CATALOG.filter(a=>realLib(a)&&fit(a)).sort(simple)[0];
+  if(!libFit){ const cs=curated.find(same); if(cs) return cs; }
+  const libSame=libFit||FULL_CATALOG.filter(a=>realLib(a)&&same(a)).sort(simple)[0];
   if(!libSame&&curated[0]) return curated[0];
   const direct=libSame||FULL_CATALOG.filter(a=>a.key===slot.key&&ok(a)).sort(simple)[0];
   const lib=direct || FULL_CATALOG.filter(a=>a.key!==slot.key&&a.m.includes(slot.key)&&ok(a)).sort(simple)[0];
