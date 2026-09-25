@@ -42,7 +42,10 @@
   .daytab.suggested{border-color:rgba(255,93,59,.55);background:rgba(255,93,59,.09);color:var(--text);}
   .daytab.suggested.active{background:var(--panel-raised);}
   .daytab.active{border-color:var(--accent);color:var(--text);background:var(--panel-raised);}
-  .daytab .dsub{display:block;font-size:11px;margin-top:2px;opacity:.75;}
+  .daytab .dsub{display:block;font-size:11px;margin-top:2px;}
+  /* the subtitle is its tab's label at 75%, but only where that label is bright: on the plain tabs the label is already
+     --text-dim, and 75% of that fell to 3.5:1 */
+  .daytab.active .dsub,.daytab.suggested .dsub{opacity:.75;}
   main{padding:16px 16px calc(var(--foot-h,80px) + 24px);max-width:560px;margin:0 auto;}
   .banner{display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(214,160,58,.1);border:1px solid rgba(214,160,58,.4);border-radius:4px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--amber);}
   .banner .linkbtn{color:var(--amber);white-space:nowrap;}
