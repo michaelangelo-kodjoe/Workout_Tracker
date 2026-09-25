@@ -98,17 +98,24 @@
   .daytab.t-upper,.daytab.t-lower,.daytab.t-cardio,.day-card.t-upper,.day-card.t-lower{box-shadow:inset 0 3px 0 var(--dc);}
   .badge.plateau{background:rgba(214,160,58,.15);color:var(--amber);border:1px solid rgba(214,160,58,.4);margin-left:6px;margin-right:0;}
   .linkbtn{font-size:11px;color:var(--light);text-decoration:underline;cursor:pointer;}
-  .groupheader{font-size:11px;color:var(--text-dim);letter-spacing:.5px;margin:18px 0 8px 2px;}
-  .exercise{background:var(--panel);border:1px solid var(--line);border-radius:4px;margin-bottom:10px;overflow:hidden;}
+  .groupheader{font-size:12px;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;margin:16px 0 8px;}
+  .exercise{background:var(--panel);border:1px solid var(--line);border-radius:8px;margin-bottom:12px;overflow:hidden;}
   .exercise.complete{border-color:var(--done-line);background:var(--done-bg);}
-  .ex-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;}
-  .ex-name{font-size:15px;} .ex-target{font-size:11px;color:var(--text-dim);margin-top:2px;}
+  .ex-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;cursor:pointer;}
+  .ex-name{font-size:17px;line-height:1.25;} .ex-target{font-size:13px;color:var(--text-dim);margin-top:4px;}
   .sug{color:var(--accent);} .e1rm{color:var(--text-dim);}
-  .ex-check{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--line);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:transparent;}
+  .ex-check{width:24px;height:24px;box-sizing:border-box;border-radius:50%;border:1.5px solid var(--field-line,#646a76);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:transparent;}
   .exercise.complete .ex-check{background:var(--done-line);border-color:var(--done-line);color:#cfe8cf;}
-  .ex-body{padding:0 14px 14px;display:none;} .exercise.open .ex-body{display:block;}
-  .howto{margin:0 0 10px;} .howto-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;}
-  .howto-btn{color:var(--light);cursor:pointer;text-decoration:underline;} .demo-link{color:var(--text-dim);text-decoration:none;}
+  .ex-body{padding:0 16px 16px;display:none;} .exercise.open .ex-body{display:block;}
+  .howto{margin:0 0 12px;}
+  /* the card's tools: How to · Swap · Demo as one segmented bar (see toolsBar()) */
+  .ex-tools{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--panel-raised);}
+  .ex-tools>*{height:44px;display:flex;align-items:center;justify-content:center;gap:6px;margin:0;padding:0 6px;background:none;border:0;color:var(--text);font:13px 'Georgia',serif;text-decoration:none;cursor:pointer;white-space:nowrap;}
+  .ex-tools>*+*{border-left:1px solid var(--line);}
+  .ex-tools>*:active{background:var(--panel);}
+  .ex-tools svg{width:16px;height:16px;flex-shrink:0;fill:none;stroke:var(--light);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  .ex-tools .ext{color:var(--text-dim);font-size:12px;}
+  .ex-tools [aria-expanded="true"]{background:var(--panel);}
   .cue{display:none;font-size:12px;line-height:1.55;color:var(--text);margin-top:8px;padding:10px 12px;background:var(--panel-raised);border-left:2px solid var(--light);border-radius:3px;}
   /* two-photo form demo: two stacked frames, the top one blinking in on a hard cut (steps(1), no crossfade)
      to fake motion between a start and end position — the same trick most fitness apps use for "exercise gifs".
@@ -128,14 +135,15 @@
   .setgrid{display:grid;grid-template-columns:28px 1fr 1fr 30px 20px;gap:8px;align-items:center;margin-bottom:6px;font-size:13px;}
   .setrm{color:var(--text-dim);cursor:pointer;font-size:13px;text-align:center;}
   .setrm:hover{color:var(--danger);}
-  .setgrid.head{color:var(--text-dim);font-size:11px;} .setnum{color:var(--text-dim);}
+  .setgrid.head{color:var(--text-dim);font-size:11px;letter-spacing:.06em;text-transform:uppercase;text-align:center;}
+  .setnum{color:var(--text-dim);text-align:center;font-family:'Menlo',monospace;}
   .setgrid.head .bw-note{opacity:.75;margin-left:3px;white-space:nowrap;}
   /* hold counter for timed sets (planks etc.): a stopwatch under the set row that fills the seconds field */
   .hold-row{display:flex;align-items:center;gap:10px;margin:-2px 0 10px 36px;font-size:12px;}
   .hold-t{font-family:'Menlo',monospace;font-size:20px;color:var(--light);min-width:56px;}
   .hold-t.hit{color:var(--green);}
   .hold-target{color:var(--text-dim);font-size:11px;flex:1;}
-  .setgrid input{width:100%;background:var(--panel-raised);border:1px solid var(--line);border-radius:3px;color:var(--text);padding:7px 6px;font-size:14px;text-align:center;}
+  .setgrid input{width:100%;background:var(--panel-raised);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:7px 6px;font-size:14px;text-align:center;}
   .setgrid input:disabled{color:var(--text-dim);-webkit-text-fill-color:var(--text-dim);cursor:not-allowed;}
   input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)!important;}
   .setdone{width:28px;height:28px;border-radius:6px;border:1px solid var(--line);background:var(--panel-raised);color:transparent;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;padding:0;}
@@ -143,15 +151,28 @@
   @keyframes popcheck{0%{transform:scale(.7);}55%{transform:scale(1.18);}100%{transform:scale(1);}}
   .delta-pill{display:inline-flex;align-items:center;gap:3px;font-family:'Menlo',monospace;font-size:11.5px;color:var(--green);background:rgba(92,187,111,.12);border:1px solid rgba(92,187,111,.35);padding:2px 7px;border-radius:10px;margin-top:6px;}
   .first-log-note{font-size:11.5px;line-height:1.55;color:var(--light);background:rgba(79,163,209,.08);border-left:2px solid var(--light);padding:9px 11px;border-radius:3px;margin:0 0 10px;}
-  .addset{font-size:11px;color:var(--text-dim);cursor:pointer;text-decoration:underline;margin-top:2px;}
-  .notes{width:100%;margin-top:10px;background:var(--panel-raised);border:1px solid var(--line);border-radius:3px;color:var(--text);padding:8px;font-size:12px;font-family:'Georgia',serif;resize:vertical;min-height:34px;}
+  .addset{display:block;width:100%;height:44px;margin:4px 0 0;padding:0;border:1px dashed var(--field-line,#646a76);border-radius:8px;background:none;color:var(--text-dim);font:13px 'Georgia',serif;cursor:pointer;}
+  .addset:active{background:var(--panel-raised);}
+  .notes{width:100%;margin-top:12px;background:var(--panel-raised);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:12px;font-size:12px;font-family:'Georgia',serif;resize:vertical;min-height:34px;}
   .last-time{font-size:11.5px;color:var(--text-dim);margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);}
   /* plate breakdown for bar-loaded lifts: what to put on each side for the weight in play */
   .plates{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11.5px;color:var(--text-dim);margin:0 0 10px;}
   .plates b{color:var(--text);font-weight:normal;font-family:'Menlo',monospace;}
-  .plates .bar-sel{padding:3px 6px;font-size:11px;}
+  /* bar-loaded lifts: "Plates per side" and its value on the left, the bar chip on the right, fixed-bar toggle below */
+  .bar-plates{display:flex;flex-direction:column;align-items:stretch;gap:0;margin:0 0 4px;}
+  .plates-row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;}
+  .plates-info{display:flex;flex-direction:column;gap:2px;min-width:0;}
+  .plates-cap{font-size:12px;color:var(--text-dim);}
+  .bar-plates .plates-txt{font-size:13px;color:var(--text-dim);}
+  .bar-plates .plates-txt b{font-size:17px;}
+  .plates-note{font-size:12px;color:var(--text-dim);}
+  .bar-chip{position:relative;display:inline-flex;align-items:center;gap:6px;flex-shrink:0;height:36px;padding:0 10px 0 12px;border:1px solid var(--field-line,#646a76);border-radius:8px;background:var(--panel-raised);color:var(--text);font:13px 'Menlo',monospace;cursor:pointer;}
+  .bar-chip svg{width:14px;height:14px;fill:none;stroke:var(--text-dim);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+  .bar-chip select{position:absolute;left:0;right:0;top:-5px;bottom:-5px;width:100%;opacity:0;font-size:16px;cursor:pointer;}
+  .bar-chip:has(select:focus-visible){outline:2px solid var(--light);outline-offset:2px;}
+  .plates .fixed-chk,.plates .mach-plate-chk{margin:0;gap:10px;font-size:13px;color:var(--text-dim);}
+  .plates .fixed-chk input,.plates .mach-plate-chk input{margin:0;width:18px;height:18px;}
   .plates .mach-base{padding:3px 6px;font-size:11px;text-align:center;}
-  .plates .mach-plate-chk{font-size:11px;}
   footer{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--line);padding:0 16px calc(2px + env(safe-area-inset-bottom));z-index:9;}
   .footer-inner{max-width:528px;margin:0 auto;}
   .finish-btn{width:100%;background:var(--accent);color:#1a0d08;border:none;border-radius:4px;padding:13px;font-size:13.5px;letter-spacing:.3px;cursor:pointer;}
@@ -268,7 +289,7 @@
   .rpe-dot{flex:1;text-align:center;padding:8px 0;border-radius:3px;border:1px solid var(--line);background:var(--panel-raised);font-size:12px;cursor:pointer;color:var(--text-dim);}
   .rpe-dot.on{background:var(--light);border-color:var(--light);color:#0d1a22;}
   .rir-row{display:flex;align-items:center;gap:5px;margin:-2px 0 8px;flex-wrap:wrap;}
-  .rir-lbl{font-size:11px;color:var(--text-dim);margin-right:2px;}
+  .rir-lbl{font-size:12px;color:var(--text-dim);margin-right:2px;white-space:nowrap;}
   .rir-pill{font-size:11px;color:var(--text-dim);background:var(--panel-raised);border:1px solid var(--line);border-radius:10px;padding:3px 9px;cursor:pointer;}
   .rir-pill.on{background:var(--light);border-color:var(--light);color:#0d1a22;}
   .ctype{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 4px;}
@@ -391,11 +412,9 @@
   .setgrid input{height:44px;}
   .setdone{width:44px;height:44px;border-radius:8px;font-size:16px;}
   .setrm{display:flex;align-items:center;justify-content:center;height:44px;font-size:15px;}
-  .linkbtn,.howto-btn,.demo-link{padding:18px 0;margin:-18px 0;}
-  .howto-btn{padding-left:6px;padding-right:6px;margin-left:-6px;margin-right:-6px;}
+  .linkbtn{padding:18px 0;margin:-18px 0;}
   #editLink,#cardioHistLink{padding:18px 13px;margin:-18px -13px;}
   /* "+ add a set" sits right under the last set row: its box starts below that row instead of reaching into it */
-  .addset{display:inline-block;position:relative;padding:16px 0;margin:4px 0 -8px;} /* positioned, so the block after it can't paint over its lower edge */
   .reset-link{padding:16px 0;margin:8px 0 -16px;}
   .cal-nav{padding:18px 19px;margin:-18px -11px;}
   .btn{min-height:44px;}
@@ -409,7 +428,7 @@
   /* reps-left pills share the row's width and stay compact to look at; an invisible ::after takes the tappable area
      to 44 px tall, into spacing the row keeps clear above and below */
   .rir-row{margin:8px 0 8px;flex-wrap:nowrap;}
-  .rir-pill{position:relative;flex:1 1 0;text-align:center;padding:10px 0;}
+  .rir-pill{position:relative;flex:1 1 0;text-align:center;padding:10px 0;border-radius:17px;}
   .rir-pill::after{content:'';position:absolute;inset:-6px -2px;}
   /* 44 px day cells: a slimmer card inset and gap leave the 7 columns room at phone width */
   .cal-wrap{padding:14px 10px;} .cal-grid,.cal-dow{gap:2px;}
@@ -1441,6 +1460,18 @@ function plateBreakdown(totalDisp, barDisp){
   const loaded=barDisp+2*out.reduce((a,b)=>a+b,0);
   return {plates:out, loaded, short:Math.abs(loaded-totalDisp)>0.01};
 }
+// the card's tool bar: how to (toggles the cue), swap, and a demo search — one 44 px segmented control, each an icon
+// and a word, so the three read as the card's tools rather than three differently styled links
+const TOOL_ICONS={
+  how:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5h.01"/></svg>',
+  swap:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h14l-3.5-3.5M20 16H6l3.5 3.5"/></svg>',
+  demo:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg>'
+};
+function toolsBar(howOpen, demoHref, withSwap, howId){
+  return `<div class="ex-tools"><button type="button" class="tool-howto"${howId?` id="${howId}"`:''} aria-expanded="${howOpen}">${TOOL_ICONS.how}<span>${howOpen?'Hide':'How to'}</span></button>`+
+    (withSwap?`<button type="button" class="tool-swap">${TOOL_ICONS.swap}<span>Swap</span></button>`:'')+
+    `<a class="tool-demo" href="${demoHref}" target="_blank" rel="noopener" aria-label="Demo videos (opens YouTube)">${TOOL_ICONS.demo}<span>Demo</span><span class="ext" aria-hidden="true">↗</span></a></div>`;
+}
 function plateText(totalLb, ex, baseLbOverride){
   // baseLbOverride lets a plate-loaded machine (no standard "bar weight" to assume) pass its own typed-in base/sled
   // weight instead of the barbell-family default lookup
@@ -1450,7 +1481,7 @@ function plateText(totalLb, ex, baseLbOverride){
   const b=plateBreakdown(total,bar);
   if(b.belowBar) return `${total} ${u} is under the ${bar} ${u} ${isMachine?'base weight':'bar'}`;
   const per=b.plates.length?b.plates.join(' + '):'nothing';
-  return `per side: <b>${per}</b>${b.short?` (loads ${b.loaded} ${u}, nearest to ${total})`:''}`;
+  return `<b>${per}</b>${b.short?` <span class="plates-note">loads ${b.loaded} ${u}, nearest to ${total}</span>`:''}`;
 }
 function dedupeSortByT(arr){ const seen=new Set(); const out=[]; [...arr].sort((a,b)=>a.t-b.t).forEach(x=>{ if(!seen.has(x.t)){ seen.add(x.t); out.push(x); } }); return out; }
 function latestBW(){ return bodyweight.length?bodyweight[bodyweight.length-1].w:null; }
@@ -1919,7 +1950,7 @@ function render(){
   if(currentDay==='cardio'){ renderTabs(); renderBody(); renderCardioForm(); return; }
   renderTabs(); renderBody();
   const day=PROGRAM.find(d=>d.id===currentDay);
-  document.getElementById('dayLabel').innerHTML=`<span><span class="badge ${dayType(day)}">${day.sub}</span>${day.name} Day</span><span class="linkbtn" id="editLink">edit</span>`;
+  document.getElementById('dayLabel').innerHTML=`<span><span class="badge ${dayType(day)}">${day.sub}</span>${day.name} Day</span><span class="linkbtn" id="editLink">Edit</span>`;
   document.getElementById('editLink').onclick=()=>{ setView('more'); document.getElementById('edDay').value=currentDay; renderEditor(); };
   const list=document.getElementById('exerciseList'); list.innerHTML='';
   let allComplete=true,lastGroup=null;
@@ -1968,29 +1999,31 @@ function render(){
     // (matching how the cue text itself only becomes true content once "how to" has actually been clicked) this
     // only creates the two image tags once state.howto is true, never just from the card being open.
     const gifHtml=(exGif&&state.howto)?`<div class="exgif"><img src="${exGif[0]}" loading="lazy" alt=""><img src="${exGif[1]}" loading="lazy" alt=""></div>`:'';
-    howto.innerHTML=`<div class="howto-row"><span><span class="howto-btn">${state.howto?'hide':'how to'}</span><span class="howto-btn swap-btn" style="margin-left:14px">swap ↔</span></span><a class="demo-link" href="${yt}" target="_blank" rel="noopener">watch demo ↗</a></div><div class="howto-demo">${gifHtml}<div class="cue">${ex.cue||'No cue written yet.'}</div></div>`;
-    howto.querySelector('.howto-btn').onclick=()=>{ state.howto=!state.howto; render(); };
-    howto.querySelector('.swap-btn').onclick=()=>openSwap(currentDay, ex); body.appendChild(howto);
+    howto.innerHTML=`${toolsBar(!!state.howto, yt, true)}<div class="howto-demo">${gifHtml}<div class="cue">${ex.cue||'No cue written yet.'}</div></div>`;
+    howto.querySelector('.tool-howto').onclick=()=>{ state.howto=!state.howto; render(); };
+    howto.querySelector('.tool-swap').onclick=()=>openSwap(currentDay, ex); body.appendChild(howto);
     let updatePlates=null;
     if(barKind(ex)){
       // some gyms rack pre-loaded fixed-weight barbells (curl bars, EZ bars) instead of a loadable bar and plates —
       // exactly like a dumbbell, there's nothing to load, just a bar to grab closest to the target weight. Marked
       // per exercise (not globally: a gym can have both loadable barbells and a fixed-weight curl-bar rack) and
       // remembered in settings.fixedBar, same pattern as the assumed bar weight override.
-      const pl=document.createElement('div'); pl.className='plates';
+      const pl=document.createElement('div'); pl.className='plates bar-plates';
       const opts=settings.unit==='kg'?BAR_OPTIONS_KG:BAR_OPTIONS_LB; const curBar=dispWeight(barWeightLb(ex));
       let fixed=!!(settings.fixedBar||{})[ex.name];
-      pl.innerHTML=`<span class="plates-txt"></span><select class="in bar-sel" title="bar weight">${opts.map(o=>`<option value="${o}"${Math.abs(o-curBar)<0.01?' selected':''}>${o} ${unitLabel()} bar</option>`).join('')}${opts.some(o=>Math.abs(o-curBar)<0.01)?'':`<option value="${curBar}" selected>${curBar} ${unitLabel()} bar</option>`}</select><label class="chk fixed-chk"><input type="checkbox"${fixed?' checked':''}> fixed-weight bar</label>`;
-      const txtEl=pl.querySelector('.plates-txt'), barSel=pl.querySelector('.bar-sel');
+      // the bar weight is a compact chip; the real <select> sits invisibly on top of it at 16 px, so tapping opens the
+      // native picker and iOS doesn't zoom the page the way it does for a field under 16 px
+      pl.innerHTML=`<div class="plates-row"><div class="plates-info"><span class="plates-cap"></span><span class="plates-txt"></span></div><label class="bar-chip"><span class="bar-chip-txt">${curBar} ${unitLabel()} bar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><select class="bar-sel" aria-label="bar weight">${opts.map(o=>`<option value="${o}"${Math.abs(o-curBar)<0.01?' selected':''}>${o} ${unitLabel()} bar</option>`).join('')}${opts.some(o=>Math.abs(o-curBar)<0.01)?'':`<option value="${curBar}" selected>${curBar} ${unitLabel()} bar</option>`}</select></label></div><label class="chk fixed-chk"><input type="checkbox"${fixed?' checked':''}>Fixed-weight bar (no plates)</label>`;
+      const txtEl=pl.querySelector('.plates-txt'), barSel=pl.querySelector('.bar-sel'), capEl=pl.querySelector('.plates-cap'), chip=pl.querySelector('.bar-chip');
       // the weight in play: the last edited set weight, else the suggestion
       let liveLb=(state.sets.find(x=>x.w!=='')||{}).w; if(liveLb===undefined||liveLb==='') liveLb=(typeof sug==='number'&&sug>0)?sug:null;
-      const syncFixedUI=()=>{ barSel.style.display=fixed?'none':''; };
+      const syncFixedUI=()=>{ chip.style.display=fixed?'none':''; capEl.textContent=fixed?'Fixed-weight bar':'Plates per side'; };
       updatePlates=lb=>{
         if(lb!=null&&lb!=='') liveLb=lb;
         if(fixed){ txtEl.textContent=(liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)))?`grab the fixed bar closest to ${dispWeight(parseFloat(liveLb))} ${unitLabel()}`:'enter a weight to see which fixed bar to grab'; return; }
         txtEl.innerHTML=(liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)))?plateText(parseFloat(liveLb),ex):'enter a weight to see plates per side';
       };
-      barSel.onchange=e=>{ settings.barWeights=settings.barWeights||{}; settings.barWeights[ex.name]=storeWeight(e.target.value); sset('settings',settings); updatePlates(); };
+      barSel.onchange=e=>{ settings.barWeights=settings.barWeights||{}; settings.barWeights[ex.name]=storeWeight(e.target.value); sset('settings',settings); pl.querySelector('.bar-chip-txt').textContent=e.target.selectedOptions[0].textContent; updatePlates(); };
       pl.querySelector('.fixed-chk input').onchange=e=>{ fixed=e.target.checked; settings.fixedBar=settings.fixedBar||{}; settings.fixedBar[ex.name]=fixed; sset('settings',settings); syncFixedUI(); updatePlates(); };
       syncFixedUI(); updatePlates(); body.appendChild(pl);
     } else if(ex.equip==='machine'){
@@ -2004,7 +2037,7 @@ function render(){
       const pl=document.createElement('div'); pl.className='plates';
       let on=!!(settings.machinePlates||{})[ex.name];
       const baseLb=(settings.machineBase||{})[ex.name]||0;
-      pl.innerHTML=`<label class="chk mach-plate-chk"><input type="checkbox"${on?' checked':''}> plate-loaded machine</label><span class="plates-txt"></span><input class="in mach-base" type="number" inputmode="decimal" placeholder="0" value="${baseLb?dispWeight(baseLb):''}" title="machine's own base/sled weight before plates" style="width:64px;display:${on?'':'none'}">`;
+      pl.innerHTML=`<label class="chk mach-plate-chk"><input type="checkbox"${on?' checked':''}>Plate-loaded machine</label><span class="plates-txt"></span><input class="in mach-base" type="number" inputmode="decimal" placeholder="0" value="${baseLb?dispWeight(baseLb):''}" title="machine's own base/sled weight before plates" style="width:64px;display:${on?'':'none'}">`;
       const txtEl=pl.querySelector('.plates-txt'), baseIn=pl.querySelector('.mach-base');
       txtEl.style.display=on?'':'none';
       let liveLb=(state.sets.find(x=>x.w!=='')||{}).w; if(liveLb===undefined||liveLb==='') liveLb=(typeof sug==='number'&&sug>0)?sug:null;
@@ -2012,7 +2045,7 @@ function render(){
         if(!on) return;
         if(lb!=null&&lb!=='') liveLb=lb;
         const base=parseFloat(baseIn.value)||0;
-        txtEl.innerHTML=(liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)))?plateText(parseFloat(liveLb),{...ex,step:5},storeWeight(base))+' <span class="note-sm" style="display:inline">(est., assumes 1:1 loading)</span>':'enter a weight to see plates per side';
+        txtEl.innerHTML=(liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)))?'per side: '+plateText(parseFloat(liveLb),{...ex,step:5},storeWeight(base))+' <span class="note-sm" style="display:inline">(est., assumes 1:1 loading)</span>':'enter a weight to see plates per side';
       };
       pl.querySelector('.mach-plate-chk input').onchange=e=>{ on=e.target.checked; settings.machinePlates=settings.machinePlates||{}; settings.machinePlates[ex.name]=on; sset('settings',settings); txtEl.style.display=on?'':'none'; baseIn.style.display=on?'':'none'; updatePlates(); };
       baseIn.oninput=e=>{ settings.machineBase=settings.machineBase||{}; settings.machineBase[ex.name]=storeWeight(e.target.value); sset('settings',settings); updatePlates(); };
@@ -2028,7 +2061,7 @@ function render(){
     // extra load, s.w the total, so every weight-based calculation — and the lift's bodyweight-only history — carries on
     const bwLoaded=ex.start===0, bwNow=bwLoaded?latestBW():null;
     const lastAdd=bwLoaded?Math.max(0,...((lastByName[ex.name]||{}).sets||[]).map(x=>parseFloat(x.add)||0)):0;
-    const hr=document.createElement('div'); hr.className='setgrid head'; hr.innerHTML=`<div>set</div><div>${bwLoaded?`+ added${bwNow!=null?` <span class="bw-note">bw ${dispWeight(bwNow)}</span>`:''}`:'weight'}</div><div>${timed?'seconds':'reps'}</div><div></div><div></div>`; body.appendChild(hr);
+    const hr=document.createElement('div'); hr.className='setgrid head'; hr.innerHTML=`<div>Set</div><div>${bwLoaded?`+ Added${bwNow!=null?` <span class="bw-note">bw ${dispWeight(bwNow)}</span>`:''}`:`Weight · ${unitLabel()}`}</div><div>${timed?'Seconds':'Reps'}</div><div>Done</div><div></div>`; body.appendChild(hr);
     const bwTotal=s=>bwNow==null?'':Math.round((bwNow+(parseFloat(s.add)||0))*10)/10;
     state.sets.forEach((s,i)=>{
       if(bwLoaded) s.w=bwTotal(s);
@@ -2056,15 +2089,15 @@ function render(){
       }
       if(s.done){
         const rir=document.createElement('div'); rir.className='rir-row'; rir.setAttribute('role','group'); rir.setAttribute('aria-label',`Set ${i+1} reps left in tank`);
-        rir.innerHTML=`<span class="rir-lbl" aria-hidden="true">reps left in tank</span>`+[0,1,2,3,4].map(v=>`<span class="rir-pill${s.rir===v?' on':''}" data-v="${v}" aria-pressed="${s.rir===v}" aria-label="${v===4?'4 or more reps':v===1?'1 rep':v+' reps'} left">${v===4?'4+':v}</span>`).join('');
+        rir.innerHTML=`<span class="rir-lbl" aria-hidden="true">Reps left</span>`+[0,1,2,3,4].map(v=>`<span class="rir-pill${s.rir===v?' on':''}" data-v="${v}" aria-pressed="${s.rir===v}" aria-label="${v===4?'4 or more reps':v===1?'1 rep':v+' reps'} left">${v===4?'4+':v}</span>`).join('');
         rir.querySelectorAll('.rir-pill').forEach(p=>p.onclick=()=>{ const v=parseInt(p.dataset.v); s.rir=(s.rir===v)?null:v; touchDayStart(); sset('today:'+currentDay,todayData); render(); });
         body.appendChild(rir);
       }
     });
-    const addset=document.createElement('div'); addset.className='addset'; addset.textContent='+ add a set';
+    const addset=document.createElement('button'); addset.type='button'; addset.className='addset'; addset.textContent='+ Add set';
     addset.onclick=()=>{ const prev=state.sets[state.sets.length-1]; state.sets.push({w:ex.start===0?(latestBW()??''):'',r:'',done:false,rir:null,...(ex.start===0&&prev&&prev.add?{add:prev.add}:{})}); sset('today:'+currentDay,todayData); render(); }; body.appendChild(addset);
 
-    const ta=document.createElement('textarea'); ta.className='notes'; ta.placeholder='notes (seat setting, how it felt…)'; ta.value=notes[histKey(ex)]||'';
+    const ta=document.createElement('textarea'); ta.className='notes'; ta.placeholder='Notes — seat setting, how it felt'; ta.value=notes[histKey(ex)]||'';
     ta.oninput=e=>{ notes[histKey(ex)]=e.target.value; sset('notes',notes); }; body.appendChild(ta);
 
     const lastToShow=saved?saved.sets:ex.seed;
@@ -2388,7 +2421,7 @@ function renderCardioForm(){
     <div class="ex-body" style="display:block">
       <div class="ctype" id="ctypeRow">${CARDIO_TYPES.map(x=>`<span data-k="${x.key}" class="${x.key===cardioDraft.type?'on':''}">${x.label}</span>`).join('')}</div>
       <div class="cue">${t.desc}</div>
-      <div class="howto-row" style="margin-top:8px"><span class="howto-btn" id="cardioHowtoBtn">${cardioDraft.showHow?'hide how to':'how to'}</span><a class="demo-link" href="${yt}" target="_blank" rel="noopener">watch demo ↗</a></div>
+      <div style="margin-top:12px">${toolsBar(!!cardioDraft.showHow, yt, false, 'cardioHowtoBtn')}</div>
       ${cardioDraft.showHow?`<div class="cue" style="display:block">${t.cue}</div>`:''}
       <div class="field-label">duration (minutes)</div>
       <div class="setgrid" style="grid-template-columns:1fr"><input type="number" inputmode="numeric" id="cDur" placeholder="e.g. 30" value="${cardioDraft.duration}"></div>
@@ -3289,7 +3322,7 @@ document.addEventListener('focusout',e=>{
 // Nearly every tappable control is a div/span wired with onclick, which a keyboard or screen reader can't reach.
 // Tag them as buttons as they're rendered (render() rebuilds cards constantly, hence the observer) and let
 // Enter/Space fire the same click a tap would.
-const KB_CLICKABLE='.viewtab,.daytab,.day-card,.ex-head,.linkbtn,.howto-btn,.addset,.setdone,.setrm,.rpe-dot,.rir-pill,.ctype span,.eqchip,.cal-nav,.cal-cell.has-session,.str-split-card,.sess,.edrow .acts span,.reset-link';
+const KB_CLICKABLE='.viewtab,.daytab,.day-card,.ex-head,.linkbtn,.addset,.setdone,.setrm,.rpe-dot,.rir-pill,.ctype span,.eqchip,.cal-nav,.cal-cell.has-session,.str-split-card,.sess,.edrow .acts span,.reset-link';
 function tagClickables(root){
   const els=[...(root.matches(KB_CLICKABLE)?[root]:[]),...root.querySelectorAll(KB_CLICKABLE)];
   for(const el of els){
