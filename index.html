@@ -47,8 +47,10 @@
   .banner.info{background:rgba(79,163,209,.1);border-color:rgba(79,163,209,.4);color:var(--light);}
   .banner.info .linkbtn{color:var(--light);}
   .bodymap{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:12px 12px 10px;margin-bottom:18px;}
-  .recov-hero{background:linear-gradient(165deg,var(--panel-raised) 0%,#1a2b20 130%);border:1px solid var(--line);border-radius:6px;padding:14px 14px 12px;margin-bottom:14px;position:relative;overflow:hidden;}
-  .recov-hero::after{content:"";position:absolute;top:-40px;right:-40px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(92,187,111,.22),transparent 70%);}
+  /* --rc is the ring's red/amber/green (set in the recovery render), so the card's tint and corner glow match the score;
+     browsers without color-mix() keep the original green */
+  .recov-hero{--rc:var(--green);background:linear-gradient(165deg,var(--panel-raised) 0%,#1a2b20 130%);background:linear-gradient(165deg,var(--panel-raised) 0%,color-mix(in srgb,var(--rc) 16%,var(--bg)) 130%);border:1px solid var(--line);border-radius:6px;padding:14px 14px 12px;margin-bottom:14px;position:relative;overflow:hidden;}
+  .recov-hero::after{content:"";position:absolute;top:-40px;right:-40px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(92,187,111,.22),transparent 70%);background:radial-gradient(circle,color-mix(in srgb,var(--rc) 24%,transparent),transparent 70%);}
   .recov-top{display:flex;align-items:center;justify-content:center;gap:14px;position:relative;}
   .recov-ring{flex:0 0 auto;}
   .recov-score{font-family:'Menlo','SF Mono',monospace;font-size:13px;text-align:left;}
@@ -1652,6 +1654,7 @@ function renderBody(){
   // the ring and number take the body map's own traffic-light colours, so "22% ready" no longer reads as all-clear green
   const ringCol=avg>=0.8?'var(--green)':avg>=0.5?'var(--amber)':'#c94a3a';
   document.getElementById('recovRingArc').style.stroke=ringCol; document.getElementById('recovPct').style.color=ringCol;
+  document.getElementById('recovHero').style.setProperty('--rc',ringCol);
   const sub=document.getElementById('recovSub'), hint=document.getElementById('tapHint'), list=document.getElementById('recovList'), toggle=document.getElementById('recovDetailToggle');
 
   // a fully-recovered muscle can still be reached to mark it sore, so the toggle stays available either way.
