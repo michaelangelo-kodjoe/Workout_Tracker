@@ -154,6 +154,19 @@
      the DOM wins, which put it behind the day sheet. It always needs to win, so it sits above every other overlay,
      including the celebration screen's z-index:40. */
   #confirmBg{z-index:50;} #confirmSheet{z-index:51;}
+  /* recovery warning: one tall sheet that lists every recovering muscle. It grows with the list up to nearly the full
+     screen; past that only the list scrolls, so the two choices stay in view however many muscles a day hits. */
+  #fatigueSheet.on{display:flex;flex-direction:column;max-height:calc(100dvh - 40px - env(safe-area-inset-top));overflow:hidden;}
+  .fat-head{display:flex;justify-content:space-between;font-family:'Menlo',monospace;font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:var(--text-dim);margin-top:6px;padding-bottom:5px;border-bottom:1px solid var(--line);}
+  .fat-list{flex:0 1 auto;min-height:0;overflow-y:auto;margin-bottom:12px;}
+  .fat-row{display:grid;grid-template-columns:minmax(0,1fr) 72px 64px;gap:10px;align-items:center;padding:9px 6px 9px 0;border-bottom:1px dashed var(--line);font-size:13.5px;}
+  .fat-row:last-child{border-bottom:none;}
+  .fat-bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;}
+  .fat-bar i{display:block;height:100%;background:#c94a3a;}
+  .fat-bar i.recovering{background:var(--amber);}
+  .fat-left{font-family:'Menlo',monospace;font-size:12px;color:var(--text-dim);text-align:right;white-space:nowrap;}
+  .fat-btns{display:flex;flex-direction:column;gap:8px;margin-top:auto;padding-top:14px;}
+  .fat-btns .btn{min-height:48px;font-size:13.5px;}
   .sheet{display:none;position:fixed;left:0;right:0;bottom:0;max-height:78vh;overflow-y:auto;background:var(--panel);border-top:1px solid var(--line);border-radius:10px 10px 0 0;padding:14px 16px calc(16px + env(safe-area-inset-bottom));z-index:31;}
   .sheet.on,.sheet-bg.on{display:block;}
   .sheet-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
@@ -594,11 +607,14 @@
 <div class="celebrate-bg" id="onboardBg"><div class="celebrate" id="onboardInner"></div></div>
 <div class="sheet-bg" id="fatigueBg"></div>
 <div class="sheet" id="fatigueSheet">
-  <div class="sheet-head"><div><div style="font-size:15px">Still recovering</div><div id="fatigueSub" style="font-size:11px;color:var(--text-dim);margin-top:2px"></div></div><span class="linkbtn" id="fatigueClose">close</span></div>
-  <div id="fatigueList"></div>
-  <div class="row" style="margin-top:16px;gap:10px;flex-wrap:nowrap">
-    <button class="btn" id="fatigueCancel" style="flex:1">stick with suggested</button>
-    <button class="btn primary" id="fatigueProceed" style="flex:1">do it anyway</button>
+  <div class="sheet-head"><div><div style="font-size:16px" id="fatigueTitle">Still recovering</div><div id="fatigueSub" style="font-size:12px;color:var(--text-dim);margin-top:4px;line-height:1.45"></div></div><span class="linkbtn" id="fatigueClose">close</span></div>
+  <div class="fat-head"><span>muscle</span><span>ready in</span></div>
+  <div class="fat-list" id="fatigueList"></div>
+  <div><span class="linkbtn" id="fatigueWhyToggle">why recovery matters</span></div>
+  <div class="plateau-tip" id="fatigueWhy" style="display:none;margin:10px 0 0">Training a muscle again before it's recovered means fewer quality reps at your working weight, faster fatigue within the set, and — if it becomes a pattern — a higher risk of strain. Muscle rebuilds stronger during rest, not just during the lift, which is why these windows exist.</div>
+  <div class="fat-btns">
+    <button class="btn primary" id="fatigueCancel"></button>
+    <button class="btn" id="fatigueProceed"></button>
   </div>
 </div>
 <div class="sheet-bg" id="confirmBg"></div>
@@ -1803,12 +1819,14 @@ function dayFatigueConflicts(day){
 async function attemptLoadDay(dayId, andThen){
   if(dayId===currentDay){ if(andThen) andThen(); return; }
   const suggested=suggestedDayId();
-  if(suggested==='cardio' && dayId!=='cardio'){ showCardioSuggestion(dayId, andThen); return; }
   const day=PROGRAM.find(d=>d.id===dayId);
   if(!day || dayId===suggested){ await loadDay(dayId); if(andThen) andThen(); return; }
+  // a lift day whose muscles are still recovering gets one sheet that covers both "not recovered" and "X is
+  // suggested instead" — it used to open the cardio suggestion first and then this list as a second sheet on top
   const conflicts=dayFatigueConflicts(day);
-  if(!conflicts.length){ await loadDay(dayId); if(andThen) andThen(); return; }
-  showFatigueWarning(day,conflicts,async()=>{ await loadDay(dayId); if(andThen) andThen(); });
+  if(conflicts.length){ showFatigueWarning(day,conflicts,suggested,andThen); return; }
+  if(suggested==='cardio'){ showCardioSuggestion(dayId, andThen); return; }
+  await loadDay(dayId); if(andThen) andThen();
 }
 function showCardioSuggestion(dayId, andThen){
   const day=PROGRAM.find(d=>d.id===dayId); if(!day) return;
@@ -1816,25 +1834,31 @@ function showCardioSuggestion(dayId, andThen){
   const copy=cardioReasonCopy(); document.getElementById('cardioSuggestSub').textContent=copy.sub; document.getElementById('cardioSuggestBody').textContent=copy.body;
   document.getElementById('cardioSuggestBg').classList.add('on'); document.getElementById('cardioSuggestSheet').classList.add('on');
   document.getElementById('cardioSuggestGo').onclick=async()=>{ closeCardioSuggest(); await loadDay('cardio'); if(andThen) andThen(); };
-  document.getElementById('cardioSuggestLift').onclick=async()=>{
-    closeCardioSuggest();
-    const conflicts=dayFatigueConflicts(day);
-    if(conflicts.length){ showFatigueWarning(day,conflicts,async()=>{ await loadDay(dayId); if(andThen) andThen(); }); return; }
-    await loadDay(dayId); if(andThen) andThen();
-  };
+  document.getElementById('cardioSuggestLift').onclick=async()=>{ closeCardioSuggest(); await loadDay(dayId); if(andThen) andThen(); };
 }
 function closeCardioSuggest(){ document.getElementById('cardioSuggestBg').classList.remove('on'); document.getElementById('cardioSuggestSheet').classList.remove('on'); }
 document.getElementById('cardioSuggestClose').onclick=closeCardioSuggest;
 document.getElementById('cardioSuggestBg').onclick=closeCardioSuggest;
-function showFatigueWarning(day,conflicts,onProceed){
-  document.getElementById('fatigueSub').textContent=`Switching to ${day.name} ${day.sub} instead of your suggested day`;
-  const note=`Training a muscle again before it's recovered means fewer quality reps at your working weight, faster fatigue within the set, and — if it becomes a pattern — a higher risk of strain. Muscle rebuilds stronger during rest, not just during the lift, which is why these windows exist.`;
-  const rows=conflicts.map(c=>`<div class="edrow"><div><div>${RECOVERY_LABEL[c.m]}</div><div class="m">${c.pct}% recovered · ~${fmtTimeLeft(c.left)} left</div></div></div>`).join('');
-  document.getElementById('fatigueList').innerHTML=`<div class="plateau-tip" style="margin-bottom:4px">${note}</div>${rows}`;
+// every recovering muscle, longest wait first; each bar is that wait relative to the longest one in the list
+function showFatigueWarning(day,conflicts,suggested,andThen){
+  const n=conflicts.length, dayName=`${day.name} ${day.sub}`;
+  const sug=suggested==='cardio'?null:PROGRAM.find(d=>d.id===suggested);
+  const sugName=sug?`${sug.name} ${sug.sub}`:'cardio';
+  document.getElementById('fatigueTitle').textContent=n===1?`${dayName} hits a muscle that isn't ready`:`${dayName} hits muscles that aren't ready`;
+  document.getElementById('fatigueSub').textContent=`${n===1?'1 of its muscles is':`${n} of its muscles are`} still recovering. ${sug?sugName:'Cardio'} is today's suggestion.`;
+  const rows=[...conflicts].sort((a,b)=>b.left-a.left), longest=Math.max(...rows.map(c=>c.left),1);
+  document.getElementById('fatigueList').innerHTML=rows.map(c=>`<div class="fat-row"><span>${RECOVERY_LABEL[c.m]}</span>
+    <div class="fat-bar" title="${c.pct}% recovered"><i class="${c.pct>=50?'recovering':''}" style="width:${Math.max(4,Math.round(c.left/longest*100))}%"></i></div>
+    <span class="fat-left">${fmtTimeLeft(c.left)}</span></div>`).join('');
+  document.getElementById('fatigueList').scrollTop=0;
+  document.getElementById('fatigueWhy').style.display='none';
   document.getElementById('fatigueBg').classList.add('on'); document.getElementById('fatigueSheet').classList.add('on');
-  document.getElementById('fatigueProceed').onclick=()=>{ closeFatigue(); onProceed(); };
-  document.getElementById('fatigueCancel').onclick=closeFatigue;
+  const cancel=document.getElementById('fatigueCancel'), proceed=document.getElementById('fatigueProceed');
+  cancel.textContent=`Do ${sugName} instead`; proceed.textContent=`Lift ${dayName} anyway`;
+  cancel.onclick=async()=>{ closeFatigue(); if(suggested!==currentDay) await loadDay(suggested); if(andThen) andThen(); };
+  proceed.onclick=async()=>{ closeFatigue(); await loadDay(day.id); if(andThen) andThen(); };
 }
+document.getElementById('fatigueWhyToggle').onclick=()=>{ const w=document.getElementById('fatigueWhy'); w.style.display=w.style.display==='none'?'block':'none'; };
 function closeFatigue(){ document.getElementById('fatigueBg').classList.remove('on'); document.getElementById('fatigueSheet').classList.remove('on'); }
 document.getElementById('fatigueClose').onclick=closeFatigue; document.getElementById('fatigueBg').onclick=closeFatigue;
 
