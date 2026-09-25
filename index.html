@@ -342,6 +342,24 @@
   .cal-dot.cardio{background:var(--green);}
   .cal-legend{display:flex;justify-content:center;gap:14px;margin-top:10px;font-size:11px;color:var(--text-dim);}
   .cal-legend span{display:inline-flex;align-items:center;gap:4px;}
+
+  /* ---------- touch targets ---------- */
+  /* everything here is tapped mid-set, often one-handed — aim for ~44px hit areas. Text links get padding cancelled
+     by an equal negative margin, which grows the tappable box without moving anything on screen. */
+  .viewtabs{margin-top:0;}
+  .viewtab{display:flex;align-items:flex-end;min-height:44px;padding-bottom:6px;}
+  .setgrid{grid-template-columns:28px 1fr 1fr 44px 32px;}
+  .setgrid input{height:44px;}
+  .setdone{width:44px;height:44px;border-radius:8px;font-size:16px;}
+  .setrm{display:flex;align-items:center;justify-content:center;height:44px;font-size:15px;}
+  .linkbtn,.howto-btn,.addset,.demo-link{padding:12px 0;margin:-12px 0;}
+  .addset{display:inline-block;}
+  .cal-nav{padding:12px 16px;margin:-12px -8px;}
+  .btn{min-height:40px;}
+  .rpe-dot{padding:12px 0;}
+  .rir-pill{padding:7px 12px;}
+  .eqchip{padding:9px 12px;}
+  .ctype span{padding:11px 14px;}
 </style>
 </head>
 <body>
