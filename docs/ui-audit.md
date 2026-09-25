@@ -46,7 +46,8 @@ Priority follows the skill's order: 1 Accessibility and 2 Touch are critical, 6 
   Fix: one shared `:active` treatment (opacity or background shift, ~100 ms) for buttons, pills and tabs.
 
 ### 6 · Typography & color (medium)
-- [ ] **11 px text carries key information.** The exercise target and weight suggestion ("3 x 6-10 · try 55 lb"),
+- [x] **11 px text carries key information.** — `251bc56` (six-step scale: 12 · 13 · 15 · 17 · 22 · 32; 11 px kept only
+  for uppercase letter-spaced labels and the calendar's plan tags). The exercise target and weight suggestion ("3 x 6-10 · try 55 lb"),
   e1RM, group headers, day-tab subtitles, bottom-nav labels and calendar tags are all 11 px; the skill's floor is 12 px.
   Fix: raise the 11 px tier to 12 px, and the target/suggestion line to ~13 px.
 - [ ] **No `color-scheme: dark`.** The app is dark-only, but without declaring it native controls (select menu,
@@ -55,6 +56,16 @@ Priority follows the skill's order: 1 Accessibility and 2 Touch are critical, 6 
 ### 7 · Animation (medium)
 - [ ] **Reduced motion misses the exercise demo animation.** `prefers-reduced-motion` covers the glow pulse, check pop
   and confetti, but the demo GIF frame flip (`exgifFlip`) keeps running.
+
+### Spacing & layout (from the ui-styling pass, 2026-09-25 — mockups approved)
+- [x] **Exercise card rebuilt** — `f87c08c`: How to · Swap · Demo segmented bar, bar-weight chip, centred column heads,
+  dashed + Add set, 16 px padding.
+- [x] **Text actions: one look per role** — `0f94dde`.
+- [x] **Home spacing and copy** — `b5910d6`: greeting no longer repeats the recovery text, equal-height day cards,
+  24 px between sections, readiness un-nested.
+- [x] **Spacing rhythm** — `251bc56`: 16 px card padding, 12 px between cards, 8 px corners, checkboxes on the text edge.
+- [ ] **Emoji as an icon:** the session-complete badge uses 💪 (the audit missed it — it only shows on the celebration
+  screen). Swap for an SVG to match the rest of the app.
 
 ## Passed
 - No emoji used as icons; bottom nav and controls use SVG.
