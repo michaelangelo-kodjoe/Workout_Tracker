@@ -360,6 +360,16 @@
   .rir-pill{padding:7px 12px;}
   .eqchip{padding:9px 12px;}
   .ctype span{padding:11px 14px;}
+
+  /* ---------- fields & focus ---------- */
+  /* --line is only 1.25:1 against a card, so field outlines all but vanished; --field-line clears 3:1. The suggested
+     weight lives in the placeholder, so it gets the readable dim token instead of the browser's 3.3:1 grey. */
+  :root{--field-line:#646a76;}
+  .setgrid input,.in,.notes,.setdone{border-color:var(--field-line);}
+  ::placeholder{color:var(--text-dim);opacity:1;}
+  input[type=checkbox]{accent-color:var(--accent);}
+  /* fields keep their accent-border focus from above; everything else gets a ring, but only for keyboard focus */
+  :focus-visible{outline:2px solid var(--light);outline-offset:2px;border-radius:3px;}
 </style>
 </head>
 <body>
