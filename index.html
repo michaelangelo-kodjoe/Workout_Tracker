@@ -90,7 +90,7 @@
   /* ---------- day types ---------- */
   /* each kind of day has its own colour — Upper violet, Lower teal, Cardio blue — so orange only ever means "act" (buttons,
      the current tab, today's pick). Day tabs and Home cards carry it as a top stripe; badges are tinted with it. */
-  .t-upper{--dc:var(--upper);--dc-bg:rgba(169,139,245,.12);} .t-lower{--dc:var(--lower);--dc-bg:rgba(56,183,168,.12);} .t-cardio{--dc:var(--cardio);--dc-bg:rgba(95,168,224,.12);}
+  .t-upper{--dc:var(--upper);--dc-bg:rgba(169,139,245,.12);} .t-lower{--dc:var(--lower);--dc-bg:rgba(56,183,168,.12);} .t-cardio{--dc:var(--cardio);--dc-bg:rgba(95,168,224,.12);} .cal-tag.t-other{--dc:var(--text-dim);}
   .badge.t-upper,.badge.t-lower,.badge.t-cardio{color:var(--dc);background:var(--dc-bg);border:1px solid var(--dc);}
   .daytab.t-upper,.daytab.t-lower,.daytab.t-cardio,.day-card.t-upper,.day-card.t-lower{box-shadow:inset 0 3px 0 var(--dc);}
   .badge.plateau{background:rgba(214,160,58,.15);color:var(--amber);border:1px solid rgba(214,160,58,.4);margin-left:6px;margin-right:0;}
@@ -374,10 +374,11 @@
   .cal-cell.today{box-shadow:inset 0 0 0 1px var(--accent);color:var(--text);}
   .cal-cell.has-session{cursor:pointer;}
   .cal-cell.has-session:active{opacity:.7;}
-  /* a letter per session type (U/L/C) on its day colour, so the calendar reads without telling colours apart */
-  .cal-dots{display:flex;gap:2px;}
+  /* the plan's initials (UH = Upper Heavy, LV = Lower Volume, C = cardio) on its day colour, so the calendar reads
+     without telling colours apart and Heavy and Volume days are told apart too */
+  .cal-dots{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;}
   .cal-tag{font-style:normal;font-family:'Menlo',monospace;font-size:11px;font-weight:bold;line-height:13px;padding:0 2px;border-radius:3px;background:var(--dc);color:#12141a;}
-  .cal-legend{display:flex;justify-content:center;gap:14px;margin-top:10px;font-size:11px;color:var(--text-dim);}
+  .cal-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 14px;margin-top:10px;font-size:11px;color:var(--text-dim);}
   .cal-legend span{display:inline-flex;align-items:center;gap:4px;}
 
   /* ---------- touch targets ---------- */
@@ -512,7 +513,7 @@
       <div class="cal-head"><span class="cal-nav" id="calPrev">‹</span><div class="cal-title" id="calTitle">—</div><span class="cal-nav" id="calNext">›</span></div>
       <div class="cal-dow"><i>S</i><i>M</i><i>T</i><i>W</i><i>T</i><i>F</i><i>S</i></div>
       <div class="cal-grid" id="calGrid"></div>
-      <div class="cal-legend"><span><i class="cal-tag t-upper">U</i>Upper</span><span><i class="cal-tag t-lower">L</i>Lower</span><span><i class="cal-tag t-cardio">C</i>Cardio</span></div>
+      <div class="cal-legend" id="calLegend"></div>
     </div>
     <div class="stats2" id="histStats"></div>
   </section>
@@ -2535,6 +2536,14 @@ function closeCalDaySheet(){
 }
 document.getElementById('calDaySheetClose').onclick=closeCalDaySheet;
 document.getElementById('calDayBg').onclick=closeCalDaySheet;
+// a session's plan, as the calendar tags it: one initial per word of the day and its focus ("Upper" + "Heavy" → UH,
+// a custom "Full Body" day → FB), cardio is C
+function sessionPlan(s){
+  if(s.isCardio) return {key:'cardio', tag:'C', label:'Cardio', type:'cardio'};
+  const label=[s.dayName,s.sub].filter(Boolean).join(' ');
+  const tag=label.split(/\s+/).filter(Boolean).slice(0,3).map(w=>w[0]).join('').toUpperCase();
+  return {key:label, tag, label, type:sessionType(s)||'other'};
+}
 function renderCalendar(){
   const base=new Date(); base.setDate(1); base.setHours(0,0,0,0); base.setMonth(base.getMonth()+calMonthOffset);
   const year=base.getFullYear(), month=base.getMonth();
@@ -2545,7 +2554,6 @@ function renderCalendar(){
   sessions.forEach(s=>{
     const d=new Date(s.t);
     if(d.getFullYear()!==year||d.getMonth()!==month) return;
-    if(!sessionType(s)) return;
     (sessionsByDay[d.getDate()]=sessionsByDay[d.getDate()]||[]).push(s);
   });
   const grid=document.getElementById('calGrid'); grid.innerHTML='';
@@ -2555,12 +2563,17 @@ function renderCalendar(){
     const cell=document.createElement('div'); cell.className='cal-cell';
     if(today.getFullYear()===year && today.getMonth()===month && today.getDate()===day) cell.classList.add('today');
     const daySessions=sessionsByDay[day]||[];
-    const daySessionTypes=new Set(daySessions.map(sessionType));
-    const types=['upper','lower','cardio'].filter(t=>daySessionTypes.has(t));
-    cell.innerHTML=`<span>${day}</span>${types.length?`<div class="cal-dots">${types.map(t=>`<i class="cal-tag t-${t}">${t[0].toUpperCase()}</i>`).join('')}</div>`:''}`;
+    const plans=[]; [...daySessions].sort((a,b)=>a.t-b.t).map(sessionPlan).forEach(p=>{ if(!plans.some(q=>q.key===p.key)) plans.push(p); });
+    cell.innerHTML=`<span>${day}</span>${plans.length?`<div class="cal-dots">${plans.map(p=>`<i class="cal-tag t-${p.type}" title="${p.label}">${p.tag}</i>`).join('')}</div>`:''}`;
+    if(plans.length) cell.setAttribute('aria-label',`${day}: ${plans.map(p=>p.label).join(', ')}`);
     if(daySessions.length){ cell.classList.add('has-session'); cell.onclick=()=>openCalDaySheet(new Date(year,month,day),daySessions); }
     grid.appendChild(cell);
   }
+  // legend: the current program's days in order, then any other plan logged this month (a renamed or removed day), cardio last
+  const legend=PROGRAM.map(d=>sessionPlan({dayName:d.name, sub:d.sub, isCardio:false}));
+  Object.values(sessionsByDay).flat().map(sessionPlan).forEach(p=>{ if(p.type!=='cardio'&&!legend.some(q=>q.key===p.key)) legend.push(p); });
+  legend.push(sessionPlan({isCardio:true}));
+  document.getElementById('calLegend').innerHTML=legend.map(p=>`<span><i class="cal-tag t-${p.type}">${p.tag}</i>${p.label}</span>`).join('');
 }
 document.getElementById('calPrev').onclick=()=>{ calMonthOffset--; renderCalendar(); };
 document.getElementById('calNext').onclick=()=>{ if(calMonthOffset<0){ calMonthOffset++; renderCalendar(); } };
