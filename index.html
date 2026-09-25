@@ -387,16 +387,32 @@
   /* ---------- touch targets ---------- */
   /* everything here is tapped mid-set, often one-handed — aim for ~44px hit areas. Text links get padding cancelled
      by an equal negative margin, which grows the tappable box without moving anything on screen. */
-  .setgrid{grid-template-columns:28px 1fr 1fr 44px 32px;}
+  .setgrid{grid-template-columns:28px 1fr 1fr 44px 44px;}
   .setgrid input{height:44px;}
   .setdone{width:44px;height:44px;border-radius:8px;font-size:16px;}
   .setrm{display:flex;align-items:center;justify-content:center;height:44px;font-size:15px;}
-  .linkbtn,.howto-btn,.addset,.demo-link{padding:12px 0;margin:-12px 0;}
-  .addset{display:inline-block;}
-  .cal-nav{padding:12px 16px;margin:-12px -8px;}
-  .btn{min-height:40px;}
-  .rpe-dot{padding:12px 0;}
-  .rir-pill{padding:7px 12px;}
+  .linkbtn,.howto-btn,.demo-link{padding:18px 0;margin:-18px 0;}
+  .howto-btn{padding-left:6px;padding-right:6px;margin-left:-6px;margin-right:-6px;}
+  #editLink,#cardioHistLink{padding:18px 13px;margin:-18px -13px;}
+  /* "+ add a set" sits right under the last set row: its box starts below that row instead of reaching into it */
+  .addset{display:inline-block;position:relative;padding:16px 0;margin:4px 0 -8px;} /* positioned, so the block after it can't paint over its lower edge */
+  .reset-link{padding:16px 0;margin:8px 0 -16px;}
+  .cal-nav{padding:18px 19px;margin:-18px -11px;}
+  .btn{min-height:44px;}
+  .rpe-dot{padding:13px 0;min-height:44px;} /* ten across a phone can't each be 44 wide; they reach 44 tall and 26 wide */
+  .ctype span{display:inline-flex;align-items:center;min-height:44px;}
+  .in{min-height:44px;}
+  .chk{min-height:44px;}
+  /* the editor's ↔ ↑ ↓ ✕ were bare glyphs, 7–15 px wide */
+  .edrow .acts{display:flex;}
+  .edrow .acts span{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;margin-left:0;}
+  /* reps-left pills share the row's width and stay compact to look at; an invisible ::after takes the tappable area
+     to 44 px tall, into spacing the row keeps clear above and below */
+  .rir-row{margin:8px 0 8px;flex-wrap:nowrap;}
+  .rir-pill{position:relative;flex:1 1 0;text-align:center;padding:10px 0;}
+  .rir-pill::after{content:'';position:absolute;inset:-6px -2px;}
+  /* 44 px day cells: a slimmer card inset and gap leave the 7 columns room at phone width */
+  .cal-wrap{padding:14px 10px;} .cal-grid,.cal-dow{gap:2px;}
   .eqchip{padding:9px 12px;}
   .ctype span{padding:11px 14px;}
   /* long Settings explanations fold behind a native disclosure, so each card shows its controls first */
