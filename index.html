@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Lift Log</title>
 <style>
-  :root{--danger:#f0619a;--bg:#14161a;--panel:#1c1f25;--panel-raised:#22262e;--line:#2c3038;--text:#e8e9ec;--text-dim:#8b8f98;--accent:#ff5d3b;--heavy:#ff5d3b;--light:#4fa3d1;--done-bg:#1f2a20;--done-line:#3d5c3f;--green:#5cbb6f;--amber:#d6a03a;--gold:#e8b23d;}
+  :root{--upper:#a98bf5;--lower:#38b7a8;--cardio:#5fa8e0;--danger:#f0619a;--bg:#14161a;--panel:#1c1f25;--panel-raised:#22262e;--line:#2c3038;--text:#e8e9ec;--text-dim:#8b8f98;--accent:#ff5d3b;--heavy:#ff5d3b;--light:#4fa3d1;--done-bg:#1f2a20;--done-line:#3d5c3f;--green:#5cbb6f;--amber:#d6a03a;--gold:#e8b23d;}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Georgia','Iowan Old Style',serif;min-height:100vh;}
   button,input,textarea,select{font-family:'Menlo','SF Mono',monospace;}
@@ -79,6 +79,12 @@
   .badge{display:inline-block;padding:2px 8px;border-radius:2px;font-size:11px;font-family:'Menlo',monospace;margin-right:8px;vertical-align:middle;}
   .badge.heavy{background:rgba(255,93,59,.15);color:var(--heavy);border:1px solid rgba(255,93,59,.4);}
   .badge.light{background:rgba(79,163,209,.15);color:var(--light);border:1px solid rgba(79,163,209,.4);}
+  /* ---------- day types ---------- */
+  /* each kind of day has its own colour — Upper violet, Lower teal, Cardio blue — so orange only ever means "act" (buttons,
+     the current tab, today's pick). Day tabs and Home cards carry it as a top stripe; badges are tinted with it. */
+  .t-upper{--dc:var(--upper);--dc-bg:rgba(169,139,245,.12);} .t-lower{--dc:var(--lower);--dc-bg:rgba(56,183,168,.12);} .t-cardio{--dc:var(--cardio);--dc-bg:rgba(95,168,224,.12);}
+  .badge.t-upper,.badge.t-lower,.badge.t-cardio{color:var(--dc);background:var(--dc-bg);border:1px solid var(--dc);}
+  .daytab.t-upper,.daytab.t-lower,.daytab.t-cardio,.day-card.t-upper,.day-card.t-lower{box-shadow:inset 0 3px 0 var(--dc);}
   .badge.plateau{background:rgba(214,160,58,.15);color:var(--amber);border:1px solid rgba(214,160,58,.4);margin-left:6px;margin-right:0;}
   .linkbtn{font-size:11px;color:var(--light);text-decoration:underline;cursor:pointer;}
   .groupheader{font-size:11px;color:var(--text-dim);letter-spacing:.5px;margin:18px 0 8px 2px;}
@@ -332,17 +338,17 @@
   .heat-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;}
   .heat-title{font-size:13px;}
   .heat-stat{font-family:'Menlo',monospace;font-size:11px;color:var(--text-dim);}
-  .heat-stat b{color:var(--accent);}
+  .heat-stat b{color:var(--green);}
   .heat-scroll{overflow-x:auto;padding-bottom:2px;}
   .heat-grid{display:grid;grid-template-rows:repeat(7,10px);grid-auto-flow:column;grid-auto-columns:10px;gap:3px;width:max-content;}
   .heat-grid i{border-radius:2px;background:var(--line);display:block;}
-  .heat-grid i.h1{background:rgba(255,93,59,.28);}
-  .heat-grid i.h2{background:rgba(255,93,59,.52);}
-  .heat-grid i.h3{background:rgba(255,93,59,.78);}
-  .heat-grid i.h4{background:var(--accent);}
+  .heat-grid i.h1{background:rgba(92,187,111,.28);}
+  .heat-grid i.h2{background:rgba(92,187,111,.52);}
+  .heat-grid i.h3{background:rgba(92,187,111,.78);}
+  .heat-grid i.h4{background:var(--green);}
   .heat-legend{display:flex;justify-content:flex-end;align-items:center;gap:4px;margin-top:10px;font-size:11px;color:var(--text-dim);}
   .heat-legend i{width:9px;height:9px;border-radius:2px;display:inline-block;background:var(--line);}
-  .heat-legend i.h4{background:var(--accent);}
+  .heat-legend i.h4{background:var(--green);}
 
   /* ---------- history calendar ---------- */
   .cal-wrap{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:14px;margin-bottom:14px;}
@@ -968,6 +974,8 @@ function slotExercise(slot, entry){
   if(entry.approx) ex.approx=true;
   return ex;
 }
+// colour class for a day: its name says whether it's an Upper or Lower day (see the "day types" styles)
+function dayType(d){ const n=(d&&d.name||'').toLowerCase(); return n.startsWith('upper')?'t-upper':n.startsWith('lower')?'t-lower':''; }
 function buildProgram(){ return TEMPLATE.map(d=>({id:d.id,name:d.name,sub:d.sub,badge:d.badge,factor:d.factor,exercises:d.slots.map(s=>slotExercise(s, CURATED_BY_NAME[s.pick]))})); }
 const DEFAULT_PROGRAM = buildProgram();
 let PROGRAM = JSON.parse(JSON.stringify(DEFAULT_PROGRAM));
@@ -1807,8 +1815,8 @@ const CARDIO_REASON_COPY={
 function cardioReasonCopy(){ const {reason,nextDay}=suggestedDay(); const c=CARDIO_REASON_COPY[reason]||CARDIO_REASON_COPY.backToBack; const f=v=>typeof v==='function'?v(nextDay):v; return {sub:f(c.sub),home:f(c.home),body:f(c.body)}; }
 function renderTabs(){ const w=document.getElementById('dayTabs'); w.innerHTML='';
   const suggested=suggestedDayId();
-  PROGRAM.forEach(d=>{ const el=document.createElement('div'); el.className='daytab'+(d.id===currentDay?' active':'')+(d.id===suggested?' suggested':''); if(d.id===suggested) el.title='next up in your rotation'; el.innerHTML=`${d.name}<span class="dsub">${d.sub}</span>`; el.onclick=()=>attemptLoadDay(d.id); w.appendChild(el); });
-  const c=document.createElement('div'); c.className='daytab cardio-tab'+(currentDay==='cardio'?' active':'')+(suggested==='cardio'?' suggested':''); if(suggested==='cardio') c.title='next up in your rotation'; c.innerHTML='Cardio<span class="dsub">endurance</span>'; c.onclick=()=>loadDay('cardio'); w.appendChild(c);
+  PROGRAM.forEach(d=>{ const el=document.createElement('div'); el.className='daytab '+dayType(d)+(d.id===currentDay?' active':'')+(d.id===suggested?' suggested':''); if(d.id===suggested) el.title='next up in your rotation'; el.innerHTML=`${d.name}<span class="dsub">${d.sub}</span>`; el.onclick=()=>attemptLoadDay(d.id); w.appendChild(el); });
+  const c=document.createElement('div'); c.className='daytab cardio-tab t-cardio'+(currentDay==='cardio'?' active':'')+(suggested==='cardio'?' suggested':''); if(suggested==='cardio') c.title='next up in your rotation'; c.innerHTML='Cardio<span class="dsub">endurance</span>'; c.onclick=()=>loadDay('cardio'); w.appendChild(c);
 }
 
 // ---------- fatigue disclaimer: warn (don't block) when picking a day whose muscles haven't recovered ----------
@@ -1874,7 +1882,7 @@ function render(){
   if(currentDay==='cardio'){ renderTabs(); renderBody(); renderCardioForm(); return; }
   renderTabs(); renderBody();
   const day=PROGRAM.find(d=>d.id===currentDay);
-  document.getElementById('dayLabel').innerHTML=`<span><span class="badge ${day.badge}">${day.sub}</span>${day.name} Day</span><span class="linkbtn" id="editLink">edit</span>`;
+  document.getElementById('dayLabel').innerHTML=`<span><span class="badge ${dayType(day)}">${day.sub}</span>${day.name} Day</span><span class="linkbtn" id="editLink">edit</span>`;
   document.getElementById('editLink').onclick=()=>{ setView('more'); document.getElementById('edDay').value=currentDay; renderEditor(); };
   const list=document.getElementById('exerciseList'); list.innerHTML='';
   let allComplete=true,lastGroup=null;
@@ -2070,7 +2078,7 @@ function renderHome(){
       <button class="start-cta" id="arrivalStart">go to cardio log</button>
       <div class="greet-sub" style="margin-top:14px">Feeling fine? Tap a lift day to train it instead.</div>
       <div class="day-carousel">
-        ${PROGRAM.map(d=>`<div class="day-card${d.id===currentDay?' today':''}" data-day="${d.id}">${d.id===currentDay?'<div class="ddot"></div>':''}<div class="dtag">${d.id===currentDay?'Today':''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub} · ${d.exercises.length} exercises</div></div>`).join('')}
+        ${PROGRAM.map(d=>`<div class="day-card ${dayType(d)}${d.id===currentDay?' today':''}" data-day="${d.id}">${d.id===currentDay?'<div class="ddot"></div>':''}<div class="dtag">${d.id===currentDay?'Today':''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub} · ${d.exercises.length} exercises</div></div>`).join('')}
       </div>`;
     document.getElementById('arrivalStart').onclick=()=>setView('log');
     panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day, ()=>setView('log')));
@@ -2110,7 +2118,7 @@ function renderHome(){
         <div class="greet-sub">${dayLine}${lastTxt}${recovTxt}${rotationTxt}</div>
       </div>
       <div class="day-carousel">
-        ${PROGRAM.map(d=>`<div class="day-card${d.id===currentDay?' today':''}" data-day="${d.id}">${d.id===currentDay?'<div class="ddot"></div>':''}<div class="dtag">${d.id===currentDay?'Today':''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub} · ${d.exercises.length} exercises</div></div>`).join('')}
+        ${PROGRAM.map(d=>`<div class="day-card ${dayType(d)}${d.id===currentDay?' today':''}" data-day="${d.id}">${d.id===currentDay?'<div class="ddot"></div>':''}<div class="dtag">${d.id===currentDay?'Today':''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub} · ${d.exercises.length} exercises</div></div>`).join('')}
       </div>
       <div class="preview-list">${previewRows}${moreRow}</div>
       <button class="start-cta" id="arrivalStart">${ctaTxt}</button>`;
@@ -2331,7 +2339,7 @@ const CARDIO_TYPES=[
 ];
 let cardioDraft={type:'zone2',duration:'',distance:'',rpe:0,notes:'',showHow:false};
 function renderCardioForm(){
-  document.getElementById('dayLabel').innerHTML=`<span><span class="badge light">endurance</span>Conditioning</span><span class="linkbtn" id="cardioHistLink">history</span>`;
+  document.getElementById('dayLabel').innerHTML=`<span><span class="badge t-cardio">endurance</span>Conditioning</span><span class="linkbtn" id="cardioHistLink">history</span>`;
   document.getElementById('cardioHistLink').onclick=()=>setView('history');
   const list=document.getElementById('exerciseList'); list.innerHTML='';
   const wrap=document.createElement('div'); wrap.className='exercise open';
@@ -2623,7 +2631,7 @@ function renderStrength(){
     const pastTxt=day.past?` · last done ${fmtDate(fullH[fullH.length-1].t)}, not in your program now`:'';
     const k=histKey(ex);
     const baseTxt=isTimedTarget(ex.target)?'':baselines[k]?` · <span class="linkbtn" data-act="baseline-undo">baseline reset ${fmtDate(baselines[k])} — undo</span>`:(fullH.length>=2?` · <span class="linkbtn" data-act="baseline">reset baseline</span>`:'');
-    row.innerHTML=`<div><div class="sn">${ex.name} <span class="badge ${day.badge}">${day.sub}</span>${plat?'<span class="badge plateau">plateau</span>':''}</div><div class="sd">${sdTxt}${shareTxt}${pastTxt}${baseTxt}</div><div class="sd" data-scrub-readout style="display:none"></div></div><div class="sp ${cls}">${p===null?'start':fmtPct(p)}</div>${h.length?`<div class="scrub" tabindex="0" aria-label="${ex.name} trend. Drag across it, or use the arrow keys, to see each session.">${sparkline([base,...h.map(x=>x.e1rm)],cls==='down'?'var(--amber)':'var(--green)',milestoneIdx)}</div>`:''}`;
+    row.innerHTML=`<div><div class="sn">${ex.name} <span class="badge ${dayType(day)}">${day.sub}</span>${plat?'<span class="badge plateau">plateau</span>':''}</div><div class="sd">${sdTxt}${shareTxt}${pastTxt}${baseTxt}</div><div class="sd" data-scrub-readout style="display:none"></div></div><div class="sp ${cls}">${p===null?'start':fmtPct(p)}</div>${h.length?`<div class="scrub" tabindex="0" aria-label="${ex.name} trend. Drag across it, or use the arrow keys, to see each session.">${sparkline([base,...h.map(x=>x.e1rm)],cls==='down'?'var(--amber)':'var(--green)',milestoneIdx)}</div>`:''}`;
     const rowWrap=row.querySelector('.scrub');
     if(rowWrap){
       // point 0 is the baseline itself (from pre-app seed numbers or the first session), so it has no set to show.
