@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Lift Log</title>
 <style>
-  :root{--bg:#14161a;--panel:#1c1f25;--panel-raised:#22262e;--line:#2c3038;--text:#e8e9ec;--text-dim:#8b8f98;--accent:#ff5d3b;--heavy:#ff5d3b;--light:#4fa3d1;--done-bg:#1f2a20;--done-line:#3d5c3f;--green:#5cbb6f;--amber:#d6a03a;--gold:#e8b23d;}
+  :root{--danger:#f0619a;--bg:#14161a;--panel:#1c1f25;--panel-raised:#22262e;--line:#2c3038;--text:#e8e9ec;--text-dim:#8b8f98;--accent:#ff5d3b;--heavy:#ff5d3b;--light:#4fa3d1;--done-bg:#1f2a20;--done-line:#3d5c3f;--green:#5cbb6f;--amber:#d6a03a;--gold:#e8b23d;}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Georgia','Iowan Old Style',serif;min-height:100vh;}
   button,input,textarea,select{font-family:'Menlo','SF Mono',monospace;}
@@ -110,7 +110,7 @@
   .plateau-tip{font-size:11.5px;line-height:1.5;color:var(--amber);margin:0 0 10px;padding:8px 10px;background:rgba(214,160,58,.08);border-left:2px solid var(--amber);border-radius:3px;}
   .setgrid{display:grid;grid-template-columns:28px 1fr 1fr 30px 20px;gap:8px;align-items:center;margin-bottom:6px;font-size:13px;}
   .setrm{color:var(--text-dim);cursor:pointer;font-size:13px;text-align:center;}
-  .setrm:hover{color:var(--accent);}
+  .setrm:hover{color:var(--danger);}
   .setgrid.head{color:var(--text-dim);font-size:11px;} .setnum{color:var(--text-dim);}
   .setgrid.head .bw-note{opacity:.75;margin-left:3px;white-space:nowrap;}
   /* hold counter for timed sets (planks etc.): a stopwatch under the set row that fills the seconds field */
@@ -222,7 +222,11 @@
   .in{background:var(--panel-raised);border:1px solid var(--line);border-radius:3px;color:var(--text);padding:7px 8px;font-size:13px;}
   .btn{background:var(--panel-raised);border:1px solid var(--line);border-radius:3px;color:var(--text);padding:7px 12px;font-size:12px;cursor:pointer;}
   .btn.primary{background:var(--accent);color:#1a0d08;border-color:var(--accent);}
-  .btn.danger{color:var(--accent);}
+  /* destructive actions get their own rose, not the orange action colour: ΔE2000 25 from --accent for normal vision and
+     22-35 under red-green colour blindness, so "delete" never looks like "go". It's also outlined where an action
+     button is filled, which keeps the two apart even for the rare blue-yellow blindness the hue alone doesn't cover. */
+  .btn.danger{color:var(--danger);border-color:var(--danger);background:transparent;}
+  .btn.primary.danger{background:transparent;color:var(--danger);border-width:1.5px;font-weight:bold;}
   .sess{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:10px 14px;margin-bottom:8px;cursor:pointer;}
   .sess .sh{display:flex;justify-content:space-between;font-size:13px;} .sess .sm{font-size:11px;color:var(--text-dim);margin-top:3px;}
   .sess .sdet{display:none;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);font-size:11.5px;line-height:1.7;}
@@ -238,7 +242,7 @@
   .edrow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line);font-size:13px;}
   .edrow .m{font-size:11.5px;color:var(--text-dim);}
   .edrow .acts span{cursor:pointer;color:var(--light);font-size:14px;margin-left:10px;}
-  .edrow .acts span.x{color:var(--accent);}
+  .edrow .acts span.x{color:var(--danger);}
   .cardio-tab{border-style:dashed;}
   .rpe-row{display:flex;gap:6px;margin-top:6px;}
   .rpe-dot{flex:1;text-align:center;padding:8px 0;border-radius:3px;border:1px solid var(--line);background:var(--panel-raised);font-size:12px;cursor:pointer;color:var(--text-dim);}
@@ -1504,11 +1508,12 @@ function showToast(m){ const t=document.getElementById('toast'); t.textContent=m
 // for a web app added to the home screen (standalone display mode) — the call returns immediately with no dialog
 // ever shown, which looks exactly like a dead button. Every yes/no confirmation in the app goes through this sheet
 // instead, so it behaves the same whether Lift Log is a browser tab or installed to the home screen.
-function confirmSheet(message, okLabel, cancelLabel){
+function confirmSheet(message, okLabel, cancelLabel, danger){
   return new Promise(resolve=>{
     document.getElementById('confirmMsg').textContent=message;
     const okBtn=document.getElementById('confirmOkBtn'), cancelBtn=document.getElementById('confirmCancelBtn');
     okBtn.textContent=okLabel||'confirm'; cancelBtn.textContent=cancelLabel||'cancel';
+    okBtn.classList.toggle('danger',!!danger); // anything that deletes or overwrites reads as danger, not as the go-ahead orange
     const bg=document.getElementById('confirmBg'), sheet=document.getElementById('confirmSheet');
     const done=v=>{ bg.classList.remove('on'); sheet.classList.remove('on'); okBtn.onclick=null; cancelBtn.onclick=null; bg.onclick=null; resolve(v); };
     okBtn.onclick=()=>done(true); cancelBtn.onclick=()=>done(false); bg.onclick=()=>done(false);
@@ -2421,7 +2426,7 @@ async function rederiveAfterSessionChange(names, dayId, t){
 }
 async function deleteSession(s){
   const label=s.isCardio?`${s.ctypeLabel} on ${fmtDate(s.t)}`:`${s.dayName} ${s.sub} on ${fmtDate(s.t)}`;
-  if(!await confirmSheet(`Delete ${label}? Its sets come out of your history and progress numbers. This cannot be undone.`, 'delete')) return false;
+  if(!await confirmSheet(`Delete ${label}? Its sets come out of your history and progress numbers. This cannot be undone.`, 'delete', null, true)) return false;
   const i=sessionIndex(s); if(i<0) return false;
   sessions.splice(i,1); await sset('sessions',sessions);
   if(s.isCardio){ renderHeaderStats(); } else await rederiveAfterSessionChange(Object.keys(s.ex||{}), s.dayId, s.t);
@@ -2747,7 +2752,7 @@ function renderEditor(){
     ren.onclick=()=>openSwap(day.id, ex);
     up.onclick=()=>{ if(i>0){ day.exercises.splice(i-1,0,day.exercises.splice(i,1)[0]); saveProgram(); } };
     dn.onclick=()=>{ if(i<day.exercises.length-1){ day.exercises.splice(i+1,0,day.exercises.splice(i,1)[0]); saveProgram(); } };
-    x.onclick=async()=>{ if(await confirmSheet(`Remove ${ex.name} from ${day.name} ${day.sub}?`, 'remove')){ day.exercises.splice(i,1); saveProgram(); } };
+    x.onclick=async()=>{ if(await confirmSheet(`Remove ${ex.name} from ${day.name} ${day.sub}?`, 'remove', null, true)){ day.exercises.splice(i,1); saveProgram(); } };
     list.appendChild(r);
   });
   const mus=document.getElementById('adMuscles'); if(!mus.children.length) mus.innerHTML=Object.keys(MUSCLE_LABEL).map(k=>`<label class="chk"><input type="checkbox" value="${k}">${MUSCLE_LABEL[k]}</label>`).join('');
@@ -2763,7 +2768,7 @@ document.getElementById('adBtn').onclick=()=>{
   day.exercises.push({group,name,target,m,seed:null,start,step,cue}); saveProgram();
   ['adName','adGroup','adTarget','adStart','adStep','adCue'].forEach(id=>document.getElementById(id).value=''); document.querySelectorAll('#adMuscles input').forEach(i=>i.checked=false); showToast('added');
 };
-document.getElementById('edReset').onclick=async()=>{ if(await confirmSheet('Reset all four days to the recommended program for your equipment? Your logged data stays.', 'reset')){ PROGRAM=buildProgram(); applyEquipPicks(PROGRAM); await sset('program',PROGRAM); document.getElementById('edDay').innerHTML=''; renderEditor(); showToast('program reset'); } };
+document.getElementById('edReset').onclick=async()=>{ if(await confirmSheet('Reset all four days to the recommended program for your equipment? Your logged data stays.', 'reset', null, true)){ PROGRAM=buildProgram(); applyEquipPicks(PROGRAM); await sset('program',PROGRAM); document.getElementById('edDay').innerHTML=''; renderEditor(); showToast('program reset'); } };
 
 let lastBackup=0;
 async function doExport(silent){
@@ -2902,7 +2907,7 @@ document.getElementById('importFile').onchange=async e=>{
   }catch(err){ showToast('that file is not a Lift Log backup'); }
   e.target.value='';
 };
-document.getElementById('wipeBtn').onclick=async()=>{ if(await confirmSheet('Erase all workouts, history and settings on this device?', 'erase')&&await confirmSheet('Really erase? This cannot be undone.', 'erase everything')){ for(const k of KEYS) await sset(k,null); location.reload(); } };
+document.getElementById('wipeBtn').onclick=async()=>{ if(await confirmSheet('Erase all workouts, history and settings on this device?', 'erase', null, true)&&await confirmSheet('Really erase? This cannot be undone.', 'erase everything', null, true)){ for(const k of KEYS) await sset(k,null); location.reload(); } };
 
 // ---------- swap ----------
 function closeSheet(){ document.getElementById('sheet').classList.remove('on'); document.getElementById('sheetBg').classList.remove('on'); }
