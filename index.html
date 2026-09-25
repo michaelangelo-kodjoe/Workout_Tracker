@@ -51,16 +51,15 @@
   .banner .linkbtn{color:var(--amber);white-space:nowrap;}
   .banner.info{background:rgba(79,163,209,.1);border-color:rgba(79,163,209,.4);color:var(--light);}
   .banner.info .linkbtn{color:var(--light);}
-  .bodymap{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:12px 12px 10px;margin-bottom:18px;}
-  /* --rc is the ring's red/amber/green (set in the recovery render), so the card's tint and corner glow match the score;
-     browsers without color-mix() keep the original green */
-  .recov-hero{--rc:var(--green);background:linear-gradient(165deg,var(--panel-raised) 0%,#1a2b20 130%);background:linear-gradient(165deg,var(--panel-raised) 0%,color-mix(in srgb,var(--rc) 16%,var(--bg)) 130%);border:1px solid var(--line);border-radius:6px;padding:14px 14px 12px;margin-bottom:14px;position:relative;overflow:hidden;}
-  .recov-hero::after{content:"";position:absolute;top:-40px;right:-40px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(92,187,111,.22),transparent 70%);background:radial-gradient(circle,color-mix(in srgb,var(--rc) 24%,transparent),transparent 70%);}
-  .recov-top{display:flex;align-items:center;justify-content:center;gap:14px;position:relative;}
+  .bodymap{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:24px;}
+  /* the readiness score heads its card rather than sitting in a second box inside it; the ring and number carry
+     the red/amber/green, and a rule separates it from the body diagram */
+  .recov-hero{padding:0 0 16px;margin-bottom:16px;border-bottom:1px solid var(--line);position:relative;}
+  .recov-top{display:flex;align-items:center;justify-content:flex-start;gap:16px;position:relative;}
   .recov-ring{flex:0 0 auto;}
-  .recov-score{font-family:'Menlo','SF Mono',monospace;font-size:13px;text-align:left;}
-  .recov-score b{font-size:26px;color:var(--green);display:block;line-height:1;}
-  .recov-sub{font-size:11px;color:var(--text-dim);margin-top:8px;line-height:1.5;position:relative;text-align:center;}
+  .recov-score{font-size:15px;text-align:left;}
+  .recov-score b{font-family:'Menlo','SF Mono',monospace;font-size:32px;font-weight:normal;color:var(--green);display:block;line-height:1.1;}
+  .recov-sub{font-size:13px;color:var(--text-dim);margin-top:12px;line-height:1.5;position:relative;text-align:left;}
   .figures{display:flex;justify-content:space-around;gap:8px;}
   .figures svg{width:100%;max-width:154px;height:auto;max-height:310px;}
   .figures .cap{text-align:center;font-size:11px;color:var(--text-dim);margin-top:2px;}
@@ -332,27 +331,28 @@
   .cel-cta{width:100%;max-width:320px;background:var(--accent);color:#1a0d08;border:none;border-radius:4px;padding:14px;font-size:13.5px;font-family:'Menlo',monospace;letter-spacing:.3px;cursor:pointer;position:relative;z-index:2;}
 
   /* ---------- arrival panel: greeting + day carousel, and first-open empty hero ---------- */
-  .greet-wrap{padding:2px 2px 4px;}
-  .greet-eyebrow{font-size:11px;color:var(--text-dim);letter-spacing:.3px;}
-  .greet-h1{font-size:21px;margin:5px 0 3px;}
-  .greet-sub{font-size:12px;color:var(--text-dim);line-height:1.5;}
-  .day-carousel{display:flex;gap:10px;overflow-x:auto;padding:16px 2px 4px;margin:0 -2px;}
+  .greet-wrap{padding:0;}
+  .greet-eyebrow{font-size:12px;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;}
+  .greet-h1{font-size:22px;line-height:1.25;margin:4px 0;}
+  .greet-sub{font-size:13px;color:var(--text-dim);line-height:1.5;}
+  .day-carousel{display:flex;gap:8px;overflow-x:auto;padding:24px 2px 4px;margin:0 -2px;}
   /* snap card-by-card and hide the scrollbar, which otherwise painted over the cards' bottom edge */
   .day-carousel{scroll-snap-type:x mandatory;scrollbar-width:none;padding-bottom:8px;}
   .day-carousel::-webkit-scrollbar{display:none;}
   .day-card{scroll-snap-align:start;}
-  .day-card{flex:0 0 118px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px 12px 10px;position:relative;cursor:pointer;}
+  .day-card{flex:0 0 124px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;position:relative;cursor:pointer;}
   .day-card.today{border-color:var(--accent);background:linear-gradient(160deg,var(--panel-raised),rgba(255,93,59,.1));}
-  .day-card .dtag{font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:var(--text-dim);min-height:11px;}
+  .day-card .dtag{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);min-height:14px;}
   .day-card.today .dtag{color:var(--accent);}
-  .day-card .dname{font-size:15px;margin:4px 0 2px;}
-  .day-card .dsub{font-size:11px;color:var(--text-dim);}
+  .day-card .dname{font-size:17px;margin:2px 0;}
+  .day-card .dsub{font-size:12px;color:var(--text-dim);line-height:1.4;}
   .day-card .ddot{position:absolute;top:11px;right:11px;width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px rgba(255,93,59,.8);}
-  .preview-list{margin:18px 2px 0;}
-  .preview-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px dashed var(--line);font-size:12.5px;}
-  .preview-row:last-child{border-bottom:none;}
-  .preview-row .pt{font-family:'Menlo',monospace;font-size:11.5px;color:var(--text-dim);}
-  .start-cta{margin-top:18px;display:block;width:100%;background:var(--accent);color:#1a0d08;border:none;border-radius:4px;padding:14px;font-size:13.5px;font-family:'Menlo',monospace;letter-spacing:.3px;cursor:pointer;}
+  .preview-list{margin:16px 0 0;}
+  .preview-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);font-size:15px;}
+  .preview-row .pt{font-family:'Menlo',monospace;font-size:13px;color:var(--text-dim);white-space:nowrap;}
+  .preview-more{display:inline-block;margin-top:12px;}
+  #arrivalPanel{margin-bottom:24px;}
+  .start-cta{margin-top:24px;display:block;width:100%;background:var(--accent);color:#1a0d08;border:none;border-radius:4px;padding:14px;font-size:13.5px;font-family:'Menlo',monospace;letter-spacing:.3px;cursor:pointer;}
   /* first-launch builder */
   .build-eq{display:flex;flex-wrap:wrap;gap:6px;margin:14px 2px 2px;}
   .eqchip{font-size:11.5px;font-family:'Menlo',monospace;padding:6px 10px;border:1px solid var(--line);border-radius:14px;color:var(--text-dim);cursor:pointer;background:var(--panel);user-select:none;}
@@ -1477,6 +1477,8 @@ function toolsBar(howOpen, demoHref, withSwap, howId){
     (withSwap?`<button type="button" class="tool-swap">${TOOL_ICONS.swap}<span>Swap</span></button>`:'')+
     `<a class="tool-demo" href="${demoHref}" target="_blank" rel="noopener" aria-label="Demo videos (opens YouTube)">${TOOL_ICONS.demo}<span>Demo</span><span class="ext" aria-hidden="true">↗</span></a></div>`;
 }
+// a rep target as it's read aloud: "3 x 6-10" → "3 × 6–10" (display only; the stored target is unchanged)
+function fmtTarget(t){ return String(t||'').replace(/(\d)\s*x\s*(\d)/i,'$1 × $2').replace(/(\d)-(\d)/g,'$1–$2'); }
 function plateText(totalLb, ex, baseLbOverride){
   // baseLbOverride lets a plate-loaded machine (no standard "bar weight" to assume) pass its own typed-in base/sled
   // weight instead of the barbell-family default lookup
@@ -1718,7 +1720,6 @@ function renderBody(){
   // the ring and number take the body map's own traffic-light colours, so "22% ready" no longer reads as all-clear green
   const ringCol=avg>=0.8?'var(--green)':avg>=0.5?'var(--amber)':'#c94a3a';
   document.getElementById('recovRingArc').style.stroke=ringCol; document.getElementById('recovPct').style.color=ringCol;
-  document.getElementById('recovHero').style.setProperty('--rc',ringCol);
   const sub=document.getElementById('recovSub'), hint=document.getElementById('tapHint'), list=document.getElementById('recovList'), toggle=document.getElementById('recovDetailToggle');
 
   // a fully-recovered muscle can still be reached to mark it sore, so the toggle stays available either way.
@@ -2154,15 +2155,15 @@ function renderHome(){
       <button class="start-cta" id="arrivalStart">go to cardio log</button>
       <div class="greet-sub" style="margin-top:14px">Feeling fine? Tap a lift day to train it instead.</div>
       <div class="day-carousel">
-        ${PROGRAM.map(d=>`<div class="day-card ${dayType(d)}${d.id===currentDay?' today':''}" data-day="${d.id}">${d.id===currentDay?'<div class="ddot"></div>':''}<div class="dtag">${d.id===currentDay?'Today':''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub} · ${d.exercises.length} exercises</div></div>`).join('')}
+        ${PROGRAM.map(d=>`<div class="day-card ${dayType(d)}${d.id===currentDay?' today':''}" data-day="${d.id}">${d.id===currentDay?'<div class="ddot"></div>':''}<div class="dtag">${d.id===currentDay?'Today':''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub}</div><div class="dsub">${d.exercises.length} exercises</div></div>`).join('')}
       </div>`;
     document.getElementById('arrivalStart').onclick=()=>setView('log');
     panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day, ()=>setView('log')));
     return;
   }
   const day=PROGRAM.find(d=>d.id===currentDay);
-  const previewRows=day.exercises.slice(0,5).map(ex=>`<div class="preview-row"><span class="pn">${ex.name}</span><span class="pt">${ex.target}</span></div>`).join('');
-  const moreRow=day.exercises.length>5?`<div class="preview-row"><span class="pn" style="color:var(--text-dim)">+ ${day.exercises.length-5} more</span></div>`:'';
+  const previewRows=day.exercises.slice(0,5).map(ex=>`<div class="preview-row"><span class="pn">${ex.name}</span><span class="pt">${fmtTarget(ex.target)}</span></div>`).join('');
+  const moreRow=day.exercises.length>5?`<span class="linkbtn preview-more" id="previewMore">+ ${day.exercises.length-5} more exercise${day.exercises.length-5===1?'':'s'}</span>`:'';
   const estMin=day.exercises.length*6;
   const ctaTxt=sessionInProgress()?'return to log':`start ${day.name} — ${day.sub}`;
 
@@ -2182,23 +2183,24 @@ function renderHome(){
       </div>`;
   } else {
     const lastLift=[...sessions].reverse().find(s=>!s.isCardio);
-    const lastTxt=lastLift?`Last time: ${fmtDate(lastLift.t)}, ${lastLift.dayName} ${lastLift.sub}. `:'';
-    const recovTxt=document.getElementById('recovSub').textContent;
-    const rotationTxt=(day.id===suggestedDayId())?' Next up in your rotation.':'';
+    // what's next and the last lift; the recovery detail lives in the readiness card right below, not repeated here
+    const isNext=day.id===suggestedDayId();
+    const lastTxt=lastLift?`Last lift: ${lastLift.dayName} ${lastLift.sub}, ${fmtDate(lastLift.t)}.`:'';
     const h1=settings.name?`Ready to work out, ${settings.name}?`:`Ready for ${day.name} — ${day.sub}?`;
-    const dayLine=settings.name?`${day.name} — ${day.sub}. `:'';
+    const dayLine=settings.name?`${day.name} ${day.sub} ${isNext?'is next in your rotation':'is loaded for today'}. `:(isNext?'Next in your rotation. ':'');
     panel.innerHTML=`
       <div class="greet-wrap">
         <div class="greet-eyebrow">${new Date().toLocaleDateString(undefined,{weekday:'long'})}</div>
         <div class="greet-h1">${h1}</div>
-        <div class="greet-sub">${dayLine}${lastTxt}${recovTxt}${rotationTxt}</div>
+        <div class="greet-sub">${dayLine}${lastTxt}</div>
       </div>
       <div class="day-carousel">
-        ${PROGRAM.map(d=>`<div class="day-card ${dayType(d)}${d.id===currentDay?' today':''}" data-day="${d.id}">${d.id===currentDay?'<div class="ddot"></div>':''}<div class="dtag">${d.id===currentDay?'Today':''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub} · ${d.exercises.length} exercises</div></div>`).join('')}
+        ${PROGRAM.map(d=>`<div class="day-card ${dayType(d)}${d.id===currentDay?' today':''}" data-day="${d.id}">${d.id===currentDay?'<div class="ddot"></div>':''}<div class="dtag">${d.id===currentDay?'Today':''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub}</div><div class="dsub">${d.exercises.length} exercises</div></div>`).join('')}
       </div>
       <div class="preview-list">${previewRows}${moreRow}</div>
       <button class="start-cta" id="arrivalStart">${ctaTxt}</button>`;
     panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day, ()=>setView('log')));
+    const more=document.getElementById('previewMore'); if(more) more.onclick=()=>setView('log');
   }
   document.getElementById('arrivalStart').onclick=()=>{ touchDayStart(); setView('log'); };
 }
