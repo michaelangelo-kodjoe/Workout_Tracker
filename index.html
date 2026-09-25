@@ -1947,7 +1947,7 @@ function render(){
       if(bwLoaded) s.w=bwTotal(s);
       const addHint=bwLoaded?(state.sets.slice(0,i).map(x=>parseFloat(x.add)||0).filter(Boolean).pop()||lastAdd):0;
       const row=document.createElement('div'); row.className='setgrid';
-      row.innerHTML=`<div class="setnum">${i+1}</div><input type="number" inputmode="decimal" placeholder="${bwLoaded?'+'+dispWeight(addHint):sug===null?'bw':sug===-1?unitLabel():dispWeight(sug)}" value="${bwLoaded?(s.add?dispWeight(s.add):''):(s.w?dispWeight(s.w):s.w)}"${bwLoaded?' title="extra weight held or worn (dumbbells, a dip belt) — leave blank for bodyweight only"':''}><input type="number" inputmode="numeric" placeholder="${timed?'sec':'reps'}" value="${s.r}"><div class="setdone ${s.done?'on':''}">${s.done?'✓':''}</div><div class="setrm" title="remove set">✕</div>`;
+      row.innerHTML=`<div class="setnum">${i+1}</div><input type="number" inputmode="decimal" placeholder="${bwLoaded?'+'+dispWeight(addHint):sug===null?'bw':sug===-1?unitLabel():dispWeight(sug)}" value="${bwLoaded?(s.add?dispWeight(s.add):''):(s.w?dispWeight(s.w):s.w)}"${bwLoaded?' title="extra weight held or worn (dumbbells, a dip belt) — leave blank for bodyweight only"':''}><input type="number" inputmode="numeric" placeholder="${timed?'sec':'reps'}" value="${s.r}"><div class="setdone ${s.done?'on':''}" aria-label="set ${i+1} done" aria-pressed="${!!s.done}">${s.done?'✓':''}</div><div class="setrm" title="remove set" aria-label="remove set ${i+1}">✕</div>`;
       const [wI,rI]=row.querySelectorAll('input');
       if(bwLoaded) wI.oninput=e=>{s.add=e.target.value===''?'':storeWeight(e.target.value); s.w=bwTotal(s); touchDayStart(); sset('today:'+currentDay,todayData);};
       else wI.oninput=e=>{s.w=storeWeight(e.target.value); touchDayStart(); sset('today:'+currentDay,todayData); if(updatePlates) updatePlates(s.w);};
@@ -3170,6 +3170,26 @@ function checkSwDrift(forceReload){
 }
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') checkSwDrift(true); });
 setInterval(()=>checkSwDrift(false), 5*60*1000);
+
+// ---------- keyboard access ----------
+// Nearly every tappable control is a div/span wired with onclick, which a keyboard or screen reader can't reach.
+// Tag them as buttons as they're rendered (render() rebuilds cards constantly, hence the observer) and let
+// Enter/Space fire the same click a tap would.
+const KB_CLICKABLE='.viewtab,.daytab,.day-card,.ex-head,.linkbtn,.howto-btn,.addset,.setdone,.setrm,.rpe-dot,.rir-pill,.ctype span,.eqchip,.cal-nav,.cal-cell.has-session,.str-split-card,.sess,.edrow .acts span,.reset-link';
+function tagClickables(root){
+  const els=[...(root.matches(KB_CLICKABLE)?[root]:[]),...root.querySelectorAll(KB_CLICKABLE)];
+  for(const el of els){
+    if(el.hasAttribute('tabindex')||el.style.cursor==='default') continue; // the cardio card's header isn't a toggle
+    el.setAttribute('tabindex','0'); if(!el.hasAttribute('role')) el.setAttribute('role','button');
+  }
+}
+tagClickables(document.body);
+new MutationObserver(ms=>{ for(const m of ms) for(const n of m.addedNodes) if(n.nodeType===1) tagClickables(n); })
+  .observe(document.body,{childList:true,subtree:true});
+document.addEventListener('keydown',e=>{
+  if((e.key!=='Enter'&&e.key!==' ')||e.target.getAttribute('role')!=='button'||e.target.matches('button,input,select,textarea')) return;
+  e.preventDefault(); e.target.click();
+});
 </script>
 </body>
 </html>
