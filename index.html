@@ -154,7 +154,9 @@
   .timer>*{position:relative;z-index:1;}
   .timer-row{display:flex;align-items:center;justify-content:space-between;}
   .timer .t{font-family:'Menlo',monospace;font-size:22px;color:var(--accent);} .timer .t.over{color:var(--green);}
-  .timer .acts span{font-size:11px;color:var(--light);text-decoration:underline;margin-left:12px;cursor:pointer;}
+  /* +30s / skip are tapped between sets with a sweaty thumb: real bordered buttons, not underlined text links */
+  .timer .acts{display:flex;gap:8px;}
+  .timer .acts span{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border:1px solid var(--field-line);border-radius:8px;background:var(--panel);color:var(--text);font-family:'Menlo',monospace;font-size:13px;cursor:pointer;}
   .tbar{height:6px;background:var(--line);border-radius:3px;margin-top:8px;overflow:hidden;}
   .tbar i{display:block;height:100%;background:var(--accent);transition:width 1s linear,background 1s linear;}
   .reset-link{text-align:center;margin-top:24px;font-size:11px;color:var(--text-dim);text-decoration:underline;cursor:pointer;}
@@ -388,6 +390,8 @@
   .rir-pill{padding:7px 12px;}
   .eqchip{padding:9px 12px;}
   .ctype span{padding:11px 14px;}
+  /* the screen's one main action (finish session, start today's workout, back from the celebration) — taller, larger, bold */
+  .finish-btn,.start-cta,.cel-cta{min-height:50px;font-size:15px;font-weight:bold;border-radius:8px;}
 
   /* ---------- fields & focus ---------- */
   /* --line is only 1.25:1 against a card, so field outlines all but vanished; --field-line clears 3:1. The suggested
@@ -602,7 +606,7 @@
 <footer><div class="footer-inner">
   <div id="logFooter" style="display:none">
   <div class="timer" id="timer"><div class="timer-row"><div class="t" id="timerT">1:30</div><div class="acts"><span id="tPlus">+30s</span><span id="tSkip">skip</span></div></div><div class="tbar"><i id="timerBar" style="width:100%"></i></div></div>
-  <button class="finish-btn" id="finishBtn">mark session complete</button>
+  <button class="finish-btn" id="finishBtn">finish session</button>
   </div>
   <nav class="viewtabs" aria-label="Sections">
     <span class="viewtab active" data-v="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</span>
@@ -2035,7 +2039,7 @@ function render(){
     if(lastToShow){ const parts=lastToShow.filter(s=>s.w||s.r).map(s=>(timed?`${s.r||'-'}s`:`${s.w?dispWeight(s.w):'-'}x${s.r||'-'}`)+`${s.rir!=null?' (RIR '+s.rir+')':''}`).join(', '); if(parts){ const d=document.createElement('div'); d.className='last-time'; d.textContent='last time'+(crossDaySub?` (${crossDaySub} day)`:'')+': '+parts; body.appendChild(d); } }
     card.appendChild(body); list.appendChild(card);
   });
-  document.getElementById('finishBtn').textContent=allComplete?'session complete — log it':'mark session complete';
+  document.getElementById('finishBtn').textContent=allComplete?'all sets done — finish session':'finish session';
 }
 
 // ---------- first-launch program builder ----------
