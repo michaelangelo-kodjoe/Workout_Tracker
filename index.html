@@ -19,6 +19,8 @@
   /* iOS Safari zooms the page in on focus of any field under 16px. Pinch-zoom is allowed (the viewport no longer
      locks scale), so on touch screens every field is held at 16px to keep tapping a set input from jumping the page. */
   @media (pointer:coarse){ input,textarea,select{font-size:16px!important;} }
+  /* while typing on a phone the footer would sit on top of the on-screen keyboard and cover the field (see "on-screen keyboard") */
+  @media (pointer:coarse){ body.typing footer{display:none;} }
   header{position:sticky;top:0;z-index:10;background:var(--bg);padding:calc(14px + env(safe-area-inset-top)) 18px 10px;border-bottom:1px solid var(--line);}
   .header-inner{max-width:560px;margin:0 auto;}
   .title-row{display:flex;align-items:center;justify-content:space-between;}
@@ -3084,7 +3086,7 @@ function setView(v){
 }
 document.querySelectorAll('.viewtab').forEach(t=>t.onclick=()=>setView(t.dataset.v));
 // the footer's height changes with the view and the rest timer; main and the toast read it to stay clear of it
-new ResizeObserver(([e])=>document.documentElement.style.setProperty('--foot-h',Math.ceil(e.target.getBoundingClientRect().height)+'px')).observe(document.querySelector('footer'));
+new ResizeObserver(([e])=>{ const h=Math.ceil(e.target.getBoundingClientRect().height); if(h) document.documentElement.style.setProperty('--foot-h',h+'px'); }).observe(document.querySelector('footer')); // 0 = hidden while typing: keep the last height so the page doesn't jump
 document.getElementById('finishBtn').onclick=finishSession;
 document.getElementById('resetLink').onclick=async()=>{ todayData={}; await sset('today:'+currentDay,{}); delete dayStartTimes[currentDay]; await sset('dayStart',dayStartTimes); render(); };
 
@@ -3236,6 +3238,19 @@ function checkSwDrift(forceReload){
 }
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') checkSwDrift(true); });
 setInterval(()=>checkSwDrift(false), 5*60*1000);
+
+// ---------- on-screen keyboard ----------
+// Phones keep position:fixed elements on screen while the keyboard is up, so the tab bar, finish button and rest timer
+// rode up on top of it and covered the set rows being typed into. Hide the footer while a text field has focus (see
+// body.typing in the stylesheet). Focus moving straight to the next field — weight to reps — doesn't flash it back.
+const TYPING_SEL='input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=button]),textarea,select';
+let typingTimer=null;
+document.addEventListener('focusin',e=>{ if(!e.target.matches(TYPING_SEL)) return; clearTimeout(typingTimer); document.body.classList.add('typing'); });
+document.addEventListener('focusout',e=>{
+  if(!e.target.matches(TYPING_SEL)) return;
+  clearTimeout(typingTimer);
+  typingTimer=setTimeout(()=>{ const a=document.activeElement; if(!a||!a.matches(TYPING_SEL)) document.body.classList.remove('typing'); },150);
+});
 
 // ---------- keyboard access ----------
 // Nearly every tappable control is a div/span wired with onclick, which a keyboard or screen reader can't reach.
