@@ -2805,7 +2805,7 @@ function renderEditor(){
   const day=PROGRAM.find(d=>d.id===sel.value); const list=document.getElementById('edList'); list.innerHTML='';
   day.exercises.forEach((ex,i)=>{
     const r=document.createElement('div'); r.className='edrow';
-    r.innerHTML=`<div><div>${ex.name}</div><div class="m">${isPrimarySlot(i)?'primary · ':''}${ex.group} · ${ex.target} · ${ex.m.map(k=>MUSCLE_LABEL[k]).join(', ')}</div></div><div class="acts"><span title="swap">↔</span><span>↑</span><span>↓</span><span class="x">✕</span></div>`;
+    r.innerHTML=`<div><div>${ex.name}</div><div class="m">${isPrimarySlot(i)?'primary · ':''}${ex.group} · ${ex.target} · ${ex.m.map(k=>MUSCLE_LABEL[k]).join(', ')}</div></div><div class="acts"><span title="swap" aria-label="swap ${ex.name}">↔</span><span aria-label="move ${ex.name} up">↑</span><span aria-label="move ${ex.name} down">↓</span><span class="x" aria-label="remove ${ex.name}">✕</span></div>`;
     const [ren,up,dn,x]=r.querySelectorAll('.acts span');
     ren.onclick=()=>openSwap(day.id, ex);
     up.onclick=()=>{ if(i>0){ day.exercises.splice(i-1,0,day.exercises.splice(i,1)[0]); saveProgram(); } };
