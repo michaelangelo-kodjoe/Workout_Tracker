@@ -1,25 +1,27 @@
 # Lift Log — UI/UX audit tracker
 
 Audit run 2026-09-24 with the `ui-ux-pro-max` skill (priority table + pro-rules pre-delivery checklist), measured in the
-browser at 375 × 812 (small phone) on the real backup. Tick an item when its fix is merged; add the commit next to it.
+browser at 375 × 812 (small phone) on the real backup. Tick an item when its fix lands; add the commit next to it.
 
 Priority follows the skill's order: 1 Accessibility and 2 Touch are critical, 6 Typography is medium.
 
 ## Open
 
 ### 1 · Accessibility (critical)
-- [ ] **Set inputs have no label.** The weight field's accessible name is its placeholder, which is the suggested weight
+- [x] **Set inputs have no label.** — `2c31577` The weight field's accessible name is its placeholder, which is the suggested weight
   ("55"), and the reps field is just "reps" — a screen reader can't tell which set or field it's on.
   Fix: `aria-label="Set 2 weight"` / `"Set 2 reps"` on each row.
-- [ ] **Selected / open state isn't exposed.** The reps-left-in-tank pills have no `aria-pressed`, the day tabs and bottom
+- [x] **Selected / open state isn't exposed.** — `2c31577` The reps-left-in-tank pills have no `aria-pressed`, the day tabs and bottom
   nav tabs have no `aria-current`/`aria-pressed`, and the exercise card header has no `aria-expanded`. Visually clear,
   but a screen reader hears the same thing for selected and unselected.
-- [ ] **Exercise done check has no text alternative.** The 22 px `.ex-check` circle on each exercise card header shows
+- [x] **Exercise done check has no text alternative.** — `2c31577` The 22 px `.ex-check` circle on each exercise card header shows
   whether the exercise is finished by fill alone, with nothing for a screen reader.
-- [ ] **Contrast: selected day tab subtitle** ("Heavy" under Upper) is 4.07:1 at 11 px — needs 4.5:1.
+- [x] **Contrast: day tab subtitles** — `517bf73`. Re-measured with the tab's layered backgrounds, the *unselected*
+  tabs' subtitle was the failure (3.47:1, --text-dim at 75% opacity); the selected tab's was 7.7:1. Now 5.1:1.
+- [x] **Workout editor's ↔ ↑ ↓ ✕ had no names** (found in the second pass, below) — `cb6d171`.
 
 ### 2 · Touch & interaction (critical)
-- [ ] **Targets under 44 × 44 px** (measured):
+- [x] **Targets under 44 × 44 px** — `16b5795`. First pass (measured):
   | Control | Size |
   |---|---|
   | reps-left-in-tank pills | 31–39 × 29 |
@@ -34,7 +36,11 @@ Priority follows the skill's order: 1 Accessibility and 2 Touch are critical, 6 
   | bodyweight input / Log button | 90 × 35 / 91 × 40 |
   | calendar ‹ arrow / day cells | 39 × 40 / 42 × 42 |
 
-  Fix: grow the hit area (padding or a transparent `::after`) rather than the visual size where the look should stay.
+  Second pass hit-tested all 140 controls with each scrolled into view, including Settings and the cardio log, which
+  the first pass missed: the editor's ↔ ↑ ↓ ✕ (7–15 px wide), every settings field (35–37 px), the checkbox labels
+  (19 px), the cardio type chips (38 px) and effort dots (26 × 40). All now reach 44 × 44 and none takes taps from a
+  neighbour. **Exception:** the ten effort dots stay 26 px wide (ten across a phone can't be 44) and reach 44 tall.
+  Trade-off: 44 px editor buttons wrap longer exercise names onto two lines.
 - [ ] **Almost no pressed feedback.** The tap highlight is switched off globally and only two `:active` rules exist
   (calendar cell, body diagram), so buttons, pills and tabs don't respond to a tap until their state changes.
   Fix: one shared `:active` treatment (opacity or background shift, ~100 ms) for buttons, pills and tabs.
@@ -52,7 +58,7 @@ Priority follows the skill's order: 1 Accessibility and 2 Touch are critical, 6 
 
 ## Passed
 - No emoji used as icons; bottom nav and controls use SVG.
-- Every interactive control has an accessible name (set ✓ / ✕ have `aria-label`s and `aria-pressed`).
+- Every interactive control in the log, home, history and strength views has an accessible name.
 - No horizontal scroll at 375 px; pinch-zoom allowed; inputs held at 16 px on touch so iOS doesn't zoom on focus.
 - Safe-area insets respected on the sticky header and fixed footer; log content has bottom padding to clear the rest
   timer and footer.
