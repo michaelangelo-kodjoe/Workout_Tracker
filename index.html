@@ -59,7 +59,7 @@
   .viewtab.active{color:var(--text);}
   .viewtab{min-width:0;} .vt-l{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;} /* large text shortens a label, it never runs into the next one */ .viewtab.active svg{stroke:var(--accent);}
   .daytabs{display:flex;gap:6px;margin-top:12px;overflow-x:auto;padding-bottom:2px;}
-  .daytabs.more-right{-webkit-mask-image:linear-gradient(to right,#000 85%,transparent);mask-image:linear-gradient(to right,#000 85%,transparent);}
+  .daytabs.more-right,.day-carousel.more-right{-webkit-mask-image:linear-gradient(to right,#000 85%,transparent);mask-image:linear-gradient(to right,#000 85%,transparent);}
   .daytab{position:relative;flex:1 0 auto;text-align:center;padding:8px 8px;border-radius:3px;border:1px solid var(--line);background:var(--panel);color:var(--text-dim);font-size:12px;cursor:pointer;white-space:nowrap;}
   .daytab.suggested{border-color:rgba(255,93,59,.55);background:rgba(255,93,59,.09);color:var(--text);}
   .daytab.suggested.active{background:var(--panel-raised);}
@@ -77,7 +77,7 @@
   /* the readiness score heads its card rather than sitting in a second box inside it; the ring and number carry
      the red/amber/green, and a rule separates it from the body diagram */
   .recov-hero{padding:0 0 16px;margin-bottom:16px;border-bottom:1px solid var(--line);position:relative;}
-  .recov-top{display:flex;align-items:center;justify-content:flex-start;gap:16px;position:relative;}
+  .recov-top{display:flex;align-items:center;justify-content:center;gap:16px;position:relative;} /* the ring and "97% Ready to Train" sit centred in the card */
   .recov-ring{flex:0 0 auto;}
   .recov-score{font-size:15px;text-align:left;}
   .recov-score b{font-family:'Menlo','SF Mono',monospace;font-size:32px;font-weight:normal;color:var(--green);display:block;line-height:1.1;}
@@ -103,9 +103,20 @@
   .legend{display:flex;justify-content:center;gap:14px;margin-top:8px;font-size:12px;color:var(--text-dim);}
   .legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle;}
   .recov-list{margin-top:8px;font-size:12px;color:var(--text-dim);line-height:1.6;border-top:1px dashed var(--line);padding-top:8px;}
-  .recov-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:3px 0;}
-  .recov-row .linkbtn{white-space:nowrap;flex-shrink:0;}
+  /* 44 px rows, and each Mark Sore / Clear fills its own row's height and no more — at 27 px apart their tap areas
+     overlapped, so a tap near a row's edge could mark the muscle next to it sore */
+  .recov-row{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:44px;padding:0;}
+  .recov-row + .recov-row{border-top:1px solid var(--line);}
+  .recov-row .linkbtn{white-space:nowrap;flex-shrink:0;align-self:stretch;display:flex;align-items:center;padding:0 0 0 12px;margin:0;}
   .recov-list b{color:var(--text);font-weight:normal;}
+  /* the breakdown by body area: a dot in the colour of the area's slowest muscle, its name, a summary, and its muscles below */
+  .recov-area{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;margin:0;padding:0;background:none;border:0;border-top:1px solid var(--line);color:var(--text);text-align:left;font:15px 'Georgia',serif;cursor:pointer;}
+  .recov-area:first-child{border-top:0;}
+  .recov-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;} .recov-dot.m-worked{background:#c94a3a;} .recov-dot.m-recovering{background:#d6a03a;} .recov-dot.m-ready{background:#4a9e5c;}
+  .recov-area-n{flex:1;} .recov-area-s{font-size:12px;color:var(--text-dim);}
+  .recov-chev{width:16px;height:16px;flex-shrink:0;fill:none;stroke:var(--text-dim);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .15s;}
+  .recov-area[aria-expanded="true"] .recov-chev{transform:rotate(90deg);}
+  .recov-row.sub{padding-left:22px;} .recov-row.sub + .recov-row.sub{border-top-style:dashed;}
   .daylabel{font-size:13px;color:var(--text-dim);margin:4px 0 14px;display:flex;justify-content:space-between;align-items:center;}
   .badge{display:inline-block;padding:2px 8px;border-radius:2px;font-size:12px;font-family:'Menlo',monospace;margin-right:8px;vertical-align:middle;}
   .badge.heavy{background:rgba(255,93,59,.15);color:var(--heavy);border:1px solid rgba(255,93,59,.4);}
@@ -438,7 +449,7 @@
   /* ---------- arrival panel: greeting + day carousel, and first-open empty hero ---------- */
   .greet-wrap{padding:0;}
   .greet-eyebrow{font-size:12px;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;}
-  .greet-h1{font-size:22px;line-height:1.25;margin:4px 0;}
+  .greet-h1{font-size:22px;line-height:1.25;margin:4px 0;font-weight:normal;}
   .greet-sub{font-size:13px;color:var(--text-dim);line-height:1.5;}
   .day-carousel{display:flex;gap:8px;overflow-x:auto;padding:24px 2px 4px;margin:0 -2px;}
   /* snap card-by-card and hide the scrollbar, which otherwise painted over the cards' bottom edge */
@@ -503,7 +514,9 @@
   .build-row.miss .bn{color:var(--text-dim);}
   .build-row .bm{color:var(--amber);font-family:'Georgia',serif;font-size:12px;}
   .empty-hero{padding:20px 4px 6px;text-align:center;}
-  .empty-h1{font-size:22px;margin:16px 0 8px;text-wrap:balance;}
+  .empty-h1{font-size:22px;margin:16px 0 8px;text-wrap:balance;font-weight:normal;}
+  /* read by screen readers, not shown */
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;}
   .empty-sub{font-size:13px;color:var(--text-dim);line-height:1.6;max-width:280px;margin:0 auto 18px;}
   .empty-plan{margin:16px auto 0;max-width:280px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px 14px;text-align:left;font-size:12px;color:var(--text-dim);line-height:1.6;}
   .empty-plan b{color:var(--text);}
@@ -666,6 +679,7 @@
     <div class="banner" id="bwBanner" style="display:none"><span>It's been a week since you last logged your weight.</span><span class="linkbtn" id="bwBannerBtn">Log It Now</span></div>
     <div id="arrivalPanel"></div>
     <div class="bodymap" id="bodymapCard">
+      <h2 class="sr-only">Recovery</h2>
       <div class="recov-hero" id="recovHero">
         <div class="recov-top">
           <svg class="recov-ring" width="60" height="60" viewBox="0 0 64 64">
@@ -1891,6 +1905,10 @@ document.getElementById('tPlus').onclick=()=>{ timer.end+=30000; timer.total+=30
 // ---------- recovery map ----------
 // a manual sore-mark (soreOverride) can only extend how long a muscle looks not-recovered, never shorten it
 // below what the automatic training-based computation (recovery) already says — whichever entry ends later wins.
+// a sore mark lasts the muscle's normal recovery window from when you set it; after that it's done, not "sore"
+function isSore(m){ const o=soreOverride[m]; return !!o && o.start+o.hours*3600000>Date.now(); }
+// expired marks used to stay saved forever, so a muscle kept showing Clear days after its soreness ran out
+function pruneSore(){ let gone=false; Object.keys(soreOverride).forEach(m=>{ if(!isSore(m)){ delete soreOverride[m]; gone=true; } }); if(gone) sset('soreOverride',soreOverride); }
 function effectiveRecovery(m){
   const r=recovery[m], o=soreOverride[m];
   if(!r) return o||null;
@@ -1916,12 +1934,20 @@ const RECOV_RING_C=169.6;
 const PLURAL_MUSCLES=new Set(['quads','hamstrings','glutes','calves-gastroc','calves-soleus','abs-upper','abs-lower','abs-obliques']);
 // the status fragment shared by the breakdown list and the muscle-tap sheet — kept in one place so the two
 // surfaces can never show a % in one and a stale time-left in the other.
+// shared by the breakdown list and the muscle sheet; a muscle you marked sore says so, not just its percentage
+// a recovery sub-region's muscle group, e.g. 'chest-upper' → 'chest', 'delt-rear' → 'shoulders', 'abs-lower' → 'abs'
+function recovGroup(m){
+  if(MUSCLE_LABEL[m]) return m;
+  const pre=m.split('-')[0];
+  return {delt:'shoulders',forearm:'forearms',brachialis:'biceps'}[pre]||pre;
+}
 function recovStatusText(m){
-  const p=recoveryProgress(m);
-  if(p<1){ const r=effectiveRecovery(m); const left=Math.max(0,r.hours-(Date.now()-r.start)/3600000); return `${Math.round(p*100)}% · ~${fmtTimeLeft(left)} left`; }
-  return 'ready';
+  const p=recoveryProgress(m), sore=isSore(m)?' · marked sore':'';
+  if(p<1){ const r=effectiveRecovery(m); const left=Math.max(0,r.hours-(Date.now()-r.start)/3600000); return `${Math.round(p*100)}% · ~${fmtTimeLeft(left)} left${sore}`; }
+  return 'ready'+sore;
 }
 function renderBody(){
+  pruneSore();
   document.querySelectorAll('.muscle').forEach(el=>{
     const cls=recovClass(recoveryProgress(el.dataset.m));
     el.classList.remove('m-ready','m-recovering','m-worked'); el.classList.add(cls);
@@ -1955,41 +1981,61 @@ function renderBody(){
   // a fully-recovered muscle can still be reached to mark it sore, so the toggle stays available either way.
   toggle.style.display='block';
 
+  // the line under the map says what the map is for; the sentence above carries the details, so they don't repeat
+  hint.textContent='Tap a muscle to see its recovery or mark it sore.';
   if(!active.length){
     sub.textContent='Every muscle group is fully recovered — ready for anything today.';
-    hint.textContent='All muscles recovered. Ready to train.';
   } else {
     const worst=active[0], wr=effectiveRecovery(worst), leftH=Math.max(0,wr.hours-(Date.now()-wr.start)/3600000);
     const day=new Date(wr.start).toLocaleDateString(undefined,{weekday:'long'});
-    const readyNames=allMuscles.filter(m=>!active.includes(m)).map(m=>RECOVERY_LABEL[m]);
-    const readyTxt=readyNames.length?`${readyNames.slice(0,3).join(', ')}${readyNames.length>3?' and more':''} ${readyNames.length===1?'is':'are'} fully recovered. `:'';
-    sub.textContent=`${readyTxt}${RECOVERY_LABEL[worst]} ${PLURAL_MUSCLES.has(worst)?'are':'is'} still coming back from ${day} — light work only.`;
-    hint.innerHTML=`<b>${RECOVERY_LABEL[worst]}</b> ready in ${fmtTimeLeft(leftH)}`;
+    // ready muscles by group, so chest reads once rather than as "Upper chest, Mid chest, Lower chest"
+    const groups=Object.keys(MUSCLE_LABEL).filter(g=>allMuscles.some(m=>recovGroup(m)===g));
+    const readyGroups=groups.filter(g=>allMuscles.filter(m=>recovGroup(m)===g).every(m=>!active.includes(m))).map(g=>MUSCLE_LABEL[g]);
+    const readyTxt=readyGroups.length?`${readyGroups.slice(0,3).join(', ')}${readyGroups.length>3?' and more':''} ${readyGroups.length===1&&!['Quads','Hamstrings','Glutes','Shoulders','Biceps','Triceps','Forearms','Calves'].includes(readyGroups[0])?'is':'are'} fully recovered. `:'';
+    sub.textContent=`${readyTxt}${RECOVERY_LABEL[worst]} ${PLURAL_MUSCLES.has(worst)?'are':'is'} still coming back from ${day} — about ${fmtTimeLeft(leftH)} to go, so keep it light.`;
   }
   renderRecovList();
 }
 // shows every tracked muscle (not just currently-recovering ones) so a fully-recovered muscle can still be
 // marked sore — the app has no way to know about an injury tweak, bad sleep, or illness on its own.
+const RECOV_AREAS=[['Legs',['quads','hamstrings','glutes','calves-gastroc','calves-soleus']],['Back',['back-lats','back-traps','lowerback']],
+  ['Chest',['chest-upper','chest-mid','chest-lower']],['Shoulders',['delt-front','delt-lateral','delt-rear']],
+  ['Arms',['biceps','brachialis','triceps-lateral','triceps-long','forearm-flexor','forearm-extensor']],['Core',['abs-upper','abs-lower','abs-obliques']]];
+let recovAreaOpen={};
 function renderRecovList(){
   const list=document.getElementById('recovList');
-  const allMuscles=Object.keys(RECOVERY_HOURS);
-  const ordered=[...allMuscles].sort((a,b)=>recoveryProgress(a)-recoveryProgress(b)||RECOVERY_LABEL[a].localeCompare(RECOVERY_LABEL[b]));
   list.innerHTML='';
-  ordered.forEach(m=>{
-    const sored=!!soreOverride[m];
-    const row=document.createElement('div'); row.className='recov-row';
-    const txt=document.createElement('span'); txt.innerHTML=`<b>${RECOVERY_LABEL[m]}</b> ${recovStatusText(m)}`;
-    const action=document.createElement('span'); action.className='linkbtn'; action.textContent=sored?'Clear':'Mark Sore';
-    action.onclick=()=>sored?clearSore(m):markSore(m);
-    row.appendChild(txt); row.appendChild(action); list.appendChild(row);
+  // six body areas, the ones with anything still recovering (or marked sore) first and open; a fully ready area is one
+  // line that opens on tap. Tapping an area remembers your choice until the page reloads.
+  const areas=RECOV_AREAS.map(([name,ms],i)=>({name,ms,i,worst:Math.min(...ms.map(recoveryProgress)),busy:ms.some(m=>recoveryProgress(m)<1||isSore(m))}))
+    .sort((a,b)=>(b.busy-a.busy)||(a.worst-b.worst)||(a.i-b.i));
+  areas.forEach(a=>{
+    const open=recovAreaOpen[a.name]??a.busy, rec=a.ms.filter(m=>recoveryProgress(m)<1).length;
+    const head=document.createElement('button'); head.className='recov-area'; head.setAttribute('aria-expanded',open);
+    head.innerHTML=`<i class="recov-dot ${recovClass(a.worst)}" aria-hidden="true"></i><span class="recov-area-n">${a.name}</span><span class="recov-area-s">${rec?`${rec} of ${a.ms.length} recovering`:'All ready'}</span><svg class="recov-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>`;
+    head.onclick=()=>{ recovAreaOpen[a.name]=!open; renderRecovList(); };
+    list.appendChild(head);
+    if(!open) return;
+    [...a.ms].sort((x,y)=>recoveryProgress(x)-recoveryProgress(y)||a.ms.indexOf(x)-a.ms.indexOf(y)).forEach(m=>{
+      const sored=isSore(m);
+      const row=document.createElement('div'); row.className='recov-row sub';
+      const txt=document.createElement('span'); txt.innerHTML=`<b>${RECOVERY_LABEL[m]}</b> ${recovStatusText(m)}`;
+      const action=document.createElement('span'); action.className='linkbtn'; action.textContent=sored?'Clear':'Mark Sore';
+      action.onclick=()=>sored?clearSore(m):markSore(m);
+      row.appendChild(txt); row.appendChild(action); list.appendChild(row);
+    });
   });
+  // pinned above the nav while the long list is open, like Strength's Hide Exercises, so closing it needs no scroll back up
+  const hide=document.createElement('button'); hide.className='str-hide btn'; hide.textContent='Hide Breakdown';
+  hide.onclick=()=>{ setRecovOpen(false); document.getElementById('recovDetailToggle').scrollIntoView({block:'center'}); };
+  list.appendChild(hide);
 }
 function markSore(m){ soreOverride[m]={start:Date.now(),hours:RECOVERY_HOURS[m]}; sset('soreOverride',soreOverride); renderBody(); renderHome(); showToast(`${RECOVERY_LABEL[m]} marked sore`); }
 function clearSore(m){ delete soreOverride[m]; sset('soreOverride',soreOverride); renderBody(); renderHome(); showToast(`${RECOVERY_LABEL[m]} cleared`); }
 function openMuscleSheet(m){
   document.getElementById('muscleSheetTitle').textContent=RECOVERY_LABEL[m];
   document.getElementById('muscleSheetSub').textContent=recovStatusText(m);
-  const sored=!!soreOverride[m];
+  const sored=isSore(m);
   const btn=document.getElementById('muscleSheetAction');
   btn.textContent=sored?'Clear':'Mark Sore';
   btn.onclick=()=>{ closeMuscleSheet(); sored?clearSore(m):markSore(m); };
@@ -2002,12 +2048,13 @@ function closeMuscleSheet(){
 }
 document.getElementById('muscleSheetClose').onclick=closeMuscleSheet;
 document.getElementById('muscleBg').onclick=closeMuscleSheet;
-document.getElementById('recovDetailToggle').onclick=()=>{
+function setRecovOpen(open){
   const l=document.getElementById('recovList'), t=document.getElementById('recovDetailToggle');
-  const open=l.style.display!=='none';
-  l.style.display=open?'none':'block';
-  t.textContent=open?'See Full Breakdown':'Hide Breakdown';
-};
+  l.style.display=open?'block':'none';
+  t.textContent=open?'Hide Breakdown':'See Full Breakdown'; t.setAttribute('aria-expanded',open);
+}
+document.getElementById('recovDetailToggle').setAttribute('aria-expanded','false');
+document.getElementById('recovDetailToggle').onclick=()=>setRecovOpen(document.getElementById('recovList').style.display==='none');
 
 // ---------- log view ----------
 function weekStart(){ const d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-d.getDay()); return d.getTime(); }
@@ -2356,7 +2403,7 @@ function renderBuilder(panel){
   panel.innerHTML=`
     <div class="greet-wrap">
       <div class="greet-eyebrow">First Launch</div>
-      <div class="greet-h1">Build Your Program</div>
+      <h2 class="greet-h1">Build Your Program</h2>
       <div class="greet-sub">Four days a week — Upper and Lower, one heavy and one volume day each. Tick what your gym has and every slot gets a recommended exercise. Change any pick now, or swap later from the log.</div>
     </div>
     <div class="build-eq">${EQUIP_TYPES.map(t=>`<span class="eqchip${settings.equipFilter.includes(t)?' on':''}" data-t="${t}" aria-pressed="${settings.equipFilter.includes(t)}">${EQUIP_LABEL[t]}</span>`).join('')}</div>
@@ -2376,6 +2423,7 @@ function renderBuilder(panel){
 // ---------- home: greeting + day carousel (returning user), first-open hero (new user), program builder ----------
 // Home is the landing tab — picking a day here (or accepting a built program) hands off to the Log tab, which now
 // always shows the active day's exercise list with no arrival/dismiss state of its own.
+let homePreviewOpen=false;
 function renderHome(){
   updateBlockUI();
   const panel=document.getElementById('arrivalPanel');
@@ -2384,7 +2432,7 @@ function renderHome(){
     panel.innerHTML=`
       <div class="greet-wrap">
         <div class="greet-eyebrow">${new Date().toLocaleDateString(undefined,{weekday:'long'})}</div>
-        <div class="greet-h1">${settings.name?'Ready for cardio, '+settings.name+'?':'Ready for cardio?'}</div>
+        <h2 class="greet-h1">${settings.name?'Ready for cardio, '+settings.name+'?':'Ready for cardio?'}</h2>
         <div class="greet-sub">${cardioReasonCopy().home}</div>
       </div>
       <button class="start-cta" id="arrivalStart">Go to Cardio Log</button>
@@ -2394,11 +2442,14 @@ function renderHome(){
       </div>`;
     document.getElementById('arrivalStart').onclick=()=>setView('log');
     panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day, ()=>setView('log')));
+    edgeFade(panel.querySelector('.day-carousel'));
     return;
   }
   const day=PROGRAM.find(d=>d.id===currentDay);
-  const previewRows=day.exercises.slice(0,5).map(ex=>`<div class="preview-row"><span class="pn">${ex.name}</span><span class="pt">${fmtTarget(ex.target)}</span></div>`).join('');
-  const moreRow=day.exercises.length>5?`<span class="linkbtn preview-more" id="previewMore">+ ${day.exercises.length-5} More Exercise${day.exercises.length-5===1?'':'s'}</span>`:'';
+  // the first five, and the rest open in place — "+ 2 More Exercises" used to jump to the Log instead
+  const extra=day.exercises.length-5;
+  const previewRows=day.exercises.slice(0,homePreviewOpen?undefined:5).map(ex=>`<div class="preview-row"><span class="pn">${ex.name}</span><span class="pt">${fmtTarget(ex.target)}</span></div>`).join('');
+  const moreRow=extra>0?`<span class="linkbtn preview-more" id="previewMore" aria-expanded="${homePreviewOpen}">${homePreviewOpen?'Show Fewer':`+ ${extra} More Exercise${extra===1?'':'s'}`}</span>`:'';
   const estMin=day.exercises.length*6;
   const ctaTxt=sessionInProgress()?'Return to Log':`Start ${day.name} — ${day.sub}`;
 
@@ -2411,7 +2462,7 @@ function renderHome(){
           <rect x="16" y="28" width="32" height="8" rx="2" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
           <rect x="48" y="22" width="8" height="20" rx="2" fill="var(--accent)" opacity=".85"/><rect x="56" y="26" width="4" height="12" rx="1.5" fill="var(--accent)"/>
         </svg>
-        <div class="empty-h1">${h1}</div>
+        <h2 class="empty-h1">${h1}</h2>
         <div class="empty-sub">No history yet — that's fine. Log one set at a time and Lift Log starts learning your numbers from today.</div>
         <div class="empty-plan"><b>${day.name}, ${day.sub}</b> · ${day.exercises.length} exercises · about ${estMin} minutes.</div>
         <button class="start-cta" id="arrivalStart">${ctaTxt}</button>
@@ -2426,7 +2477,7 @@ function renderHome(){
     panel.innerHTML=`
       <div class="greet-wrap">
         <div class="greet-eyebrow">${new Date().toLocaleDateString(undefined,{weekday:'long'})}</div>
-        <div class="greet-h1">${h1}</div>
+        <h2 class="greet-h1">${h1}</h2>
         <div class="greet-sub">${dayLine}${lastTxt}</div>
       </div>
       <div class="day-carousel">
@@ -2435,7 +2486,8 @@ function renderHome(){
       <div class="preview-list">${previewRows}${moreRow}</div>
       <button class="start-cta" id="arrivalStart">${ctaTxt}</button>`;
     panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day, ()=>setView('log')));
-    const more=document.getElementById('previewMore'); if(more) more.onclick=()=>setView('log');
+    edgeFade(panel.querySelector('.day-carousel'));
+    const more=document.getElementById('previewMore'); if(more) more.onclick=()=>{ homePreviewOpen=!homePreviewOpen; renderHome(); document.getElementById('previewMore').focus({preventScroll:true}); };
   }
   document.getElementById('arrivalStart').onclick=()=>{ touchDayStart(); setView('log'); };
 }
@@ -3753,6 +3805,9 @@ document.addEventListener('keydown',e=>{
   else if(!e.shiftKey&&a===last){ e.preventDefault(); first.focus(); }
 });
 // the day-tab strip fades on its right edge while more tabs sit off-screen (narrow phones, large text)
+// a sideways-scrolling row fades at its right edge while more is off-screen (the Log's day tabs, Home's day cards)
+function edgeFade(el){ if(!el) return; const sync=()=>el.classList.toggle('more-right',el.scrollLeft+el.clientWidth<el.scrollWidth-2);
+  el.addEventListener('scroll',sync,{passive:true}); new ResizeObserver(sync).observe(el); sync(); }
 (()=>{ const dt=document.getElementById('dayTabs'); const sync=()=>dt.classList.toggle('more-right',dt.scrollLeft+dt.clientWidth<dt.scrollWidth-2);
   dt.addEventListener('scroll',sync,{passive:true}); new ResizeObserver(sync).observe(dt); new MutationObserver(sync).observe(dt,{childList:true}); })();
 if(navigator.standalone) document.documentElement.classList.add('ios-standalone');
