@@ -2226,7 +2226,24 @@ document.getElementById('fatigueWhyToggle').onclick=()=>{ const w=document.getEl
 function closeFatigue(){ document.getElementById('fatigueBg').classList.remove('on'); document.getElementById('fatigueSheet').classList.remove('on'); }
 document.getElementById('fatigueClose').onclick=closeFatigue; document.getElementById('fatigueBg').onclick=closeFatigue;
 
+// render() and the cardio form rebuild the whole list on every tap, which dropped keyboard focus back to <body>.
+// Remember the focused control as (card, kind, position) and focus its replacement once the list is redrawn;
+// a set that was removed hands focus to the one before it, a vanished control to its card's header.
+const FOCUS_STATE_CLASSES=['on','open','active','complete'];
+function listFocusKey(){
+  const a=document.activeElement, list=document.getElementById('exerciseList'); if(!a||a===list||!list.contains(a)) return null;
+  const card=a.closest('.exercise'); if(!card) return null;
+  const cls=[...a.classList].find(c=>!FOCUS_STATE_CLASSES.includes(c)); const sig=a.tagName.toLowerCase()+(cls?'.'+cls:'');
+  return {card:[...list.querySelectorAll('.exercise')].indexOf(card), sig, i:[...card.querySelectorAll(sig)].indexOf(a)};
+}
+function restoreListFocus(k){
+  if(!k) return; const card=document.querySelectorAll('#exerciseList .exercise')[k.card]; if(!card) return;
+  tagClickables(card); // the observer that makes divs focusable runs after this, too late for focus()
+  const same=card.querySelectorAll(k.sig); const el=same[Math.min(k.i,same.length-1)]||card.querySelector('.ex-head');
+  if(el) el.focus({preventScroll:true});
+}
 function render(){
+  const focusKey=listFocusKey();
   // several settings handlers (unit, auto-rotate, rotate-every, deload start/end) re-render the log after a change
   // without knowing which day is loaded — on the Cardio day there is no PROGRAM entry to draw, so hand off to
   // the cardio form instead of crashing on day.badge below.
@@ -2393,6 +2410,7 @@ function render(){
     card.appendChild(body); list.appendChild(card);
   });
   document.getElementById('finishBtn').textContent=allComplete?'All Sets Done — Finish Session':'Finish Session';
+  restoreListFocus(focusKey);
 }
 
 // ---------- first-launch program builder ----------
@@ -2769,6 +2787,7 @@ const CARDIO_TYPES=[
 ];
 let cardioDraft={type:'zone2',duration:'',distance:'',rpe:0,notes:'',showHow:false};
 function renderCardioForm(){
+  const focusKey=listFocusKey();
   document.getElementById('dayLabel').innerHTML=`<span><span class="badge t-cardio">Endurance</span>Conditioning</span><span class="linkbtn" id="cardioHistLink">History</span>`;
   document.getElementById('cardioHistLink').onclick=()=>setView('history');
   const list=document.getElementById('exerciseList'); list.innerHTML='';
@@ -2801,6 +2820,7 @@ function renderCardioForm(){
   document.getElementById('cardioLogBtn').onclick=logCardio;
   document.getElementById('finishBtn').style.display='none';
   document.getElementById('resetLink').style.display='none';
+  restoreListFocus(focusKey);
 }
 async function logCardio(){
   if(!cardioDraft.duration){ showToast('Add a duration first'); return; }
