@@ -112,7 +112,7 @@
      so it stands apart from the words around it by more than colour */
   .linkbtn{font-size:13px;color:var(--light);text-decoration:none;cursor:pointer;}
   .plateau-tip .linkbtn,.note-sm .linkbtn,.first-log-note .linkbtn{font-size:inherit;text-decoration:underline;}
-  #edReset{white-space:nowrap;color:var(--text-dim);text-decoration:underline;} /* destructive: the quiet style */
+  #edReset{white-space:nowrap;}
   .groupheader{font-size:12px;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;margin:16px 0 8px;}
   .exercise{background:var(--panel);border:1px solid var(--line);border-radius:8px;margin-bottom:12px;overflow:hidden;}
   .exercise.complete{border-color:var(--done-line);background:var(--done-bg);}
@@ -248,6 +248,7 @@
   .stat .l{font-size:12px;color:var(--text-dim);margin-top:2px;}
   .srow{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:10px 14px;margin-bottom:8px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:baseline;}
   .srow .sn{font-size:15px;} .srow .sd{font-size:12px;color:var(--text-dim);margin-top:2px;}
+  .srow .sd .linkbtn{white-space:nowrap;} /* Reset Baseline broke across two lines mid-sentence */
   .srow .sp{font-family:'Menlo',monospace;font-size:16px;text-align:right;white-space:nowrap;}
   .sp.up{color:var(--green);} .sp.down{color:var(--amber);} .sp.flat{color:var(--text-dim);}
   .spark{grid-column:1 / -1;height:28px;width:100%;margin-top:4px;}
@@ -276,10 +277,20 @@
   .srow .scrub{grid-column:1 / -1;padding:6px 0;margin:-6px 0;}
   .scrub-line{position:absolute;width:1px;margin-left:-.5px;background:var(--text-dim);pointer-events:none;display:none;}
   .scrub-dot{position:absolute;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;box-shadow:0 0 0 2px var(--panel);pointer-events:none;display:none;}
-  .str-card-exlist{margin-top:10px;border-top:1px solid var(--line);padding-top:6px;}
-  .str-card-exlist .srow{cursor:default;padding:8px 10px;}
-  .str-card-exlist .sn{font-size:13px;} .str-card-exlist .sd{font-size:12px;}
-  .str-card-exlist .sp{font-size:13px;}
+  .str-card-exlist{margin-top:10px;cursor:default;}
+  .str-card-exlist .srow{cursor:default;padding:10px 0;margin:0;background:none;border:0;border-top:1px solid var(--line);border-radius:0;}
+  .str-card-exlist .sn{font-size:15px;} .str-card-exlist .sd{font-size:12px;}
+  .str-card-exlist .sp{font-size:15px;}
+  .str-card-exlist .also{font-size:12px;color:var(--text-dim);white-space:nowrap;}
+  .str-grp{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:16px 0 4px;font-size:12px;color:var(--text-dim);}
+  .str-grp span:first-child{font-size:11px;letter-spacing:.08em;text-transform:uppercase;}
+  .str-past{margin-top:16px;}
+  .str-past-btn{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:52px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel-raised);color:var(--text);text-align:left;font-family:'Georgia',serif;cursor:pointer;}
+  .str-past-btn b{display:block;font-weight:normal;font-size:15px;} .str-past-btn b+span{display:block;font-size:12px;color:var(--text-dim);}
+  .str-past-act{font-size:13px;color:var(--light);}
+  .str-past-list{margin-top:4px;}
+  /* pinned to the bottom of the screen while the open list scrolls past, so closing it doesn't mean scrolling back up */
+  .str-hide{position:sticky;bottom:calc(var(--foot-h,80px) + 12px);display:block;width:100%;min-height:44px;margin-top:16px;box-shadow:0 12px 0 0 var(--panel),0 -12px 16px -4px var(--panel);}
   .bwlb{display:inline-block;font-size:12px;background:rgba(79,163,209,.15);color:var(--light);border:1px solid rgba(79,163,209,.4);padding:1px 8px;border-radius:10px;} /* spaced by its row's gap, so it lines up whether it fits beside the label or wraps under it */
   .note-sm{font-size:12px;color:var(--text-dim);line-height:1.5;margin-top:14px;}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:12px;}
@@ -293,10 +304,17 @@
      button is filled, which keeps the two apart even for the rare blue-yellow blindness the hue alone doesn't cover. */
   .btn.danger{color:var(--danger);border-color:var(--danger);background:transparent;}
   .btn.primary.danger{background:transparent;color:var(--danger);border-width:1.5px;font-weight:bold;}
-  .sess{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin-bottom:8px;cursor:pointer;}
-  .sess .sh{display:flex;justify-content:space-between;font-size:13px;} .sess .sm{font-size:12px;color:var(--text-dim);margin-top:3px;}
-  .sess .sdet{display:none;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);font-size:12px;line-height:1.7;}
-  .sess.open .sdet{display:block;}
+  /* a session in the calendar's day sheet: plan and summary, then its sets in a raised panel — each exercise on its own
+     line, each set kept whole — with Edit and Delete at the foot. Always open: you tapped the date to see them */
+  .sess{border-top:1px solid var(--line);} .sess:first-child{border-top:0;}
+  .sess-head{display:flex;align-items:center;gap:12px;min-height:60px;padding:8px 0;color:var(--text);}
+  .sess-main{flex:1;min-width:0;} .sess-name{display:flex;align-items:center;gap:6px;font-size:15px;}
+  .sess-meta{display:block;font-size:12px;color:var(--text-dim);margin-top:3px;}
+  .sess .sdet{margin:0 0 12px;padding:10px 12px;background:var(--panel-raised);border-radius:8px;font-size:13px;line-height:1.45;color:var(--text-dim);}
+  .sess.editing .sdet{background:none;padding:0;} /* the edit form brings its own fields */
+  .sess-ex{padding:4px 0;} .sess-ex b{display:block;font-weight:normal;color:var(--text);}
+  .sess-ex span{display:flex;flex-wrap:wrap;gap:2px 14px;font:12px 'Menlo',monospace;} .sess-ex i{font-style:normal;white-space:nowrap;}
+  .sess-notes{color:var(--text);white-space:pre-wrap;}
   /* session edit form: grid columns must be allowed to shrink (minmax(0,…)) — number inputs otherwise keep an
      intrinsic width on iOS and push the RIR column off the edge of the sheet */
   .se-row{display:grid;grid-template-columns:18px minmax(0,1fr) minmax(0,1fr) 62px;gap:6px;margin-top:4px;align-items:center;}
@@ -444,27 +462,30 @@
   .empty-plan b{color:var(--text);}
 
   /* ---------- history heatmap ---------- */
-  .heat-wrap{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:12px;}
-  .heat-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;}
-  .heat-title{font-size:13px;}
-  .heat-stat{font-family:'Menlo',monospace;font-size:12px;color:var(--text-dim);}
-  .heat-stat b{color:var(--green);}
-  .heat-scroll{overflow-x:auto;padding-bottom:2px;}
-  .heat-grid{display:grid;grid-template-rows:repeat(7,10px);grid-auto-flow:column;grid-auto-columns:10px;gap:3px;width:max-content;}
-  .heat-grid i{border-radius:2px;background:var(--line);display:block;}
-  .heat-grid i.h1{background:rgba(92,187,111,.28);}
-  .heat-grid i.h2{background:rgba(92,187,111,.52);}
-  .heat-grid i.h3{background:rgba(92,187,111,.78);}
-  .heat-grid i.h4{background:var(--green);}
-  .heat-legend{display:flex;justify-content:flex-end;align-items:center;gap:4px;margin-top:10px;font-size:12px;color:var(--text-dim);}
-  .heat-legend i{width:9px;height:9px;border-radius:2px;display:inline-block;background:var(--line);}
-  .heat-legend i.h4{background:var(--green);}
+  .heat-title,.cal-title{font-size:13px;font-weight:normal;margin:0;}
+  /* Training Rhythm: the two headline counts over a bar per week, with the 4-a-week goal as a dashed line. It replaced
+     a heatmap that filled half its card and an 8-week sparkline that said "30 days" */
+  .rhythm-card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:12px;}
+  .rhythm-card .heat-title{font-size:15px;margin-bottom:12px;}
+  .rh-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .rh-stats b{display:block;font:22px 'Menlo',monospace;font-weight:normal;} .rh-stats b.up{color:var(--green);}
+  .rh-stats b small{font-size:12px;color:var(--text-dim);} .rh-stats span{font-size:12px;color:var(--text-dim);}
+  .rh-chart{position:relative;margin-top:28px;}
+  .rh-goal{position:absolute;left:0;right:0;top:0;border-top:1px dashed var(--field-line,#646a76);}
+  .rh-goal span{position:absolute;right:0;top:-18px;font-size:11px;color:var(--text-dim);}
+  .rh-bars{display:flex;gap:4px;align-items:flex-end;height:72px;}
+  .rh-bars i{flex:1;min-height:2px;border-radius:4px 4px 0 0;background:rgba(92,187,111,.7);}
+  .rh-bars i.zero{background:var(--line);} .rh-bars i.met{background:var(--green);}
+  .rh-bars i.now{background:rgba(92,187,111,.3);box-shadow:inset 0 0 0 1px var(--green);}
+  .rh-axis{display:flex;gap:4px;margin-top:6px;padding-top:4px;border-top:1px solid var(--line);font-size:11px;color:var(--text-dim);}
+  .rh-axis span{flex:1;white-space:nowrap;overflow:visible;}
+  .rh-cap{font-size:12px;color:var(--text-dim);margin-top:8px;}
 
   /* ---------- history calendar ---------- */
   .cal-wrap{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:12px;}
   .cal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
-  .cal-title{font-size:13px;}
-  .cal-nav{color:var(--text-dim);cursor:pointer;font-size:16px;padding:0 8px;line-height:1;}
+  .cal-nav{color:var(--text);cursor:pointer;padding:0 8px;line-height:0;}
+  .cal-nav svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
   .cal-nav.dis{visibility:hidden;}
   .cal-dow{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:12px;color:var(--text-dim);margin-bottom:5px;}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
@@ -491,11 +512,13 @@
   /* sheets: Close takes a 44 px square in the corner; the session card's Edit / Delete sit 20 px apart so each can
      reach 44 px wide; the fatigue sheet's toggle gets real height rather than overlapping the list above it */
   .sheet-head .linkbtn{padding:15px 12px;margin:-15px -12px -15px 0;}
-  .sess-acts{display:inline-flex;gap:20px;margin-left:12px;white-space:nowrap;}
-  .sess-acts .linkbtn{padding:15px 10px;margin:-15px -10px;}
-  .linkbtn.quiet{color:var(--text-dim);text-decoration:underline;}
+  #calDaySheetBody{padding-top:4px;} /* keeps Close's enlarged tap area off the first session's row */
+  .sess-acts{display:flex;justify-content:flex-end;gap:24px;margin-top:4px;}
+  .sess-acts .linkbtn{padding:14px 0;margin:-4px 0 -10px;} /* 44 px tall without adding space under the sets */
+  /* a destructive text action takes the app's danger colour, like Clear Today's Entries and the editor's ✕ — only links
+     inside a sentence are underlined, so they stand apart from the words around them */
+  .linkbtn.danger{color:var(--danger);}
   .why-row{margin:4px 0;} .why-row .linkbtn{display:inline-block;padding:15px 0;margin:0;}
-  #calDaySheetBody{padding-top:12px;} /* room between Close and the first session's Edit / Delete, so their areas don't meet */
   #editLink,#cardioHistLink{padding:15px 12px;margin:-15px -12px;}
   /* "+ add a set" sits right under the last set row: its box starts below that row instead of reaching into it */
   .cal-nav{padding:18px 19px;margin:-18px -11px;}
@@ -660,18 +683,18 @@
 
   <section id="historyView" style="display:none">
     <div class="empty" id="histEmpty" style="display:none;margin-bottom:14px">No sessions yet. Finish a workout or log a conditioning session and it will show up here.</div>
-    <div class="heat-wrap">
-      <div class="heat-head"><div class="heat-title">Training Rhythm</div><div class="heat-stat" id="heatStat"></div></div>
-      <div class="heat-scroll"><div class="heat-grid" id="heatGrid"></div></div>
-      <div class="heat-legend">Less<i></i><i class="h1"></i><i class="h2"></i><i class="h3"></i><i class="h4"></i>More</div>
+    <div class="rhythm-card">
+      <h3 class="heat-title">Training Rhythm</h3>
+      <div class="rh-stats" id="rhStats"></div>
+      <div class="rh-chart" id="rhChart" role="img"></div>
+      <div class="rh-cap">Sessions per week, last 12 weeks</div>
     </div>
     <div class="cal-wrap">
-      <div class="cal-head"><span class="cal-nav" id="calPrev">‹</span><div class="cal-title" id="calTitle">—</div><span class="cal-nav" id="calNext">›</span></div>
+      <div class="cal-head"><span class="cal-nav" id="calPrev" aria-label="Previous Month"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></span><h3 class="cal-title" id="calTitle" aria-live="polite">—</h3><span class="cal-nav" id="calNext" aria-label="Next Month"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></div>
       <div class="cal-dow"><i>S</i><i>M</i><i>T</i><i>W</i><i>T</i><i>F</i><i>S</i></div>
       <div class="cal-grid" id="calGrid"></div>
       <div class="cal-legend" id="calLegend"></div>
     </div>
-    <div class="stats2" id="histStats"></div>
   </section>
 
   <section id="strengthView" style="display:none">
@@ -706,7 +729,7 @@
       <h3>Conditioning</h3>
       <div id="condStats"></div>
     </div>
-    <div class="note-sm">Strength level compares each lift to the numbers you started with (100%). It weighs both the load and the reps, so adding reps at the same weight counts too. "Per <span id="bwUnitNote">lb</span> of body weight" divides that by your logged weight, so getting stronger while staying the same size counts extra.</div>
+    <div class="note-sm">Each percentage is how much a lift has changed since the numbers you started with. It weighs both the load and the reps, so adding reps at the same weight counts too. "Relative to body weight" divides your strength by your logged weight, so getting stronger while staying the same size counts extra.</div>
   </section>
 
   <section id="moreView" style="display:none">
@@ -747,7 +770,7 @@
     </div>
     <div class="card">
       <h3>Edit Workouts</h3>
-      <div class="row" style="margin-bottom:8px;row-gap:16px"><select class="in" id="edDay"></select><span class="linkbtn" id="edReset">Reset to Default Program</span></div>
+      <div class="row" style="margin-bottom:8px;row-gap:16px"><select class="in" id="edDay"></select><span class="linkbtn danger" id="edReset">Reset to Default Program</span></div>
       <div id="edList"></div>
       <div style="margin-top:12px;font-size:12px;color:var(--text-dim)">Add an Exercise</div>
       <div class="row" style="margin-top:6px">
@@ -1615,10 +1638,10 @@ function plateText(totalLb, ex, baseLbOverride){
 }
 function dedupeSortByT(arr){ const seen=new Set(); const out=[]; [...arr].sort((a,b)=>a.t-b.t).forEach(x=>{ if(!seen.has(x.t)){ seen.add(x.t); out.push(x); } }); return out; }
 function latestBW(){ return bodyweight.length?bodyweight[bodyweight.length-1].w:null; }
-function sparkline(points,color,milestoneIdx){
+function sparkline(points,color,milestoneIdx,minSpan){
   if(!points||points.length<2) return '';
   const w=300,h=26,pad=2;
-  const coords=sparkCoords(points,w,h,pad);
+  const coords=sparkCoords(points,w,h,pad,minSpan);
   const pts=coords.map(c=>c.join(',')).join(' ');
   const dot=(milestoneIdx!=null&&coords[milestoneIdx])?`<circle class="milestone" cx="${coords[milestoneIdx][0]}" cy="${coords[milestoneIdx][1]}" r="2.6"/>`:'';
   return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline fill="none" stroke="${color||'var(--light)'}" stroke-width="1.6" points="${pts}"/>${dot}</svg>`;
@@ -1658,8 +1681,11 @@ function buildAggregateSeries(events,baseByName,mode){
 // one point per logged session: every exercise in a session shares its timestamp, so without this a single
 // session would be several stacked points and the scrub would step through one workout exercise by exercise
 function perSession(series){ const m=new Map(); series.forEach(x=>{ if(x.p!=null) m.set(x.t,x.p); }); return [...m].map(([t,p])=>({t,p})); }
-function sparkCoords(points,w,h,pad){
-  const min=Math.min(...points),max=Math.max(...points),span=(max-min)||1;
+// minSpan keeps a small wobble small: the chart shows at least that range, centred on the data, instead of
+// stretching a 2 lb change to the full height
+function sparkCoords(points,w,h,pad,minSpan){
+  let min=Math.min(...points),max=Math.max(...points),span=(max-min)||1;
+  if(minSpan&&span<minSpan){ min=(min+max)/2-minSpan/2; span=minSpan; }
   return points.map((v,i)=>[pad+(i/(points.length-1))*(w-2*pad),h-pad-((v-min)/span)*(h-2*pad)]);
 }
 // Stock-app-style scrub: drag a finger (or hover a mouse) across a chart and a crosshair snaps to the nearest
@@ -2652,24 +2678,25 @@ async function logCardio(){
 }
 
 // ---------- history view ----------
-function buildHeatmap(){
-  const grid=document.getElementById('heatGrid'); grid.innerHTML='';
-  const days=98; const today=new Date(); today.setHours(0,0,0,0);
-  const start=new Date(today); start.setDate(start.getDate()-(days-1));
-  for(let i=0;i<start.getDay();i++){ const pad=document.createElement('i'); pad.style.visibility='hidden'; grid.appendChild(pad); }
-  // shading is by volume, but a day counts as trained because a session was logged on it — a session logged with
-  // its weights left blank (0 lb moved) used to leave its day empty and drop out of the count. The count is
-  // sessions, as the label says, not distinct days.
-  const byDay={}, trained=new Set(), startT=start.getTime(); let count=0;
-  sessions.forEach(s=>{ const d=new Date(s.t); d.setHours(0,0,0,0); const key=d.getTime(); byDay[key]=(byDay[key]||0)+(s.isCardio?(s.duration||0)*100:(s.vol||0)); trained.add(key); if(s.t>=startT) count++; });
-  const maxV=Math.max(1,...Object.values(byDay));
-  for(let i=0;i<days;i++){
-    const d=new Date(start); d.setDate(d.getDate()+i); const key=d.getTime();
-    const cell=document.createElement('i');
-    if(trained.has(key)){ const lvl=Math.max(1,Math.min(4,Math.ceil((byDay[key]||0)/maxV*4))); cell.className='h'+lvl; }
-    grid.appendChild(cell);
-  }
-  document.getElementById('heatStat').innerHTML=`<b>${count}</b> Sessions · 14 Weeks`;
+// Training Rhythm: sessions in the last 30 days and conditioning this week, over lifting sessions per week for 12 weeks.
+// The goal line is the header's 4 a week; the current week is outlined, since it's still in progress.
+const RHYTHM_GOAL=4;
+function renderRhythm(){
+  const week=weekStart(), month=Date.now()-30*864e5;
+  const lifts=sessions.filter(s=>!s.isCardio), cardioWeek=sessions.filter(s=>s.isCardio&&s.t>=week);
+  const cardioMin=cardioWeek.reduce((a,b)=>a+(b.duration||0),0);
+  document.getElementById('rhStats').innerHTML=`<div><b>${lifts.filter(s=>s.t>=month).length}</b><span>Lifting, Last 30 Days</span></div>
+    <div><b class="${cardioWeek.length>=2?'up':''}">${cardioWeek.length}<small> / 2–3</small></b><span>Conditioning This Week${cardioMin?` · ${cardioMin} min`:''}</span></div>`;
+  const ranges=weekRanges(12), counts=ranges.map(([a,b])=>lifts.filter(s=>s.t>=a&&s.t<b).length);
+  const top=Math.max(RHYTHM_GOAL,...counts);
+  const bars=counts.map((n,i)=>{ const cur=i===counts.length-1;
+    return `<i class="${cur?'now':n===0?'zero':n>=RHYTHM_GOAL?'met':''}" style="height:${n?Math.max(4,n/top*100):3}%" title="${fmtDate(ranges[i][0])}: ${n}"></i>`; }).join('');
+  // a month label under the first week that starts in it
+  const axis=ranges.map(([a],i)=>{ const d=new Date(a), prev=i?new Date(ranges[i-1][0]):null;
+    return `<span>${!prev||prev.getMonth()!==d.getMonth()?d.toLocaleDateString(undefined,{month:'short'}):''}</span>`; }).join('');
+  const chart=document.getElementById('rhChart');
+  chart.innerHTML=`<div class="rh-goal" style="top:${(1-RHYTHM_GOAL/top)*72}px"><span>Goal ${RHYTHM_GOAL}</span></div><div class="rh-bars">${bars}</div><div class="rh-axis">${axis}</div>`;
+  chart.setAttribute('aria-label',`Lifting sessions per week, last 12 weeks, oldest first: ${counts.join(', ')}. This week so far: ${counts[counts.length-1]}. Goal ${RHYTHM_GOAL} a week.`);
 }
 let calMonthOffset=0;
 function sessionType(s){ return s.isCardio?'cardio':(s.dayName==='Upper'?'upper':s.dayName==='Lower'?'lower':null); }
@@ -2722,7 +2749,7 @@ async function saveSessionEdit(s, edited){
 }
 const RIR_OPTS=[['','RIR'],['0','0'],['1','1'],['2','2'],['3','3'],['4','4+']];
 function renderSessionEditForm(s, el, onDone){
-  const det=el.querySelector('.sdet'); el.classList.add('open'); det.style.display='block';
+  const det=el.querySelector('.sdet');
   if(s.isCardio){
     det.innerHTML=`<div class="field-label">Duration (minutes)</div><input class="in" id="seDur" type="number" inputmode="numeric" value="${s.duration||''}" style="width:100%">
       <div class="field-label">Distance (optional)</div><input class="in" id="seDist" type="text" value="${s.distance||''}" style="width:100%">
@@ -2744,22 +2771,24 @@ function renderSessionEditForm(s, el, onDone){
   det.querySelector('[data-act="cancel"]').onclick=e=>{ e.stopPropagation(); onDone(); };
   det.querySelectorAll('input,select,textarea').forEach(i=>i.onclick=e=>e.stopPropagation());
 }
-// shared by the History tab's full session list and the calendar's day-detail sheet, so the two never drift
-// apart. forceOpen skips the tap-to-expand step; editable adds edit/delete controls (the day sheet only).
-function buildSessionItem(s, forceOpen, editable){
-  const el=document.createElement('div'); el.className='sess'+(forceOpen?' open':'');
-  const acts=editable?`<span class="sess-acts"><span class="linkbtn" data-act="edit">Edit</span><span class="linkbtn quiet" data-act="del">Delete</span></span>`:'';
-  if(s.isCardio){
-    el.innerHTML=`<div class="sh"><span>${fmtDate(s.t)}</span><span style="color:var(--text-dim)">${s.ctypeLabel}${acts?' &nbsp;'+acts:''}</span></div><div class="sm">${s.duration} min${s.distance?' · '+s.distance:''}${s.rpe?' · RPE '+s.rpe:''}</div><div class="sdet" style="${s.notes?'display:block;':''}border:none;padding-top:4px">${s.notes||''}</div>`;
-  } else {
-    const det=Object.entries(s.ex).map(([n,sets])=>{ const en=entryFor(n); const bwl=!!(en&&en.start===0); const timed=!!(en&&en.target&&isTimedTarget(en.target)); return `<b style="font-weight:normal;color:var(--text)">${n}</b> — ${sets.map(x=>(timed?`${x.r||'-'}s hold`:`${x.w?dispWeight(x.w):(bwl?'bw':'—')}×${x.r||'-'}`)+`${x.rir!=null?' (RIR '+x.rir+')':''}`).join(', ')}`; }).join('<br>');
-    el.innerHTML=`<div class="sh"><span>${fmtDate(s.t)}</span><span style="color:var(--text-dim)">${s.dayName} · ${s.sub}${acts?' &nbsp;'+acts:''}</span></div><div class="sm">${s.sets} sets · ${dispVol(s.vol).toLocaleString()} ${unitLabel()} moved</div><div class="sdet">${det}</div>`;
-    el.onclick=()=>el.classList.toggle('open');
-  }
-  if(editable){
-    el.querySelector('[data-act="edit"]').onclick=e=>{ e.stopPropagation(); renderSessionEditForm(s, el, ()=>refreshCalDaySheet()); };
-    el.querySelector('[data-act="del"]').onclick=async e=>{ e.stopPropagation(); if(await deleteSession(s)) refreshCalDaySheet(); };
-  }
+// each exercise in a lifting session with its sets as text ("115×10", "bw×12", "30s hold", "(RIR 2)")
+function sessionExLines(s){
+  return Object.entries(s.ex||{}).map(([n,sets])=>{ const en=entryFor(n); const bwl=!!(en&&en.start===0); const timed=!!(en&&en.target&&isTimedTarget(en.target));
+    return [n, sets.map(x=>(timed?`${x.r||'-'}s hold`:`${x.w?dispWeight(x.w):(bwl?'bw':'—')}×${x.r||'-'}`)+`${x.rir!=null?' (RIR '+x.rir+')':''}`)]; });
+}
+// one session in the calendar's day sheet, shown in full
+function buildSessionItem(s){
+  const el=document.createElement('div'); el.className='sess';
+  const p=sessionPlan(s);
+  const meta=s.isCardio?[`${s.duration} min`,s.distance,s.rpe?`RPE ${s.rpe}`:''].filter(Boolean).join(' · ')
+    :`${Object.keys(s.ex||{}).length} exercises · ${s.sets} sets · ${dispVol(s.vol||0).toLocaleString()} ${unitLabel()}`;
+  const body=s.isCardio?(s.notes?`<div class="sess-notes"></div>`:'')
+    :sessionExLines(s).map(([n,sets])=>`<div class="sess-ex"><b>${n}</b><span>${sets.map(x=>`<i>${x}</i>`).join('')}</span></div>`).join('');
+  el.innerHTML=`<div class="sess-head"><span class="sess-main"><span class="sess-name"><i class="cal-tag t-${p.type}" aria-hidden="true">${p.tag}</i>${s.isCardio?s.ctypeLabel:p.label}</span><span class="sess-meta">${meta}</span></span></div>
+    <div class="sdet">${body}<div class="sess-acts"><span class="linkbtn" data-act="edit">Edit</span><span class="linkbtn danger" data-act="del">Delete</span></div></div>`;
+  if(s.isCardio&&s.notes) el.querySelector('.sess-notes').textContent=s.notes;
+  el.querySelector('[data-act="edit"]').onclick=e=>{ e.stopPropagation(); el.classList.add('editing'); renderSessionEditForm(s, el, ()=>refreshCalDaySheet()); };
+  el.querySelector('[data-act="del"]').onclick=async e=>{ e.stopPropagation(); if(await deleteSession(s)) refreshCalDaySheet(); };
   return el;
 }
 let calSheetDate=null;
@@ -2775,7 +2804,7 @@ function openCalDaySheet(dateObj,daySessions){
   calSheetDate=dateObj;
   document.getElementById('calDaySheetTitle').textContent=dateObj.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
   const body=document.getElementById('calDaySheetBody'); body.innerHTML='';
-  daySessions.forEach(s=>body.appendChild(buildSessionItem(s,true,true)));
+  daySessions.forEach(s=>body.appendChild(buildSessionItem(s)));
   document.getElementById('calDayBg').classList.add('on');
   document.getElementById('calDaySheet').classList.add('on');
 }
@@ -2828,17 +2857,8 @@ document.getElementById('calPrev').onclick=()=>{ calMonthOffset--; renderCalenda
 document.getElementById('calNext').onclick=()=>{ if(calMonthOffset<0){ calMonthOffset++; renderCalendar(); } };
 function renderHistory(){
   document.getElementById('histEmpty').style.display=sessions.length?'none':'block';
-  buildHeatmap();
+  renderRhythm();
   renderCalendar();
-  const st=document.getElementById('histStats');
-  const week=weekStart(), month=Date.now()-30*864e5;
-  const lifts=sessions.filter(s=>!s.isCardio), cardio=sessions.filter(s=>s.isCardio);
-  const thisWeek=lifts.filter(s=>s.t>=week).length, thisMonth=lifts.filter(s=>s.t>=month).length;
-  const cardioWeekMin=cardio.filter(s=>s.t>=week).reduce((a,b)=>a+(b.duration||0),0);
-  const wk=weekRanges(8).map(([a,b])=>lifts.filter(s=>s.t>=a&&s.t<b).length);
-  st.innerHTML=`<div class="stat"><div class="v ${thisWeek>=4?'up':''}">${thisWeek}<span style="font-size:12px;color:var(--text-dim)"> / 4</span></div><div class="l">Lifting Sessions This Week</div></div>
-    <div class="stat"><div class="v">${thisMonth}</div><div class="l">Lifting, Last 30 Days</div>${sparkline(wk,'var(--green)')}</div>
-    <div class="stat" style="grid-column:1 / -1"><div class="v ${cardioWeekMin>=60?'up':''}">${cardioWeekMin} min</div><div class="l">Conditioning This Week (target: 2–3 sessions)</div></div>`;
 }
 
 // ---------- strength view ----------
@@ -2862,20 +2882,19 @@ function renderConditioning(){
     const paceVals = paced.map(s=>s.duration/parsePace(s.distance)); // min per mile/km
     const p0=paceVals[0], p1=paceVals[paceVals.length-1];
     const paceChange = ((p0-p1)/p0*100); // positive = faster pace now
-    paceHtml = `<div class="srow" style="grid-template-columns:1fr 70px 64px"><div><div class="sn">Pace (min per mile/km)</div><div class="sd">${paced.length} sessions with distance logged</div></div><div class="se">${p1.toFixed(1)}</div><div class="sp ${paceChange>0.5?'up':paceChange<-0.5?'down':'flat'}">${paceChange>0.5?'faster':paceChange<-0.5?'slower':'steady'}</div>${sparkline(paceVals,'var(--light)')}</div>`;
+    paceHtml = `<div class="srow" style="grid-template-columns:1fr 70px 64px"><div><div class="sn">Pace (min per mile/km)</div><div class="sd">${paced.length} sessions with distance logged</div></div><div class="se">${p1.toFixed(1)}</div><div class="sp ${paceChange>0.5?'up':paceChange<-0.5?'down':'flat'}">${paceChange>0.5?'Faster':paceChange<-0.5?'Slower':'Steady'}</div>${sparkline(paceVals,'var(--light)')}</div>`;
   }
   out.innerHTML = `
     <div class="stats2" style="margin-bottom:10px">
-      <div class="stat"><div class="v">${wk[wk.length-1]} min</div><div class="l">this week</div>${sparkline(wk,'var(--green)')}</div>
-      <div class="stat"><div class="v ${rpeDelta!==null&&rpeDelta<-0.3?'up':''}">${avgRpeRecent?avgRpeRecent.toFixed(1):'—'}</div><div class="l">recent avg effort (RPE)${rpeDelta!==null?(Math.abs(rpeDelta)<0.05?', same as early on':`, ${rpeDelta<0?'down':'up'} from ${avgRpeEarly.toFixed(1)} early on`):''}</div>${rpeTrend.length>1?sparkline(rpeTrend,'var(--amber)'):''}</div>
+      <div class="stat"><div class="v">${wk[wk.length-1]} min</div><div class="l">This Week</div>${sparkline(wk,'var(--green)')}</div>
+      <div class="stat"><div class="v ${rpeDelta!==null&&rpeDelta<-0.3?'up':''}">${avgRpeRecent?avgRpeRecent.toFixed(1):'—'}</div><div class="l">Recent Average Effort (RPE)</div>${rpeDelta!==null?`<div class="l">${Math.abs(rpeDelta)<0.05?'Same as early on':`${rpeDelta<0?'Down':'Up'} from ${avgRpeEarly.toFixed(1)} early on`}</div>`:''}${rpeTrend.length>1?sparkline(rpeTrend,'var(--amber)'):''}</div>
     </div>
     ${paceHtml}
     <div class="note-sm" style="margin-top:${paceHtml?'10px':'0'}">Same effort covering more distance, or the same pace feeling easier (lower RPE), is what real endurance improvement looks like — not just logging more minutes.</div>`;
 }
-let strCardOpen={upper:false,lower:false};
+let strCardOpen={upper:false,lower:false}, strPastOpen={upper:false,lower:false};
 function renderStrength(){
   renderConditioning();
-  document.getElementById('bwUnitNote').textContent=unitLabel();
   const upperList=document.getElementById('upperStrList'), lowerList=document.getElementById('lowerStrList');
   upperList.innerHTML=''; lowerList.innerHTML='';
   let changes=[], upperTotal=0, upperBase=0, lowerTotal=0, lowerBase=0;
@@ -2883,12 +2902,17 @@ function renderStrength(){
   const nameSlots={};
   PROGRAM.forEach(day=>day.exercises.forEach(ex=>{ (nameSlots[ex.name]=nameSlots[ex.name]||[]).push({name:day.name,sub:day.sub}); }));
   const countedNames=new Set();
+  // the open list groups rows under each program day; a lift on two days of the same half shows once, under the first,
+  // marked "also Volume"; retired lifts fold into a No Longer in Program group of their own
+  const shownRows={}, pastBox={};
+  const listFor=day=>day.name==='Upper'?upperList:day.name==='Lower'?lowerList:null;
   const renderRow=(ex, day)=>{
-    const targetList=day.name==='Upper'?upperList:day.name==='Lower'?lowerList:null;
+    const half=listFor(day), targetList=day.past&&half?pastBox[half.id].list:half;
     const base=baselineFor(ex), cur=currentFor(ex), h=histFrom(ex), fullH=hist[histKey(ex)]||[];
     const p=h.length?pct(base,cur):null;
     const firstOccurrence=!countedNames.has(ex.name); countedNames.add(ex.name);
-    if(firstOccurrence){
+    // retired ("Past") lifts keep their rows, but the summary numbers only measure what you're training now
+    if(firstOccurrence&&!day.past){
       if(p!==null) changes.push(p);
       if(day.name==='Upper'){ upperTotal+=cur; upperBase+=base; }
       else if(day.name==='Lower'){ lowerTotal+=cur; lowerBase+=base; }
@@ -2898,19 +2922,24 @@ function renderStrength(){
       if(day.name==='Upper'){ upperBaseByName[ex.name]=base; upperEvents.push(...events); }
       else if(day.name==='Lower'){ lowerBaseByName[ex.name]=base; lowerEvents.push(...events); }
     }
+    const seenKey=half&&!day.past?half.id+'|'+ex.name:null;
+    if(seenKey&&shownRows[seenKey]){ shownRows[seenKey].querySelector('.also').textContent+=` · also ${day.sub}`; return false; }
     const cls=p===null||Math.abs(p)<0.05?'flat':(p>0?'up':'down');
+    // one session with no earlier numbers to compare against is a starting point, not "0%, no progress" — and its
+    // chart would be a flat line between two identical points
+    const firstOnly=h.length===1&&cls==='flat';
     const last=h.length?h[h.length-1]:null;
     const bestTxt=last?`${dispWeight(last.w)} ${unitLabel()} × ${last.r}`:(ex.seed?(()=>{const b=ex.seed.filter(x=>x.w&&x.r).sort((a,b)=>e1rm(b.w,b.r)-e1rm(a.w,a.r))[0]; return b?`${dispWeight(b.w)} ${unitLabel()} × ${b.r}`:'—';})():'—');
     const plat=isPlateau(ex);
     const breaks=plateauBreakIdx(h); const milestoneIdx=breaks.length?breaks[breaks.length-1]+1:null;
-    const others=(nameSlots[ex.name]||[]).filter(o=>!(o.name===day.name&&o.sub===day.sub));
+    const others=(nameSlots[ex.name]||[]).filter(o=>o.name!==day.name); // same-half days show as "also …" instead
     const shareTxt=others.length?` · shares history with ${others.map(o=>`${o.name} ${o.sub}`).join(', ')}`:'';
     const row=document.createElement('div'); row.className='srow';
-    const sdTxt=isTimedTarget(ex.target)?'timed hold — counted as sets, not scored for strength':`best set ${bestTxt} · ${fullH.length?fullH.length+' session'+(fullH.length>1?'s':'')+' logged':'your starting numbers'}`;
-    const pastTxt=day.past?` · last done ${fmtDate(fullH[fullH.length-1].t)}, not in your program now`:'';
+    const sdTxt=isTimedTarget(ex.target)?'Timed hold — counted as sets, not scored for strength':`Best set ${bestTxt} · ${fullH.length?fullH.length+' session'+(fullH.length>1?'s':'')+' logged':'your starting numbers'}`;
+    const pastTxt=day.past?` · last done ${fmtDate(fullH[fullH.length-1].t)}`:'';
     const k=histKey(ex);
     const baseTxt=isTimedTarget(ex.target)?'':baselines[k]?` · <span class="linkbtn" data-act="baseline-undo">Baseline Reset ${fmtDate(baselines[k])} — Undo</span>`:(fullH.length>=2?` · <span class="linkbtn" data-act="baseline">Reset Baseline</span>`:'');
-    row.innerHTML=`<div><div class="sn">${ex.name} <span class="badge ${dayType(day)}">${day.sub}</span>${plat?'<span class="badge plateau">Plateau</span>':''}</div><div class="sd">${sdTxt}${shareTxt}${pastTxt}${baseTxt}</div><div class="sd" data-scrub-readout style="display:none"></div></div><div class="sp ${cls}">${p===null?'Start':fmtPct(p)}</div>${h.length?`<div class="scrub" tabindex="0" aria-label="${ex.name} trend. Drag across it, or use the arrow keys, to see each session.">${sparkline([base,...h.map(x=>x.e1rm)],cls==='down'?'var(--amber)':'var(--green)',milestoneIdx)}</div>`:''}`;
+    row.innerHTML=`<div><div class="sn">${ex.name}<span class="also"></span>${plat?' <span class="badge plateau">Plateau</span>':''}</div><div class="sd">${sdTxt}${shareTxt}${pastTxt}${baseTxt}</div><div class="sd" data-scrub-readout style="display:none"></div></div><div class="sp ${cls}">${p===null?'Start':firstOnly?'New':fmtPct(p)}</div>${h.length&&!firstOnly?`<div class="scrub" tabindex="0" aria-label="${ex.name} trend. Drag across it, or use the arrow keys, to see each session.">${sparkline([base,...h.map(x=>x.e1rm)],cls==='down'?'var(--amber)':'var(--green)',milestoneIdx)}</div>`:''}`;
     const rowWrap=row.querySelector('.scrub');
     if(rowWrap){
       // point 0 is the baseline itself (from pre-app seed numbers or the first session), so it has no set to show.
@@ -2933,23 +2962,46 @@ function renderStrength(){
     const rb=row.querySelector('[data-act="baseline"]'); if(rb) rb.onclick=async e=>{ e.stopPropagation(); baselines[k]=fullH[fullH.length-1].t; await sset('baselines',baselines); renderStrength(); if(view==='log') render(); showToast(`${ex.name}: progress now measured from your latest session`); };
     const ru=row.querySelector('[data-act="baseline-undo"]'); if(ru) ru.onclick=async e=>{ e.stopPropagation(); delete baselines[k]; await sset('baselines',baselines); renderStrength(); if(view==='log') render(); showToast(`${ex.name}: baseline back to your first session`); };
     if(targetList) targetList.appendChild(row);
+    if(seenKey) shownRows[seenKey]=row;
+    return !!targetList;
   };
-  PROGRAM.forEach(day=>day.exercises.forEach(ex=>renderRow(ex, day)));
+  PROGRAM.forEach(day=>{
+    const list=listFor(day); let grp=null, n=0, merged=0;
+    if(list){ grp=document.createElement('div'); grp.className='str-grp'; list.appendChild(grp); }
+    day.exercises.forEach(ex=>{ if(renderRow(ex, day)) n++; else if(list) merged++; });
+    if(grp) grp.innerHTML=`<span>${day.name} ${day.sub}</span><span>${n} lift${n===1?'':'s'}${merged?` · ${merged} shown above`:''}</span>`;
+  });
+  [upperList,lowerList].forEach(l=>{
+    const key=l===upperList?'upper':'lower', box=document.createElement('div'); box.className='str-past';
+    box.innerHTML=`<button class="str-past-btn" aria-expanded="${!!strPastOpen[key]}"><span><b>No Longer in Program · <span data-n>0</span></b><span>Not counted in the totals above</span></span><span class="str-past-act">${strPastOpen[key]?'Hide':'Show'}</span></button><div class="str-past-list" style="${strPastOpen[key]?'':'display:none'}"></div>`;
+    // stopPropagation: the re-render detaches the button, so the card's own "tap inside the list" check can't see it
+    box.querySelector('.str-past-btn').onclick=e=>{ e.stopPropagation(); strPastOpen[key]=!strPastOpen[key]; renderStrength(); };
+    l.appendChild(box); pastBox[l.id]={box,list:box.querySelector('.str-past-list')};
+  });
   // lifts with logged history that are no longer in the program (rotated or swapped out) — their sessions are
   // just as real, so they stay in the stats, grouped under the day they were last done on (or by muscle for
-  // entries older than the day tag), marked "past" instead of Heavy/Volume
+  // entries older than the day tag), marked "Past" instead of Heavy/Volume
   const UPPER_KEYS=new Set(['chest','back','shoulders','biceps','triceps','forearms']);
   Object.keys(hist).filter(n=>!countedNames.has(n)&&hist[n].length).sort((a,b)=>hist[b][hist[b].length-1].t-hist[a][hist[a].length-1].t).forEach(name=>{
     const en=entryFor(name)||{}; const key=keyOfEntry(en);
     const lastTagged=[...hist[name]].reverse().find(x=>x.d); const srcDay=lastTagged&&PROGRAM.find(d=>d.id===lastTagged.d);
     const half=srcDay?srcDay.name:(key&&!UPPER_KEYS.has(key)?'Lower':'Upper');
     const ex={name, target:en.target||'3 x 8-12', seed:null, start:en.start===0?0:-1};
-    renderRow(ex, {name:half, sub:'past', badge:'light', past:true});
+    renderRow(ex, {name:half, sub:'Past', badge:'light', past:true});
+  });
+  [upperList,lowerList].forEach(l=>{
+    const {box,list}=pastBox[l.id], n=list.children.length;
+    box.querySelector('[data-n]').textContent=n; box.style.display=n?'':'none';
+    const hide=document.createElement('button'); hide.className='str-hide btn'; hide.textContent='Hide Exercises';
+    hide.onclick=e=>{ e.stopPropagation(); const key=l===upperList?'upper':'lower'; strCardOpen[key]=false; renderStrength(); document.getElementById(key+'StrCard').scrollIntoView({block:'nearest'}); };
+    l.appendChild(hide);
   });
   document.getElementById('upperStrList').style.display=strCardOpen.upper?'block':'none';
   document.getElementById('lowerStrList').style.display=strCardOpen.lower?'block':'none';
   document.getElementById('upperStrCard').classList.toggle('open',!!strCardOpen.upper);
   document.getElementById('lowerStrCard').classList.toggle('open',!!strCardOpen.lower);
+  document.getElementById('upperStrCard').setAttribute('aria-expanded',!!strCardOpen.upper);
+  document.getElementById('lowerStrCard').setAttribute('aria-expanded',!!strCardOpen.lower);
   document.getElementById('upperStrCard').style.display=strCardOpen.lower?'none':'';
   document.getElementById('lowerStrCard').style.display=strCardOpen.upper?'none':'';
   document.getElementById('upperStrHint').textContent=strCardOpen.upper?'Hide Exercises':'See Exercises';
@@ -2966,7 +3018,7 @@ function renderStrength(){
   if(bodyweight.length&&bodyBase&&bodyTotal){
     const bw0=bodyweight[0].w, bw1=bodyweight[bodyweight.length-1].w;
     const rel=((bodyTotal/bw1)/(bodyBase/bw0)-1)*100;
-    bwPill.textContent=`${rel>=0?'+':''}${Math.round(rel)}% per ${unitLabel()} bodyweight`; bwPill.style.display='inline-block';
+    bwPill.textContent=`${rel>=0?'+':''}${Math.round(rel)}% relative to body weight`; bwPill.style.display='inline-block';
   } else bwPill.style.display='none';
   const renderSplitCard=(p,series,numId,sparkId,scrubId,hintId)=>{
     const numEl=document.getElementById(numId), hintEl=document.getElementById(hintId);
@@ -2995,8 +3047,10 @@ function renderStrength(){
     onReset:()=>{ heroNum.textContent=heroRest.num; heroNum.className=heroRest.cls; heroLbl.textContent=heroRest.lbl; bwPill.style.visibility=''; }};
   // bodyweight card
   const info=document.getElementById('bwInfo'), sp=document.getElementById('bwSpark'), bwNote=document.getElementById('bwNote');
-  if(bodyweight.length){ const f=bodyweight[0].w,l=bodyweight[bodyweight.length-1].w; const dl=dispBW(l), delta=dispBW(l)-dispBW(f); info.textContent=`${dl} ${unitLabel()} now · ${delta>=0?'+':''}${Math.round(delta*10)/10} since ${fmtDate(bodyweight[0].t)}`; sp.innerHTML=bodyweight.length>1?sparkline(bodyweight.map(b=>dispBW(b.w)),'var(--amber)'):''; document.getElementById('bwInput').placeholder=String(dl); }
-  else { info.textContent=''; sp.innerHTML=''; document.getElementById('bwInput').placeholder=unitLabel(); }
+  if(bodyweight.length){ const f=bodyweight[0].w,l=bodyweight[bodyweight.length-1].w; const dl=dispBW(l), delta=dispBW(l)-dispBW(f); info.textContent=`${dl} ${unitLabel()} now · ${delta>=0?'+':''}${Math.round(delta*10)/10} ${unitLabel()} since ${fmtDate(bodyweight[0].t)}`; const bwVals=bodyweight.map(b=>dispBW(b.w)); sp.innerHTML=bodyweight.length>1?sparkline(bwVals,'var(--amber)',null,0.04*bwVals.reduce((a,b)=>a+b,0)/bwVals.length):''; }
+  else { info.textContent=''; sp.innerHTML=''; }
+  // the placeholder used to be your last weight, which in grey read as already filled in — that's in the line beside it
+  const bwIn=document.getElementById('bwInput'); bwIn.placeholder=unitLabel(); bwIn.setAttribute('aria-label',`Today's body weight in ${unitLabel()}`);
   const bwRate=bwWeeklyRate();
   bwNote.innerHTML=(bwRate!==null && bwRate<=-1)?`<div class="plateau-tip" style="margin-top:10px">Losing about ${Math.abs(bwRate).toFixed(1)}% of body weight a week — research on rate of loss suggests staying closer to 0.5-1%/week better preserves strength and muscle. Fine if it's a short intentional push; worth easing off if it's not.</div>`:'';
 }
@@ -3523,7 +3577,7 @@ document.addEventListener('focusout',e=>{
 // Nearly every tappable control is a div/span wired with onclick, which a keyboard or screen reader can't reach.
 // Tag them as buttons as they're rendered (render() rebuilds cards constantly, hence the observer) and let
 // Enter/Space fire the same click a tap would.
-const KB_CLICKABLE='.viewtab,.daytab,.day-card,.ex-head,.linkbtn,.addset,.setdone,.setrm,.rpe-dot,.rir-pill,.ctype span,.eqchip,.cal-nav,.cal-cell.has-session,.str-split-card,.sess,.edrow .acts span,.reset-link';
+const KB_CLICKABLE='.viewtab,.daytab,.day-card,.ex-head,.linkbtn,.addset,.setdone,.setrm,.rpe-dot,.rir-pill,.ctype span,.eqchip,.cal-nav,.cal-cell.has-session,.str-split-card,.edrow .acts span,.reset-link';
 function tagClickables(root){
   const els=[...(root.matches(KB_CLICKABLE)?[root]:[]),...root.querySelectorAll(KB_CLICKABLE)];
   for(const el of els){
