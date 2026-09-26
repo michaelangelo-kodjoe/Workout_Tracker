@@ -134,6 +134,9 @@
   .linkbtn{font-size:13px;color:var(--light);text-decoration:none;cursor:pointer;}
   .plateau-tip .linkbtn,.note-sm .linkbtn,.first-log-note .linkbtn{font-size:inherit;text-decoration:underline;}
   #edReset{white-space:nowrap;}
+  .groupheader{font:inherit;margin:0;}
+  .daylabel{flex-wrap:wrap;} .day-bar{flex:0 0 100%;height:3px;border-radius:2px;background:var(--line);margin-top:4px;overflow:hidden;}
+  .day-bar i{display:block;height:100%;background:var(--green);border-radius:2px;} h3.ex-name{font-weight:normal;margin:0;}
   .groupheader{font-size:12px;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;margin:16px 0 8px;}
   .exercise{background:var(--panel);border:1px solid var(--line);border-radius:8px;margin-bottom:12px;overflow:hidden;}
   .exercise.complete{border-color:var(--done-line);background:var(--done-bg);}
@@ -175,7 +178,7 @@
   .setgrid.head{color:var(--text-dim);font-size:11px;letter-spacing:.06em;text-transform:uppercase;text-align:center;}
   .setgrid.head>div{min-width:0;overflow:hidden;text-overflow:ellipsis;} /* at large text a head shortens rather than running into its neighbour */
   .setnum{color:var(--text-dim);text-align:center;font-family:'Menlo',monospace;}
-  .setgrid.head .bw-note{opacity:.75;margin-left:3px;white-space:nowrap;}
+  .bw-line{font-size:12px;color:var(--text-dim);margin:0 0 10px;}
   /* hold counter for timed sets (planks etc.): a stopwatch under the set row that fills the seconds field */
   .hold-row{display:flex;align-items:center;gap:10px;margin:-2px 0 10px 36px;font-size:12px;}
   .hold-t{font-family:'Menlo',monospace;font-size:22px;color:var(--light);min-width:56px;}
@@ -187,7 +190,7 @@
   .setdone{width:28px;height:28px;border-radius:6px;border:1px solid var(--line);background:var(--panel-raised);color:transparent;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;padding:0;}
   .setdone.on{background:var(--green);border-color:var(--green);color:#0d1a0f;animation:popcheck .4s ease;box-shadow:0 0 0 4px rgba(92,187,111,.18);}
   @keyframes popcheck{0%{transform:scale(.7);}55%{transform:scale(1.18);}100%{transform:scale(1);}}
-  .delta-pill{display:inline-flex;align-items:center;gap:3px;font-family:'Menlo',monospace;font-size:12px;color:var(--green);background:rgba(92,187,111,.12);border:1px solid rgba(92,187,111,.35);padding:2px 7px;border-radius:10px;margin-top:6px;}
+  .delta-up{font-family:'Menlo',monospace;font-size:12px;color:var(--green);white-space:nowrap;}
   .first-log-note{font-size:12px;line-height:1.55;color:var(--light);background:rgba(79,163,209,.08);border-left:2px solid var(--light);padding:9px 11px;border-radius:3px;margin:0 0 10px;}
   .addset{display:block;width:100%;height:44px;margin:4px 0 0;padding:0;border:1px dashed var(--field-line,#646a76);border-radius:8px;background:none;color:var(--text-dim);font:13px 'Georgia',serif;cursor:pointer;}
   .notes{width:100%;margin-top:12px;background:var(--panel-raised);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:12px;font-size:12px;font-family:'Georgia',serif;resize:vertical;min-height:34px;}
@@ -221,7 +224,7 @@
   .timer .t{font-family:'Menlo',monospace;font-size:22px;color:var(--accent);} .timer .t.over{color:var(--green);}
   /* +30s / skip are tapped between sets with a sweaty thumb: real bordered buttons, not underlined text links */
   .timer .acts{display:flex;gap:8px;}
-  .timer .acts span{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border:1px solid var(--field-line);border-radius:8px;background:var(--panel);color:var(--text);font-family:'Menlo',monospace;font-size:13px;cursor:pointer;}
+  .timer .acts button{display:inline-flex;align-items:center;min-height:44px;margin:0;padding:0 14px;border:1px solid var(--field-line);border-radius:8px;background:var(--panel);color:var(--text);font-family:'Menlo',monospace;font-size:13px;cursor:pointer;}
   .tbar{height:6px;background:var(--line);border-radius:3px;margin-top:8px;overflow:hidden;}
   .tbar i{display:block;height:100%;background:var(--accent);transition:width 1s linear,background 1s linear;}
   /* destructive, so it's an outlined button in the danger colour — same shape as + Add Set, and it asks first */
@@ -364,7 +367,7 @@
   .ctype{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 4px;}
   .ctype span{padding:8px 12px;border-radius:3px;border:1px solid var(--line);background:var(--panel-raised);font-size:13px;cursor:pointer;color:var(--text-dim);}
   .ctype span.on{border-color:var(--light);color:var(--text);background:rgba(79,163,209,.12);}
-  .field-label{font-size:12px;color:var(--text-dim);margin:12px 0 4px;}
+  .field-label{display:block;font-size:12px;color:var(--text-dim);margin:12px 0 4px;}
   /* Add an Exercise: every field has a visible label above it, not a placeholder that gets cut off */
   .ad-h{font-size:15px;font-weight:normal;margin:24px 0 0;padding-top:16px;border-top:1px solid var(--line);}
   .ad-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;}
@@ -611,6 +614,7 @@
   .how summary::-webkit-details-marker{display:none;}
   .how[open] summary{color:var(--text-dim);}
   /* the screen's one main action (finish session, start today's workout, back from the celebration) — taller, larger, bold */
+  .finish-btn.is-off{background:var(--panel-raised);color:var(--text-dim);border:1px solid var(--line);}
   .finish-btn,.start-cta,.cel-cta{min-height:50px;font-size:15px;font-weight:bold;border-radius:8px;}
 
   /* ---------- fields & focus ---------- */
@@ -643,8 +647,8 @@
     #logFooter .timer{flex:1 1 0;min-width:0;margin:0;padding:0 6px 0 12px;min-height:44px;flex-direction:row;align-items:center;overflow:visible;}
     #logFooter .timer-row{flex:1 1 auto;gap:8px;}
     #logFooter .timer .t{font-size:17px;}
-    #logFooter .timer .acts span{position:relative;min-height:32px;padding:0 10px;font-size:12px;}
-    #logFooter .timer .acts span::after{content:'';position:absolute;inset:-7px 0;} /* 44 px to tap in the 44 px row */
+    #logFooter .timer .acts button{position:relative;min-height:32px;padding:0 10px;font-size:12px;}
+    #logFooter .timer .acts button::after{content:'';position:absolute;inset:-7px 0;} /* 44 px to tap in the 44 px row */
     #logFooter .tbar{position:absolute;left:0;right:0;bottom:0;height:3px;margin:0;border-radius:0 0 7px 7px;pointer-events:none;} /* follows the box's corners itself, so the box needn't clip, and never takes a tap */
     #logFooter .finish-btn{flex:1 1 0;min-height:44px;margin:0;padding:0 12px;}
     .viewtabs{padding-top:0;}
@@ -894,7 +898,7 @@
 
 <footer><div class="footer-inner">
   <div id="logFooter" style="display:none">
-  <div class="timer" id="timer"><div class="timer-row"><div class="t" id="timerT">1:30</div><div class="acts"><span id="tPlus">+30s</span><span id="tSkip">Skip</span></div></div><div class="tbar"><i id="timerBar" style="width:100%"></i></div></div>
+  <div class="timer" id="timer"><div class="timer-row"><div class="t" id="timerT">1:30</div><div class="acts"><button type="button" id="tPlus">+30s</button><button type="button" id="tSkip">Skip</button></div></div><div class="tbar"><i id="timerBar" style="width:100%"></i></div></div>
   <button class="finish-btn" id="finishBtn">Finish Session</button>
   </div>
   <nav class="viewtabs" aria-label="Sections">
@@ -907,7 +911,8 @@
 </div></footer>
 <div class="sheet-bg" id="sheetBg"></div>
 <div class="sheet" id="sheet"><div class="sheet-head"><div><div id="sheetTitle" style="font-size:15px">Swap Exercise</div><div id="sheetSub" style="font-size:12px;color:var(--text-dim);margin-top:2px"></div></div><span class="linkbtn" id="sheetClose">Close</span></div><input class="in" id="sheetSearch" placeholder="Search alternatives…" style="width:100%;margin-bottom:12px"><div id="sheetList"></div></div>
-<div class="toast" id="toast">Saved</div>
+<div class="toast" id="toast" role="status" aria-live="polite">Saved</div>
+<div class="sr-only" id="timerLive" aria-live="polite"></div>
 <div class="celebrate-bg" id="celebrateBg"><div class="celebrate" id="celebrateInner"></div></div>
 <div class="celebrate-bg" id="onboardBg" role="dialog" aria-modal="true" aria-labelledby="onboardTitle"><div class="celebrate" id="onboardInner"></div></div>
 <div class="sheet-bg" id="fatigueBg"></div>
@@ -1853,7 +1858,7 @@ function beep(){ try{ if(!timer.ctx) timer.ctx=new (window.AudioContext||window.
 function startTimer(sec){
   try{ if(!timer.ctx) timer.ctx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
   timer.total=sec; timer.end=Date.now()+sec*1000; clearInterval(timer.iv);
-  const el=document.getElementById('timer'); el.classList.add('on'); el.classList.remove('done');
+  const el=document.getElementById('timer'); el.classList.add('on'); el.classList.remove('done'); document.getElementById('timerLive').textContent='';
   tick(); timer.iv=setInterval(tick,1000);
 }
 // timer runs cool blue while there's plenty of rest left, then fades to the accent color over the final quarter of the rest as a "time's almost up" cue
@@ -1862,7 +1867,7 @@ function lerpColor(a,b,t){ return `rgb(${Math.round(a[0]+(b[0]-a[0])*t)},${Math.
 function tick(){
   const left=Math.ceil((timer.end-Date.now())/1000);
   const t=document.getElementById('timerT'), bar=document.getElementById('timerBar'), el=document.getElementById('timer');
-  if(left<=0){ t.textContent='Go'; t.classList.add('over'); t.style.color=''; bar.style.width='0%'; bar.style.background=''; el.classList.add('done'); clearInterval(timer.iv); beep(); setTimeout(stopTimer,4000); return; }
+  if(left<=0){ t.textContent='Go'; t.classList.add('over'); t.style.color=''; bar.style.width='0%'; bar.style.background=''; el.classList.add('done'); clearInterval(timer.iv); beep(); document.getElementById('timerLive').textContent='Rest over — next set'; setTimeout(stopTimer,4000); return; }
   t.classList.remove('over'); t.textContent=`${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}`;
   const pct=left/timer.total; bar.style.width=(pct*100)+'%';
   const fadeT=Math.min(1,pct/TIMER_FADE_WINDOW); const col=lerpColor(TIMER_ACCENT,TIMER_BLUE,fadeT);
@@ -2099,6 +2104,17 @@ function touchDayStart(){ if(!dayStartTimes[currentDay]){ dayStartTimes[currentD
 // todayData persists to storage on every keystroke, so this survives a reload — unlike dayStartTimes, which is
 // in-memory only and would otherwise forget an in-progress session the moment the tab reloads.
 function sessionInProgress(){ return Object.values(todayData).some(s=>s.sets&&s.sets.some(x=>x.done||(x.w&&x.r))); }
+// started = Start was tapped on Home (or a set was touched) within the last 12 h, the window the session duration uses
+function sessionStarted(){ const t=dayStartTimes[currentDay]; return (!!t&&Date.now()-t<12*3600000)||sessionInProgress(); }
+// the Log's session chrome follows what's been logged, and is re-checked on every keystroke in a set field:
+// Finish Session looks and reads disabled until a set is logged (a tap still explains why, via finishSession's toast),
+// and the progress row only appears once the session has started
+function updateLogChrome(){
+  if(currentDay==='cardio') return;
+  const btn=document.getElementById('finishBtn'), off=!sessionInProgress();
+  btn.classList.toggle('is-off',off); btn.setAttribute('aria-disabled',String(off));
+  const on=sessionStarted(); document.querySelectorAll('#dayLabel .day-prog,#dayLabel .day-bar').forEach(el=>el.style.visibility=on?'':'hidden');
+}
 // only checks each exercise's own primary muscle, not every secondary muscle it happens to also touch
 // (ex.m) — forearms/abs/lowerback get hit as a secondary target by all sorts of pulling and hinging exercises
 // on both upper and lower days, so checking those too meant an unrelated day's forearms wrist-curl slot could
@@ -2226,15 +2242,30 @@ document.getElementById('fatigueWhyToggle').onclick=()=>{ const w=document.getEl
 function closeFatigue(){ document.getElementById('fatigueBg').classList.remove('on'); document.getElementById('fatigueSheet').classList.remove('on'); }
 document.getElementById('fatigueClose').onclick=closeFatigue; document.getElementById('fatigueBg').onclick=closeFatigue;
 
+// render() and the cardio form rebuild the whole list on every tap, which dropped keyboard focus back to <body>.
+// Remember the focused control as (card, kind, position) and focus its replacement once the list is redrawn;
+// a set that was removed hands focus to the one before it, a vanished control to its card's header.
+const FOCUS_STATE_CLASSES=['on','open','active','complete'];
+function listFocusKey(){
+  const a=document.activeElement, list=document.getElementById('exerciseList'); if(!a||a===list||!list.contains(a)) return null;
+  const card=a.closest('.exercise'); if(!card) return null;
+  const cls=[...a.classList].find(c=>!FOCUS_STATE_CLASSES.includes(c)); const sig=a.tagName.toLowerCase()+(cls?'.'+cls:'');
+  return {card:[...list.querySelectorAll('.exercise')].indexOf(card), sig, i:[...card.querySelectorAll(sig)].indexOf(a)};
+}
+function restoreListFocus(k){
+  if(!k) return; const card=document.querySelectorAll('#exerciseList .exercise')[k.card]; if(!card) return;
+  tagClickables(card); // the observer that makes divs focusable runs after this, too late for focus()
+  const same=card.querySelectorAll(k.sig); const el=same[Math.min(k.i,same.length-1)]||card.querySelector('.ex-head');
+  if(el) el.focus({preventScroll:true});
+}
 function render(){
+  const focusKey=listFocusKey();
   // several settings handlers (unit, auto-rotate, rotate-every, deload start/end) re-render the log after a change
   // without knowing which day is loaded — on the Cardio day there is no PROGRAM entry to draw, so hand off to
   // the cardio form instead of crashing on day.badge below.
   if(currentDay==='cardio'){ renderTabs(); renderBody(); renderCardioForm(); return; }
   renderTabs(); renderBody();
   const day=PROGRAM.find(d=>d.id===currentDay);
-  document.getElementById('dayLabel').innerHTML=`<span><span class="badge ${dayType(day)}">${day.sub}</span>${day.name} Day</span><span class="linkbtn" id="editLink">Edit</span>`;
-  document.getElementById('editLink').onclick=()=>{ setView('more'); renderEditor(); document.getElementById('edDay').value=currentDay; openSetPage('edit'); };
   const list=document.getElementById('exerciseList'); list.innerHTML='';
   let allComplete=true,lastGroup=null;
   // cards are shown grouped by muscle group (groups in order of first appearance, slot order within a group) so a
@@ -2243,7 +2274,7 @@ function render(){
   const groupOrder=[]; day.exercises.forEach(ex=>{ if(!groupOrder.includes(ex.group)) groupOrder.push(ex.group); });
   const ordered=groupOrder.flatMap(g=>day.exercises.filter(ex=>ex.group===g));
   ordered.forEach(ex=>{
-    if(ex.group!==lastGroup){ const gh=document.createElement('div'); gh.className='groupheader'; gh.textContent=ex.group; list.appendChild(gh); lastGroup=ex.group; }
+    if(ex.group!==lastGroup){ const gh=document.createElement('h3'); gh.className='groupheader'; gh.textContent=ex.group; list.appendChild(gh); lastGroup=ex.group; }
     const state=ensureState(ex); const complete=state.sets.every(s=>s.done); if(!complete) allComplete=false;
     const daySaved=lastSessionData[currentDay]&&lastSessionData[currentDay][ex.name];
     let sug=suggestWeight(ex,daySaved);
@@ -2260,16 +2291,17 @@ function render(){
     // repeating "try 110 lb bodyweight" up here just restates the same number.
     const sugTxt=(ex.start===0&&typeof sug==='number')?'':(sug===null?'log body weight in Strength to use here':sug===-1?'find a weight for the rep range':estFrom?`~${dispWeight(sug)} ${unitLabel()} · estimate from ${estFrom}`:(dispWeight(sug)+' '+unitLabel()+(isDeloadActive()?' · deload':'')+(crossDaySub?` · from ${crossDaySub} day`:'')));
     const cur=currentFor(ex), base=baselineFor(ex);
-    const lvl=(base&&cur)?Math.round(cur/base*100):0; const lvlTxt=lvl&&lvl!==100?` <span class="e1rm">· strength ${lvl}%</span>`:'';
+    // the same ± change from the baseline the Strength tab shows ("+10%"), not the old ratio ("110%")
+    const chg=pct(base,cur); const lvlTxt=chg!==null&&Math.round(chg*10)!==0?` <span class="e1rm">· strength ${fmtPct(chg)}</span>`:'';
     const plat=isPlateau(ex);
-    let deltaPill='';
+    let deltaTxt=''; // the jump over last time's top weight, as a small green ↑ beside the suggestion (was a row of its own)
     if(!crossDaySub && ex.start!==0 && typeof sug==='number' && saved && saved.sets){
       const loggedLast=saved.sets.filter(s=>s.w!==''&&s.r!=='');
-      if(loggedLast.length){ const lastW=Math.max(...loggedLast.map(s=>parseFloat(s.w)||0)); if(lastW && sug>lastW) deltaPill=`<div class="delta-pill">↑ +${Math.round((dispWeight(sug)-dispWeight(lastW))*10)/10} ${unitLabel()} vs last time</div>`; }
+      if(loggedLast.length){ const lastW=Math.max(...loggedLast.map(s=>parseFloat(s.w)||0)); if(lastW && sug>lastW){ const up=Math.round((dispWeight(sug)-dispWeight(lastW))*10)/10; deltaTxt=` <span class="delta-up" aria-hidden="true">↑${up}</span><span class="sr-only">, up ${up} ${unitLabel()} from last time</span>`; } }
     }
     const card=document.createElement('div'); card.className='exercise'+(state.open?' open':'')+(complete?' complete':'');
     const head=document.createElement('div'); head.className='ex-head';
-    head.innerHTML=`<div><div class="ex-name">${ex.name}${plat?'<span class="badge plateau">Plateau</span>':''}</div><div class="ex-target">${fmtTarget(ex.target)}${sugTxt?` <span class="sug">· try ${sugTxt}</span>`:''}${lvlTxt}</div>${deltaPill}</div><div class="ex-check" role="img" aria-label="${complete?'finished':'not finished'}">${complete?'✓':''}</div>`;
+    head.innerHTML=`<div><div class="ex-name">${ex.name}${plat?'<span class="badge plateau">Plateau</span>':''}</div><div class="ex-target">${fmtTarget(ex.target)}${sugTxt?` <span class="sug">· ${typeof sug==='number'&&sug!==-1?'try ':''}${sugTxt}</span>${deltaTxt}`:''}${lvlTxt}</div></div><div class="ex-check" role="img" aria-label="${complete?'finished':'not finished'}">${complete?'✓':''}</div>`;
     head.setAttribute('aria-expanded',String(!!state.open));
     head.onclick=()=>{ state.open=!state.open; render(); }; card.appendChild(head);
 
@@ -2344,7 +2376,10 @@ function render(){
     // extra load, s.w the total, so every weight-based calculation — and the lift's bodyweight-only history — carries on
     const bwLoaded=ex.start===0, bwNow=bwLoaded?latestBW():null;
     const lastAdd=bwLoaded?Math.max(0,...((lastByName[ex.name]||{}).sets||[]).map(x=>parseFloat(x.add)||0)):0;
-    const hr=document.createElement('div'); hr.className='setgrid head'; hr.innerHTML=`<div>Set</div><div>${bwLoaded?`+ Added${bwNow!=null?` <span class="bw-note">bw ${dispWeight(bwNow)}</span>`:''}`:`Weight · ${unitLabel()}`}</div><div>${timed?'Seconds':'Reps'}</div><div>Done</div><div></div>`; body.appendChild(hr);
+    // bodyweight lifts: the body weight gets its own line (it made the column head wrap as "+ Added / BW 168"),
+    // and says what the column is for, which only a hover tooltip explained before
+    if(bwLoaded&&bwNow!=null){ const bl=document.createElement('div'); bl.className='bw-line'; bl.textContent=`Body weight ${dispBW(bwNow)} ${unitLabel()} — log only what you add on top`; body.appendChild(bl); }
+    const hr=document.createElement('div'); hr.className='setgrid head'; hr.innerHTML=`<div>Set</div><div>${bwLoaded?`+ Added · ${unitLabel()}`:`Weight · ${unitLabel()}`}</div><div>${timed?'Seconds':'Reps'}</div><div>Done</div><div></div>`; body.appendChild(hr);
     const bwTotal=s=>bwNow==null?'':Math.round((bwNow+(parseFloat(s.add)||0))*10)/10;
     state.sets.forEach((s,i)=>{
       if(bwLoaded) s.w=bwTotal(s);
@@ -2365,12 +2400,21 @@ function render(){
         }
         s.done=!s.done; touchDayStart(); if(s.done&&settings.auto) startTimer(settings.smartRest?suggestedRest(ex):settings.rest); sset('today:'+currentDay,todayData); render();
       };
-      row.querySelector('.setrm').onclick=()=>{ if(state.sets.length<=1){ showToast('Keep at least one set'); return; } state.sets.splice(i,1); touchDayStart(); sset('today:'+currentDay,todayData); render(); };
+      row.querySelector('.setrm').onclick=async()=>{
+        if(state.sets.length<=1){ showToast('Keep at least one set'); return; }
+        // an empty set goes in one tap; one with anything logged asks first, since ✕ sits right beside Done
+        const logged=s.done||s.r!==''||(bwLoaded?!!parseFloat(s.add):(s.w!==''&&s.w!=null));
+        const fk=listFocusKey();
+        if(logged&&!await confirmSheet(`Remove set ${i+1} of ${ex.name}? What's logged in it will be lost.`,'Remove Set',null,true)) return;
+        state.sets.splice(i,1); touchDayStart(); sset('today:'+currentDay,todayData); render(); restoreListFocus(fk);
+      };
       body.appendChild(row);
       if(timed&&!s.done){
         const running=hold.key===holdKey(ex,i);
+        // one orange button per card: the next set's, unless a hold is already counting on this exercise
+        const nextUp=i===state.sets.findIndex(x=>!x.done) && !state.sets.some((x,j)=>hold.key===holdKey(ex,j));
         const hrow=document.createElement('div'); hrow.className='hold-row';
-        hrow.innerHTML=`<span class="hold-t${running&&holdElapsed()>=hold.target?' hit':''}">${fmtHold(running?holdElapsed():0)}</span><span class="hold-target">hold · target ${topRep(ex.target)}s${running?' · counting':''}</span><button class="btn${running?'':' primary'}">${running?'stop':'start hold'}</button>`;
+        hrow.innerHTML=`<span class="hold-t${running&&holdElapsed()>=hold.target?' hit':''}">${fmtHold(running?holdElapsed():0)}</span><span class="hold-target">Hold · Target ${topRep(ex.target)}s${running?' · Counting':''}</span><button type="button" class="btn${nextUp?' primary':''}">${running?'Stop':'Start Hold'}</button>`;
         hrow.querySelector('button').onclick=()=>{ running?stopHold(true):startHold(ex,i,s); };
         if(running){ hold.el=hrow.querySelector('.hold-t'); hold.inp=row.querySelectorAll('input')[1]; }
         body.appendChild(hrow);
@@ -2385,14 +2429,24 @@ function render(){
     const addset=document.createElement('button'); addset.type='button'; addset.className='addset'; addset.textContent='+ Add Set';
     addset.onclick=()=>{ const prev=state.sets[state.sets.length-1]; state.sets.push({w:ex.start===0?(latestBW()??''):'',r:'',done:false,rir:null,...(ex.start===0&&prev&&prev.add?{add:prev.add}:{})}); sset('today:'+currentDay,todayData); render(); }; body.appendChild(addset);
 
-    const ta=document.createElement('textarea'); ta.className='notes'; ta.placeholder='Notes — seat setting, how it felt'; ta.value=notes[histKey(ex)]||'';
+    const ta=document.createElement('textarea'); ta.className='notes'; ta.placeholder='Notes — seat setting, how it felt'; ta.setAttribute('aria-label',`Notes for ${ex.name}`); ta.value=notes[histKey(ex)]||'';
     ta.oninput=e=>{ notes[histKey(ex)]=e.target.value; sset('notes',notes); }; body.appendChild(ta);
 
     const lastToShow=saved?saved.sets:ex.seed;
-    if(lastToShow){ const parts=lastToShow.filter(s=>s.w||s.r).map(s=>(timed?`${s.r||'-'}s`:`${s.w?dispWeight(s.w):'-'}x${s.r||'-'}`)+`${s.rir!=null?' (RIR '+s.rir+')':''}`).join(', '); if(parts){ const d=document.createElement('div'); d.className='last-time'; d.textContent='Last time'+(crossDaySub?` (${crossDaySub} day)`:'')+': '+parts; body.appendChild(d); } }
+    if(lastToShow){ // bodyweight lifts show what was added ("BW + 20 × 10"), not a bodyweight total with float noise ("170.02x10");
+    // the reps-left figure uses the pills' own words rather than "RIR"
+    const lastSetW=s=>bwLoaded?(parseFloat(s.add)?`BW + ${dispWeight(s.add)}`:'BW'):(s.w?Math.round(dispWeight(s.w)*10)/10:'–');
+    const parts=lastToShow.filter(s=>s.w||s.r).map(s=>(timed?`${s.r||'–'}s`:`${lastSetW(s)} × ${s.r||'–'}`)+`${s.rir!=null?` (${s.rir>=4?'4+':s.rir} left)`:''}`).join(', '); if(parts){ const d=document.createElement('div'); d.className='last-time'; d.textContent='Last time'+(crossDaySub?` (${crossDaySub} day)`:'')+': '+parts; body.appendChild(d); } }
     card.appendChild(body); list.appendChild(card);
   });
   document.getElementById('finishBtn').textContent=allComplete?'All Sets Done — Finish Session':'Finish Session';
+  // the row under the day tabs shows how far through the session you are — it used to be "[Heavy] Upper Day", which
+  // only repeated the selected tab; the day's name stays as the heading for screen readers. Time is Home's estimate.
+  const nEx=day.exercises.length, nDone=day.exercises.filter(ex=>ensureState(ex).sets.every(s=>s.done)).length;
+  document.getElementById('dayLabel').innerHTML=`<h2 class="sr-only">${day.name} ${day.sub}</h2><span class="day-prog">${nDone} of ${nEx} Done · About ${nEx*6} min</span><span class="linkbtn" id="editLink">Edit Day</span><div class="day-bar" aria-hidden="true"><i style="width:${Math.round(nDone/nEx*100)}%"></i></div>`;
+  document.getElementById('editLink').onclick=()=>{ setView('more'); renderEditor(); document.getElementById('edDay').value=currentDay; openSetPage('edit'); };
+  updateLogChrome();
+  restoreListFocus(focusKey);
 }
 
 // ---------- first-launch program builder ----------
@@ -2769,26 +2823,27 @@ const CARDIO_TYPES=[
 ];
 let cardioDraft={type:'zone2',duration:'',distance:'',rpe:0,notes:'',showHow:false};
 function renderCardioForm(){
-  document.getElementById('dayLabel').innerHTML=`<span><span class="badge t-cardio">Endurance</span>Conditioning</span><span class="linkbtn" id="cardioHistLink">History</span>`;
+  const focusKey=listFocusKey();
+  document.getElementById('dayLabel').innerHTML=`<h2 class="sr-only">Cardio</h2><span></span><span class="linkbtn" id="cardioHistLink">History</span>`;
   document.getElementById('cardioHistLink').onclick=()=>setView('history');
   const list=document.getElementById('exerciseList'); list.innerHTML='';
   const wrap=document.createElement('div'); wrap.className='exercise open';
   const t=CARDIO_TYPES.find(x=>x.key===cardioDraft.type);
   const yt='https://www.youtube.com/results?search_query='+encodeURIComponent(t.demo);
   wrap.innerHTML=`
-    <div class="ex-head" style="cursor:default"><div><div class="ex-name">Log a Session</div><div class="ex-target">Pick a type, fill in what applies</div></div></div>
+    <div class="ex-head" style="cursor:default"><div><h3 class="ex-name">Log a Session</h3><div class="ex-target">Pick a type, fill in what applies</div></div></div>
     <div class="ex-body" style="display:block">
-      <div class="ctype" id="ctypeRow">${CARDIO_TYPES.map(x=>`<span data-k="${x.key}" class="${x.key===cardioDraft.type?'on':''}">${x.label}</span>`).join('')}</div>
+      <div class="ctype" id="ctypeRow" role="group" aria-label="Session Type">${CARDIO_TYPES.map(x=>`<span data-k="${x.key}" class="${x.key===cardioDraft.type?'on':''}" aria-pressed="${x.key===cardioDraft.type}">${x.label}</span>`).join('')}</div>
       <div class="cue">${t.desc}</div>
       <div style="margin-top:12px">${toolsBar(!!cardioDraft.showHow, yt, false, 'cardioHowtoBtn')}</div>
       ${cardioDraft.showHow?`<div class="cue" style="display:block">${t.cue}</div>`:''}
-      <div class="field-label">Duration (minutes)</div>
+      <label class="field-label" for="cDur">Duration (minutes)</label>
       <div class="setgrid" style="grid-template-columns:1fr"><input type="number" inputmode="numeric" id="cDur" placeholder="e.g. 30" value="${cardioDraft.duration}"></div>
-      <div class="field-label">Distance (optional, miles/km)</div>
+      <label class="field-label" for="cDist">Distance (optional, miles/km)</label>
       <div class="setgrid" style="grid-template-columns:1fr"><input type="text" inputmode="decimal" id="cDist" placeholder="e.g. 3.1 mi" value="${cardioDraft.distance}"></div>
-      <div class="field-label">Effort (RPE, 1 easy – 10 max)</div>
-      <div class="rpe-row" id="rpeRow">${Array.from({length:10},(_,i)=>i+1).map(n=>`<div class="rpe-dot ${cardioDraft.rpe===n?'on':''}" data-n="${n}">${n}</div>`).join('')}</div>
-      <textarea class="notes" id="cNotes" placeholder="Notes — route, how it felt">${cardioDraft.notes}</textarea>
+      <div class="field-label" id="rpeLbl">Effort (RPE, 1 easy – 10 max)</div>
+      <div class="rpe-row" id="rpeRow" role="group" aria-labelledby="rpeLbl">${Array.from({length:10},(_,i)=>i+1).map(n=>`<div class="rpe-dot ${cardioDraft.rpe===n?'on':''}" data-n="${n}" aria-pressed="${cardioDraft.rpe===n}" aria-label="Effort ${n}">${n}</div>`).join('')}</div>
+      <textarea class="notes" id="cNotes" aria-label="Notes" placeholder="Notes — route, how it felt">${cardioDraft.notes}</textarea>
       <div class="row" style="margin-top:12px"><button class="btn primary" id="cardioLogBtn" style="flex:1">Log Session</button></div>
     </div>`;
   list.appendChild(wrap);
@@ -2801,6 +2856,7 @@ function renderCardioForm(){
   document.getElementById('cardioLogBtn').onclick=logCardio;
   document.getElementById('finishBtn').style.display='none';
   document.getElementById('resetLink').style.display='none';
+  restoreListFocus(focusKey);
 }
 async function logCardio(){
   if(!cardioDraft.duration){ showToast('Add a duration first'); return; }
@@ -2888,10 +2944,10 @@ const RIR_OPTS=[['','RIR'],['0','0'],['1','1'],['2','2'],['3','3'],['4','4+']];
 function renderSessionEditForm(s, el, onDone){
   const det=el.querySelector('.sdet');
   if(s.isCardio){
-    det.innerHTML=`<div class="field-label">Duration (minutes)</div><input class="in" id="seDur" type="number" inputmode="numeric" value="${s.duration||''}" style="width:100%">
-      <div class="field-label">Distance (optional)</div><input class="in" id="seDist" type="text" value="${s.distance||''}" style="width:100%">
-      <div class="field-label">Effort (RPE)</div><select class="in" id="seRpe" style="width:100%"><option value="0">—</option>${Array.from({length:10},(_,k)=>k+1).map(n=>`<option value="${n}"${s.rpe===n?' selected':''}>${n}</option>`).join('')}</select>
-      <textarea class="notes" id="seNotes" placeholder="Notes">${s.notes||''}</textarea>
+    det.innerHTML=`<label class="field-label" for="seDur">Duration (minutes)</label><input class="in" id="seDur" type="number" inputmode="numeric" value="${s.duration||''}" style="width:100%">
+      <label class="field-label" for="seDist">Distance (optional)</label><input class="in" id="seDist" type="text" value="${s.distance||''}" style="width:100%">
+      <label class="field-label" for="seRpe">Effort (RPE)</label><select class="in" id="seRpe" style="width:100%"><option value="0">—</option>${Array.from({length:10},(_,k)=>k+1).map(n=>`<option value="${n}"${s.rpe===n?' selected':''}>${n}</option>`).join('')}</select>
+      <textarea class="notes" id="seNotes" aria-label="Notes" placeholder="Notes">${s.notes||''}</textarea>
       <div class="se-foot"><button class="btn" data-act="cancel">Cancel</button><button class="btn primary" data-act="save">Save</button></div>`;
     det.querySelector('[data-act="save"]').onclick=async e=>{ e.stopPropagation(); const dur=parseInt(det.querySelector('#seDur').value); if(!dur){ showToast('Add a duration'); return; } await saveSessionEdit(s,{duration:dur,distance:det.querySelector('#seDist').value.trim(),rpe:parseInt(det.querySelector('#seRpe').value)||0,notes:det.querySelector('#seNotes').value}); onDone(); };
   } else {
@@ -3596,6 +3652,7 @@ document.querySelectorAll('.viewtab').forEach(t=>t.onclick=()=>setView(t.dataset
 // the footer's height changes with the view and the rest timer; main and the toast read it to stay clear of it
 new ResizeObserver(([e])=>{ const h=e.target.offsetHeight; if(h) document.documentElement.style.setProperty('--foot-h',h+'px'); }).observe(document.querySelector('footer')); // 0 = hidden while typing: keep the last height so the page doesn't jump
 document.getElementById('finishBtn').onclick=finishSession;
+document.getElementById('exerciseList').addEventListener('input',updateLogChrome); // after each field's own handler has saved
 document.getElementById('resetLink').onclick=async()=>{
   const day=PROGRAM.find(d=>d.id===currentDay);
   if(!await confirmSheet(`Clear everything you've logged today${day?` for ${day.name} ${day.sub}`:''}? This can't be undone.`, 'Clear', null, true)) return;
