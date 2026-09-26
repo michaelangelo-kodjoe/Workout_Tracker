@@ -221,7 +221,7 @@
   .timer .t{font-family:'Menlo',monospace;font-size:22px;color:var(--accent);} .timer .t.over{color:var(--green);}
   /* +30s / skip are tapped between sets with a sweaty thumb: real bordered buttons, not underlined text links */
   .timer .acts{display:flex;gap:8px;}
-  .timer .acts span{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border:1px solid var(--field-line);border-radius:8px;background:var(--panel);color:var(--text);font-family:'Menlo',monospace;font-size:13px;cursor:pointer;}
+  .timer .acts button{display:inline-flex;align-items:center;min-height:44px;margin:0;padding:0 14px;border:1px solid var(--field-line);border-radius:8px;background:var(--panel);color:var(--text);font-family:'Menlo',monospace;font-size:13px;cursor:pointer;}
   .tbar{height:6px;background:var(--line);border-radius:3px;margin-top:8px;overflow:hidden;}
   .tbar i{display:block;height:100%;background:var(--accent);transition:width 1s linear,background 1s linear;}
   /* destructive, so it's an outlined button in the danger colour — same shape as + Add Set, and it asks first */
@@ -643,8 +643,8 @@
     #logFooter .timer{flex:1 1 0;min-width:0;margin:0;padding:0 6px 0 12px;min-height:44px;flex-direction:row;align-items:center;overflow:visible;}
     #logFooter .timer-row{flex:1 1 auto;gap:8px;}
     #logFooter .timer .t{font-size:17px;}
-    #logFooter .timer .acts span{position:relative;min-height:32px;padding:0 10px;font-size:12px;}
-    #logFooter .timer .acts span::after{content:'';position:absolute;inset:-7px 0;} /* 44 px to tap in the 44 px row */
+    #logFooter .timer .acts button{position:relative;min-height:32px;padding:0 10px;font-size:12px;}
+    #logFooter .timer .acts button::after{content:'';position:absolute;inset:-7px 0;} /* 44 px to tap in the 44 px row */
     #logFooter .tbar{position:absolute;left:0;right:0;bottom:0;height:3px;margin:0;border-radius:0 0 7px 7px;pointer-events:none;} /* follows the box's corners itself, so the box needn't clip, and never takes a tap */
     #logFooter .finish-btn{flex:1 1 0;min-height:44px;margin:0;padding:0 12px;}
     .viewtabs{padding-top:0;}
@@ -894,7 +894,7 @@
 
 <footer><div class="footer-inner">
   <div id="logFooter" style="display:none">
-  <div class="timer" id="timer"><div class="timer-row"><div class="t" id="timerT">1:30</div><div class="acts"><span id="tPlus">+30s</span><span id="tSkip">Skip</span></div></div><div class="tbar"><i id="timerBar" style="width:100%"></i></div></div>
+  <div class="timer" id="timer"><div class="timer-row"><div class="t" id="timerT">1:30</div><div class="acts"><button type="button" id="tPlus">+30s</button><button type="button" id="tSkip">Skip</button></div></div><div class="tbar"><i id="timerBar" style="width:100%"></i></div></div>
   <button class="finish-btn" id="finishBtn">Finish Session</button>
   </div>
   <nav class="viewtabs" aria-label="Sections">
