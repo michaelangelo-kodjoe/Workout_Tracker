@@ -304,16 +304,13 @@
      button is filled, which keeps the two apart even for the rare blue-yellow blindness the hue alone doesn't cover. */
   .btn.danger{color:var(--danger);border-color:var(--danger);background:transparent;}
   .btn.primary.danger{background:transparent;color:var(--danger);border-width:1.5px;font-weight:bold;}
-  /* a session in the calendar's day sheet: plan and summary on a row that collapses it, then its sets in a raised
-     panel — each exercise on its own line, each set kept whole — with Edit and Delete at the foot */
+  /* a session in the calendar's day sheet: plan and summary, then its sets in a raised panel — each exercise on its own
+     line, each set kept whole — with Edit and Delete at the foot. Always open: you tapped the date to see them */
   .sess{border-top:1px solid var(--line);} .sess:first-child{border-top:0;}
-  .sess-head{display:flex;align-items:center;gap:12px;width:100%;min-height:60px;margin:0;padding:8px 0;background:none;border:0;color:var(--text);text-align:left;cursor:pointer;font-family:'Georgia',serif;}
+  .sess-head{display:flex;align-items:center;gap:12px;min-height:60px;padding:8px 0;color:var(--text);}
   .sess-main{flex:1;min-width:0;} .sess-name{display:flex;align-items:center;gap:6px;font-size:15px;}
   .sess-meta{display:block;font-size:12px;color:var(--text-dim);margin-top:3px;}
-  .sess-chev{width:16px;height:16px;flex-shrink:0;fill:none;stroke:var(--text-dim);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .15s;}
-  .sess.open .sess-chev{transform:rotate(90deg);}
-  .sess .sdet{display:none;margin:0 0 12px;padding:10px 12px;background:var(--panel-raised);border-radius:8px;font-size:13px;line-height:1.45;color:var(--text-dim);}
-  .sess.open .sdet{display:block;}
+  .sess .sdet{margin:0 0 12px;padding:10px 12px;background:var(--panel-raised);border-radius:8px;font-size:13px;line-height:1.45;color:var(--text-dim);}
   .sess.editing .sdet{background:none;padding:0;} /* the edit form brings its own fields */
   .sess-ex{padding:4px 0;} .sess-ex b{display:block;font-weight:normal;color:var(--text);}
   .sess-ex span{display:flex;flex-wrap:wrap;gap:2px 14px;font:12px 'Menlo',monospace;} .sess-ex i{font-style:normal;white-space:nowrap;}
@@ -2752,7 +2749,7 @@ async function saveSessionEdit(s, edited){
 }
 const RIR_OPTS=[['','RIR'],['0','0'],['1','1'],['2','2'],['3','3'],['4','4+']];
 function renderSessionEditForm(s, el, onDone){
-  const det=el.querySelector('.sdet'); el.classList.add('open'); det.style.display='block';
+  const det=el.querySelector('.sdet');
   if(s.isCardio){
     det.innerHTML=`<div class="field-label">Duration (minutes)</div><input class="in" id="seDur" type="number" inputmode="numeric" value="${s.duration||''}" style="width:100%">
       <div class="field-label">Distance (optional)</div><input class="in" id="seDist" type="text" value="${s.distance||''}" style="width:100%">
@@ -2779,19 +2776,17 @@ function sessionExLines(s){
   return Object.entries(s.ex||{}).map(([n,sets])=>{ const en=entryFor(n); const bwl=!!(en&&en.start===0); const timed=!!(en&&en.target&&isTimedTarget(en.target));
     return [n, sets.map(x=>(timed?`${x.r||'-'}s hold`:`${x.w?dispWeight(x.w):(bwl?'bw':'—')}×${x.r||'-'}`)+`${x.rir!=null?' (RIR '+x.rir+')':''}`)]; });
 }
-// one session in the calendar's day sheet, open to start; its head row collapses it
+// one session in the calendar's day sheet, shown in full
 function buildSessionItem(s){
-  const el=document.createElement('div'); el.className='sess open';
+  const el=document.createElement('div'); el.className='sess';
   const p=sessionPlan(s);
   const meta=s.isCardio?[`${s.duration} min`,s.distance,s.rpe?`RPE ${s.rpe}`:''].filter(Boolean).join(' · ')
     :`${Object.keys(s.ex||{}).length} exercises · ${s.sets} sets · ${dispVol(s.vol||0).toLocaleString()} ${unitLabel()}`;
   const body=s.isCardio?(s.notes?`<div class="sess-notes"></div>`:'')
     :sessionExLines(s).map(([n,sets])=>`<div class="sess-ex"><b>${n}</b><span>${sets.map(x=>`<i>${x}</i>`).join('')}</span></div>`).join('');
-  el.innerHTML=`<button class="sess-head" aria-expanded="true"><span class="sess-main"><span class="sess-name"><i class="cal-tag t-${p.type}" aria-hidden="true">${p.tag}</i>${s.isCardio?s.ctypeLabel:p.label}</span><span class="sess-meta">${meta}</span></span><svg class="sess-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+  el.innerHTML=`<div class="sess-head"><span class="sess-main"><span class="sess-name"><i class="cal-tag t-${p.type}" aria-hidden="true">${p.tag}</i>${s.isCardio?s.ctypeLabel:p.label}</span><span class="sess-meta">${meta}</span></span></div>
     <div class="sdet">${body}<div class="sess-acts"><span class="linkbtn" data-act="edit">Edit</span><span class="linkbtn danger" data-act="del">Delete</span></div></div>`;
   if(s.isCardio&&s.notes) el.querySelector('.sess-notes').textContent=s.notes;
-  const head=el.querySelector('.sess-head');
-  head.onclick=()=>{ if(el.classList.contains('editing')) return; head.setAttribute('aria-expanded',el.classList.toggle('open')); };
   el.querySelector('[data-act="edit"]').onclick=e=>{ e.stopPropagation(); el.classList.add('editing'); renderSessionEditForm(s, el, ()=>refreshCalDaySheet()); };
   el.querySelector('[data-act="del"]').onclick=async e=>{ e.stopPropagation(); if(await deleteSession(s)) refreshCalDaySheet(); };
   return el;
