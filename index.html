@@ -2231,6 +2231,11 @@ function render(){
       row.querySelector('.setdone').onclick=()=>{
         if(hold.key===holdKey(ex,i)) stopHold(false); // fills s.r with the elapsed seconds before the check below
         if(!s.done && s.r===''){ showToast(timed?'Add the seconds first':'Add reps first'); return; }
+        // the grey weight in an empty box is only a suggestion — ticking used to save the set with no weight at all.
+        // A tick means "did what's shown", so it takes that number; with none to take (a new lift), it asks for one.
+        if(!s.done && !bwLoaded && !timed && (s.w===''||s.w==null)){
+          if(sug!=null && sug!==-1) s.w=storeWeight(dispWeight(sug)); else { showToast('Add the weight first'); return; }
+        }
         s.done=!s.done; touchDayStart(); if(s.done&&settings.auto) startTimer(settings.smartRest?suggestedRest(ex):settings.rest); sset('today:'+currentDay,todayData); render();
       };
       row.querySelector('.setrm').onclick=()=>{ if(state.sets.length<=1){ showToast('Keep at least one set'); return; } state.sets.splice(i,1); touchDayStart(); sset('today:'+currentDay,todayData); render(); };
@@ -2766,6 +2771,9 @@ function renderSessionEditForm(s, el, onDone){
     det.querySelectorAll('.se-ex [data-act="rm"]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const box=b.closest('.se-ex'); removed.add(box.dataset.name); box.style.display='none'; });
     det.querySelector('[data-act="save"]').onclick=async e=>{ e.stopPropagation(); const ex={};
       det.querySelectorAll('.se-ex').forEach(box=>{ const n=box.dataset.name; if(removed.has(n)) return; ex[n]=[...box.querySelectorAll('.se-row')].map(row=>{ const [wI,rI]=row.querySelectorAll('input'); const sel=row.querySelector('select'); return {w:wI.value===''?'':storeWeight(wI.value), r:rI.value, rir:sel.value===''?null:parseInt(sel.value)}; }); });
+      // same rule as ticking a set: a weighted lift's set with reps needs its weight (body-weight lifts and holds don't)
+      const missing=Object.entries(ex).find(([n,sets])=>{ const en=entryFor(n); if(en&&(en.start===0||(en.target&&isTimedTarget(en.target)))) return false; return sets.some(x=>x.r!==''&&x.w===''); });
+      if(missing){ showToast(`Add a weight for every ${missing[0]} set, or blank its reps to drop it`); return; }
       await saveSessionEdit(s,{ex}); onDone(); };
   }
   det.querySelector('[data-act="cancel"]').onclick=e=>{ e.stopPropagation(); onDone(); };
