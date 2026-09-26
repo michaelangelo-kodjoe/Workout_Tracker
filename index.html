@@ -477,7 +477,9 @@
   .rir-pill::after{content:'';position:absolute;inset:-6px -2px;}
   /* 44 px day cells: a slimmer card inset and gap leave the 7 columns room at phone width */
   .cal-wrap{padding:16px 10px;} .cal-grid,.cal-dow{gap:2px;}
-  .eqchip{padding:9px 12px;}
+  .eqchip{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:22px;}
+  /* the builder's one action stays in reach while the 29 picks scroll under it */
+  #buildDone{position:sticky;bottom:calc(var(--foot-h,80px) + 12px);z-index:3;box-shadow:0 -16px 16px -4px var(--bg),0 12px 0 0 var(--bg);}
   .ctype span{padding:11px 14px;}
   /* tap feedback: the system tap highlight is off (it flashed a grey box over whole cards), so every control dims for
      the moment it's pressed instead — quick in, a little slower out, never moving anything */
@@ -2199,8 +2201,8 @@ function renderBuilder(panel){
       <div class="greet-h1">Build your program</div>
       <div class="greet-sub">Four days a week — Upper and Lower, one heavy and one volume day each. Tick what your gym has and every slot gets a recommended exercise. Change any pick now, or swap later from the log.</div>
     </div>
-    <div class="build-eq">${EQUIP_TYPES.map(t=>`<span class="eqchip${settings.equipFilter.includes(t)?' on':''}" data-t="${t}">${EQUIP_LABEL[t]}</span>`).join('')}</div>
-    ${PROGRAM.map(d=>`<div class="build-day"><div class="build-dh">${d.name} · ${d.sub}</div>${d.exercises.map((ex,i)=>`<div class="build-row${equipAllowed(ex)?'':' miss'}"><span class="bg">${ex.group}</span><span class="bn">${ex.name}<div class="bt">${ex.target}${equipAllowed(ex)?(ex.approx?` · <span class="bm">closest library match — trains ${MUSCLE_LABEL[ex.key]||ex.group} only as a secondary muscle</span>`:''):' · <span class="bm">nothing in the library for your equipment — change it, or tick more above</span>'}</div></span><span class="linkbtn bc" data-d="${d.id}" data-i="${i}">Change</span></div>`).join('')}</div>`).join('')}
+    <div class="build-eq">${EQUIP_TYPES.map(t=>`<span class="eqchip${settings.equipFilter.includes(t)?' on':''}" data-t="${t}" aria-pressed="${settings.equipFilter.includes(t)}">${EQUIP_LABEL[t]}</span>`).join('')}</div>
+    ${PROGRAM.map(d=>`<div class="build-day"><div class="build-dh">${d.name} · ${d.sub}</div>${d.exercises.map((ex,i)=>`<div class="build-row${equipAllowed(ex)?'':' miss'}"><span class="bg">${ex.group}</span><span class="bn">${ex.name}<div class="bt">${fmtTarget(ex.target)}${equipAllowed(ex)?(ex.approx?` · <span class="bm">closest library match — trains ${MUSCLE_LABEL[ex.key]||ex.group} only as a secondary muscle</span>`:''):' · <span class="bm">nothing in the library for your equipment — change it, or tick more above</span>'}</div></span><span class="linkbtn bc" data-d="${d.id}" data-i="${i}" aria-label="Change ${ex.name.replace(/"/g,'&quot;')}">Change</span></div>`).join('')}</div>`).join('')}
     <button class="start-cta" id="buildDone">Use This Program</button>`;
   panel.querySelectorAll('.eqchip').forEach(c=>c.onclick=()=>{
     const t=c.dataset.t; const next=settings.equipFilter.includes(t)?settings.equipFilter.filter(x=>x!==t):[...settings.equipFilter,t];
