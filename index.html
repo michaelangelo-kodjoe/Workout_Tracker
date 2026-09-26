@@ -3255,7 +3255,11 @@ document.getElementById('importFile').onchange=async e=>{
   try{
     const j=JSON.parse(await f.text()); if(j.app!=='liftlog') throw 0;
     if(importMode==='merge'){ await doMergeImport(j.data); showToast('Merged — reloading'); }
-    else{ const replaceKeys=KEYS.filter(k=>!k.startsWith('today:')&&k!=='dayStart'); for(const k of replaceKeys){ if(k in j.data) await sset(k,j.data[k]); } showToast('Restored — reloading'); }
+    else{
+      // Import overwrites everything here, so it asks first, like Erase Everything does. Merge adds to what's here, so it doesn't.
+      const n=Array.isArray(j.data.sessions)?j.data.sessions.length:0, when=j.exported?` from ${fmtDate(Date.parse(j.exported))}`:'';
+      if(!await confirmSheet(`Replace everything on this device with the backup${when} (${n} session${n===1?'':'s'})? Your ${sessions.length} session${sessions.length===1?'':'s'}, history and settings here are overwritten. This cannot be undone.`, 'Replace', null, true)){ e.target.value=''; return; }
+      const replaceKeys=KEYS.filter(k=>!k.startsWith('today:')&&k!=='dayStart'); for(const k of replaceKeys){ if(k in j.data) await sset(k,j.data[k]); } showToast('Restored — reloading'); }
     setTimeout(()=>location.reload(),900);
   }catch(err){ showToast('That file is not a Lift Log backup'); }
   e.target.value='';
