@@ -112,7 +112,7 @@
      so it stands apart from the words around it by more than colour */
   .linkbtn{font-size:13px;color:var(--light);text-decoration:none;cursor:pointer;}
   .plateau-tip .linkbtn,.note-sm .linkbtn,.first-log-note .linkbtn{font-size:inherit;text-decoration:underline;}
-  #edReset{white-space:nowrap;color:var(--text-dim);text-decoration:underline;} /* destructive: the quiet style */
+  #edReset{white-space:nowrap;}
   .groupheader{font-size:12px;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;margin:16px 0 8px;}
   .exercise{background:var(--panel);border:1px solid var(--line);border-radius:8px;margin-bottom:12px;overflow:hidden;}
   .exercise.complete{border-color:var(--done-line);background:var(--done-bg);}
@@ -518,7 +518,9 @@
   #calDaySheetBody{padding-top:4px;} /* keeps Close's enlarged tap area off the first session's row */
   .sess-acts{display:flex;justify-content:flex-end;gap:24px;margin-top:4px;}
   .sess-acts .linkbtn{padding:14px 0;margin:-4px 0 -10px;} /* 44 px tall without adding space under the sets */
-  .linkbtn.quiet{color:var(--text-dim);text-decoration:underline;}
+  /* a destructive text action takes the app's danger colour, like Clear Today's Entries and the editor's ✕ — only links
+     inside a sentence are underlined, so they stand apart from the words around them */
+  .linkbtn.danger{color:var(--danger);}
   .why-row{margin:4px 0;} .why-row .linkbtn{display:inline-block;padding:15px 0;margin:0;}
   #editLink,#cardioHistLink{padding:15px 12px;margin:-15px -12px;}
   /* "+ add a set" sits right under the last set row: its box starts below that row instead of reaching into it */
@@ -771,7 +773,7 @@
     </div>
     <div class="card">
       <h3>Edit Workouts</h3>
-      <div class="row" style="margin-bottom:8px;row-gap:16px"><select class="in" id="edDay"></select><span class="linkbtn" id="edReset">Reset to Default Program</span></div>
+      <div class="row" style="margin-bottom:8px;row-gap:16px"><select class="in" id="edDay"></select><span class="linkbtn danger" id="edReset">Reset to Default Program</span></div>
       <div id="edList"></div>
       <div style="margin-top:12px;font-size:12px;color:var(--text-dim)">Add an Exercise</div>
       <div class="row" style="margin-top:6px">
@@ -2786,7 +2788,7 @@ function buildSessionItem(s){
   const body=s.isCardio?(s.notes?`<div class="sess-notes"></div>`:'')
     :sessionExLines(s).map(([n,sets])=>`<div class="sess-ex"><b>${n}</b><span>${sets.map(x=>`<i>${x}</i>`).join('')}</span></div>`).join('');
   el.innerHTML=`<button class="sess-head" aria-expanded="true"><span class="sess-main"><span class="sess-name"><i class="cal-tag t-${p.type}" aria-hidden="true">${p.tag}</i>${s.isCardio?s.ctypeLabel:p.label}</span><span class="sess-meta">${meta}</span></span><svg class="sess-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
-    <div class="sdet">${body}<div class="sess-acts"><span class="linkbtn" data-act="edit">Edit</span><span class="linkbtn quiet" data-act="del">Delete</span></div></div>`;
+    <div class="sdet">${body}<div class="sess-acts"><span class="linkbtn" data-act="edit">Edit</span><span class="linkbtn danger" data-act="del">Delete</span></div></div>`;
   if(s.isCardio&&s.notes) el.querySelector('.sess-notes').textContent=s.notes;
   const head=el.querySelector('.sess-head');
   head.onclick=()=>{ if(el.classList.contains('editing')) return; head.setAttribute('aria-expanded',el.classList.toggle('open')); };
