@@ -218,12 +218,12 @@
   .fat-left{font-family:'Menlo',monospace;font-size:12px;color:var(--text-dim);text-align:right;white-space:nowrap;}
   .fat-btns{display:flex;flex-direction:column;gap:8px;margin-top:auto;padding-top:14px;}
   .fat-btns .btn{min-height:48px;font-size:13px;}
-  .sheet{display:none;position:fixed;left:0;right:0;bottom:0;max-height:78vh;overflow-y:auto;background:var(--panel);border-top:1px solid var(--line);border-radius:10px 10px 0 0;padding:14px 16px calc(16px + env(safe-area-inset-bottom));z-index:31;}
+  .sheet{display:none;position:fixed;left:0;right:0;bottom:0;max-height:78vh;overflow-y:auto;background:var(--panel);border-top:1px solid var(--line);border-radius:12px 12px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));z-index:31;}
   .sheet.on,.sheet-bg.on{display:block;}
   .sheet{overscroll-behavior:contain;} .sheet:focus{outline:none;}
   html.sheet-open,html.sheet-open body{overflow:hidden;}
-  .sheet-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
-  .alt{border:1px solid var(--line);border-radius:4px;padding:10px 12px;margin-bottom:8px;background:var(--panel-raised);}
+  .sheet-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px;}
+  .alt{border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin-bottom:8px;background:var(--panel-raised);}
   .alt .an{font-size:15px;} .alt .am{font-size:12px;color:var(--text-dim);margin-top:2px;}
   .alt .ac{font-size:12px;line-height:1.5;color:var(--text);margin-top:6px;opacity:.85;}
   .alt .ab{margin-top:8px;display:flex;gap:8px;}
@@ -707,7 +707,7 @@
 <div class="celebrate-bg" id="onboardBg"><div class="celebrate" id="onboardInner"></div></div>
 <div class="sheet-bg" id="fatigueBg"></div>
 <div class="sheet" id="fatigueSheet">
-  <div class="sheet-head"><div><div style="font-size:16px" id="fatigueTitle">Still recovering</div><div id="fatigueSub" style="font-size:12px;color:var(--text-dim);margin-top:4px;line-height:1.45"></div></div><span class="linkbtn" id="fatigueClose">Close</span></div>
+  <div class="sheet-head"><div><div style="font-size:17px" id="fatigueTitle">Still Recovering</div><div id="fatigueSub" style="font-size:12px;color:var(--text-dim);margin-top:4px;line-height:1.45"></div></div><span class="linkbtn" id="fatigueClose">Close</span></div>
   <div class="fat-head"><span>Muscle</span><span>Ready In</span></div>
   <div class="fat-list" id="fatigueList"></div>
   <div class="why-row"><span class="linkbtn" id="fatigueWhyToggle">Why Recovery Matters</span></div>
@@ -728,7 +728,7 @@
 </div>
 <div class="sheet-bg" id="deloadBg"></div>
 <div class="sheet" id="deloadSheet">
-  <div class="sheet-head"><div><div style="font-size:15px" id="deloadTitle">Plan a deload week</div><div id="deloadStats" style="font-size:12px;color:var(--text-dim);margin-top:2px"></div></div><span class="linkbtn" id="deloadClose">Close</span></div>
+  <div class="sheet-head"><div><div style="font-size:15px" id="deloadTitle">Plan a Deload Week</div><div id="deloadStats" style="font-size:12px;color:var(--text-dim);margin-top:2px"></div></div><span class="linkbtn" id="deloadClose">Close</span></div>
   <div class="plateau-tip" style="margin-bottom:14px">A deload is a planned lighter week — usually about 10-20% less weight and/or fewer hard sets — taken every 4-8 weeks of consistent training. It gives connective tissue and your nervous system time to catch up with the muscle adaptations you've already earned, which is generally thought to lower overuse-injury risk and can help push through a stall that isn't responding to changes on a single exercise. It's not mandatory, and skipping one occasionally is fine — but going many months without one is usually when plateaus and nagging aches start to stack up.</div>
   <div class="empty" style="margin-bottom:10px">Starting one suggests weights about 10% lighter across every exercise for the next 7 days. Nothing about your logged history changes — it only affects the suggested working weight.</div>
   <div class="row" style="gap:10px;flex-wrap:nowrap">
@@ -1392,7 +1392,7 @@ function openBlockSheet(){
   blockProposals=buildBlockProposals();
   const weeks=blockStart?((Date.now()-blockStart)/(7*864e5)).toFixed(1):'0';
   const n=blockProposals.length;
-  document.getElementById('blockTitle').textContent=`Block ${blockNum} complete`;
+  document.getElementById('blockTitle').textContent=`Block ${blockNum} Complete`;
   document.getElementById('blockStats').textContent=`${weeks} weeks · ${n} change${n===1?'':'s'} proposed`;
   document.getElementById('blockIntro').textContent=n
     ? `Untick anything you'd rather keep — everything not listed stays as it is. Primary lifts (the first two of each day) only change once they've stalled, or every other block; accessories get a fresh variation each block.`
@@ -1949,7 +1949,7 @@ async function attemptLoadDay(dayId, andThen){
 }
 function showCardioSuggestion(dayId, andThen){
   const day=PROGRAM.find(d=>d.id===dayId); if(!day) return;
-  document.getElementById('cardioSuggestLift').textContent=`${day.name} ${day.sub} instead`;
+  document.getElementById('cardioSuggestLift').textContent=`${day.name} ${day.sub} Instead`;
   const copy=cardioReasonCopy(); document.getElementById('cardioSuggestSub').textContent=copy.sub; document.getElementById('cardioSuggestBody').textContent=copy.body;
   document.getElementById('cardioSuggestBg').classList.add('on'); document.getElementById('cardioSuggestSheet').classList.add('on');
   document.getElementById('cardioSuggestGo').onclick=async()=>{ closeCardioSuggest(); await loadDay('cardio'); if(andThen) andThen(); };
@@ -1962,7 +1962,7 @@ document.getElementById('cardioSuggestBg').onclick=closeCardioSuggest;
 function showFatigueWarning(day,conflicts,suggested,andThen){
   const n=conflicts.length, dayName=`${day.name} ${day.sub}`;
   const sug=suggested==='cardio'?null:PROGRAM.find(d=>d.id===suggested);
-  const sugName=sug?`${sug.name} ${sug.sub}`:'cardio';
+  const sugName=sug?`${sug.name} ${sug.sub}`:'Cardio';
   document.getElementById('fatigueTitle').textContent=n===1?`${dayName} hits a muscle that isn't ready`:`${dayName} hits muscles that aren't ready`;
   document.getElementById('fatigueSub').textContent=`${n===1?'1 of its muscles is':`${n} of its muscles are`} still recovering. ${sug?sugName:'Cardio'} is today's suggestion.`;
   const rows=[...conflicts].sort((a,b)=>b.left-a.left), longest=Math.max(...rows.map(c=>c.left),1);
@@ -1973,7 +1973,7 @@ function showFatigueWarning(day,conflicts,suggested,andThen){
   document.getElementById('fatigueWhy').style.display='none';
   document.getElementById('fatigueBg').classList.add('on'); document.getElementById('fatigueSheet').classList.add('on');
   const cancel=document.getElementById('fatigueCancel'), proceed=document.getElementById('fatigueProceed');
-  cancel.textContent=`Do ${sugName} instead`; proceed.textContent=`Lift ${dayName} anyway`;
+  cancel.textContent=`Do ${sugName} Instead`; proceed.textContent=`Lift ${dayName} Anyway`;
   cancel.onclick=async()=>{ closeFatigue(); if(suggested!==currentDay) await loadDay(suggested); if(andThen) andThen(); };
   proceed.onclick=async()=>{ closeFatigue(); await loadDay(day.id); if(andThen) andThen(); };
 }
@@ -2575,7 +2575,7 @@ function renderSessionEditForm(s, el, onDone){
     det.querySelector('[data-act="save"]').onclick=async e=>{ e.stopPropagation(); const dur=parseInt(det.querySelector('#seDur').value); if(!dur){ showToast('Add a duration'); return; } await saveSessionEdit(s,{duration:dur,distance:det.querySelector('#seDist').value.trim(),rpe:parseInt(det.querySelector('#seRpe').value)||0,notes:det.querySelector('#seNotes').value}); onDone(); };
   } else {
     const removed=new Set();
-    det.innerHTML=`<div class="se-row" style="margin-top:4px"><span></span><span class="n">${unitLabel()}</span><span class="n">reps</span><span class="n">RIR</span></div>`+Object.entries(s.ex).map(([n,sets])=>`<div class="se-ex" data-name="${n.replace(/"/g,'&quot;')}"><div class="se-head"><b style="font-weight:normal;color:var(--text)">${n}</b><span class="linkbtn" data-act="rm">Remove</span></div>
+    det.innerHTML=`<div class="se-row" style="margin-top:4px"><span></span><span class="n">${unitLabel()}</span><span class="n">Reps</span><span class="n">RIR</span></div>`+Object.entries(s.ex).map(([n,sets])=>`<div class="se-ex" data-name="${n.replace(/"/g,'&quot;')}"><div class="se-head"><b style="font-weight:normal;color:var(--text)">${n}</b><span class="linkbtn" data-act="rm">Remove</span></div>
       ${sets.map((x,k)=>`<div class="se-row"><span class="n">${k+1}</span><input class="in" type="number" inputmode="decimal" placeholder="—" value="${x.w?dispWeight(x.w):''}"><input class="in" type="number" inputmode="numeric" placeholder="—" value="${x.r||''}"><select class="in">${RIR_OPTS.map(([v,l])=>`<option value="${v}"${String(x.rir??'')===v?' selected':''}>${l}</option>`).join('')}</select></div>`).join('')}</div>`).join('')+
       `<div class="note-sm" style="margin-top:8px">Blank both fields to drop a set. Weights are in ${unitLabel()}.</div>
       <div class="se-foot"><button class="btn" data-act="cancel">Cancel</button><button class="btn primary" data-act="save">Save</button></div>`;
@@ -3118,7 +3118,7 @@ function openSwap(dayId, ex){
   // the same rule-based pick a block review would make for this slot, shown first
   const suggested=pickForSlot(day, idx, allNamesInUse());
   if(suggested){ const h=document.createElement('div'); h.className='alt-sec'; h.textContent='Suggested for this slot'; list.appendChild(h); render1(suggested, (isPlateau(ex)?'a fresh variation to break the stall':'a fresh variation')+(suggested.lib?' · from the full library':'')); seen.add(suggested.name);
-    const skip=document.createElement('div'); skip.className='note-sm'; skip.style.margin='-4px 0 10px'; skip.innerHTML=`Not for you? <span class="linkbtn">Never suggest ${suggested.name}</span>`; skip.querySelector('.linkbtn').onclick=async()=>{ await neverSuggest(suggested.name); openSwap(dayId, ex); }; list.appendChild(skip); }
+    const skip=document.createElement('div'); skip.className='note-sm'; skip.style.margin='-4px 0 10px'; skip.innerHTML=`Not for you? <span class="linkbtn">Never Suggest ${suggested.name}</span>`; skip.querySelector('.linkbtn').onclick=async()=>{ await neverSuggest(suggested.name); openSwap(dayId, ex); }; list.appendChild(skip); }
   if(original && original.name!==ex.name){ const h=document.createElement('div'); h.className='alt-sec'; h.textContent='Original'; list.appendChild(h); render1(original,'back to the program'); seen.add(original.name); }
   const h1=document.createElement('div'); h1.className='alt-sec'; h1.textContent=`${ex.group} alternatives`; list.appendChild(h1);
   // same-group options: the curated pool for this group (the program's own recommended picks live there too)
