@@ -59,7 +59,7 @@
   .viewtab.active{color:var(--text);}
   .viewtab{min-width:0;} .vt-l{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;} /* large text shortens a label, it never runs into the next one */ .viewtab.active svg{stroke:var(--accent);}
   .daytabs{display:flex;gap:6px;margin-top:12px;overflow-x:auto;padding-bottom:2px;}
-  .daytabs.more-right{-webkit-mask-image:linear-gradient(to right,#000 85%,transparent);mask-image:linear-gradient(to right,#000 85%,transparent);}
+  .daytabs.more-right,.day-carousel.more-right{-webkit-mask-image:linear-gradient(to right,#000 85%,transparent);mask-image:linear-gradient(to right,#000 85%,transparent);}
   .daytab{position:relative;flex:1 0 auto;text-align:center;padding:8px 8px;border-radius:3px;border:1px solid var(--line);background:var(--panel);color:var(--text-dim);font-size:12px;cursor:pointer;white-space:nowrap;}
   .daytab.suggested{border-color:rgba(255,93,59,.55);background:rgba(255,93,59,.09);color:var(--text);}
   .daytab.suggested.active{background:var(--panel-raised);}
@@ -2404,6 +2404,7 @@ function renderHome(){
       </div>`;
     document.getElementById('arrivalStart').onclick=()=>setView('log');
     panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day, ()=>setView('log')));
+    edgeFade(panel.querySelector('.day-carousel'));
     return;
   }
   const day=PROGRAM.find(d=>d.id===currentDay);
@@ -2447,6 +2448,7 @@ function renderHome(){
       <div class="preview-list">${previewRows}${moreRow}</div>
       <button class="start-cta" id="arrivalStart">${ctaTxt}</button>`;
     panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day, ()=>setView('log')));
+    edgeFade(panel.querySelector('.day-carousel'));
     const more=document.getElementById('previewMore'); if(more) more.onclick=()=>{ homePreviewOpen=!homePreviewOpen; renderHome(); document.getElementById('previewMore').focus({preventScroll:true}); };
   }
   document.getElementById('arrivalStart').onclick=()=>{ touchDayStart(); setView('log'); };
@@ -3765,6 +3767,9 @@ document.addEventListener('keydown',e=>{
   else if(!e.shiftKey&&a===last){ e.preventDefault(); first.focus(); }
 });
 // the day-tab strip fades on its right edge while more tabs sit off-screen (narrow phones, large text)
+// a sideways-scrolling row fades at its right edge while more is off-screen (the Log's day tabs, Home's day cards)
+function edgeFade(el){ if(!el) return; const sync=()=>el.classList.toggle('more-right',el.scrollLeft+el.clientWidth<el.scrollWidth-2);
+  el.addEventListener('scroll',sync,{passive:true}); new ResizeObserver(sync).observe(el); sync(); }
 (()=>{ const dt=document.getElementById('dayTabs'); const sync=()=>dt.classList.toggle('more-right',dt.scrollLeft+dt.clientWidth<dt.scrollWidth-2);
   dt.addEventListener('scroll',sync,{passive:true}); new ResizeObserver(sync).observe(dt); new MutationObserver(sync).observe(dt,{childList:true}); })();
 if(navigator.standalone) document.documentElement.classList.add('ios-standalone');
