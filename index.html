@@ -43,6 +43,9 @@
   .title-row{display:flex;align-items:center;justify-content:space-between;}
   h1{font-size:22px;margin:0;font-weight:normal;letter-spacing:.3px;white-space:nowrap;} /* the wordmark never breaks */
   .rhythm{display:flex;align-items:center;gap:8px;}
+  /* Settings isn't about training, so the week's count stays off its header — hidden, not removed, so the header keeps
+     its height and nothing below it jumps when you switch tabs */
+  body[data-view="more"] .rhythm{visibility:hidden;}
   .rhythm-ring{flex:0 0 auto;}
   .rhythm-label{font-size:12px;color:var(--text-dim);line-height:1.35;text-align:right;}
   .rhythm-label b{color:var(--green);font-size:13px;font-family:'Menlo',monospace;}
@@ -193,8 +196,8 @@
   .bar-chip svg{width:14px;height:14px;fill:none;stroke:var(--text-dim);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
   .bar-chip select{position:absolute;left:0;right:0;top:-5px;bottom:-5px;width:100%;opacity:0;font-size:16px;cursor:pointer;}
   .bar-chip:has(select:focus-visible){outline:2px solid var(--light);outline-offset:2px;}
-  .plates .fixed-chk,.plates .mach-plate-chk{margin:0;gap:10px;font-size:13px;color:var(--text-dim);}
-  .plates .fixed-chk input,.plates .mach-plate-chk input{margin:0;width:18px;height:18px;}
+  /* on/off like every other setting: the words, then a switch at the right edge */
+  .plates .fixed-chk,.plates .mach-plate-chk{flex:1 1 100%;justify-content:space-between;margin:0;gap:12px;font-size:13px;color:var(--text-dim);cursor:pointer;}
   .plates .mach-base{padding:3px 6px;font-size:12px;text-align:center;}
   footer{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--line);padding:0 var(--safe-r) calc(2px + var(--sa-b)) var(--safe-l);z-index:9;}
   .footer-inner{max-width:528px;margin:0 auto;}
@@ -338,6 +341,7 @@
   .blk-row .m{font-size:12px;color:var(--text-dim);margin-top:2px;}
   .edrow .acts span{cursor:pointer;color:var(--light);font-size:15px;margin-left:10px;}
   .edrow .acts span.x{color:var(--danger);}
+  .edrow .acts span.off{color:var(--text-dim);opacity:.35;cursor:default;}
   .cardio-tab{border-style:dashed;}
   .rpe-row{display:flex;gap:6px;margin-top:6px;}
   .rpe-dot{flex:1;text-align:center;padding:8px 0;border-radius:3px;border:1px solid var(--line);background:var(--panel-raised);font-size:12px;cursor:pointer;color:var(--text-dim);}
@@ -350,9 +354,18 @@
   .ctype span{padding:8px 12px;border-radius:3px;border:1px solid var(--line);background:var(--panel-raised);font-size:13px;cursor:pointer;color:var(--text-dim);}
   .ctype span.on{border-color:var(--light);color:var(--text);background:rgba(79,163,209,.12);}
   .field-label{font-size:12px;color:var(--text-dim);margin:12px 0 4px;}
+  /* Add an Exercise: every field has a visible label above it, not a placeholder that gets cut off */
+  .ad-h{font-size:15px;font-weight:normal;margin:24px 0 0;padding-top:16px;border-top:1px solid var(--line);}
+  .ad-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;}
+  .ad-f{display:flex;flex-direction:column;gap:4px;min-width:0;font-size:12px;color:var(--text-dim);}
+  .ad-f .in{width:100%;min-width:0;} .ad-wide{grid-column:1 / -1;}
+  .ad-muscles{border:0;padding:0;margin:12px 0 0;min-width:0;} .ad-muscles legend{padding:0;font-size:12px;color:var(--text-dim);}
   .chk{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--text-dim);margin:2px 6px 2px 0;font-family:'Georgia',serif;}
   .empty{font-size:13px;color:var(--text-dim);line-height:1.6;padding:6px 0;}
   .storage-warn{font-size:12px;color:var(--amber);margin-top:8px;}
+  .storage-warn.ok{color:var(--text-dim);} /* amber only when storage is actually unavailable */
+  /* Export on its own row, Import and Merge side by side under it — they used to wrap 2 + 1, Merge alone */
+  .data-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;} .data-btns .btn{width:100%;margin:0;} .data-btns #exportBtn{grid-column:1 / -1;}
 
   /* ---------- celebration screen ---------- */
   .celebrate-bg{display:none;position:fixed;inset:0;background:var(--bg);z-index:40;overflow-y:auto;}
@@ -447,6 +460,36 @@
   .start-cta{margin-top:24px;display:block;width:100%;background:var(--accent);color:#1a0d08;border:none;border-radius:4px;padding:14px;font-size:13px;font-family:'Menlo',monospace;letter-spacing:.3px;cursor:pointer;}
   /* first-launch builder */
   .build-eq{display:flex;flex-wrap:wrap;gap:6px;margin:14px 2px 2px;}
+  .chip-set{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+  /* Settings main screen: grouped rows, each showing its current value and opening its own page */
+  .set-group-h{font-size:11px;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;margin:16px 4px 8px;}
+  .set-group-h:first-child{margin-top:0;}
+  .set-group{background:var(--panel);border:1px solid var(--line);border-radius:8px;}
+  .set-row{display:flex;align-items:center;gap:12px;width:100%;min-height:52px;margin:0;padding:0 16px;background:none;border:0;border-top:1px solid var(--line);color:var(--text);text-align:left;font:15px 'Georgia',serif;cursor:pointer;}
+  .set-group>.set-row:first-child{border-top:0;}
+  .set-row.static{cursor:default;}
+  .set-lbl{flex:1;min-width:0;} .set-cap{display:block;font-size:12px;color:var(--text-dim);margin-top:2px;}
+  .set-val{font-size:13px;color:var(--text-dim);text-align:right;}
+  .set-chev{width:16px;height:16px;flex-shrink:0;fill:none;stroke:var(--text-dim);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  .set-seg{width:auto;max-width:none;margin:0;padding:2px;gap:2px;} .set-seg button{flex:none;height:36px;padding:0 14px;}
+  #setMain .reset-link{margin-top:24px;}
+  #setMain #storageInfo{margin-top:12px;}
+  /* an on/off switch for a single yes/no setting */
+  input.switch{appearance:none;-webkit-appearance:none;flex-shrink:0;width:48px;height:28px;margin:0;border-radius:14px;background:var(--line);position:relative;cursor:pointer;transition:background .15s;}
+  input.switch::after{content:"";position:absolute;left:3px;top:3px;width:22px;height:22px;border-radius:50%;background:var(--text);transition:transform .15s;}
+  input.switch:checked{background:var(--green);} input.switch:checked::after{transform:translateX(20px);}
+  /* a Settings page: Back to Settings, then its title */
+  .set-sub{display:flex;flex-direction:column;align-items:flex-start;gap:4px;margin-bottom:12px;}
+  .set-back{display:inline-flex;align-items:center;gap:2px;min-height:44px;margin:-8px 0 0 -10px;padding:0 10px 0 4px;background:none;border:0;color:var(--light);font:15px 'Georgia',serif;cursor:pointer;}
+  .set-back svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  .set-sub h2{margin:0;font-size:22px;font-weight:normal;} .set-sub h2:focus{outline:none;}
+  .set-days{width:100%;max-width:none;margin:0 0 12px;} .set-days button{font-family:'Menlo',monospace;font-size:12px;}
+  .set-day-h{font-size:11px;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;margin:4px 0;}
+  #edReset.set-reset{display:block;margin:24px auto 0;padding:12px 8px;background:none;border:0;font-family:'Georgia',serif;} /* beats .linkbtn's negative tap-area margin */
+  #adOpen{margin-top:12px;}
+  #textSizeOpts{max-width:none;}
+  /* an on/off setting inside a Settings page: its sentence, then the switch */
+  .set-toggle{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:52px;font-size:15px;color:var(--text);cursor:pointer;}
   .eqchip{font-size:12px;font-family:'Menlo',monospace;padding:6px 10px;border:1px solid var(--line);border-radius:14px;color:var(--text-dim);cursor:pointer;background:var(--panel);user-select:none;}
   .eqchip.on{border-color:var(--accent);color:var(--text);background:rgba(255,93,59,.12);}
   .build-day{margin:18px 2px 0;}
@@ -736,70 +779,104 @@
   </section>
 
   <section id="moreView" style="display:none">
-    <div class="card">
-      <h3>Your Name</h3>
-      <div class="row"><input class="in" id="nameInput" placeholder="Optional — used in your greeting" style="flex:1"></div>
+    <!-- Settings: four groups of rows that fit on one screen; each row opens its own page, Units switches in place -->
+    <div id="setMain">
+      <div class="set-group-h">You</div>
+      <div class="set-group">
+        <button class="set-row" data-page="name"><span class="set-lbl">Name</span><span class="set-val" id="sv-name"></span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+        <div class="set-row static"><span class="set-lbl" id="unitsLbl">Units</span><div class="onb-seg set-seg" role="group" aria-labelledby="unitsLbl"><button data-u="lb" aria-pressed="false">lb</button><button data-u="kg" aria-pressed="false">kg</button></div></div>
+        <button class="set-row" data-page="text"><span class="set-lbl">Text Size</span><span class="set-val" id="sv-text"></span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+      </div>
+      <div class="set-group-h">Training</div>
+      <div class="set-group">
+        <button class="set-row" data-page="equip"><span class="set-lbl">Equipment</span><span class="set-val" id="sv-equip"></span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+        <button class="set-row" data-page="rotate"><span class="set-lbl">Exercise Rotation</span><span class="set-val" id="sv-rotate"></span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+        <button class="set-row" data-page="rest"><span class="set-lbl">Rest Timer</span><span class="set-val" id="sv-rest"></span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+      </div>
+      <div class="set-group-h">Program</div>
+      <div class="set-group">
+        <button class="set-row" data-page="edit"><span class="set-lbl">Edit Workouts</span><span class="set-val" id="sv-edit"></span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+      </div>
+      <div class="set-group-h">Your Data</div>
+      <div class="set-group">
+        <button class="set-row" data-page="data"><span class="set-lbl">Back Up &amp; Restore</span><span class="set-val" id="sv-data"></span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+        <label class="set-row static" for="autoBackup"><span class="set-lbl">Weekly Auto-Backup<span class="set-cap">Downloads a backup when you finish a session, once it's been 7+ days</span></span><input type="checkbox" class="switch" id="autoBackup"></label>
+      </div>
+      <button type="button" class="reset-link" id="wipeBtn">Erase Everything</button>
+      <div class="storage-warn" id="storageInfo" style="text-align:center"></div>
     </div>
-    <div class="card">
-      <h3>Units</h3>
-      <div class="row"><span style="font-size:12px;color:var(--text-dim)">Weight in</span>
-        <select class="in" id="unitSel"><option value="lb">lb</option><option value="kg">kg</option></select></div>
+    <div class="set-page" id="sp-name" hidden>
+      <div class="set-sub"><button class="set-back" aria-label="Back to Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Settings</button><h2 tabindex="-1">Name</h2></div>
+      <div class="card">
+      <label class="ad-f" for="nameInput">Your Name<input class="in" id="nameInput" placeholder="Optional — used in your greeting" autocomplete="given-name"></label>
+      </div>
     </div>
-    <div class="card">
-      <h3>Text Size</h3>
-      <div class="row"><span style="font-size:12px;color:var(--text-dim)">Everything in the app, scaled together</span>
-        <select class="in" id="textSizeSel"><option value="standard">Standard</option><option value="large">Large</option><option value="larger">Larger</option></select></div>
+    <div class="set-page" id="sp-text" hidden>
+      <div class="set-sub"><button class="set-back" aria-label="Back to Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Settings</button><h2 tabindex="-1">Text Size</h2></div>
+      <div class="card">
+      <div class="note-sm" style="margin-bottom:4px">Everything in the app scales together, so every layout keeps its proportions.</div>
+      <div class="onb-opts" role="group" aria-label="Text size" id="textSizeOpts"></div>
+      </div>
     </div>
-    <div class="card">
-      <h3>Equipment & Variety</h3>
-      <div class="note-sm" style="margin-bottom:6px">Uncheck anything your gym doesn't have — swap alternatives and block rotation will only draw from what's left checked.</div>
-      <div id="equipChks"></div>
+    <div class="set-page" id="sp-equip" hidden>
+      <div class="set-sub"><button class="set-back" aria-label="Back to Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Settings</button><h2 tabindex="-1">Equipment</h2></div>
+      <div class="card">
+      <div class="note-sm" style="margin-bottom:6px">Turn off anything your gym doesn't have — swap alternatives and block rotation will only draw from what's left on.</div>
+      <div id="equipChks" class="chip-set" role="group" aria-label="Equipment"></div>
       <div class="note-sm" id="neverList" style="margin-top:8px;display:none"></div>
+      </div>
     </div>
-    <div class="card">
-      <h3>Exercise Rotation</h3>
-      <div class="row"><label class="chk"><input type="checkbox" id="autoRotateChk"> Suggest fresh variations at the end of each training block</label></div>
-      <div class="row" style="margin-top:6px" id="rotateEveryRow"><span style="font-size:12px;color:var(--text-dim)">Block Length</span>
+    <div class="set-page" id="sp-rotate" hidden>
+      <div class="set-sub"><button class="set-back" aria-label="Back to Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Settings</button><h2 tabindex="-1">Exercise Rotation</h2></div>
+      <div class="card">
+      <label class="set-toggle" for="autoRotateChk"><span>Suggest fresh variations at the end of each training block</span><input type="checkbox" class="switch" id="autoRotateChk"></label>
+      <div class="row" style="margin-top:6px" id="rotateEveryRow"><label for="blockWeeksSel" style="font-size:12px;color:var(--text-dim)">Block Length</label>
         <select class="in" id="blockWeeksSel"><option value="3">3 weeks</option><option value="4">4 weeks</option><option value="6">6 weeks</option></select></div>
       <details class="how"><summary>How This Works</summary><div class="note-sm">At the end of every block you get a review of what's changing before anything is applied. The first two exercises of each day are your primary lifts: they only change once they've been stuck for 3 sessions, or every other block. The rest are accessories and get a fresh variation each block, drawn from the curated picks and the full exercise library. Nothing is repeated across your four days, and a pick's natural rep range always matches its slot.</div></details>
+      </div>
     </div>
-    <div class="card">
-      <h3>Rest Timer</h3>
-      <div class="row"><label class="chk"><input type="checkbox" id="smartRestChk"> Use a smart rest time based on each exercise's rep range</label></div>
+    <div class="set-page" id="sp-rest" hidden>
+      <div class="set-sub"><button class="set-back" aria-label="Back to Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Settings</button><h2 tabindex="-1">Rest Timer</h2></div>
+      <div class="card">
+      <label class="set-toggle" for="smartRestChk"><span>Use a smart rest time based on each exercise's rep range</span><input type="checkbox" class="switch" id="smartRestChk"></label>
       <details class="how"><summary>How This Works</summary><div class="note-sm">Lower-rep sets (up to 10) rest ~150s, moderate sets (up to 12) rest 90s, higher-rep and hold-based sets rest 60s — heavier, lower-rep work needs more recovery between sets than light, high-rep work does.</div></details>
-      <div class="row" style="margin-top:10px"><span style="font-size:12px;color:var(--text-dim)" id="restSelLbl">Fallback Rest</span>
-        <select class="in" id="restSel"><option value="60">60s</option><option value="90">90s</option><option value="120">120s</option><option value="150">150s</option><option value="180">180s</option></select>
-        <label class="chk"><input type="checkbox" id="autoTimer"> Start automatically when a set is checked</label></div>
+      <div class="row" style="margin-top:10px"><label for="restSel" style="font-size:12px;color:var(--text-dim)" id="restSelLbl">Fallback Rest</label>
+        <select class="in" id="restSel"><option value="60">60s</option><option value="90">90s</option><option value="120">120s</option><option value="150">150s</option><option value="180">180s</option></select></div>
+      <label class="set-toggle" for="autoTimer" style="margin-top:8px"><span>Start automatically when a set is checked</span><input type="checkbox" class="switch" id="autoTimer"></label>
+      </div>
     </div>
-    <div class="card">
-      <h3>Edit Workouts</h3>
-      <div class="row" style="margin-bottom:8px;row-gap:16px"><select class="in" id="edDay"></select><span class="linkbtn danger" id="edReset">Reset to Default Program</span></div>
+    <div class="set-page" id="sp-edit" hidden>
+      <div class="set-sub"><button class="set-back" aria-label="Back to Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Settings</button><h2 tabindex="-1">Edit Workouts</h2></div>
+      <select id="edDay" aria-label="Day to Edit" hidden></select>
+      <div class="onb-seg set-days" role="group" aria-label="Day to edit" id="edTabs"></div>
+      <div class="set-day-h" id="edDayH"></div>
       <div id="edList"></div>
-      <div style="margin-top:12px;font-size:12px;color:var(--text-dim)">Add an Exercise</div>
-      <div class="row" style="margin-top:6px">
-        <input class="in" id="adName" placeholder="Name" style="flex:1;min-width:140px">
-        <input class="in" id="adGroup" placeholder="Group (e.g. Chest)" style="width:110px">
+      <button type="button" class="addset" id="adOpen"></button>
+      <div id="adForm" hidden>
+      <h4 class="ad-h">Add an Exercise</h4>
+      <div class="ad-grid">
+        <label class="ad-f ad-wide">Name<input class="in" id="adName" placeholder="e.g. Cable Crunch"></label>
+        <label class="ad-f">Muscle Group<input class="in" id="adGroup" placeholder="e.g. Chest"></label>
+        <label class="ad-f">Target<input class="in" id="adTarget" placeholder="e.g. 3 x 8-12"></label>
+        <label class="ad-f"><span>Starting Weight · <span data-unit>lb</span></span><input class="in" id="adStart" type="number" inputmode="decimal" placeholder="e.g. 50"></label>
+        <label class="ad-f"><span>Increase Step · <span data-unit>lb</span></span><input class="in" id="adStep" type="number" inputmode="decimal" placeholder="e.g. 5"></label>
       </div>
-      <div class="row" style="margin-top:6px">
-        <input class="in" id="adTarget" placeholder="3 x 8-12" style="width:90px">
-        <input class="in" id="adStart" type="number" placeholder="Start" style="width:90px">
-        <input class="in" id="adStep" type="number" placeholder="Step" style="width:80px">
+      <div class="note-sm" style="margin-top:8px">Leave Starting Weight blank for a body-weight exercise. Increase Step is how much the suggested weight goes up once you reach the top of the rep range.</div>
+      <fieldset class="ad-muscles"><legend>Muscles Worked</legend><div id="adMuscles" class="chip-set"></div></fieldset>
+      <label class="ad-f" style="margin-top:12px">Form Cue (optional)<textarea class="in notes" id="adCue" placeholder="e.g. Elbows tucked, pause at the bottom" style="margin-top:0"></textarea></label>
+      <div class="row" style="margin-top:8px"><button class="btn primary" id="adBtn">Add Exercise</button><button class="btn" id="adCancel">Cancel</button></div>
       </div>
-      <div id="adMuscles" style="margin-top:6px"></div>
-      <textarea class="in notes" id="adCue" placeholder="Form cue (optional)"></textarea>
-      <div class="row" style="margin-top:8px"><button class="btn primary" id="adBtn">Add Exercise</button></div>
+      <button type="button" class="linkbtn danger set-reset" id="edReset">Reset to Default Program</button>
     </div>
-    <div class="card">
-      <h3>Your Data</h3>
-      <div class="row"><button class="btn" id="exportBtn">Export Backup</button><button class="btn" id="importBtn">Import Backup</button><button class="btn" id="mergeBtn">Merge Backup</button><input type="file" id="importFile" accept="application/json" style="display:none"></div>
-      <div class="note-sm" style="margin-top:6px">Import replaces everything on this device with the backup file. Merge combines the backup's sessions, exercise history and body weight with what's already here instead of overwriting it — use this to bring two devices' data together.</div>
-      <div class="row" style="margin-top:10px"><label class="chk"><input type="checkbox" id="autoBackup"> Auto-download a backup when I finish a session and it's been 7+ days</label></div>
-      <div class="storage-warn" id="lastBackup" style="color:var(--text-dim)"></div>
-      <div class="row" style="margin-top:10px"><button class="btn danger" id="wipeBtn">Erase Everything</button></div>
-      <div class="storage-warn" id="storageInfo"></div>
+    <div class="set-page" id="sp-data" hidden>
+      <div class="set-sub"><button class="set-back" aria-label="Back to Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Settings</button><h2 tabindex="-1">Back Up &amp; Restore</h2></div>
+      <div class="card">
+      <div class="data-btns"><button class="btn" id="exportBtn">Export Backup</button><button class="btn" id="importBtn">Import Backup</button><button class="btn" id="mergeBtn">Merge Backup</button><input type="file" id="importFile" accept="application/json" style="display:none"></div>
+      <div class="note-sm" style="margin-top:8px">Export saves a file with everything in the app. Import replaces everything on this device with a backup file. Merge combines the backup's sessions, exercise history and body weight with what's already here instead of overwriting it — use this to bring two devices' data together.</div>
+      <div class="storage-warn ok" id="lastBackup"></div>
+      </div>
     </div>
-  </section>
-</main>
+  </section></main>
 
 <footer><div class="footer-inner">
   <div id="logFooter" style="display:none">
@@ -2110,7 +2187,7 @@ function render(){
   renderTabs(); renderBody();
   const day=PROGRAM.find(d=>d.id===currentDay);
   document.getElementById('dayLabel').innerHTML=`<span><span class="badge ${dayType(day)}">${day.sub}</span>${day.name} Day</span><span class="linkbtn" id="editLink">Edit</span>`;
-  document.getElementById('editLink').onclick=()=>{ setView('more'); document.getElementById('edDay').value=currentDay; renderEditor(); };
+  document.getElementById('editLink').onclick=()=>{ setView('more'); renderEditor(); document.getElementById('edDay').value=currentDay; openSetPage('edit'); };
   const list=document.getElementById('exerciseList'); list.innerHTML='';
   let allComplete=true,lastGroup=null;
   // cards are shown grouped by muscle group (groups in order of first appearance, slot order within a group) so a
@@ -2172,7 +2249,7 @@ function render(){
       let fixed=!!(settings.fixedBar||{})[ex.name];
       // the bar weight is a compact chip; the real <select> sits invisibly on top of it at 16 px, so tapping opens the
       // native picker and iOS doesn't zoom the page the way it does for a field under 16 px
-      pl.innerHTML=`<div class="plates-row"><div class="plates-info"><span class="plates-cap"></span><span class="plates-txt"></span></div><label class="bar-chip"><span class="bar-chip-txt">${curBar} ${unitLabel()} bar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><select class="bar-sel" aria-label="bar weight">${opts.map(o=>`<option value="${o}"${Math.abs(o-curBar)<0.01?' selected':''}>${o} ${unitLabel()} bar</option>`).join('')}${opts.some(o=>Math.abs(o-curBar)<0.01)?'':`<option value="${curBar}" selected>${curBar} ${unitLabel()} bar</option>`}</select></label></div><label class="chk fixed-chk"><input type="checkbox"${fixed?' checked':''}>Fixed-Weight Bar (no plates)</label>`;
+      pl.innerHTML=`<div class="plates-row"><div class="plates-info"><span class="plates-cap"></span><span class="plates-txt"></span></div><label class="bar-chip"><span class="bar-chip-txt">${curBar} ${unitLabel()} bar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><select class="bar-sel" aria-label="bar weight">${opts.map(o=>`<option value="${o}"${Math.abs(o-curBar)<0.01?' selected':''}>${o} ${unitLabel()} bar</option>`).join('')}${opts.some(o=>Math.abs(o-curBar)<0.01)?'':`<option value="${curBar}" selected>${curBar} ${unitLabel()} bar</option>`}</select></label></div><label class="chk fixed-chk"><span>Fixed-Weight Bar (no plates)</span><input type="checkbox" class="switch"${fixed?' checked':''}></label>`;
       const txtEl=pl.querySelector('.plates-txt'), barSel=pl.querySelector('.bar-sel'), capEl=pl.querySelector('.plates-cap'), chip=pl.querySelector('.bar-chip');
       // the weight in play: the last edited set weight, else the suggestion
       let liveLb=(state.sets.find(x=>x.w!=='')||{}).w; if(liveLb===undefined||liveLb==='') liveLb=(typeof sug==='number'&&sug>0)?sug:null;
@@ -2196,7 +2273,7 @@ function render(){
       const pl=document.createElement('div'); pl.className='plates';
       let on=!!(settings.machinePlates||{})[ex.name];
       const baseLb=(settings.machineBase||{})[ex.name]||0;
-      pl.innerHTML=`<label class="chk mach-plate-chk"><input type="checkbox"${on?' checked':''}>Plate-Loaded Machine</label><span class="plates-txt"></span><input class="in mach-base" type="number" inputmode="decimal" placeholder="0" value="${baseLb?dispWeight(baseLb):''}" title="machine's own base/sled weight before plates" style="width:64px;display:${on?'':'none'}">`;
+      pl.innerHTML=`<label class="chk mach-plate-chk"><span>Plate-Loaded Machine</span><input type="checkbox" class="switch"${on?' checked':''}></label><span class="plates-txt"></span><input class="in mach-base" type="number" inputmode="decimal" placeholder="0" value="${baseLb?dispWeight(baseLb):''}" title="machine's own base/sled weight before plates" style="width:64px;display:${on?'':'none'}">`;
       const txtEl=pl.querySelector('.plates-txt'), baseIn=pl.querySelector('.mach-base');
       txtEl.style.display=on?'':'none';
       let liveLb=(state.sets.find(x=>x.w!=='')||{}).w; if(liveLb===undefined||liveLb==='') liveLb=(typeof sug==='number'&&sug>0)?sug:null;
@@ -3072,15 +3149,17 @@ document.getElementById('lowerStrCard').onclick=e=>{ if(e.target.closest('.str-c
 document.getElementById('bwLog').onclick=async()=>{ const raw=parseNum(document.getElementById('bwInput').value); if(!raw||raw<=0){ showToast('Enter a weight like 168.5'); return; } bodyweight.push({t:Date.now(),w:storeBW(raw)}); await sset('bodyweight',bodyweight); document.getElementById('bwInput').value=''; showToast('Body weight logged'); renderStrength(); updateBwUI(); };
 
 // ---------- more: settings, editor, data ----------
-function renderSettings(){ document.getElementById('nameInput').value=settings.name||''; document.getElementById('nameInput').oninput=e=>{ settings.name=e.target.value; sset('settings',settings); }; document.getElementById('restSel').value=String(settings.rest); document.getElementById('autoTimer').checked=!!settings.auto; document.getElementById('autoBackup').checked=!!settings.autoBackup; document.getElementById('smartRestChk').checked=!!settings.smartRest; document.getElementById('restSelLbl').textContent=settings.smartRest?'Fallback Rest':'Default Rest'; document.getElementById('unitSel').value=settings.unit||'lb'; document.getElementById('textSizeSel').value=settings.textSize||'standard'; updateBackupUI();
+function renderSettings(){ document.getElementById('nameInput').value=settings.name||''; document.getElementById('nameInput').oninput=e=>{ settings.name=e.target.value; sset('settings',settings); }; document.getElementById('restSel').value=String(settings.rest); document.getElementById('autoTimer').checked=!!settings.auto; document.getElementById('autoBackup').checked=!!settings.autoBackup; document.getElementById('smartRestChk').checked=!!settings.smartRest; document.getElementById('restSelLbl').textContent=settings.smartRest?'Fallback Rest':'Default Rest'; updateBackupUI(); renderSetMain();
+  document.getElementById('storageInfo').classList.toggle('ok', store.mode==='local'||store.mode==='idb');
   document.getElementById('storageInfo').textContent = store.mode==='local'?'Data is saved on this device. Export a backup now and then so it is never trapped on one phone.':store.mode==='idb'?'Data is saved on this device (using this browser’s IndexedDB storage). Export a backup now and then so it is never trapped on one phone.':'Storage unavailable in this browser — nothing will be saved after you close the page.';
   const eqBox=document.getElementById('equipChks');
-  if(!eqBox.children.length) eqBox.innerHTML=EQUIP_TYPES.map(t=>`<label class="chk"><input type="checkbox" value="${t}"> ${EQUIP_LABEL[t]}</label>`).join('');
-  document.querySelectorAll('#equipChks input').forEach(i=>{ i.checked=settings.equipFilter.includes(i.value); i.onchange=()=>{
-    const picked=[...document.querySelectorAll('#equipChks input:checked')].map(x=>x.value);
-    settings.equipFilter=picked.length?picked:EQUIP_TYPES.slice(); sset('settings',settings);
-    if(!picked.length){ showToast('At least one equipment type stays on'); renderSettings(); }
-  }; });
+  // the same pill chips as the first-launch program builder, for the same setting
+  eqBox.innerHTML=EQUIP_TYPES.map(t=>{ const on=settings.equipFilter.includes(t); return `<span class="eqchip${on?' on':''}" data-t="${t}" aria-pressed="${on}">${EQUIP_LABEL[t]}</span>`; }).join('');
+  eqBox.querySelectorAll('.eqchip').forEach(c=>c.onclick=()=>{
+    const t=c.dataset.t, next=settings.equipFilter.includes(t)?settings.equipFilter.filter(x=>x!==t):[...settings.equipFilter,t];
+    if(!next.length){ showToast('At least one equipment type stays on'); return; }
+    settings.equipFilter=next; sset('settings',settings); renderSettings();
+  });
   const nl=document.getElementById('neverList'); const never=settings.neverSuggest||[];
   nl.style.display=never.length?'':'none';
   if(never.length){ nl.innerHTML=`Never suggested: ${never.join(', ')} · <span class="linkbtn" id="neverClear">Clear</span>`; document.getElementById('neverClear').onclick=async()=>{ settings.neverSuggest=[]; await sset('settings',settings); renderSettings(); showToast('Cleared'); }; }
@@ -3090,17 +3169,55 @@ function renderSettings(){ document.getElementById('nameInput').value=settings.n
 document.getElementById('restSel').onchange=e=>{ settings.rest=parseInt(e.target.value); sset('settings',settings); };
 document.getElementById('autoTimer').onchange=e=>{ settings.auto=e.target.checked; sset('settings',settings); };
 document.getElementById('smartRestChk').onchange=e=>{ settings.smartRest=e.target.checked; sset('settings',settings); renderSettings(); };
-document.getElementById('textSizeSel').onchange=e=>{ settings.textSize=e.target.value; sset('settings',settings); applyTextSize(); };
-document.getElementById('unitSel').onchange=e=>{ settings.unit=e.target.value; sset('settings',settings); render(); renderHistory(); renderStrength(); };
+// ---------- Settings: the grouped main screen and its pages ----------
+const TEXT_SIZE_LABEL={standard:'Standard',large:'Large',larger:'Larger'};
+function renderSetMain(){
+  const sv=(k,v)=>{ document.getElementById('sv-'+k).textContent=v; };
+  sv('name', settings.name||'Not Set');
+  sv('text', TEXT_SIZE_LABEL[settings.textSize]||'Standard');
+  const eq=settings.equipFilter.length; sv('equip', eq===EQUIP_TYPES.length?`All ${eq}`:`${eq} of ${EQUIP_TYPES.length}`);
+  sv('rotate', settings.autoRotate?`Every ${settings.blockWeeks||4} Weeks`:'Off');
+  sv('rest', settings.smartRest?`Smart · ${settings.rest}s Fallback`:`${settings.rest}s`);
+  const nEx=PROGRAM.reduce((a,d)=>a+d.exercises.length,0); sv('edit', `${PROGRAM.length} Days · ${nEx} Exercises`);
+  sv('data', lastBackup?`Last: ${fmtDate(lastBackup)}`:'Never Backed Up');
+  document.querySelectorAll('#setMain .set-seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.u===(settings.unit||'lb')));
+  // the same size options as onboarding, applied as soon as one is picked
+  const opts=document.getElementById('textSizeOpts'), cur=settings.textSize||'standard';
+  opts.innerHTML=[['standard','Standard',15],['large','Large',17],['larger','Larger',20]].map(([k,l,px])=>`<button class="onb-opt" data-k="${k}" aria-pressed="${cur===k}">${l}<b style="font-size:${px}px" aria-hidden="true">Aa</b></button>`).join('');
+  opts.querySelectorAll('.onb-opt').forEach(b=>b.onclick=()=>{ settings.textSize=b.dataset.k; sset('settings',settings); applyTextSize(); renderSetMain(); });
+}
+let setPage=null;
+function openSetPage(k){
+  setPage=k; document.getElementById('setMain').hidden=true;
+  document.querySelectorAll('.set-page').forEach(pg=>pg.hidden=pg.id!=='sp-'+k);
+  if(k==='edit') renderEditor();
+  window.scrollTo(0,0); document.querySelector(`#sp-${k} h2`).focus({preventScroll:true});
+}
+function closeSetPage(){
+  const was=setPage; setPage=null; document.querySelectorAll('.set-page').forEach(pg=>pg.hidden=true);
+  document.getElementById('setMain').hidden=false; renderSettings(); window.scrollTo(0,0);
+  if(was){ const r=document.querySelector(`.set-row[data-page="${was}"]`); if(r) r.focus({preventScroll:true}); }
+}
+document.querySelectorAll('.set-row[data-page]').forEach(r=>r.onclick=()=>openSetPage(r.dataset.page));
+document.querySelectorAll('.set-back').forEach(b=>b.onclick=closeSetPage);
+document.querySelectorAll('#setMain .set-seg button').forEach(b=>b.onclick=()=>{ if(settings.unit===b.dataset.u) return; settings.unit=b.dataset.u; sset('settings',settings); renderSetMain(); render(); renderHistory(); renderStrength(); });
 document.getElementById('autoRotateChk').onchange=e=>{ settings.autoRotate=e.target.checked; sset('settings',settings); renderSettings(); updateBlockUI(); };
 document.getElementById('blockWeeksSel').onchange=e=>{ settings.blockWeeks=parseInt(e.target.value); sset('settings',settings); updateBlockUI(); };
 
 function renderEditor(){
   const sel=document.getElementById('edDay'); if(!sel.options.length){ PROGRAM.forEach(d=>{ const o=document.createElement('option'); o.value=d.id; o.textContent=`${d.name} · ${d.sub}`; sel.appendChild(o); }); sel.value=PROGRAM.some(d=>d.id===currentDay)?currentDay:PROGRAM[0].id; sel.onchange=renderEditor; }
   const day=PROGRAM.find(d=>d.id===sel.value); const list=document.getElementById('edList'); list.innerHTML='';
+  // a tab per day with its exercise count; the (hidden) select still holds which day is open
+  const tabs=document.getElementById('edTabs');
+  tabs.innerHTML=PROGRAM.map(d=>`<button data-d="${d.id}" aria-pressed="${d.id===day.id}" aria-label="${d.name} ${d.sub}, ${d.exercises.length} exercises">${sessionPlan({dayName:d.name,sub:d.sub}).tag} ${d.exercises.length}</button>`).join('');
+  tabs.querySelectorAll('button').forEach(b=>b.onclick=()=>{ sel.value=b.dataset.d; renderEditor(); });
+  document.getElementById('edDayH').textContent=`${day.name} · ${day.sub}`;
+  document.getElementById('adOpen').textContent=`+ Add an Exercise to ${day.name} ${day.sub}`;
   day.exercises.forEach((ex,i)=>{
     const r=document.createElement('div'); r.className='edrow';
-    r.innerHTML=`<div><div>${ex.name}</div><div class="m">${isPrimarySlot(i)?'Primary · ':''}${ex.group} · ${ex.target} · ${ex.m.map(k=>MUSCLE_LABEL[k]).join(', ')}</div></div><div class="acts"><span title="swap" aria-label="swap ${ex.name}">↔</span><span aria-label="move ${ex.name} up">↑</span><span aria-label="move ${ex.name} down">↓</span><span class="x" aria-label="remove ${ex.name}">✕</span></div>`;
+    // the first row can't move up and the last can't move down, so those arrows show as off instead of doing nothing
+    const first=i===0, last=i===day.exercises.length-1;
+    r.innerHTML=`<div><div>${ex.name}</div><div class="m">${isPrimarySlot(i)?'Primary · ':''}${ex.group} · ${fmtTarget(ex.target)} · ${ex.m.map(k=>MUSCLE_LABEL[k]).join(', ')}</div></div><div class="acts"><span title="Swap" aria-label="Swap ${ex.name}">↔</span><span${first?' class="off" aria-disabled="true"':''} aria-label="Move ${ex.name} Up">↑</span><span${last?' class="off" aria-disabled="true"':''} aria-label="Move ${ex.name} Down">↓</span><span class="x" aria-label="Remove ${ex.name}">✕</span></div>`;
     const [ren,up,dn,x]=r.querySelectorAll('.acts span');
     ren.onclick=()=>openSwap(day.id, ex);
     up.onclick=()=>{ if(i>0){ day.exercises.splice(i-1,0,day.exercises.splice(i,1)[0]); saveProgram(); } };
@@ -3108,18 +3225,25 @@ function renderEditor(){
     x.onclick=async()=>{ if(await confirmSheet(`Remove ${ex.name} from ${day.name} ${day.sub}?`, 'Remove', null, true)){ day.exercises.splice(i,1); saveProgram(); } };
     list.appendChild(r);
   });
-  const mus=document.getElementById('adMuscles'); if(!mus.children.length) mus.innerHTML=Object.keys(MUSCLE_LABEL).map(k=>`<label class="chk"><input type="checkbox" value="${k}">${MUSCLE_LABEL[k]}</label>`).join('');
+  document.querySelectorAll('#moreView [data-unit]').forEach(u=>u.textContent=unitLabel());
+  document.getElementById('adStep').placeholder='e.g. '+dispWeight(5);
+  const mus=document.getElementById('adMuscles');
+  if(!mus.children.length){ mus.innerHTML=Object.keys(MUSCLE_LABEL).map(k=>`<span class="eqchip" data-k="${k}" aria-pressed="false">${MUSCLE_LABEL[k]}</span>`).join('');
+    mus.querySelectorAll('.eqchip').forEach(c=>c.onclick=()=>{ const on=c.classList.toggle('on'); c.setAttribute('aria-pressed',on); }); }
 }
 async function saveProgram(){ await sset('program',PROGRAM); renderEditor(); if(view==='log') render(); if(view==='home') renderHome(); }
+const showAdForm=on=>{ document.getElementById('adForm').hidden=!on; document.getElementById('adOpen').hidden=on; if(on) document.getElementById('adName').focus(); };
+document.getElementById('adOpen').onclick=()=>showAdForm(true);
+document.getElementById('adCancel').onclick=()=>showAdForm(false);
 document.getElementById('adBtn').onclick=()=>{
   const name=document.getElementById('adName').value.trim(), group=document.getElementById('adGroup').value.trim()||'Other', target=document.getElementById('adTarget').value.trim()||'3 x 8-12';
   const startRaw=document.getElementById('adStart').value, stepRaw=document.getElementById('adStep').value;
   const start=startRaw?storeWeight(startRaw):0, step=stepRaw?storeWeight(stepRaw):5, cue=document.getElementById('adCue').value.trim();
-  const m=[...document.querySelectorAll('#adMuscles input:checked')].map(i=>i.value);
+  const m=[...document.querySelectorAll('#adMuscles .eqchip.on')].map(c=>c.dataset.k);
   if(!name){ showToast('Give it a name'); return; } if(!m.length){ showToast('Pick at least one muscle'); return; }
   const day=PROGRAM.find(d=>d.id===document.getElementById('edDay').value);
   day.exercises.push({group,name,target,m,seed:null,start,step,cue}); saveProgram();
-  ['adName','adGroup','adTarget','adStart','adStep','adCue'].forEach(id=>document.getElementById(id).value=''); document.querySelectorAll('#adMuscles input').forEach(i=>i.checked=false); showToast('Added');
+  ['adName','adGroup','adTarget','adStart','adStep','adCue'].forEach(id=>document.getElementById(id).value=''); document.querySelectorAll('#adMuscles .eqchip').forEach(c=>{ c.classList.remove('on'); c.setAttribute('aria-pressed','false'); }); showToast('Added'); showAdForm(false);
 };
 document.getElementById('edReset').onclick=async()=>{ if(await confirmSheet('Reset all four days to the recommended program for your equipment? Your logged data stays.', 'Reset', null, true)){ PROGRAM=buildProgram(); applyEquipPicks(PROGRAM); await sset('program',PROGRAM); document.getElementById('edDay').innerHTML=''; renderEditor(); showToast('Program reset'); } };
 
@@ -3255,7 +3379,11 @@ document.getElementById('importFile').onchange=async e=>{
   try{
     const j=JSON.parse(await f.text()); if(j.app!=='liftlog') throw 0;
     if(importMode==='merge'){ await doMergeImport(j.data); showToast('Merged — reloading'); }
-    else{ const replaceKeys=KEYS.filter(k=>!k.startsWith('today:')&&k!=='dayStart'); for(const k of replaceKeys){ if(k in j.data) await sset(k,j.data[k]); } showToast('Restored — reloading'); }
+    else{
+      // Import overwrites everything here, so it asks first, like Erase Everything does. Merge adds to what's here, so it doesn't.
+      const n=Array.isArray(j.data.sessions)?j.data.sessions.length:0, when=j.exported?` from ${fmtDate(Date.parse(j.exported))}`:'';
+      if(!await confirmSheet(`Replace everything on this device with the backup${when} (${n} session${n===1?'':'s'})? Your ${sessions.length} session${sessions.length===1?'':'s'}, history and settings here are overwritten. This cannot be undone.`, 'Replace', null, true)){ e.target.value=''; return; }
+      const replaceKeys=KEYS.filter(k=>!k.startsWith('today:')&&k!=='dayStart'); for(const k of replaceKeys){ if(k in j.data) await sset(k,j.data[k]); } showToast('Restored — reloading'); }
     setTimeout(()=>location.reload(),900);
   }catch(err){ showToast('That file is not a Lift Log backup'); }
   e.target.value='';
@@ -3405,12 +3533,12 @@ async function doSwap(day, idx, alt){
 
 // ---------- views ----------
 function setView(v){
-  view=v; document.querySelectorAll('.viewtab').forEach(t=>{ t.classList.toggle('active',t.dataset.v===v); if(t.dataset.v===v) t.setAttribute('aria-current','page'); else t.removeAttribute('aria-current'); });
+  view=v; document.body.dataset.view=v; document.querySelectorAll('.viewtab').forEach(t=>{ t.classList.toggle('active',t.dataset.v===v); if(t.dataset.v===v) t.setAttribute('aria-current','page'); else t.removeAttribute('aria-current'); });
   ['home','log','history','strength','more'].forEach(n=>document.getElementById(n+'View').style.display=(v===n?'':'none'));
   document.getElementById('dayTabs').style.display=v==='log'?'':'none'; document.getElementById('logFooter').style.display=v==='log'?'':'none';
   if(v==='home') renderHome();
   if(v==='log' && currentDay!=='cardio') render();
-  if(v==='history') renderHistory(); if(v==='strength') renderStrength(); if(v==='more'){ renderSettings(); renderEditor(); }
+  if(v==='history') renderHistory(); if(v==='strength') renderStrength(); if(v==='more'){ if(setPage) closeSetPage(); else renderSettings(); }
 }
 document.querySelectorAll('.viewtab').forEach(t=>t.onclick=()=>setView(t.dataset.v));
 // the footer's height changes with the view and the rest timer; main and the toast read it to stay clear of it
