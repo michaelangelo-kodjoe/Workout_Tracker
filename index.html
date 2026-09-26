@@ -134,7 +134,9 @@
   .linkbtn{font-size:13px;color:var(--light);text-decoration:none;cursor:pointer;}
   .plateau-tip .linkbtn,.note-sm .linkbtn,.first-log-note .linkbtn{font-size:inherit;text-decoration:underline;}
   #edReset{white-space:nowrap;}
-  .daylabel-h,.groupheader{font:inherit;margin:0;} h3.ex-name{font-weight:normal;margin:0;}
+  .groupheader{font:inherit;margin:0;}
+  .daylabel{flex-wrap:wrap;} .day-bar{flex:0 0 100%;height:3px;border-radius:2px;background:var(--line);margin-top:4px;overflow:hidden;}
+  .day-bar i{display:block;height:100%;background:var(--green);border-radius:2px;} h3.ex-name{font-weight:normal;margin:0;}
   .groupheader{font-size:12px;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;margin:16px 0 8px;}
   .exercise{background:var(--panel);border:1px solid var(--line);border-radius:8px;margin-bottom:12px;overflow:hidden;}
   .exercise.complete{border-color:var(--done-line);background:var(--done-bg);}
@@ -2252,8 +2254,6 @@ function render(){
   if(currentDay==='cardio'){ renderTabs(); renderBody(); renderCardioForm(); return; }
   renderTabs(); renderBody();
   const day=PROGRAM.find(d=>d.id===currentDay);
-  document.getElementById('dayLabel').innerHTML=`<h2 class="daylabel-h"><span class="badge ${dayType(day)}">${day.sub}</span><span class="sr-only"> </span>${day.name} Day</h2><span class="linkbtn" id="editLink">Edit</span>`;
-  document.getElementById('editLink').onclick=()=>{ setView('more'); renderEditor(); document.getElementById('edDay').value=currentDay; openSetPage('edit'); };
   const list=document.getElementById('exerciseList'); list.innerHTML='';
   let allComplete=true,lastGroup=null;
   // cards are shown grouped by muscle group (groups in order of first appearance, slot order within a group) so a
@@ -2428,6 +2428,11 @@ function render(){
     card.appendChild(body); list.appendChild(card);
   });
   document.getElementById('finishBtn').textContent=allComplete?'All Sets Done — Finish Session':'Finish Session';
+  // the row under the day tabs shows how far through the session you are — it used to be "[Heavy] Upper Day", which
+  // only repeated the selected tab; the day's name stays as the heading for screen readers. Time is Home's estimate.
+  const nEx=day.exercises.length, nDone=day.exercises.filter(ex=>ensureState(ex).sets.every(s=>s.done)).length;
+  document.getElementById('dayLabel').innerHTML=`<h2 class="sr-only">${day.name} ${day.sub}</h2><span class="day-prog">${nDone} of ${nEx} Done · About ${nEx*6} min</span><span class="linkbtn" id="editLink">Edit Day</span><div class="day-bar" aria-hidden="true"><i style="width:${Math.round(nDone/nEx*100)}%"></i></div>`;
+  document.getElementById('editLink').onclick=()=>{ setView('more'); renderEditor(); document.getElementById('edDay').value=currentDay; openSetPage('edit'); };
   restoreListFocus(focusKey);
 }
 
@@ -2806,7 +2811,7 @@ const CARDIO_TYPES=[
 let cardioDraft={type:'zone2',duration:'',distance:'',rpe:0,notes:'',showHow:false};
 function renderCardioForm(){
   const focusKey=listFocusKey();
-  document.getElementById('dayLabel').innerHTML=`<h2 class="daylabel-h"><span class="badge t-cardio">Endurance</span><span class="sr-only"> </span>Conditioning</h2><span class="linkbtn" id="cardioHistLink">History</span>`;
+  document.getElementById('dayLabel').innerHTML=`<h2 class="sr-only">Cardio</h2><span></span><span class="linkbtn" id="cardioHistLink">History</span>`;
   document.getElementById('cardioHistLink').onclick=()=>setView('history');
   const list=document.getElementById('exerciseList'); list.innerHTML='';
   const wrap=document.createElement('div'); wrap.className='exercise open';
