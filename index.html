@@ -1897,6 +1897,10 @@ document.getElementById('tPlus').onclick=()=>{ timer.end+=30000; timer.total+=30
 // ---------- recovery map ----------
 // a manual sore-mark (soreOverride) can only extend how long a muscle looks not-recovered, never shorten it
 // below what the automatic training-based computation (recovery) already says — whichever entry ends later wins.
+// a sore mark lasts the muscle's normal recovery window from when you set it; after that it's done, not "sore"
+function isSore(m){ const o=soreOverride[m]; return !!o && o.start+o.hours*3600000>Date.now(); }
+// expired marks used to stay saved forever, so a muscle kept showing Clear days after its soreness ran out
+function pruneSore(){ let gone=false; Object.keys(soreOverride).forEach(m=>{ if(!isSore(m)){ delete soreOverride[m]; gone=true; } }); if(gone) sset('soreOverride',soreOverride); }
 function effectiveRecovery(m){
   const r=recovery[m], o=soreOverride[m];
   if(!r) return o||null;
@@ -1930,11 +1934,12 @@ function recovGroup(m){
   return {delt:'shoulders',forearm:'forearms',brachialis:'biceps'}[pre]||pre;
 }
 function recovStatusText(m){
-  const p=recoveryProgress(m), sore=soreOverride[m]?' · marked sore':'';
+  const p=recoveryProgress(m), sore=isSore(m)?' · marked sore':'';
   if(p<1){ const r=effectiveRecovery(m); const left=Math.max(0,r.hours-(Date.now()-r.start)/3600000); return `${Math.round(p*100)}% · ~${fmtTimeLeft(left)} left${sore}`; }
   return 'ready'+sore;
 }
 function renderBody(){
+  pruneSore();
   document.querySelectorAll('.muscle').forEach(el=>{
     const cls=recovClass(recoveryProgress(el.dataset.m));
     el.classList.remove('m-ready','m-recovering','m-worked'); el.classList.add(cls);
@@ -1991,7 +1996,7 @@ function renderRecovList(){
   const ordered=[...allMuscles].sort((a,b)=>recoveryProgress(a)-recoveryProgress(b)||RECOVERY_LABEL[a].localeCompare(RECOVERY_LABEL[b]));
   list.innerHTML='';
   ordered.forEach(m=>{
-    const sored=!!soreOverride[m];
+    const sored=isSore(m);
     const row=document.createElement('div'); row.className='recov-row';
     const txt=document.createElement('span'); txt.innerHTML=`<b>${RECOVERY_LABEL[m]}</b> ${recovStatusText(m)}`;
     const action=document.createElement('span'); action.className='linkbtn'; action.textContent=sored?'Clear':'Mark Sore';
@@ -2008,7 +2013,7 @@ function clearSore(m){ delete soreOverride[m]; sset('soreOverride',soreOverride)
 function openMuscleSheet(m){
   document.getElementById('muscleSheetTitle').textContent=RECOVERY_LABEL[m];
   document.getElementById('muscleSheetSub').textContent=recovStatusText(m);
-  const sored=!!soreOverride[m];
+  const sored=isSore(m);
   const btn=document.getElementById('muscleSheetAction');
   btn.textContent=sored?'Clear':'Mark Sore';
   btn.onclick=()=>{ closeMuscleSheet(); sored?clearSore(m):markSore(m); };
