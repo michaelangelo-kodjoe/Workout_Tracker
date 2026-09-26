@@ -2288,7 +2288,7 @@ function render(){
     }
     const card=document.createElement('div'); card.className='exercise'+(state.open?' open':'')+(complete?' complete':'');
     const head=document.createElement('div'); head.className='ex-head';
-    head.innerHTML=`<div><div class="ex-name">${ex.name}${plat?'<span class="badge plateau">Plateau</span>':''}</div><div class="ex-target">${fmtTarget(ex.target)}${sugTxt?` <span class="sug">· try ${sugTxt}</span>`:''}${lvlTxt}</div>${deltaPill}</div><div class="ex-check" role="img" aria-label="${complete?'finished':'not finished'}">${complete?'✓':''}</div>`;
+    head.innerHTML=`<div><div class="ex-name">${ex.name}${plat?'<span class="badge plateau">Plateau</span>':''}</div><div class="ex-target">${fmtTarget(ex.target)}${sugTxt?` <span class="sug">· ${typeof sug==='number'&&sug!==-1?'try ':''}${sugTxt}</span>`:''}${lvlTxt}</div>${deltaPill}</div><div class="ex-check" role="img" aria-label="${complete?'finished':'not finished'}">${complete?'✓':''}</div>`;
     head.setAttribute('aria-expanded',String(!!state.open));
     head.onclick=()=>{ state.open=!state.open; render(); }; card.appendChild(head);
 
