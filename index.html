@@ -103,8 +103,11 @@
   .legend{display:flex;justify-content:center;gap:14px;margin-top:8px;font-size:12px;color:var(--text-dim);}
   .legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle;}
   .recov-list{margin-top:8px;font-size:12px;color:var(--text-dim);line-height:1.6;border-top:1px dashed var(--line);padding-top:8px;}
-  .recov-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:3px 0;}
-  .recov-row .linkbtn{white-space:nowrap;flex-shrink:0;}
+  /* 44 px rows, and each Mark Sore / Clear fills its own row's height and no more — at 27 px apart their tap areas
+     overlapped, so a tap near a row's edge could mark the muscle next to it sore */
+  .recov-row{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:44px;padding:0;}
+  .recov-row + .recov-row{border-top:1px solid var(--line);}
+  .recov-row .linkbtn{white-space:nowrap;flex-shrink:0;align-self:stretch;display:flex;align-items:center;padding:0 0 0 12px;margin:0;}
   .recov-list b{color:var(--text);font-weight:normal;}
   .daylabel{font-size:13px;color:var(--text-dim);margin:4px 0 14px;display:flex;justify-content:space-between;align-items:center;}
   .badge{display:inline-block;padding:2px 8px;border-radius:2px;font-size:12px;font-family:'Menlo',monospace;margin-right:8px;vertical-align:middle;}
