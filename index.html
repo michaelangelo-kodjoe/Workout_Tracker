@@ -2835,11 +2835,11 @@ function renderHistory(){
   const week=weekStart(), month=Date.now()-30*864e5;
   const lifts=sessions.filter(s=>!s.isCardio), cardio=sessions.filter(s=>s.isCardio);
   const thisWeek=lifts.filter(s=>s.t>=week).length, thisMonth=lifts.filter(s=>s.t>=month).length;
-  const cardioWeekMin=cardio.filter(s=>s.t>=week).reduce((a,b)=>a+(b.duration||0),0);
+  const cardioWeek=cardio.filter(s=>s.t>=week), cardioWeekMin=cardioWeek.reduce((a,b)=>a+(b.duration||0),0);
   const wk=weekRanges(8).map(([a,b])=>lifts.filter(s=>s.t>=a&&s.t<b).length);
   st.innerHTML=`<div class="stat"><div class="v ${thisWeek>=4?'up':''}">${thisWeek}<span style="font-size:12px;color:var(--text-dim)"> / 4</span></div><div class="l">Lifting Sessions This Week</div></div>
-    <div class="stat"><div class="v">${thisMonth}</div><div class="l">Lifting, Last 30 Days</div>${sparkline(wk,'var(--green)')}</div>
-    <div class="stat" style="grid-column:1 / -1"><div class="v ${cardioWeekMin>=60?'up':''}">${cardioWeekMin} min</div><div class="l">Conditioning This Week (target: 2–3 sessions)</div></div>`;
+    <div class="stat"><div class="v">${thisMonth}</div><div class="l">Lifting, Last 30 Days</div>${sparkline(wk,'var(--green)')}<div class="l">Per Week, Last 8 Weeks</div></div>
+    <div class="stat" style="grid-column:1 / -1"><div class="v ${cardioWeek.length>=2?'up':''}">${cardioWeek.length}<span style="font-size:12px;color:var(--text-dim)"> / 2–3</span></div><div class="l">Conditioning Sessions This Week${cardioWeekMin?` · ${cardioWeekMin} min`:''}</div></div>`;
 }
 
 // ---------- strength view ----------
