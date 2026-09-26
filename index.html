@@ -359,6 +359,10 @@
   .onb-seg button{flex:1;height:44px;border:0;border-radius:6px;background:none;color:var(--text-dim);font-size:13px;cursor:pointer;}
   .onb-seg button[aria-pressed="true"]{background:var(--text);color:var(--bg);}
   .onb-seg+.onb-field{margin-top:0;}
+  .onb-opts{display:flex;flex-direction:column;gap:8px;width:100%;max-width:300px;margin-top:12px;}
+  .onb-opt{display:flex;align-items:center;justify-content:space-between;min-height:56px;padding:0 16px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--text);font:15px 'Georgia',serif;cursor:pointer;}
+  .onb-opt[aria-pressed="true"]{border-color:var(--accent);background:var(--panel-raised);}
+  .onb-opt b{font-weight:normal;color:var(--text-dim);}
   .onb-note{font-size:12px;color:var(--text-dim);max-width:320px;line-height:1.5;}
   .onb-foot{position:sticky;bottom:0;z-index:2;display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 0 calc(24px + var(--sa-b));background:var(--bg);box-shadow:0 -16px 16px -4px var(--bg);}
   .cel-cta.alt{background:none;color:var(--text);border:1px solid var(--field-line,#646a76);}
@@ -2437,10 +2441,10 @@ function showCelebration({day,worked,nsets,vol,durationMin,pr,rhythmCount}){
   document.getElementById('celBackBtn').onclick=()=>{ bg.classList.remove('on'); setView('home'); if(pendingBlockReview){ pendingBlockReview=false; openBlockSheet(); } };
 }
 
-// ---------- first-launch onboarding: welcome (import or start new) -> name -> units & body weight -> body-map intro ----------
+// ---------- first-launch onboarding: welcome (import or start new) -> name -> units & body weight -> text size -> body-map intro ----------
 // shown once, on top of whatever init() already rendered underneath (Home showing the program builder,
 // since this only fires when needsBuild is true). Reuses the celebration overlay's look, unrelated content.
-const ONB_STEPS=3;
+const ONB_STEPS=4;
 let onbBw=null; // the body-weight entry this onboarding logged, so going Back and changing it edits rather than duplicates
 function onbShell(step,{skip,body,foot}){
   return `<div class="onb-top">
@@ -2517,15 +2521,29 @@ function renderOnboardStep(step){
     };
     $('onboardSkip').onclick=async()=>{ if(onbBw){ bodyweight.splice(bodyweight.indexOf(onbBw),1); onbBw=null; await sset('bodyweight',bodyweight); updateBwUI(); } renderOnboardStep(3); };
     $('onboardBack').onclick=()=>renderOnboardStep(1);
-  } else {
+  } else if(step===3){
+    // picking an option applies it straight away, so the whole screen previews the size before you commit to it
+    const opt=(k,label,px)=>`<button class="onb-opt" data-k="${k}" aria-pressed="${(settings.textSize||'standard')===k}">${label}<b style="font-size:${px}px" aria-hidden="true">Aa</b></button>`;
     inner.innerHTML=onbShell(3,{skip:false,
+      body:`<div class="cel-h1" id="onboardTitle" tabindex="-1">How big should text be?</div>
+        <div class="cel-sub">Pick what's easy to read at arm's length between sets. Change it any time in Settings.</div>
+        <div class="onb-opts" role="group" aria-label="Text size">${opt('standard','Standard',15)}${opt('large','Large',17)}${opt('larger','Larger',20)}</div>`,
+      foot:`<button class="cel-cta" id="onboardNext">Continue</button>`});
+    inner.querySelectorAll('.onb-opt').forEach(b=>b.onclick=()=>{
+      settings.textSize=b.dataset.k; applyTextSize();
+      inner.querySelectorAll('.onb-opt').forEach(x=>x.setAttribute('aria-pressed',x===b));
+    });
+    $('onboardNext').onclick=()=>renderOnboardStep(4);
+    $('onboardBack').onclick=()=>renderOnboardStep(2);
+  } else {
+    inner.innerHTML=onbShell(4,{skip:false,
       body:`<div class="cel-h1" id="onboardTitle" tabindex="-1">Meet Your Recovery Map</div>
         <div class="cel-sub">After a session, the muscles you trained show up red, then fade through amber to green as they recover. Check in here before every session.</div>
         <div id="onboardBodymapSlot" style="width:100%;text-align:left"></div>`,
       foot:`<button class="cel-cta" id="onboardDone">Let's Build Your Program</button>`});
     $('onboardBodymapSlot').appendChild($('bodymapCard'));
     $('onboardDone').onclick=finishOnboarding;
-    $('onboardBack').onclick=()=>{ $('arrivalPanel').insertAdjacentElement('afterend',$('bodymapCard')); renderOnboardStep(2); };
+    $('onboardBack').onclick=()=>{ $('arrivalPanel').insertAdjacentElement('afterend',$('bodymapCard')); renderOnboardStep(3); };
   }
   const title=$('onboardTitle'); if(title) title.focus({preventScroll:true});
   inner.parentElement.scrollTop=0;
