@@ -1919,10 +1919,11 @@ const RECOV_RING_C=169.6;
 const PLURAL_MUSCLES=new Set(['quads','hamstrings','glutes','calves-gastroc','calves-soleus','abs-upper','abs-lower','abs-obliques']);
 // the status fragment shared by the breakdown list and the muscle-tap sheet — kept in one place so the two
 // surfaces can never show a % in one and a stale time-left in the other.
+// shared by the breakdown list and the muscle sheet; a muscle you marked sore says so, not just its percentage
 function recovStatusText(m){
-  const p=recoveryProgress(m);
-  if(p<1){ const r=effectiveRecovery(m); const left=Math.max(0,r.hours-(Date.now()-r.start)/3600000); return `${Math.round(p*100)}% · ~${fmtTimeLeft(left)} left`; }
-  return 'ready';
+  const p=recoveryProgress(m), sore=soreOverride[m]?' · marked sore':'';
+  if(p<1){ const r=effectiveRecovery(m); const left=Math.max(0,r.hours-(Date.now()-r.start)/3600000); return `${Math.round(p*100)}% · ~${fmtTimeLeft(left)} left${sore}`; }
+  return 'ready'+sore;
 }
 function renderBody(){
   document.querySelectorAll('.muscle').forEach(el=>{
