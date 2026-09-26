@@ -277,10 +277,20 @@
   .srow .scrub{grid-column:1 / -1;padding:6px 0;margin:-6px 0;}
   .scrub-line{position:absolute;width:1px;margin-left:-.5px;background:var(--text-dim);pointer-events:none;display:none;}
   .scrub-dot{position:absolute;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;box-shadow:0 0 0 2px var(--panel);pointer-events:none;display:none;}
-  .str-card-exlist{margin-top:10px;border-top:1px solid var(--line);padding-top:6px;}
-  .str-card-exlist .srow{cursor:default;padding:8px 10px;}
-  .str-card-exlist .sn{font-size:13px;} .str-card-exlist .sd{font-size:12px;}
-  .str-card-exlist .sp{font-size:13px;}
+  .str-card-exlist{margin-top:10px;cursor:default;}
+  .str-card-exlist .srow{cursor:default;padding:10px 0;margin:0;background:none;border:0;border-top:1px solid var(--line);border-radius:0;}
+  .str-card-exlist .sn{font-size:15px;} .str-card-exlist .sd{font-size:12px;}
+  .str-card-exlist .sp{font-size:15px;}
+  .str-card-exlist .also{font-size:12px;color:var(--text-dim);white-space:nowrap;}
+  .str-grp{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:16px 0 4px;font-size:12px;color:var(--text-dim);}
+  .str-grp span:first-child{font-size:11px;letter-spacing:.08em;text-transform:uppercase;}
+  .str-past{margin-top:16px;}
+  .str-past-btn{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:52px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel-raised);color:var(--text);text-align:left;font-family:'Georgia',serif;cursor:pointer;}
+  .str-past-btn b{display:block;font-weight:normal;font-size:15px;} .str-past-btn b+span{display:block;font-size:12px;color:var(--text-dim);}
+  .str-past-act{font-size:13px;color:var(--light);}
+  .str-past-list{margin-top:4px;}
+  /* pinned to the bottom of the screen while the open list scrolls past, so closing it doesn't mean scrolling back up */
+  .str-hide{position:sticky;bottom:calc(var(--foot-h,80px) + 12px);display:block;width:100%;min-height:44px;margin-top:16px;box-shadow:0 12px 0 0 var(--panel),0 -12px 16px -4px var(--panel);}
   .bwlb{display:inline-block;font-size:12px;background:rgba(79,163,209,.15);color:var(--light);border:1px solid rgba(79,163,209,.4);padding:1px 8px;border-radius:10px;} /* spaced by its row's gap, so it lines up whether it fits beside the label or wraps under it */
   .note-sm{font-size:12px;color:var(--text-dim);line-height:1.5;margin-top:14px;}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:12px;}
@@ -2871,7 +2881,7 @@ function renderConditioning(){
     ${paceHtml}
     <div class="note-sm" style="margin-top:${paceHtml?'10px':'0'}">Same effort covering more distance, or the same pace feeling easier (lower RPE), is what real endurance improvement looks like — not just logging more minutes.</div>`;
 }
-let strCardOpen={upper:false,lower:false};
+let strCardOpen={upper:false,lower:false}, strPastOpen={upper:false,lower:false};
 function renderStrength(){
   renderConditioning();
   const upperList=document.getElementById('upperStrList'), lowerList=document.getElementById('lowerStrList');
@@ -2881,8 +2891,12 @@ function renderStrength(){
   const nameSlots={};
   PROGRAM.forEach(day=>day.exercises.forEach(ex=>{ (nameSlots[ex.name]=nameSlots[ex.name]||[]).push({name:day.name,sub:day.sub}); }));
   const countedNames=new Set();
+  // the open list groups rows under each program day; a lift on two days of the same half shows once, under the first,
+  // marked "also Volume"; retired lifts fold into a No Longer in Program group of their own
+  const shownRows={}, pastBox={};
+  const listFor=day=>day.name==='Upper'?upperList:day.name==='Lower'?lowerList:null;
   const renderRow=(ex, day)=>{
-    const targetList=day.name==='Upper'?upperList:day.name==='Lower'?lowerList:null;
+    const half=listFor(day), targetList=day.past&&half?pastBox[half.id].list:half;
     const base=baselineFor(ex), cur=currentFor(ex), h=histFrom(ex), fullH=hist[histKey(ex)]||[];
     const p=h.length?pct(base,cur):null;
     const firstOccurrence=!countedNames.has(ex.name); countedNames.add(ex.name);
@@ -2897,6 +2911,8 @@ function renderStrength(){
       if(day.name==='Upper'){ upperBaseByName[ex.name]=base; upperEvents.push(...events); }
       else if(day.name==='Lower'){ lowerBaseByName[ex.name]=base; lowerEvents.push(...events); }
     }
+    const seenKey=half&&!day.past?half.id+'|'+ex.name:null;
+    if(seenKey&&shownRows[seenKey]){ shownRows[seenKey].querySelector('.also').textContent+=` · also ${day.sub}`; return false; }
     const cls=p===null||Math.abs(p)<0.05?'flat':(p>0?'up':'down');
     // one session with no earlier numbers to compare against is a starting point, not "0%, no progress" — and its
     // chart would be a flat line between two identical points
@@ -2905,14 +2921,14 @@ function renderStrength(){
     const bestTxt=last?`${dispWeight(last.w)} ${unitLabel()} × ${last.r}`:(ex.seed?(()=>{const b=ex.seed.filter(x=>x.w&&x.r).sort((a,b)=>e1rm(b.w,b.r)-e1rm(a.w,a.r))[0]; return b?`${dispWeight(b.w)} ${unitLabel()} × ${b.r}`:'—';})():'—');
     const plat=isPlateau(ex);
     const breaks=plateauBreakIdx(h); const milestoneIdx=breaks.length?breaks[breaks.length-1]+1:null;
-    const others=(nameSlots[ex.name]||[]).filter(o=>!(o.name===day.name&&o.sub===day.sub));
+    const others=(nameSlots[ex.name]||[]).filter(o=>o.name!==day.name); // same-half days show as "also …" instead
     const shareTxt=others.length?` · shares history with ${others.map(o=>`${o.name} ${o.sub}`).join(', ')}`:'';
     const row=document.createElement('div'); row.className='srow';
     const sdTxt=isTimedTarget(ex.target)?'Timed hold — counted as sets, not scored for strength':`Best set ${bestTxt} · ${fullH.length?fullH.length+' session'+(fullH.length>1?'s':'')+' logged':'your starting numbers'}`;
-    const pastTxt=day.past?` · last done ${fmtDate(fullH[fullH.length-1].t)}, not in your program now`:'';
+    const pastTxt=day.past?` · last done ${fmtDate(fullH[fullH.length-1].t)}`:'';
     const k=histKey(ex);
     const baseTxt=isTimedTarget(ex.target)?'':baselines[k]?` · <span class="linkbtn" data-act="baseline-undo">Baseline Reset ${fmtDate(baselines[k])} — Undo</span>`:(fullH.length>=2?` · <span class="linkbtn" data-act="baseline">Reset Baseline</span>`:'');
-    row.innerHTML=`<div><div class="sn">${ex.name} <span class="badge ${dayType(day)}">${day.sub}</span>${plat?'<span class="badge plateau">Plateau</span>':''}</div><div class="sd">${sdTxt}${shareTxt}${pastTxt}${baseTxt}</div><div class="sd" data-scrub-readout style="display:none"></div></div><div class="sp ${cls}">${p===null?'Start':firstOnly?'New':fmtPct(p)}</div>${h.length&&!firstOnly?`<div class="scrub" tabindex="0" aria-label="${ex.name} trend. Drag across it, or use the arrow keys, to see each session.">${sparkline([base,...h.map(x=>x.e1rm)],cls==='down'?'var(--amber)':'var(--green)',milestoneIdx)}</div>`:''}`;
+    row.innerHTML=`<div><div class="sn">${ex.name}<span class="also"></span>${plat?' <span class="badge plateau">Plateau</span>':''}</div><div class="sd">${sdTxt}${shareTxt}${pastTxt}${baseTxt}</div><div class="sd" data-scrub-readout style="display:none"></div></div><div class="sp ${cls}">${p===null?'Start':firstOnly?'New':fmtPct(p)}</div>${h.length&&!firstOnly?`<div class="scrub" tabindex="0" aria-label="${ex.name} trend. Drag across it, or use the arrow keys, to see each session.">${sparkline([base,...h.map(x=>x.e1rm)],cls==='down'?'var(--amber)':'var(--green)',milestoneIdx)}</div>`:''}`;
     const rowWrap=row.querySelector('.scrub');
     if(rowWrap){
       // point 0 is the baseline itself (from pre-app seed numbers or the first session), so it has no set to show.
@@ -2935,8 +2951,22 @@ function renderStrength(){
     const rb=row.querySelector('[data-act="baseline"]'); if(rb) rb.onclick=async e=>{ e.stopPropagation(); baselines[k]=fullH[fullH.length-1].t; await sset('baselines',baselines); renderStrength(); if(view==='log') render(); showToast(`${ex.name}: progress now measured from your latest session`); };
     const ru=row.querySelector('[data-act="baseline-undo"]'); if(ru) ru.onclick=async e=>{ e.stopPropagation(); delete baselines[k]; await sset('baselines',baselines); renderStrength(); if(view==='log') render(); showToast(`${ex.name}: baseline back to your first session`); };
     if(targetList) targetList.appendChild(row);
+    if(seenKey) shownRows[seenKey]=row;
+    return !!targetList;
   };
-  PROGRAM.forEach(day=>day.exercises.forEach(ex=>renderRow(ex, day)));
+  PROGRAM.forEach(day=>{
+    const list=listFor(day); let grp=null, n=0, merged=0;
+    if(list){ grp=document.createElement('div'); grp.className='str-grp'; list.appendChild(grp); }
+    day.exercises.forEach(ex=>{ if(renderRow(ex, day)) n++; else if(list) merged++; });
+    if(grp) grp.innerHTML=`<span>${day.name} ${day.sub}</span><span>${n} lift${n===1?'':'s'}${merged?` · ${merged} shown above`:''}</span>`;
+  });
+  [upperList,lowerList].forEach(l=>{
+    const key=l===upperList?'upper':'lower', box=document.createElement('div'); box.className='str-past';
+    box.innerHTML=`<button class="str-past-btn" aria-expanded="${!!strPastOpen[key]}"><span><b>No Longer in Program · <span data-n>0</span></b><span>Not counted in the totals above</span></span><span class="str-past-act">${strPastOpen[key]?'Hide':'Show'}</span></button><div class="str-past-list" style="${strPastOpen[key]?'':'display:none'}"></div>`;
+    // stopPropagation: the re-render detaches the button, so the card's own "tap inside the list" check can't see it
+    box.querySelector('.str-past-btn').onclick=e=>{ e.stopPropagation(); strPastOpen[key]=!strPastOpen[key]; renderStrength(); };
+    l.appendChild(box); pastBox[l.id]={box,list:box.querySelector('.str-past-list')};
+  });
   // lifts with logged history that are no longer in the program (rotated or swapped out) — their sessions are
   // just as real, so they stay in the stats, grouped under the day they were last done on (or by muscle for
   // entries older than the day tag), marked "Past" instead of Heavy/Volume
@@ -2947,6 +2977,13 @@ function renderStrength(){
     const half=srcDay?srcDay.name:(key&&!UPPER_KEYS.has(key)?'Lower':'Upper');
     const ex={name, target:en.target||'3 x 8-12', seed:null, start:en.start===0?0:-1};
     renderRow(ex, {name:half, sub:'Past', badge:'light', past:true});
+  });
+  [upperList,lowerList].forEach(l=>{
+    const {box,list}=pastBox[l.id], n=list.children.length;
+    box.querySelector('[data-n]').textContent=n; box.style.display=n?'':'none';
+    const hide=document.createElement('button'); hide.className='str-hide btn'; hide.textContent='Hide Exercises';
+    hide.onclick=e=>{ e.stopPropagation(); const key=l===upperList?'upper':'lower'; strCardOpen[key]=false; renderStrength(); document.getElementById(key+'StrCard').scrollIntoView({block:'nearest'}); };
+    l.appendChild(hide);
   });
   document.getElementById('upperStrList').style.display=strCardOpen.upper?'block':'none';
   document.getElementById('lowerStrList').style.display=strCardOpen.lower?'block':'none';
