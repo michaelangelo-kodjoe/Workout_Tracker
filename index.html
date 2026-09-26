@@ -457,6 +457,7 @@
   .start-cta{margin-top:24px;display:block;width:100%;background:var(--accent);color:#1a0d08;border:none;border-radius:4px;padding:14px;font-size:13px;font-family:'Menlo',monospace;letter-spacing:.3px;cursor:pointer;}
   /* first-launch builder */
   .build-eq{display:flex;flex-wrap:wrap;gap:6px;margin:14px 2px 2px;}
+  .chip-set{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
   .eqchip{font-size:12px;font-family:'Menlo',monospace;padding:6px 10px;border:1px solid var(--line);border-radius:14px;color:var(--text-dim);cursor:pointer;background:var(--panel);user-select:none;}
   .eqchip.on{border-color:var(--accent);color:var(--text);background:rgba(255,93,59,.12);}
   .build-day{margin:18px 2px 0;}
@@ -762,8 +763,8 @@
     </div>
     <div class="card">
       <h3>Equipment & Variety</h3>
-      <div class="note-sm" style="margin-bottom:6px">Uncheck anything your gym doesn't have — swap alternatives and block rotation will only draw from what's left checked.</div>
-      <div id="equipChks"></div>
+      <div class="note-sm" style="margin-bottom:6px">Turn off anything your gym doesn't have — swap alternatives and block rotation will only draw from what's left on.</div>
+      <div id="equipChks" class="chip-set" role="group" aria-label="Equipment"></div>
       <div class="note-sm" id="neverList" style="margin-top:8px;display:none"></div>
     </div>
     <div class="card">
@@ -794,7 +795,7 @@
         <label class="ad-f"><span>Increase Step · <span data-unit>lb</span></span><input class="in" id="adStep" type="number" inputmode="decimal" placeholder="e.g. 5"></label>
       </div>
       <div class="note-sm" style="margin-top:8px">Leave Starting Weight blank for a body-weight exercise. Increase Step is how much the suggested weight goes up once you reach the top of the rep range.</div>
-      <fieldset class="ad-muscles"><legend>Muscles Worked</legend><div id="adMuscles"></div></fieldset>
+      <fieldset class="ad-muscles"><legend>Muscles Worked</legend><div id="adMuscles" class="chip-set"></div></fieldset>
       <label class="ad-f" style="margin-top:12px">Form Cue (optional)<textarea class="in notes" id="adCue" placeholder="e.g. Elbows tucked, pause at the bottom" style="margin-top:0"></textarea></label>
       <div class="row" style="margin-top:8px"><button class="btn primary" id="adBtn">Add Exercise</button></div>
     </div>
@@ -3085,12 +3086,13 @@ function renderSettings(){ document.getElementById('nameInput').value=settings.n
   document.getElementById('storageInfo').classList.toggle('ok', store.mode==='local'||store.mode==='idb');
   document.getElementById('storageInfo').textContent = store.mode==='local'?'Data is saved on this device. Export a backup now and then so it is never trapped on one phone.':store.mode==='idb'?'Data is saved on this device (using this browser’s IndexedDB storage). Export a backup now and then so it is never trapped on one phone.':'Storage unavailable in this browser — nothing will be saved after you close the page.';
   const eqBox=document.getElementById('equipChks');
-  if(!eqBox.children.length) eqBox.innerHTML=EQUIP_TYPES.map(t=>`<label class="chk"><input type="checkbox" value="${t}"> ${EQUIP_LABEL[t]}</label>`).join('');
-  document.querySelectorAll('#equipChks input').forEach(i=>{ i.checked=settings.equipFilter.includes(i.value); i.onchange=()=>{
-    const picked=[...document.querySelectorAll('#equipChks input:checked')].map(x=>x.value);
-    settings.equipFilter=picked.length?picked:EQUIP_TYPES.slice(); sset('settings',settings);
-    if(!picked.length){ showToast('At least one equipment type stays on'); renderSettings(); }
-  }; });
+  // the same pill chips as the first-launch program builder, for the same setting
+  eqBox.innerHTML=EQUIP_TYPES.map(t=>{ const on=settings.equipFilter.includes(t); return `<span class="eqchip${on?' on':''}" data-t="${t}" aria-pressed="${on}">${EQUIP_LABEL[t]}</span>`; }).join('');
+  eqBox.querySelectorAll('.eqchip').forEach(c=>c.onclick=()=>{
+    const t=c.dataset.t, next=settings.equipFilter.includes(t)?settings.equipFilter.filter(x=>x!==t):[...settings.equipFilter,t];
+    if(!next.length){ showToast('At least one equipment type stays on'); return; }
+    settings.equipFilter=next; sset('settings',settings); renderSettings();
+  });
   const nl=document.getElementById('neverList'); const never=settings.neverSuggest||[];
   nl.style.display=never.length?'':'none';
   if(never.length){ nl.innerHTML=`Never suggested: ${never.join(', ')} · <span class="linkbtn" id="neverClear">Clear</span>`; document.getElementById('neverClear').onclick=async()=>{ settings.neverSuggest=[]; await sset('settings',settings); renderSettings(); showToast('Cleared'); }; }
@@ -3122,18 +3124,20 @@ function renderEditor(){
   });
   document.querySelectorAll('#moreView [data-unit]').forEach(u=>u.textContent=unitLabel());
   document.getElementById('adStep').placeholder='e.g. '+dispWeight(5);
-  const mus=document.getElementById('adMuscles'); if(!mus.children.length) mus.innerHTML=Object.keys(MUSCLE_LABEL).map(k=>`<label class="chk"><input type="checkbox" value="${k}">${MUSCLE_LABEL[k]}</label>`).join('');
+  const mus=document.getElementById('adMuscles');
+  if(!mus.children.length){ mus.innerHTML=Object.keys(MUSCLE_LABEL).map(k=>`<span class="eqchip" data-k="${k}" aria-pressed="false">${MUSCLE_LABEL[k]}</span>`).join('');
+    mus.querySelectorAll('.eqchip').forEach(c=>c.onclick=()=>{ const on=c.classList.toggle('on'); c.setAttribute('aria-pressed',on); }); }
 }
 async function saveProgram(){ await sset('program',PROGRAM); renderEditor(); if(view==='log') render(); if(view==='home') renderHome(); }
 document.getElementById('adBtn').onclick=()=>{
   const name=document.getElementById('adName').value.trim(), group=document.getElementById('adGroup').value.trim()||'Other', target=document.getElementById('adTarget').value.trim()||'3 x 8-12';
   const startRaw=document.getElementById('adStart').value, stepRaw=document.getElementById('adStep').value;
   const start=startRaw?storeWeight(startRaw):0, step=stepRaw?storeWeight(stepRaw):5, cue=document.getElementById('adCue').value.trim();
-  const m=[...document.querySelectorAll('#adMuscles input:checked')].map(i=>i.value);
+  const m=[...document.querySelectorAll('#adMuscles .eqchip.on')].map(c=>c.dataset.k);
   if(!name){ showToast('Give it a name'); return; } if(!m.length){ showToast('Pick at least one muscle'); return; }
   const day=PROGRAM.find(d=>d.id===document.getElementById('edDay').value);
   day.exercises.push({group,name,target,m,seed:null,start,step,cue}); saveProgram();
-  ['adName','adGroup','adTarget','adStart','adStep','adCue'].forEach(id=>document.getElementById(id).value=''); document.querySelectorAll('#adMuscles input').forEach(i=>i.checked=false); showToast('Added');
+  ['adName','adGroup','adTarget','adStart','adStep','adCue'].forEach(id=>document.getElementById(id).value=''); document.querySelectorAll('#adMuscles .eqchip').forEach(c=>{ c.classList.remove('on'); c.setAttribute('aria-pressed','false'); }); showToast('Added');
 };
 document.getElementById('edReset').onclick=async()=>{ if(await confirmSheet('Reset all four days to the recommended program for your equipment? Your logged data stays.', 'Reset', null, true)){ PROGRAM=buildProgram(); applyEquipPicks(PROGRAM); await sset('program',PROGRAM); document.getElementById('edDay').innerHTML=''; renderEditor(); showToast('Program reset'); } };
 
