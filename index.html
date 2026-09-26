@@ -342,6 +342,26 @@
   .cel-badge svg{width:36px;height:36px;fill:none;stroke:var(--accent);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;} /* the Log tab's dumbbell, not an emoji */
   .onboard-logo{width:84px;height:84px;border-radius:20px;margin-bottom:18px;position:relative;z-index:2;box-shadow:0 8px 24px rgba(255,93,59,.35);}
   #onboardTitle:focus{outline:none;} /* focused so a screen reader starts at each step's question, not to show a ring */
+  /* onboarding: back, progress and skip on top, the question centred, the action pinned low where a thumb rests */
+  .celebrate.onb{align-items:stretch;overflow:visible;padding:calc(8px + var(--sa-t)) 16px 0;}
+  .onb-top{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;}
+  .onb-back,.onb-skip{min-width:44px;height:44px;padding:0 4px;background:none;border:0;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .onb-skip{color:var(--text-dim);font:13px 'Georgia',serif;}
+  .onb-back svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  .onb-prog{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;}
+  .onb-bars{display:flex;gap:4px;width:140px;} .onb-bars i{flex:1;height:4px;border-radius:2px;background:var(--line);} .onb-bars i.on{background:var(--accent);}
+  .onb-body{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px;padding:24px 8px;}
+  .onb-body .cel-h1,.onb-body .cel-sub{margin:0;max-width:320px;} .onb-body .cel-sub{line-height:1.5;}
+  .onb-body .onboard-logo{margin-bottom:6px;}
+  .onb-field{display:flex;flex-direction:column;gap:6px;width:100%;max-width:300px;margin-top:12px;text-align:left;font-size:12px;color:var(--text-dim);}
+  .onb-field .in{width:100%;min-height:52px;text-align:center;font-size:17px;}
+  .onb-seg{display:flex;gap:4px;padding:4px;width:100%;max-width:300px;margin-top:12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);}
+  .onb-seg button{flex:1;height:44px;border:0;border-radius:6px;background:none;color:var(--text-dim);font-size:13px;cursor:pointer;}
+  .onb-seg button[aria-pressed="true"]{background:var(--text);color:var(--bg);}
+  .onb-seg+.onb-field{margin-top:0;}
+  .onb-note{font-size:12px;color:var(--text-dim);max-width:320px;line-height:1.5;}
+  .onb-foot{position:sticky;bottom:0;z-index:2;display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 0 calc(24px + var(--sa-b));background:var(--bg);box-shadow:0 -16px 16px -4px var(--bg);}
+  .cel-cta.alt{background:none;color:var(--text);border:1px solid var(--field-line,#646a76);}
   .cel-h1{font-size:22px;margin:0 0 6px;position:relative;z-index:2;}
   .cel-sub{font-size:13px;color:var(--text-dim);margin-bottom:26px;position:relative;z-index:2;}
   .cel-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;width:100%;max-width:320px;position:relative;z-index:2;margin-bottom:20px;}
@@ -2417,37 +2437,39 @@ function showCelebration({day,worked,nsets,vol,durationMin,pr,rhythmCount}){
   document.getElementById('celBackBtn').onclick=()=>{ bg.classList.remove('on'); setView('home'); if(pendingBlockReview){ pendingBlockReview=false; openBlockSheet(); } };
 }
 
-// ---------- first-launch onboarding: welcome -> name -> import? -> body weight -> body-map intro ----------
+// ---------- first-launch onboarding: welcome (import or start new) -> name -> units & body weight -> body-map intro ----------
 // shown once, on top of whatever init() already rendered underneath (Home showing the program builder,
-// since this only fires when needsBuild is true). Reuses the celebration overlay's CSS, unrelated content.
+// since this only fires when needsBuild is true). Reuses the celebration overlay's look, unrelated content.
+const ONB_STEPS=3;
+let onbBw=null; // the body-weight entry this onboarding logged, so going Back and changing it edits rather than duplicates
+function onbShell(step,{skip,body,foot}){
+  return `<div class="onb-top">
+      <button class="onb-back" id="onboardBack" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="onb-prog">Step ${step} of ${ONB_STEPS}<div class="onb-bars" aria-hidden="true">${Array.from({length:ONB_STEPS},(_,i)=>`<i class="${i<step?'on':''}"></i>`).join('')}</div></div>
+      ${skip?'<button class="onb-skip" id="onboardSkip">Skip</button>':'<span style="width:44px"></span>'}
+    </div>
+    <div class="onb-body">${body}</div>
+    <div class="onb-foot">${foot}</div>`;
+}
 function renderOnboardStep(step){
-  const inner=document.getElementById('onboardInner');
-  if(step===1){
-    inner.innerHTML=`
-      <img class="onboard-logo" src="icon-192.png" alt="Lift Log">
-      <div class="cel-h1" id="onboardTitle" tabindex="-1">Welcome to Lift Log</div>
-      <div class="cel-sub">Track your lifts, watch your body recover, and let the app learn your numbers as you go.</div>
-      <button class="cel-cta" id="onboardNext">Get Started</button>`;
-    document.getElementById('onboardNext').onclick=()=>renderOnboardStep(2);
-  } else if(step===2){
-    inner.innerHTML=`
-      <div class="cel-h1" id="onboardTitle" tabindex="-1">What should we call you?</div>
-      <div class="cel-sub">Optional — used to personalize your greeting. Change it any time in Settings.</div>
-      <input class="in" id="onboardName" aria-label="Your name" placeholder="Your name" style="width:100%;max-width:280px;text-align:center;margin-bottom:18px;position:relative;z-index:2" value="${settings.name||''}">
-      <button class="cel-cta" id="onboardNext">Continue</button>`;
-    document.getElementById('onboardName').oninput=e=>{ settings.name=e.target.value; };
-    document.getElementById('onboardNext').onclick=()=>renderOnboardStep(3);
-  } else if(step===3){
-    inner.innerHTML=`
-      <div class="cel-h1" id="onboardTitle" tabindex="-1">Setting up a new device?</div>
-      <div class="cel-sub">If you've used Lift Log before, import your backup file to bring your program, history, and settings with you.</div>
-      <input type="file" id="onboardImportFile" accept="application/json" style="display:none">
-      <button class="cel-cta" id="onboardImportBtn">Import My Data</button>
-      <div class="linkbtn" id="onboardImportSkip" style="margin-top:16px;position:relative;z-index:2">No Backup — Start Fresh</div>
-      <div id="onboardImportError" role="alert" style="display:none;margin-top:16px;position:relative;z-index:2"></div>`;
-    document.getElementById('onboardImportBtn').onclick=()=>document.getElementById('onboardImportFile').click();
-    document.getElementById('onboardImportSkip').onclick=()=>renderOnboardStep(4);
-    document.getElementById('onboardImportFile').onchange=async e=>{
+  const inner=document.getElementById('onboardInner'), $=id=>document.getElementById(id);
+  inner.classList.add('onb');
+  if(step===0){
+    inner.innerHTML=`<div class="onb-body">
+        <img class="onboard-logo" src="icon-192.png" alt="Lift Log">
+        <div class="cel-h1" id="onboardTitle" tabindex="-1">Welcome to Lift Log</div>
+        <div class="cel-sub">Track your lifts, watch your body recover, and let the app learn your numbers as you go.</div>
+      </div>
+      <div class="onb-foot">
+        <div id="onboardImportError" role="alert" class="onb-note" style="display:none"></div>
+        <input type="file" id="onboardImportFile" accept="application/json" style="display:none">
+        <button class="cel-cta" id="onboardImportBtn">Import My Data</button>
+        <button class="cel-cta alt" id="onboardNext">Start as New User</button>
+        <div class="onb-note">Used Lift Log before? Import your backup file to bring your program, history and settings with you.</div>
+      </div>`;
+    $('onboardImportBtn').onclick=()=>$('onboardImportFile').click();
+    $('onboardNext').onclick=()=>renderOnboardStep(1);
+    $('onboardImportFile').onchange=async e=>{
       const f=e.target.files[0]; if(!f) return;
       try{
         const j=JSON.parse(await f.text()); if(j.app!=='liftlog') throw 0;
@@ -2456,34 +2478,57 @@ function renderOnboardStep(step){
         showToast('Restored — reloading');
         setTimeout(()=>location.reload(),900);
       }catch(err){
-        const err_=document.getElementById('onboardImportError');
+        const err_=$('onboardImportError');
         err_.style.display='block';
-        err_.innerHTML=`<div class="plateau-tip">That doesn't look like a Lift Log backup file. Try a different file above, or <span class="linkbtn" id="onboardImportSkip2" style="color:var(--amber)">Skip and Start Fresh</span>.</div>`;
-        document.getElementById('onboardImportSkip2').onclick=()=>renderOnboardStep(4);
+        err_.innerHTML=`<div class="plateau-tip">That doesn't look like a Lift Log backup file. Try a different file, or start as a new user.</div>`;
       }
       e.target.value='';
     };
-  } else if(step===4){
-    inner.innerHTML=`
-      <div class="cel-h1" id="onboardTitle" tabindex="-1">What do you weigh today?</div>
-      <div class="cel-sub">Optional — body-weight exercises (push-ups, dips, and the like) start pre-filled with this instead of blank. Log it any time from Strength.</div>
-      <input class="in" id="onboardBw" type="text" inputmode="decimal" autocomplete="off" aria-label="Body weight in ${unitLabel()}" placeholder="${unitLabel()}" style="width:140px;text-align:center;margin-bottom:18px;position:relative;z-index:2">
-      <button class="cel-cta" id="onboardNext">Continue</button>`;
-    document.getElementById('onboardNext').onclick=async()=>{
-      const raw=parseNum(document.getElementById('onboardBw').value);
-      if(raw&&raw>0){ bodyweight.push({t:Date.now(),w:storeBW(raw)}); await sset('bodyweight',bodyweight); updateBwUI(); }
-      renderOnboardStep(5);
+  } else if(step===1){
+    inner.innerHTML=onbShell(1,{skip:true,
+      body:`<div class="cel-h1" id="onboardTitle" tabindex="-1">What should we call you?</div>
+        <div class="cel-sub">Used to personalize your greeting. Change it any time in Settings.</div>
+        <label class="onb-field">Your Name<input class="in" id="onboardName" placeholder="e.g. Sam" autocomplete="given-name"></label>`,
+      foot:`<button class="cel-cta" id="onboardNext">Continue</button>`});
+    $('onboardName').value=settings.name||'';
+    $('onboardNext').onclick=()=>{ settings.name=$('onboardName').value.trim(); renderOnboardStep(2); };
+    $('onboardSkip').onclick=()=>{ settings.name=''; renderOnboardStep(2); };
+    $('onboardBack').onclick=()=>renderOnboardStep(0);
+  } else if(step===2){
+    const seg=u=>`<button aria-pressed="${settings.unit===u}" data-u="${u}">${u}</button>`;
+    inner.innerHTML=onbShell(2,{skip:true,
+      body:`<div class="cel-h1" id="onboardTitle" tabindex="-1">What do you weigh today?</div>
+        <div class="cel-sub">Body-weight exercises — push-ups, dips and the like — start pre-filled with this. Log it any time from Strength.</div>
+        <div class="onb-seg" role="group" aria-label="Units">${seg('lb')}${seg('kg')}</div>
+        <label class="onb-field"><span id="onboardBwLbl">Body Weight · ${unitLabel()}</span><input class="in" id="onboardBw" type="text" inputmode="decimal" autocomplete="off" placeholder="e.g. ${settings.unit==='kg'?76:168}" value="${onbBw?dispBW(onbBw.w):''}"></label>
+        <div class="onb-note">Units apply everywhere — change them later in Settings.</div>`,
+      foot:`<button class="cel-cta" id="onboardNext">Continue</button>`});
+    inner.querySelectorAll('.onb-seg button').forEach(b=>b.onclick=()=>{
+      settings.unit=b.dataset.u;
+      inner.querySelectorAll('.onb-seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+      $('onboardBwLbl').textContent=`Body Weight · ${unitLabel()}`; $('onboardBw').placeholder=`e.g. ${settings.unit==='kg'?76:168}`;
+    });
+    $('onboardNext').onclick=async()=>{
+      const raw=parseNum($('onboardBw').value);
+      if(raw&&raw>0){ if(onbBw) onbBw.w=storeBW(raw); else { onbBw={t:Date.now(),w:storeBW(raw)}; bodyweight.push(onbBw); } }
+      else if(onbBw){ bodyweight.splice(bodyweight.indexOf(onbBw),1); onbBw=null; }
+      await sset('bodyweight',bodyweight); updateBwUI();
+      renderOnboardStep(3);
     };
+    $('onboardSkip').onclick=async()=>{ if(onbBw){ bodyweight.splice(bodyweight.indexOf(onbBw),1); onbBw=null; await sset('bodyweight',bodyweight); updateBwUI(); } renderOnboardStep(3); };
+    $('onboardBack').onclick=()=>renderOnboardStep(1);
   } else {
-    inner.innerHTML=`
-      <div class="cel-h1" id="onboardTitle" tabindex="-1">Meet Your Recovery Map</div>
-      <div class="cel-sub">After a session, the muscles you trained show up red, then fade through amber to green as they recover. Check in here before every session.</div>
-      <div id="onboardBodymapSlot" style="width:100%;position:relative;z-index:2"></div>
-      <button class="cel-cta" id="onboardDone" style="margin-top:18px">Let's Build Your Program</button>`;
-    document.getElementById('onboardBodymapSlot').appendChild(document.getElementById('bodymapCard'));
-    document.getElementById('onboardDone').onclick=finishOnboarding;
+    inner.innerHTML=onbShell(3,{skip:false,
+      body:`<div class="cel-h1" id="onboardTitle" tabindex="-1">Meet Your Recovery Map</div>
+        <div class="cel-sub">After a session, the muscles you trained show up red, then fade through amber to green as they recover. Check in here before every session.</div>
+        <div id="onboardBodymapSlot" style="width:100%;text-align:left"></div>`,
+      foot:`<button class="cel-cta" id="onboardDone">Let's Build Your Program</button>`});
+    $('onboardBodymapSlot').appendChild($('bodymapCard'));
+    $('onboardDone').onclick=finishOnboarding;
+    $('onboardBack').onclick=()=>{ $('arrivalPanel').insertAdjacentElement('afterend',$('bodymapCard')); renderOnboardStep(2); };
   }
-  const title=document.getElementById('onboardTitle'); if(title) title.focus({preventScroll:true});
+  const title=$('onboardTitle'); if(title) title.focus({preventScroll:true});
+  inner.parentElement.scrollTop=0;
 }
 // while a full-screen overlay is up, the app behind it can't be reached by keyboard or screen reader
 function setAppInert(on){ ['header','main','footer'].forEach(sel=>document.querySelector(sel).toggleAttribute('inert',on)); }
@@ -2491,6 +2536,7 @@ async function finishOnboarding(){
   setAppInert(false);
   settings.onboarded=true;
   await sset('settings',settings);
+  render(); renderHistory(); renderStrength(); // units may have changed underneath
   document.getElementById('arrivalPanel').insertAdjacentElement('afterend', document.getElementById('bodymapCard'));
   document.getElementById('onboardBg').classList.remove('on');
   renderHome();
@@ -3378,7 +3424,7 @@ document.getElementById('resetLink').onclick=async()=>{
 
   await loadDay(suggestedDayId());
   if(currentDay==='cardio') setView('log'); // cardio is a decisive rotation call, not a day to choose from Home — go straight to logging it
-  if(needsBuild && !settings.onboarded){ setAppInert(true); document.getElementById('onboardBg').classList.add('on'); renderOnboardStep(1); }
+  if(needsBuild && !settings.onboarded){ setAppInert(true); document.getElementById('onboardBg').classList.add('on'); renderOnboardStep(0); }
   setInterval(renderBody,60000);
 })();
 if('serviceWorker' in navigator) window.addEventListener('load',()=>{
