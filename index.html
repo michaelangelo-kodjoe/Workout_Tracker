@@ -2866,12 +2866,12 @@ function renderConditioning(){
     const paceVals = paced.map(s=>s.duration/parsePace(s.distance)); // min per mile/km
     const p0=paceVals[0], p1=paceVals[paceVals.length-1];
     const paceChange = ((p0-p1)/p0*100); // positive = faster pace now
-    paceHtml = `<div class="srow" style="grid-template-columns:1fr 70px 64px"><div><div class="sn">Pace (min per mile/km)</div><div class="sd">${paced.length} sessions with distance logged</div></div><div class="se">${p1.toFixed(1)}</div><div class="sp ${paceChange>0.5?'up':paceChange<-0.5?'down':'flat'}">${paceChange>0.5?'faster':paceChange<-0.5?'slower':'steady'}</div>${sparkline(paceVals,'var(--light)')}</div>`;
+    paceHtml = `<div class="srow" style="grid-template-columns:1fr 70px 64px"><div><div class="sn">Pace (min per mile/km)</div><div class="sd">${paced.length} sessions with distance logged</div></div><div class="se">${p1.toFixed(1)}</div><div class="sp ${paceChange>0.5?'up':paceChange<-0.5?'down':'flat'}">${paceChange>0.5?'Faster':paceChange<-0.5?'Slower':'Steady'}</div>${sparkline(paceVals,'var(--light)')}</div>`;
   }
   out.innerHTML = `
     <div class="stats2" style="margin-bottom:10px">
-      <div class="stat"><div class="v">${wk[wk.length-1]} min</div><div class="l">this week</div>${sparkline(wk,'var(--green)')}</div>
-      <div class="stat"><div class="v ${rpeDelta!==null&&rpeDelta<-0.3?'up':''}">${avgRpeRecent?avgRpeRecent.toFixed(1):'—'}</div><div class="l">recent avg effort (RPE)${rpeDelta!==null?(Math.abs(rpeDelta)<0.05?', same as early on':`, ${rpeDelta<0?'down':'up'} from ${avgRpeEarly.toFixed(1)} early on`):''}</div>${rpeTrend.length>1?sparkline(rpeTrend,'var(--amber)'):''}</div>
+      <div class="stat"><div class="v">${wk[wk.length-1]} min</div><div class="l">This Week</div>${sparkline(wk,'var(--green)')}</div>
+      <div class="stat"><div class="v ${rpeDelta!==null&&rpeDelta<-0.3?'up':''}">${avgRpeRecent?avgRpeRecent.toFixed(1):'—'}</div><div class="l">Recent Average Effort (RPE)</div>${rpeDelta!==null?`<div class="l">${Math.abs(rpeDelta)<0.05?'Same as early on':`${rpeDelta<0?'Down':'Up'} from ${avgRpeEarly.toFixed(1)} early on`}</div>`:''}${rpeTrend.length>1?sparkline(rpeTrend,'var(--amber)'):''}</div>
     </div>
     ${paceHtml}
     <div class="note-sm" style="margin-top:${paceHtml?'10px':'0'}">Same effort covering more distance, or the same pace feeling easier (lower RPE), is what real endurance improvement looks like — not just logging more minutes.</div>`;
@@ -2912,7 +2912,7 @@ function renderStrength(){
     const others=(nameSlots[ex.name]||[]).filter(o=>!(o.name===day.name&&o.sub===day.sub));
     const shareTxt=others.length?` · shares history with ${others.map(o=>`${o.name} ${o.sub}`).join(', ')}`:'';
     const row=document.createElement('div'); row.className='srow';
-    const sdTxt=isTimedTarget(ex.target)?'timed hold — counted as sets, not scored for strength':`best set ${bestTxt} · ${fullH.length?fullH.length+' session'+(fullH.length>1?'s':'')+' logged':'your starting numbers'}`;
+    const sdTxt=isTimedTarget(ex.target)?'Timed hold — counted as sets, not scored for strength':`Best set ${bestTxt} · ${fullH.length?fullH.length+' session'+(fullH.length>1?'s':'')+' logged':'your starting numbers'}`;
     const pastTxt=day.past?` · last done ${fmtDate(fullH[fullH.length-1].t)}, not in your program now`:'';
     const k=histKey(ex);
     const baseTxt=isTimedTarget(ex.target)?'':baselines[k]?` · <span class="linkbtn" data-act="baseline-undo">Baseline Reset ${fmtDate(baselines[k])} — Undo</span>`:(fullH.length>=2?` · <span class="linkbtn" data-act="baseline">Reset Baseline</span>`:'');
@@ -2943,14 +2943,14 @@ function renderStrength(){
   PROGRAM.forEach(day=>day.exercises.forEach(ex=>renderRow(ex, day)));
   // lifts with logged history that are no longer in the program (rotated or swapped out) — their sessions are
   // just as real, so they stay in the stats, grouped under the day they were last done on (or by muscle for
-  // entries older than the day tag), marked "past" instead of Heavy/Volume
+  // entries older than the day tag), marked "Past" instead of Heavy/Volume
   const UPPER_KEYS=new Set(['chest','back','shoulders','biceps','triceps','forearms']);
   Object.keys(hist).filter(n=>!countedNames.has(n)&&hist[n].length).sort((a,b)=>hist[b][hist[b].length-1].t-hist[a][hist[a].length-1].t).forEach(name=>{
     const en=entryFor(name)||{}; const key=keyOfEntry(en);
     const lastTagged=[...hist[name]].reverse().find(x=>x.d); const srcDay=lastTagged&&PROGRAM.find(d=>d.id===lastTagged.d);
     const half=srcDay?srcDay.name:(key&&!UPPER_KEYS.has(key)?'Lower':'Upper');
     const ex={name, target:en.target||'3 x 8-12', seed:null, start:en.start===0?0:-1};
-    renderRow(ex, {name:half, sub:'past', badge:'light', past:true});
+    renderRow(ex, {name:half, sub:'Past', badge:'light', past:true});
   });
   document.getElementById('upperStrList').style.display=strCardOpen.upper?'block':'none';
   document.getElementById('lowerStrList').style.display=strCardOpen.lower?'block':'none';
