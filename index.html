@@ -441,7 +441,7 @@
   /* ---------- arrival panel: greeting + day carousel, and first-open empty hero ---------- */
   .greet-wrap{padding:0;}
   .greet-eyebrow{font-size:12px;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;}
-  .greet-h1{font-size:22px;line-height:1.25;margin:4px 0;}
+  .greet-h1{font-size:22px;line-height:1.25;margin:4px 0;font-weight:normal;}
   .greet-sub{font-size:13px;color:var(--text-dim);line-height:1.5;}
   .day-carousel{display:flex;gap:8px;overflow-x:auto;padding:24px 2px 4px;margin:0 -2px;}
   /* snap card-by-card and hide the scrollbar, which otherwise painted over the cards' bottom edge */
@@ -506,7 +506,9 @@
   .build-row.miss .bn{color:var(--text-dim);}
   .build-row .bm{color:var(--amber);font-family:'Georgia',serif;font-size:12px;}
   .empty-hero{padding:20px 4px 6px;text-align:center;}
-  .empty-h1{font-size:22px;margin:16px 0 8px;text-wrap:balance;}
+  .empty-h1{font-size:22px;margin:16px 0 8px;text-wrap:balance;font-weight:normal;}
+  /* read by screen readers, not shown */
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;}
   .empty-sub{font-size:13px;color:var(--text-dim);line-height:1.6;max-width:280px;margin:0 auto 18px;}
   .empty-plan{margin:16px auto 0;max-width:280px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px 14px;text-align:left;font-size:12px;color:var(--text-dim);line-height:1.6;}
   .empty-plan b{color:var(--text);}
@@ -669,6 +671,7 @@
     <div class="banner" id="bwBanner" style="display:none"><span>It's been a week since you last logged your weight.</span><span class="linkbtn" id="bwBannerBtn">Log It Now</span></div>
     <div id="arrivalPanel"></div>
     <div class="bodymap" id="bodymapCard">
+      <h2 class="sr-only">Recovery</h2>
       <div class="recov-hero" id="recovHero">
         <div class="recov-top">
           <svg class="recov-ring" width="60" height="60" viewBox="0 0 64 64">
@@ -2373,7 +2376,7 @@ function renderBuilder(panel){
   panel.innerHTML=`
     <div class="greet-wrap">
       <div class="greet-eyebrow">First Launch</div>
-      <div class="greet-h1">Build Your Program</div>
+      <h2 class="greet-h1">Build Your Program</h2>
       <div class="greet-sub">Four days a week — Upper and Lower, one heavy and one volume day each. Tick what your gym has and every slot gets a recommended exercise. Change any pick now, or swap later from the log.</div>
     </div>
     <div class="build-eq">${EQUIP_TYPES.map(t=>`<span class="eqchip${settings.equipFilter.includes(t)?' on':''}" data-t="${t}" aria-pressed="${settings.equipFilter.includes(t)}">${EQUIP_LABEL[t]}</span>`).join('')}</div>
@@ -2402,7 +2405,7 @@ function renderHome(){
     panel.innerHTML=`
       <div class="greet-wrap">
         <div class="greet-eyebrow">${new Date().toLocaleDateString(undefined,{weekday:'long'})}</div>
-        <div class="greet-h1">${settings.name?'Ready for cardio, '+settings.name+'?':'Ready for cardio?'}</div>
+        <h2 class="greet-h1">${settings.name?'Ready for cardio, '+settings.name+'?':'Ready for cardio?'}</h2>
         <div class="greet-sub">${cardioReasonCopy().home}</div>
       </div>
       <button class="start-cta" id="arrivalStart">Go to Cardio Log</button>
@@ -2432,7 +2435,7 @@ function renderHome(){
           <rect x="16" y="28" width="32" height="8" rx="2" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
           <rect x="48" y="22" width="8" height="20" rx="2" fill="var(--accent)" opacity=".85"/><rect x="56" y="26" width="4" height="12" rx="1.5" fill="var(--accent)"/>
         </svg>
-        <div class="empty-h1">${h1}</div>
+        <h2 class="empty-h1">${h1}</h2>
         <div class="empty-sub">No history yet — that's fine. Log one set at a time and Lift Log starts learning your numbers from today.</div>
         <div class="empty-plan"><b>${day.name}, ${day.sub}</b> · ${day.exercises.length} exercises · about ${estMin} minutes.</div>
         <button class="start-cta" id="arrivalStart">${ctaTxt}</button>
@@ -2447,7 +2450,7 @@ function renderHome(){
     panel.innerHTML=`
       <div class="greet-wrap">
         <div class="greet-eyebrow">${new Date().toLocaleDateString(undefined,{weekday:'long'})}</div>
-        <div class="greet-h1">${h1}</div>
+        <h2 class="greet-h1">${h1}</h2>
         <div class="greet-sub">${dayLine}${lastTxt}</div>
       </div>
       <div class="day-carousel">
