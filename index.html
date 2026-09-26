@@ -7,12 +7,15 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Lift Log">
 <meta name="theme-color" content="#14161a">
+<meta name="color-scheme" content="dark">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Lift Log</title>
 <style>
-  :root{--upper:#a98bf5;--lower:#38b7a8;--cardio:#5fa8e0;--danger:#f0619a;--bg:#14161a;--panel:#1c1f25;--panel-raised:#22262e;--line:#2c3038;--text:#e8e9ec;--text-dim:#8b8f98;--accent:#ff5d3b;--heavy:#ff5d3b;--light:#4fa3d1;--done-bg:#1f2a20;--done-line:#3d5c3f;--green:#5cbb6f;--amber:#d6a03a;--gold:#e8b23d;}
+  /* the app is dark-only: declaring it gives native controls (select menus, checkboxes, number spinners, scrollbars)
+     their dark system styling instead of light boxes on a dark page */
+  :root{color-scheme:dark;--upper:#a98bf5;--lower:#38b7a8;--cardio:#5fa8e0;--danger:#f0619a;--bg:#14161a;--panel:#1c1f25;--panel-raised:#22262e;--line:#2c3038;--text:#e8e9ec;--text-dim:#8b8f98;--accent:#ff5d3b;--heavy:#ff5d3b;--light:#4fa3d1;--done-bg:#1f2a20;--done-line:#3d5c3f;--green:#5cbb6f;--amber:#d6a03a;--gold:#e8b23d;}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Georgia','Iowan Old Style',serif;min-height:100vh;}
   button,input,textarea,select{font-family:'Menlo','SF Mono',monospace;}
