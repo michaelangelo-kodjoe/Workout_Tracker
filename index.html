@@ -188,7 +188,7 @@
   .setdone{width:28px;height:28px;border-radius:6px;border:1px solid var(--line);background:var(--panel-raised);color:transparent;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;padding:0;}
   .setdone.on{background:var(--green);border-color:var(--green);color:#0d1a0f;animation:popcheck .4s ease;box-shadow:0 0 0 4px rgba(92,187,111,.18);}
   @keyframes popcheck{0%{transform:scale(.7);}55%{transform:scale(1.18);}100%{transform:scale(1);}}
-  .delta-pill{display:inline-flex;align-items:center;gap:3px;font-family:'Menlo',monospace;font-size:12px;color:var(--green);background:rgba(92,187,111,.12);border:1px solid rgba(92,187,111,.35);padding:2px 7px;border-radius:10px;margin-top:6px;}
+  .delta-up{font-family:'Menlo',monospace;font-size:12px;color:var(--green);white-space:nowrap;}
   .first-log-note{font-size:12px;line-height:1.55;color:var(--light);background:rgba(79,163,209,.08);border-left:2px solid var(--light);padding:9px 11px;border-radius:3px;margin:0 0 10px;}
   .addset{display:block;width:100%;height:44px;margin:4px 0 0;padding:0;border:1px dashed var(--field-line,#646a76);border-radius:8px;background:none;color:var(--text-dim);font:13px 'Georgia',serif;cursor:pointer;}
   .notes{width:100%;margin-top:12px;background:var(--panel-raised);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:12px;font-size:12px;font-family:'Georgia',serif;resize:vertical;min-height:34px;}
@@ -2282,14 +2282,14 @@ function render(){
     // the same ± change from the baseline the Strength tab shows ("+10%"), not the old ratio ("110%")
     const chg=pct(base,cur); const lvlTxt=chg!==null&&Math.round(chg*10)!==0?` <span class="e1rm">· strength ${fmtPct(chg)}</span>`:'';
     const plat=isPlateau(ex);
-    let deltaPill='';
+    let deltaTxt=''; // the jump over last time's top weight, as a small green ↑ beside the suggestion (was a row of its own)
     if(!crossDaySub && ex.start!==0 && typeof sug==='number' && saved && saved.sets){
       const loggedLast=saved.sets.filter(s=>s.w!==''&&s.r!=='');
-      if(loggedLast.length){ const lastW=Math.max(...loggedLast.map(s=>parseFloat(s.w)||0)); if(lastW && sug>lastW) deltaPill=`<div class="delta-pill">↑ +${Math.round((dispWeight(sug)-dispWeight(lastW))*10)/10} ${unitLabel()} vs last time</div>`; }
+      if(loggedLast.length){ const lastW=Math.max(...loggedLast.map(s=>parseFloat(s.w)||0)); if(lastW && sug>lastW){ const up=Math.round((dispWeight(sug)-dispWeight(lastW))*10)/10; deltaTxt=` <span class="delta-up" aria-hidden="true">↑${up}</span><span class="sr-only">, up ${up} ${unitLabel()} from last time</span>`; } }
     }
     const card=document.createElement('div'); card.className='exercise'+(state.open?' open':'')+(complete?' complete':'');
     const head=document.createElement('div'); head.className='ex-head';
-    head.innerHTML=`<div><div class="ex-name">${ex.name}${plat?'<span class="badge plateau">Plateau</span>':''}</div><div class="ex-target">${fmtTarget(ex.target)}${sugTxt?` <span class="sug">· ${typeof sug==='number'&&sug!==-1?'try ':''}${sugTxt}</span>`:''}${lvlTxt}</div>${deltaPill}</div><div class="ex-check" role="img" aria-label="${complete?'finished':'not finished'}">${complete?'✓':''}</div>`;
+    head.innerHTML=`<div><div class="ex-name">${ex.name}${plat?'<span class="badge plateau">Plateau</span>':''}</div><div class="ex-target">${fmtTarget(ex.target)}${sugTxt?` <span class="sug">· ${typeof sug==='number'&&sug!==-1?'try ':''}${sugTxt}</span>${deltaTxt}`:''}${lvlTxt}</div></div><div class="ex-check" role="img" aria-label="${complete?'finished':'not finished'}">${complete?'✓':''}</div>`;
     head.setAttribute('aria-expanded',String(!!state.open));
     head.onclick=()=>{ state.open=!state.open; render(); }; card.appendChild(head);
 
