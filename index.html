@@ -614,6 +614,7 @@
   .how summary::-webkit-details-marker{display:none;}
   .how[open] summary{color:var(--text-dim);}
   /* the screen's one main action (finish session, start today's workout, back from the celebration) — taller, larger, bold */
+  .finish-btn.is-off{background:var(--panel-raised);color:var(--text-dim);border:1px solid var(--line);}
   .finish-btn,.start-cta,.cel-cta{min-height:50px;font-size:15px;font-weight:bold;border-radius:8px;}
 
   /* ---------- fields & focus ---------- */
@@ -2103,6 +2104,13 @@ function touchDayStart(){ if(!dayStartTimes[currentDay]){ dayStartTimes[currentD
 // todayData persists to storage on every keystroke, so this survives a reload — unlike dayStartTimes, which is
 // in-memory only and would otherwise forget an in-progress session the moment the tab reloads.
 function sessionInProgress(){ return Object.values(todayData).some(s=>s.sets&&s.sets.some(x=>x.done||(x.w&&x.r))); }
+// the Log's session chrome follows what's been logged, and is re-checked on every keystroke in a set field:
+// Finish Session looks and reads disabled until a set is logged (a tap still explains why, via finishSession's toast)
+function updateLogChrome(){
+  if(currentDay==='cardio') return;
+  const btn=document.getElementById('finishBtn'), off=!sessionInProgress();
+  btn.classList.toggle('is-off',off); btn.setAttribute('aria-disabled',String(off));
+}
 // only checks each exercise's own primary muscle, not every secondary muscle it happens to also touch
 // (ex.m) — forearms/abs/lowerback get hit as a secondary target by all sorts of pulling and hinging exercises
 // on both upper and lower days, so checking those too meant an unrelated day's forearms wrist-curl slot could
@@ -2433,6 +2441,7 @@ function render(){
   const nEx=day.exercises.length, nDone=day.exercises.filter(ex=>ensureState(ex).sets.every(s=>s.done)).length;
   document.getElementById('dayLabel').innerHTML=`<h2 class="sr-only">${day.name} ${day.sub}</h2><span class="day-prog">${nDone} of ${nEx} Done · About ${nEx*6} min</span><span class="linkbtn" id="editLink">Edit Day</span><div class="day-bar" aria-hidden="true"><i style="width:${Math.round(nDone/nEx*100)}%"></i></div>`;
   document.getElementById('editLink').onclick=()=>{ setView('more'); renderEditor(); document.getElementById('edDay').value=currentDay; openSetPage('edit'); };
+  updateLogChrome();
   restoreListFocus(focusKey);
 }
 
@@ -3639,6 +3648,7 @@ document.querySelectorAll('.viewtab').forEach(t=>t.onclick=()=>setView(t.dataset
 // the footer's height changes with the view and the rest timer; main and the toast read it to stay clear of it
 new ResizeObserver(([e])=>{ const h=e.target.offsetHeight; if(h) document.documentElement.style.setProperty('--foot-h',h+'px'); }).observe(document.querySelector('footer')); // 0 = hidden while typing: keep the last height so the page doesn't jump
 document.getElementById('finishBtn').onclick=finishSession;
+document.getElementById('exerciseList').addEventListener('input',updateLogChrome); // after each field's own handler has saved
 document.getElementById('resetLink').onclick=async()=>{
   const day=PROGRAM.find(d=>d.id===currentDay);
   if(!await confirmSheet(`Clear everything you've logged today${day?` for ${day.name} ${day.sub}`:''}? This can't be undone.`, 'Clear', null, true)) return;
