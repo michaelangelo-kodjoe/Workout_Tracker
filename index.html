@@ -2408,7 +2408,10 @@ function render(){
     ta.oninput=e=>{ notes[histKey(ex)]=e.target.value; sset('notes',notes); }; body.appendChild(ta);
 
     const lastToShow=saved?saved.sets:ex.seed;
-    if(lastToShow){ const parts=lastToShow.filter(s=>s.w||s.r).map(s=>(timed?`${s.r||'-'}s`:`${s.w?dispWeight(s.w):'-'}x${s.r||'-'}`)+`${s.rir!=null?' (RIR '+s.rir+')':''}`).join(', '); if(parts){ const d=document.createElement('div'); d.className='last-time'; d.textContent='Last time'+(crossDaySub?` (${crossDaySub} day)`:'')+': '+parts; body.appendChild(d); } }
+    if(lastToShow){ // bodyweight lifts show what was added ("BW + 20 × 10"), not a bodyweight total with float noise ("170.02x10");
+    // the reps-left figure uses the pills' own words rather than "RIR"
+    const lastSetW=s=>bwLoaded?(parseFloat(s.add)?`BW + ${dispWeight(s.add)}`:'BW'):(s.w?Math.round(dispWeight(s.w)*10)/10:'–');
+    const parts=lastToShow.filter(s=>s.w||s.r).map(s=>(timed?`${s.r||'–'}s`:`${lastSetW(s)} × ${s.r||'–'}`)+`${s.rir!=null?` (${s.rir>=4?'4+':s.rir} left)`:''}`).join(', '); if(parts){ const d=document.createElement('div'); d.className='last-time'; d.textContent='Last time'+(crossDaySub?` (${crossDaySub} day)`:'')+': '+parts; body.appendChild(d); } }
     card.appendChild(body); list.appendChild(card);
   });
   document.getElementById('finishBtn').textContent=allComplete?'All Sets Done — Finish Session':'Finish Session';
