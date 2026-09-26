@@ -2385,6 +2385,7 @@ function renderBuilder(panel){
 // ---------- home: greeting + day carousel (returning user), first-open hero (new user), program builder ----------
 // Home is the landing tab — picking a day here (or accepting a built program) hands off to the Log tab, which now
 // always shows the active day's exercise list with no arrival/dismiss state of its own.
+let homePreviewOpen=false;
 function renderHome(){
   updateBlockUI();
   const panel=document.getElementById('arrivalPanel');
@@ -2406,8 +2407,10 @@ function renderHome(){
     return;
   }
   const day=PROGRAM.find(d=>d.id===currentDay);
-  const previewRows=day.exercises.slice(0,5).map(ex=>`<div class="preview-row"><span class="pn">${ex.name}</span><span class="pt">${fmtTarget(ex.target)}</span></div>`).join('');
-  const moreRow=day.exercises.length>5?`<span class="linkbtn preview-more" id="previewMore">+ ${day.exercises.length-5} More Exercise${day.exercises.length-5===1?'':'s'}</span>`:'';
+  // the first five, and the rest open in place — "+ 2 More Exercises" used to jump to the Log instead
+  const extra=day.exercises.length-5;
+  const previewRows=day.exercises.slice(0,homePreviewOpen?undefined:5).map(ex=>`<div class="preview-row"><span class="pn">${ex.name}</span><span class="pt">${fmtTarget(ex.target)}</span></div>`).join('');
+  const moreRow=extra>0?`<span class="linkbtn preview-more" id="previewMore" aria-expanded="${homePreviewOpen}">${homePreviewOpen?'Show Fewer':`+ ${extra} More Exercise${extra===1?'':'s'}`}</span>`:'';
   const estMin=day.exercises.length*6;
   const ctaTxt=sessionInProgress()?'Return to Log':`Start ${day.name} — ${day.sub}`;
 
@@ -2444,7 +2447,7 @@ function renderHome(){
       <div class="preview-list">${previewRows}${moreRow}</div>
       <button class="start-cta" id="arrivalStart">${ctaTxt}</button>`;
     panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day, ()=>setView('log')));
-    const more=document.getElementById('previewMore'); if(more) more.onclick=()=>setView('log');
+    const more=document.getElementById('previewMore'); if(more) more.onclick=()=>{ homePreviewOpen=!homePreviewOpen; renderHome(); document.getElementById('previewMore').focus({preventScroll:true}); };
   }
   document.getElementById('arrivalStart').onclick=()=>{ touchDayStart(); setView('log'); };
 }
