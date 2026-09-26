@@ -5,3 +5,6 @@ program-generator-plan.html
 Functional+Fitness+Exercise+Database*.xlsx
 exercises.csv
 liftlog-backup-*.json
+
+# local UI audit tracker (kept on disk, not published)
+docs/ui-audit.md
