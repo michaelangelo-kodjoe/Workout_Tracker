@@ -2279,7 +2279,8 @@ function render(){
     // repeating "try 110 lb bodyweight" up here just restates the same number.
     const sugTxt=(ex.start===0&&typeof sug==='number')?'':(sug===null?'log body weight in Strength to use here':sug===-1?'find a weight for the rep range':estFrom?`~${dispWeight(sug)} ${unitLabel()} · estimate from ${estFrom}`:(dispWeight(sug)+' '+unitLabel()+(isDeloadActive()?' · deload':'')+(crossDaySub?` · from ${crossDaySub} day`:'')));
     const cur=currentFor(ex), base=baselineFor(ex);
-    const lvl=(base&&cur)?Math.round(cur/base*100):0; const lvlTxt=lvl&&lvl!==100?` <span class="e1rm">· strength ${lvl}%</span>`:'';
+    // the same ± change from the baseline the Strength tab shows ("+10%"), not the old ratio ("110%")
+    const chg=pct(base,cur); const lvlTxt=chg!==null&&Math.round(chg*10)!==0?` <span class="e1rm">· strength ${fmtPct(chg)}</span>`:'';
     const plat=isPlateau(ex);
     let deltaPill='';
     if(!crossDaySub && ex.start!==0 && typeof sug==='number' && saved && saved.sets){
