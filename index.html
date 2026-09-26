@@ -2104,12 +2104,16 @@ function touchDayStart(){ if(!dayStartTimes[currentDay]){ dayStartTimes[currentD
 // todayData persists to storage on every keystroke, so this survives a reload — unlike dayStartTimes, which is
 // in-memory only and would otherwise forget an in-progress session the moment the tab reloads.
 function sessionInProgress(){ return Object.values(todayData).some(s=>s.sets&&s.sets.some(x=>x.done||(x.w&&x.r))); }
+// started = Start was tapped on Home (or a set was touched) within the last 12 h, the window the session duration uses
+function sessionStarted(){ const t=dayStartTimes[currentDay]; return (!!t&&Date.now()-t<12*3600000)||sessionInProgress(); }
 // the Log's session chrome follows what's been logged, and is re-checked on every keystroke in a set field:
-// Finish Session looks and reads disabled until a set is logged (a tap still explains why, via finishSession's toast)
+// Finish Session looks and reads disabled until a set is logged (a tap still explains why, via finishSession's toast),
+// and the progress row only appears once the session has started
 function updateLogChrome(){
   if(currentDay==='cardio') return;
   const btn=document.getElementById('finishBtn'), off=!sessionInProgress();
   btn.classList.toggle('is-off',off); btn.setAttribute('aria-disabled',String(off));
+  const on=sessionStarted(); document.querySelectorAll('#dayLabel .day-prog,#dayLabel .day-bar').forEach(el=>el.style.visibility=on?'':'hidden');
 }
 // only checks each exercise's own primary muscle, not every secondary muscle it happens to also touch
 // (ex.m) — forearms/abs/lowerback get hit as a secondary target by all sorts of pulling and hinging exercises
