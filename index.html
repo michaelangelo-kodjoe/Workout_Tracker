@@ -335,6 +335,7 @@
   .cel-badge{width:74px;height:74px;border-radius:50%;background:radial-gradient(circle,rgba(255,93,59,.35),rgba(255,93,59,.05) 70%);border:1px solid rgba(255,93,59,.5);display:flex;align-items:center;justify-content:center;margin-bottom:18px;position:relative;z-index:2;}
   .cel-badge svg{width:36px;height:36px;fill:none;stroke:var(--accent);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;} /* the Log tab's dumbbell, not an emoji */
   .onboard-logo{width:84px;height:84px;border-radius:20px;margin-bottom:18px;position:relative;z-index:2;box-shadow:0 8px 24px rgba(255,93,59,.35);}
+  #onboardTitle:focus{outline:none;} /* focused so a screen reader starts at each step's question, not to show a ring */
   .cel-h1{font-size:22px;margin:0 0 6px;position:relative;z-index:2;}
   .cel-sub{font-size:13px;color:var(--text-dim);margin-bottom:26px;position:relative;z-index:2;}
   .cel-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;width:100%;max-width:320px;position:relative;z-index:2;margin-bottom:20px;}
@@ -746,7 +747,7 @@
 <div class="sheet" id="sheet"><div class="sheet-head"><div><div id="sheetTitle" style="font-size:15px">Swap Exercise</div><div id="sheetSub" style="font-size:12px;color:var(--text-dim);margin-top:2px"></div></div><span class="linkbtn" id="sheetClose">Close</span></div><input class="in" id="sheetSearch" placeholder="Search alternatives…" style="width:100%;margin-bottom:12px"><div id="sheetList"></div></div>
 <div class="toast" id="toast">Saved</div>
 <div class="celebrate-bg" id="celebrateBg"><div class="celebrate" id="celebrateInner"></div></div>
-<div class="celebrate-bg" id="onboardBg"><div class="celebrate" id="onboardInner"></div></div>
+<div class="celebrate-bg" id="onboardBg" role="dialog" aria-modal="true" aria-labelledby="onboardTitle"><div class="celebrate" id="onboardInner"></div></div>
 <div class="sheet-bg" id="fatigueBg"></div>
 <div class="sheet" id="fatigueSheet">
   <div class="sheet-head"><div><div style="font-size:17px" id="fatigueTitle">Still Recovering</div><div id="fatigueSub" style="font-size:12px;color:var(--text-dim);margin-top:4px;line-height:1.45"></div></div><span class="linkbtn" id="fatigueClose">Close</span></div>
@@ -2407,26 +2408,26 @@ function renderOnboardStep(step){
   if(step===1){
     inner.innerHTML=`
       <img class="onboard-logo" src="icon-192.png" alt="Lift Log">
-      <div class="cel-h1">Welcome to Lift Log</div>
+      <div class="cel-h1" id="onboardTitle" tabindex="-1">Welcome to Lift Log</div>
       <div class="cel-sub">Track your lifts, watch your body recover, and let the app learn your numbers as you go.</div>
       <button class="cel-cta" id="onboardNext">Get started</button>`;
     document.getElementById('onboardNext').onclick=()=>renderOnboardStep(2);
   } else if(step===2){
     inner.innerHTML=`
-      <div class="cel-h1">What should we call you?</div>
+      <div class="cel-h1" id="onboardTitle" tabindex="-1">What should we call you?</div>
       <div class="cel-sub">Optional — used to personalize your greeting. Change it any time in Settings.</div>
-      <input class="in" id="onboardName" placeholder="Your name" style="width:100%;max-width:280px;text-align:center;margin-bottom:18px;position:relative;z-index:2" value="${settings.name||''}">
+      <input class="in" id="onboardName" aria-label="Your name" placeholder="Your name" style="width:100%;max-width:280px;text-align:center;margin-bottom:18px;position:relative;z-index:2" value="${settings.name||''}">
       <button class="cel-cta" id="onboardNext">Continue</button>`;
     document.getElementById('onboardName').oninput=e=>{ settings.name=e.target.value; };
     document.getElementById('onboardNext').onclick=()=>renderOnboardStep(3);
   } else if(step===3){
     inner.innerHTML=`
-      <div class="cel-h1">Setting up a new device?</div>
+      <div class="cel-h1" id="onboardTitle" tabindex="-1">Setting up a new device?</div>
       <div class="cel-sub">If you've used Lift Log before, import your backup file to bring your program, history, and settings with you.</div>
       <input type="file" id="onboardImportFile" accept="application/json" style="display:none">
       <button class="cel-cta" id="onboardImportBtn">Import my data</button>
       <div class="linkbtn" id="onboardImportSkip" style="margin-top:16px;position:relative;z-index:2">No backup — start fresh</div>
-      <div id="onboardImportError" style="display:none;margin-top:16px;position:relative;z-index:2"></div>`;
+      <div id="onboardImportError" role="alert" style="display:none;margin-top:16px;position:relative;z-index:2"></div>`;
     document.getElementById('onboardImportBtn').onclick=()=>document.getElementById('onboardImportFile').click();
     document.getElementById('onboardImportSkip').onclick=()=>renderOnboardStep(4);
     document.getElementById('onboardImportFile').onchange=async e=>{
@@ -2447,9 +2448,9 @@ function renderOnboardStep(step){
     };
   } else if(step===4){
     inner.innerHTML=`
-      <div class="cel-h1">What do you weigh today?</div>
+      <div class="cel-h1" id="onboardTitle" tabindex="-1">What do you weigh today?</div>
       <div class="cel-sub">Optional — body-weight exercises (push-ups, dips, and the like) start pre-filled with this instead of blank. Log it any time from Strength.</div>
-      <input class="in" id="onboardBw" type="text" inputmode="decimal" autocomplete="off" placeholder="${unitLabel()}" style="width:140px;text-align:center;margin-bottom:18px;position:relative;z-index:2">
+      <input class="in" id="onboardBw" type="text" inputmode="decimal" autocomplete="off" aria-label="Body weight in ${unitLabel()}" placeholder="${unitLabel()}" style="width:140px;text-align:center;margin-bottom:18px;position:relative;z-index:2">
       <button class="cel-cta" id="onboardNext">Continue</button>`;
     document.getElementById('onboardNext').onclick=async()=>{
       const raw=parseNum(document.getElementById('onboardBw').value);
@@ -2458,15 +2459,19 @@ function renderOnboardStep(step){
     };
   } else {
     inner.innerHTML=`
-      <div class="cel-h1">Meet your recovery map</div>
+      <div class="cel-h1" id="onboardTitle" tabindex="-1">Meet your recovery map</div>
       <div class="cel-sub">After a session, the muscles you trained show up red, then fade through amber to green as they recover. Check in here before every session.</div>
       <div id="onboardBodymapSlot" style="width:100%;position:relative;z-index:2"></div>
       <button class="cel-cta" id="onboardDone" style="margin-top:18px">Let's build your program</button>`;
     document.getElementById('onboardBodymapSlot').appendChild(document.getElementById('bodymapCard'));
     document.getElementById('onboardDone').onclick=finishOnboarding;
   }
+  const title=document.getElementById('onboardTitle'); if(title) title.focus({preventScroll:true});
 }
+// while a full-screen overlay is up, the app behind it can't be reached by keyboard or screen reader
+function setAppInert(on){ ['header','main','footer'].forEach(sel=>document.querySelector(sel).toggleAttribute('inert',on)); }
 async function finishOnboarding(){
+  setAppInert(false);
   settings.onboarded=true;
   await sset('settings',settings);
   document.getElementById('arrivalPanel').insertAdjacentElement('afterend', document.getElementById('bodymapCard'));
@@ -3354,7 +3359,7 @@ document.getElementById('resetLink').onclick=async()=>{
 
   await loadDay(suggestedDayId());
   if(currentDay==='cardio') setView('log'); // cardio is a decisive rotation call, not a day to choose from Home — go straight to logging it
-  if(needsBuild && !settings.onboarded){ document.getElementById('onboardBg').classList.add('on'); renderOnboardStep(1); }
+  if(needsBuild && !settings.onboarded){ setAppInert(true); document.getElementById('onboardBg').classList.add('on'); renderOnboardStep(1); }
   setInterval(renderBody,60000);
 })();
 if('serviceWorker' in navigator) window.addEventListener('load',()=>{
