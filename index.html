@@ -707,7 +707,7 @@
       <h3>Conditioning</h3>
       <div id="condStats"></div>
     </div>
-    <div class="note-sm">Strength level compares each lift to the numbers you started with (100%). It weighs both the load and the reps, so adding reps at the same weight counts too. "Per <span id="bwUnitNote">lb</span> of body weight" divides that by your logged weight, so getting stronger while staying the same size counts extra.</div>
+    <div class="note-sm">Each percentage is how much a lift has changed since the numbers you started with. It weighs both the load and the reps, so adding reps at the same weight counts too. "Relative to body weight" divides your strength by your logged weight, so getting stronger while staying the same size counts extra.</div>
   </section>
 
   <section id="moreView" style="display:none">
@@ -2879,7 +2879,6 @@ function renderConditioning(){
 let strCardOpen={upper:false,lower:false};
 function renderStrength(){
   renderConditioning();
-  document.getElementById('bwUnitNote').textContent=unitLabel();
   const upperList=document.getElementById('upperStrList'), lowerList=document.getElementById('lowerStrList');
   upperList.innerHTML=''; lowerList.innerHTML='';
   let changes=[], upperTotal=0, upperBase=0, lowerTotal=0, lowerBase=0;
@@ -2973,7 +2972,7 @@ function renderStrength(){
   if(bodyweight.length&&bodyBase&&bodyTotal){
     const bw0=bodyweight[0].w, bw1=bodyweight[bodyweight.length-1].w;
     const rel=((bodyTotal/bw1)/(bodyBase/bw0)-1)*100;
-    bwPill.textContent=`${rel>=0?'+':''}${Math.round(rel)}% per ${unitLabel()} bodyweight`; bwPill.style.display='inline-block';
+    bwPill.textContent=`${rel>=0?'+':''}${Math.round(rel)}% relative to body weight`; bwPill.style.display='inline-block';
   } else bwPill.style.display='none';
   const renderSplitCard=(p,series,numId,sparkId,scrubId,hintId)=>{
     const numEl=document.getElementById(numId), hintEl=document.getElementById(hintId);
@@ -3002,8 +3001,10 @@ function renderStrength(){
     onReset:()=>{ heroNum.textContent=heroRest.num; heroNum.className=heroRest.cls; heroLbl.textContent=heroRest.lbl; bwPill.style.visibility=''; }};
   // bodyweight card
   const info=document.getElementById('bwInfo'), sp=document.getElementById('bwSpark'), bwNote=document.getElementById('bwNote');
-  if(bodyweight.length){ const f=bodyweight[0].w,l=bodyweight[bodyweight.length-1].w; const dl=dispBW(l), delta=dispBW(l)-dispBW(f); info.textContent=`${dl} ${unitLabel()} now · ${delta>=0?'+':''}${Math.round(delta*10)/10} since ${fmtDate(bodyweight[0].t)}`; const bwVals=bodyweight.map(b=>dispBW(b.w)); sp.innerHTML=bodyweight.length>1?sparkline(bwVals,'var(--amber)',null,0.04*bwVals.reduce((a,b)=>a+b,0)/bwVals.length):''; document.getElementById('bwInput').placeholder=String(dl); }
-  else { info.textContent=''; sp.innerHTML=''; document.getElementById('bwInput').placeholder=unitLabel(); }
+  if(bodyweight.length){ const f=bodyweight[0].w,l=bodyweight[bodyweight.length-1].w; const dl=dispBW(l), delta=dispBW(l)-dispBW(f); info.textContent=`${dl} ${unitLabel()} now · ${delta>=0?'+':''}${Math.round(delta*10)/10} ${unitLabel()} since ${fmtDate(bodyweight[0].t)}`; const bwVals=bodyweight.map(b=>dispBW(b.w)); sp.innerHTML=bodyweight.length>1?sparkline(bwVals,'var(--amber)',null,0.04*bwVals.reduce((a,b)=>a+b,0)/bwVals.length):''; }
+  else { info.textContent=''; sp.innerHTML=''; }
+  // the placeholder used to be your last weight, which in grey read as already filled in — that's in the line beside it
+  const bwIn=document.getElementById('bwInput'); bwIn.placeholder=unitLabel(); bwIn.setAttribute('aria-label',`Today's body weight in ${unitLabel()}`);
   const bwRate=bwWeeklyRate();
   bwNote.innerHTML=(bwRate!==null && bwRate<=-1)?`<div class="plateau-tip" style="margin-top:10px">Losing about ${Math.abs(bwRate).toFixed(1)}% of body weight a week — research on rate of loss suggests staying closer to 0.5-1%/week better preserves strength and muscle. Fine if it's a short intentional push; worth easing off if it's not.</div>`:'';
 }
