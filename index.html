@@ -176,7 +176,7 @@
   .setgrid.head{color:var(--text-dim);font-size:11px;letter-spacing:.06em;text-transform:uppercase;text-align:center;}
   .setgrid.head>div{min-width:0;overflow:hidden;text-overflow:ellipsis;} /* at large text a head shortens rather than running into its neighbour */
   .setnum{color:var(--text-dim);text-align:center;font-family:'Menlo',monospace;}
-  .setgrid.head .bw-note{opacity:.75;margin-left:3px;white-space:nowrap;}
+  .bw-line{font-size:12px;color:var(--text-dim);margin:0 0 10px;}
   /* hold counter for timed sets (planks etc.): a stopwatch under the set row that fills the seconds field */
   .hold-row{display:flex;align-items:center;gap:10px;margin:-2px 0 10px 36px;font-size:12px;}
   .hold-t{font-family:'Menlo',monospace;font-size:22px;color:var(--light);min-width:56px;}
@@ -2364,7 +2364,10 @@ function render(){
     // extra load, s.w the total, so every weight-based calculation — and the lift's bodyweight-only history — carries on
     const bwLoaded=ex.start===0, bwNow=bwLoaded?latestBW():null;
     const lastAdd=bwLoaded?Math.max(0,...((lastByName[ex.name]||{}).sets||[]).map(x=>parseFloat(x.add)||0)):0;
-    const hr=document.createElement('div'); hr.className='setgrid head'; hr.innerHTML=`<div>Set</div><div>${bwLoaded?`+ Added${bwNow!=null?` <span class="bw-note">bw ${dispWeight(bwNow)}</span>`:''}`:`Weight · ${unitLabel()}`}</div><div>${timed?'Seconds':'Reps'}</div><div>Done</div><div></div>`; body.appendChild(hr);
+    // bodyweight lifts: the body weight gets its own line (it made the column head wrap as "+ Added / BW 168"),
+    // and says what the column is for, which only a hover tooltip explained before
+    if(bwLoaded&&bwNow!=null){ const bl=document.createElement('div'); bl.className='bw-line'; bl.textContent=`Body weight ${dispBW(bwNow)} ${unitLabel()} — log only what you add on top`; body.appendChild(bl); }
+    const hr=document.createElement('div'); hr.className='setgrid head'; hr.innerHTML=`<div>Set</div><div>${bwLoaded?`+ Added · ${unitLabel()}`:`Weight · ${unitLabel()}`}</div><div>${timed?'Seconds':'Reps'}</div><div>Done</div><div></div>`; body.appendChild(hr);
     const bwTotal=s=>bwNow==null?'':Math.round((bwNow+(parseFloat(s.add)||0))*10)/10;
     state.sets.forEach((s,i)=>{
       if(bwLoaded) s.w=bwTotal(s);
