@@ -196,8 +196,8 @@
   .bar-chip svg{width:14px;height:14px;fill:none;stroke:var(--text-dim);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
   .bar-chip select{position:absolute;left:0;right:0;top:-5px;bottom:-5px;width:100%;opacity:0;font-size:16px;cursor:pointer;}
   .bar-chip:has(select:focus-visible){outline:2px solid var(--light);outline-offset:2px;}
-  .plates .fixed-chk,.plates .mach-plate-chk{margin:0;gap:10px;font-size:13px;color:var(--text-dim);}
-  .plates .fixed-chk input,.plates .mach-plate-chk input{margin:0;width:18px;height:18px;}
+  /* on/off like every other setting: the words, then a switch at the right edge */
+  .plates .fixed-chk,.plates .mach-plate-chk{flex:1 1 100%;justify-content:space-between;margin:0;gap:12px;font-size:13px;color:var(--text-dim);cursor:pointer;}
   .plates .mach-base{padding:3px 6px;font-size:12px;text-align:center;}
   footer{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--line);padding:0 var(--safe-r) calc(2px + var(--sa-b)) var(--safe-l);z-index:9;}
   .footer-inner{max-width:528px;margin:0 auto;}
@@ -2249,7 +2249,7 @@ function render(){
       let fixed=!!(settings.fixedBar||{})[ex.name];
       // the bar weight is a compact chip; the real <select> sits invisibly on top of it at 16 px, so tapping opens the
       // native picker and iOS doesn't zoom the page the way it does for a field under 16 px
-      pl.innerHTML=`<div class="plates-row"><div class="plates-info"><span class="plates-cap"></span><span class="plates-txt"></span></div><label class="bar-chip"><span class="bar-chip-txt">${curBar} ${unitLabel()} bar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><select class="bar-sel" aria-label="bar weight">${opts.map(o=>`<option value="${o}"${Math.abs(o-curBar)<0.01?' selected':''}>${o} ${unitLabel()} bar</option>`).join('')}${opts.some(o=>Math.abs(o-curBar)<0.01)?'':`<option value="${curBar}" selected>${curBar} ${unitLabel()} bar</option>`}</select></label></div><label class="chk fixed-chk"><input type="checkbox"${fixed?' checked':''}>Fixed-Weight Bar (no plates)</label>`;
+      pl.innerHTML=`<div class="plates-row"><div class="plates-info"><span class="plates-cap"></span><span class="plates-txt"></span></div><label class="bar-chip"><span class="bar-chip-txt">${curBar} ${unitLabel()} bar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><select class="bar-sel" aria-label="bar weight">${opts.map(o=>`<option value="${o}"${Math.abs(o-curBar)<0.01?' selected':''}>${o} ${unitLabel()} bar</option>`).join('')}${opts.some(o=>Math.abs(o-curBar)<0.01)?'':`<option value="${curBar}" selected>${curBar} ${unitLabel()} bar</option>`}</select></label></div><label class="chk fixed-chk"><span>Fixed-Weight Bar (no plates)</span><input type="checkbox" class="switch"${fixed?' checked':''}></label>`;
       const txtEl=pl.querySelector('.plates-txt'), barSel=pl.querySelector('.bar-sel'), capEl=pl.querySelector('.plates-cap'), chip=pl.querySelector('.bar-chip');
       // the weight in play: the last edited set weight, else the suggestion
       let liveLb=(state.sets.find(x=>x.w!=='')||{}).w; if(liveLb===undefined||liveLb==='') liveLb=(typeof sug==='number'&&sug>0)?sug:null;
@@ -2273,7 +2273,7 @@ function render(){
       const pl=document.createElement('div'); pl.className='plates';
       let on=!!(settings.machinePlates||{})[ex.name];
       const baseLb=(settings.machineBase||{})[ex.name]||0;
-      pl.innerHTML=`<label class="chk mach-plate-chk"><input type="checkbox"${on?' checked':''}>Plate-Loaded Machine</label><span class="plates-txt"></span><input class="in mach-base" type="number" inputmode="decimal" placeholder="0" value="${baseLb?dispWeight(baseLb):''}" title="machine's own base/sled weight before plates" style="width:64px;display:${on?'':'none'}">`;
+      pl.innerHTML=`<label class="chk mach-plate-chk"><span>Plate-Loaded Machine</span><input type="checkbox" class="switch"${on?' checked':''}></label><span class="plates-txt"></span><input class="in mach-base" type="number" inputmode="decimal" placeholder="0" value="${baseLb?dispWeight(baseLb):''}" title="machine's own base/sled weight before plates" style="width:64px;display:${on?'':'none'}">`;
       const txtEl=pl.querySelector('.plates-txt'), baseIn=pl.querySelector('.mach-base');
       txtEl.style.display=on?'':'none';
       let liveLb=(state.sets.find(x=>x.w!=='')||{}).w; if(liveLb===undefined||liveLb==='') liveLb=(typeof sug==='number'&&sug>0)?sug:null;
