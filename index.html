@@ -297,6 +297,11 @@
   .se-foot .btn{flex:1;}
   .edrow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line);font-size:13px;}
   .edrow .m{font-size:12px;color:var(--text-dim);}
+  .blk-row{display:grid;grid-template-columns:18px minmax(0,1fr);column-gap:12px;row-gap:2px;align-items:start;padding:12px 0;border-bottom:1px solid var(--line);cursor:pointer;}
+  .blk-row input{grid-row:1 / span 3;margin:2px 0 0;width:18px;height:18px;}
+  .blk-row .blk-from{font-size:13px;color:var(--text-dim);}
+  .blk-row .blk-to{font-size:15px;} .blk-row .blk-to b{font-weight:normal;}
+  .blk-row .m{font-size:12px;color:var(--text-dim);margin-top:2px;}
   .edrow .acts span{cursor:pointer;color:var(--light);font-size:15px;margin-left:10px;}
   .edrow .acts span.x{color:var(--danger);}
   .cardio-tab{border-style:dashed;}
@@ -1396,8 +1401,10 @@ function openBlockSheet(){
   blockProposals.forEach(p=>{
     const day=PROGRAM.find(d=>d.id===p.dayId);
     const why=p.reason==='plateau'?'stuck for 3 sessions':p.reason==='block2'?'two blocks on this lift':'fresh variation for the new block';
-    const row=document.createElement('div'); row.className='edrow';
-    row.innerHTML=`<div><label class="chk" style="font-size:12px;color:var(--text)"><input type="checkbox"${p.apply?' checked':''}> ${p.from} → <b>${p.pick.name}</b></label><div class="m">${day.name} ${day.sub}${p.primary?' · primary':''} · ${why} · ${slotTargetFor(anchorOf(day.exercises[p.idx]).target,p.pick)}</div></div>`;
+    // one tappable row: the checkbox in its own column, and the lift leaving, the lift coming in and the details all
+    // starting at the same edge beside it, so a long name wraps within its line instead of stranding the arrow
+    const row=document.createElement('label'); row.className='blk-row';
+    row.innerHTML=`<input type="checkbox"${p.apply?' checked':''}><span class="blk-from">${p.from}</span><span class="blk-to">→ <b>${p.pick.name}</b></span><span class="m">${day.name} ${day.sub}${p.primary?' · Primary':''} · ${why} · ${fmtTarget(slotTargetFor(anchorOf(day.exercises[p.idx]).target,p.pick))}</span>`;
     row.querySelector('input').onchange=e=>{ p.apply=e.target.checked; };
     list.appendChild(row);
   });
