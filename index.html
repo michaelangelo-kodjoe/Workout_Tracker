@@ -363,6 +363,14 @@
   .onb-opt{display:flex;align-items:center;justify-content:space-between;min-height:56px;padding:0 16px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--text);font:15px 'Georgia',serif;cursor:pointer;}
   .onb-opt[aria-pressed="true"]{border-color:var(--accent);background:var(--panel-raised);}
   .onb-opt b{font-weight:normal;color:var(--text-dim);}
+  /* the recovery-map step shows a sample day, since a new user's own map is all green and can't show the colours it explains */
+  .onb-ex{width:100%;max-width:360px;margin-top:8px;padding:16px;background:var(--panel);border:1px solid var(--line);border-radius:8px;text-align:left;}
+  .onb-ex-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12px;color:var(--text-dim);}
+  .onb-ex-h span:first-child{font-size:11px;letter-spacing:.08em;text-transform:uppercase;} .onb-ex-h span:last-child{text-align:right;}
+  .onb-ex .figures{margin:12px 0 8px;} .onb-ex .figures svg{max-height:200px;}
+  .muscle-ex{stroke:#101216;stroke-width:1.6;stroke-linejoin:round;}
+  .onb-ex-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);font-size:15px;}
+  .onb-ex-row i{width:12px;height:12px;border-radius:50%;flex-shrink:0;} .onb-ex-row span{flex:1;} .onb-ex-row b{font-weight:normal;font-size:13px;color:var(--text-dim);text-align:right;}
   .onb-note{font-size:12px;color:var(--text-dim);max-width:320px;line-height:1.5;}
   .onb-foot{position:sticky;bottom:0;z-index:2;display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 0 calc(24px + var(--sa-b));background:var(--bg);box-shadow:0 -16px 16px -4px var(--bg);}
   .cel-cta.alt{background:none;color:var(--text);border:1px solid var(--field-line,#646a76);}
@@ -2539,14 +2547,36 @@ function renderOnboardStep(step){
     inner.innerHTML=onbShell(4,{skip:false,
       body:`<div class="cel-h1" id="onboardTitle" tabindex="-1">Meet Your Recovery Map</div>
         <div class="cel-sub">After a session, the muscles you trained show up red, then fade through amber to green as they recover. Check in here before every session.</div>
-        <div id="onboardBodymapSlot" style="width:100%;text-align:left"></div>`,
+        <div class="onb-ex">
+          <div class="onb-ex-h"><span>Example</span><span>The Day After Upper Heavy</span></div>
+          <div id="onboardExFigs"></div>
+          <div class="onb-ex-row"><i style="background:#c94a3a"></i><span>Chest & Back</span><b>Worked Yesterday</b></div>
+          <div class="onb-ex-row"><i style="background:#d6a03a"></i><span>Shoulders & Arms</span><b>Recovering</b></div>
+          <div class="onb-ex-row"><i style="background:#4a9e5c"></i><span>Legs & Core</span><b>Ready</b></div>
+          <div class="onb-note" style="margin-top:4px">Yours starts all green — nothing's been trained yet.</div>
+        </div>`,
       foot:`<button class="cel-cta" id="onboardDone">Let's Build Your Program</button>`});
-    $('onboardBodymapSlot').appendChild($('bodymapCard'));
+    $('onboardExFigs').replaceWith(exampleRecoveryFigures());
     $('onboardDone').onclick=finishOnboarding;
-    $('onboardBack').onclick=()=>{ $('arrivalPanel').insertAdjacentElement('afterend',$('bodymapCard')); renderOnboardStep(3); };
+    $('onboardBack').onclick=()=>renderOnboardStep(3);
   }
   const title=$('onboardTitle'); if(title) title.focus({preventScroll:true});
   inner.parentElement.scrollTop=0;
+}
+// a copy of the body-map figures tinted as they'd look the day after Upper Heavy. The copy's paths lose the .muscle class
+// and data-m, so renderBody() never recolours them or wires up their taps.
+const EX_WORKED=['chest-upper','chest-mid','chest-lower','back-lats','back-traps','delt-front'];
+const EX_RECOVERING=['delt-lateral','delt-rear','biceps','brachialis','triceps-lateral','triceps-long','forearm-flexor','forearm-extensor'];
+function exampleRecoveryFigures(){
+  const figs=document.querySelector('#bodymapCard .figures').cloneNode(true);
+  figs.setAttribute('aria-hidden','true');
+  figs.querySelectorAll('.muscle-glow,defs').forEach(el=>el.remove());
+  figs.querySelectorAll('.muscle').forEach(el=>{
+    const m=el.dataset.m;
+    el.setAttribute('class','muscle-ex '+(EX_WORKED.includes(m)?'m-worked':EX_RECOVERING.includes(m)?'m-recovering':'m-ready'));
+    el.removeAttribute('data-m');
+  });
+  return figs;
 }
 // while a full-screen overlay is up, the app behind it can't be reached by keyboard or screen reader
 function setAppInert(on){ ['header','main','footer'].forEach(sel=>document.querySelector(sel).toggleAttribute('inert',on)); }
@@ -2555,7 +2585,6 @@ async function finishOnboarding(){
   settings.onboarded=true;
   await sset('settings',settings);
   render(); renderHistory(); renderStrength(); // units may have changed underneath
-  document.getElementById('arrivalPanel').insertAdjacentElement('afterend', document.getElementById('bodymapCard'));
   document.getElementById('onboardBg').classList.remove('on');
   renderHome();
 }
