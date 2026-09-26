@@ -497,6 +497,35 @@
   input[type=checkbox]{accent-color:var(--accent);}
   /* fields keep their accent-border focus from above; everything else gets a ring, but only for keyboard focus */
   :focus-visible{outline:2px solid var(--light);outline-offset:2px;border-radius:3px;}
+
+  /* ---------- landscape phone (option A from the landscape mockup) ----------
+     On a phone turned on its side the sticky header (title + day tabs) and the bottom bar (timer + Finish + nav) used
+     to leave 41 px for the workout. On short landscape screens only: the title, day tabs and weekly ring share one row
+     that scrolls away with the page, and the rest timer and Finish share one row above the nav. Portrait is untouched. */
+  @media (orientation:landscape) and (max-height:500px){
+    header{position:relative;padding-top:calc(8px + env(safe-area-inset-top));padding-bottom:8px;}
+    .header-inner{display:flex;flex-wrap:wrap;align-items:center;column-gap:16px;row-gap:8px;max-width:none;}
+    .header-inner>.banner{flex:1 0 100%;margin-bottom:0;}
+    .title-row{display:contents;}
+    h1{font-size:22px;white-space:nowrap;}
+    .daytabs{order:2;flex:1 1 0;min-width:0;margin-top:0;padding-bottom:0;}
+    .daytab{display:flex;align-items:center;justify-content:center;gap:4px;min-height:44px;padding:0 10px;border-radius:8px;}
+    .daytab .dsub{display:inline;margin-top:0;}
+    .rhythm{order:3;margin-left:auto;}
+    /* the ring stays; its words stay for screen readers only */
+    .rhythm-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+    #logFooter{display:flex;gap:8px;padding-top:8px;}
+    #logFooter .timer{flex:1 1 0;min-width:0;margin:0;padding:0 6px 0 12px;min-height:44px;flex-direction:row;align-items:center;overflow:visible;}
+    #logFooter .timer-row{flex:1 1 auto;gap:8px;}
+    #logFooter .timer .t{font-size:17px;}
+    #logFooter .timer .acts span{position:relative;min-height:32px;padding:0 10px;font-size:12px;}
+    #logFooter .timer .acts span::after{content:'';position:absolute;inset:-7px 0;} /* 44 px to tap in the 44 px row */
+    #logFooter .tbar{position:absolute;left:0;right:0;bottom:0;height:3px;margin:0;border-radius:0 0 7px 7px;pointer-events:none;} /* follows the box's corners itself, so the box needn't clip, and never takes a tap */
+    #logFooter .finish-btn{flex:1 1 0;min-height:44px;margin:0;padding:0 12px;}
+    .viewtabs{padding-top:0;}
+    .viewtab{flex-direction:row;gap:6px;min-height:44px;}
+    .viewtab svg{width:18px;height:18px;}
+  }
 </style>
 </head>
 <body>
