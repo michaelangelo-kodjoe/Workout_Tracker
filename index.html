@@ -43,6 +43,9 @@
   .title-row{display:flex;align-items:center;justify-content:space-between;}
   h1{font-size:22px;margin:0;font-weight:normal;letter-spacing:.3px;white-space:nowrap;} /* the wordmark never breaks */
   .rhythm{display:flex;align-items:center;gap:8px;}
+  /* Settings isn't about training, so the week's count stays off its header — hidden, not removed, so the header keeps
+     its height and nothing below it jumps when you switch tabs */
+  body[data-view="more"] .rhythm{visibility:hidden;}
   .rhythm-ring{flex:0 0 auto;}
   .rhythm-label{font-size:12px;color:var(--text-dim);line-height:1.35;text-align:right;}
   .rhythm-label b{color:var(--green);font-size:13px;font-family:'Menlo',monospace;}
@@ -3427,7 +3430,7 @@ async function doSwap(day, idx, alt){
 
 // ---------- views ----------
 function setView(v){
-  view=v; document.querySelectorAll('.viewtab').forEach(t=>{ t.classList.toggle('active',t.dataset.v===v); if(t.dataset.v===v) t.setAttribute('aria-current','page'); else t.removeAttribute('aria-current'); });
+  view=v; document.body.dataset.view=v; document.querySelectorAll('.viewtab').forEach(t=>{ t.classList.toggle('active',t.dataset.v===v); if(t.dataset.v===v) t.setAttribute('aria-current','page'); else t.removeAttribute('aria-current'); });
   ['home','log','history','strength','more'].forEach(n=>document.getElementById(n+'View').style.display=(v===n?'':'none'));
   document.getElementById('dayTabs').style.display=v==='log'?'':'none'; document.getElementById('logFooter').style.display=v==='log'?'':'none';
   if(v==='home') renderHome();
