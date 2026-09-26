@@ -191,7 +191,9 @@
   .timer .acts span{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border:1px solid var(--field-line);border-radius:8px;background:var(--panel);color:var(--text);font-family:'Menlo',monospace;font-size:13px;cursor:pointer;}
   .tbar{height:6px;background:var(--line);border-radius:3px;margin-top:8px;overflow:hidden;}
   .tbar i{display:block;height:100%;background:var(--accent);transition:width 1s linear,background 1s linear;}
-  .reset-link{text-align:center;margin-top:24px;font-size:13px;color:var(--text-dim);text-decoration:underline;cursor:pointer;} /* quiet, destructive: grey and underlined */
+  /* destructive, so it's an outlined button in the danger colour — same shape as + Add Set, and it asks first */
+  .reset-link{display:block;width:100%;height:44px;margin-top:24px;padding:0;border:1px solid var(--line);border-radius:8px;background:none;color:var(--danger);font:13px 'Georgia',serif;cursor:pointer;}
+  .reset-link:active{background:var(--panel-raised);}
   .sheet-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:30;}
   /* the confirm sheet can be opened from inside another already-open sheet (deleting a session from the calendar
      day sheet, removing an exercise from the editor) — same z-index as a regular sheet means whichever is later in
@@ -420,7 +422,6 @@
   .setrm{display:flex;align-items:center;justify-content:center;height:44px;font-size:15px;}
   .linkbtn{padding:15px 0;margin:-15px 0;}
   #editLink,#cardioHistLink{padding:15px 12px;margin:-15px -12px;}
-  .reset-link{padding:15px 0;margin:9px 0 -15px;}
   /* "+ add a set" sits right under the last set row: its box starts below that row instead of reaching into it */
   .cal-nav{padding:18px 19px;margin:-18px -11px;}
   .btn{min-height:44px;}
@@ -544,7 +545,7 @@
   <section id="logView" style="display:none">
     <div class="daylabel" id="dayLabel"></div>
     <div id="exerciseList"></div>
-    <div class="reset-link" id="resetLink">Clear Today's Entries</div>
+    <button type="button" class="reset-link" id="resetLink">Clear Today's Entries</button>
   </section>
 
   <section id="historyView" style="display:none">
@@ -3163,7 +3164,10 @@ document.querySelectorAll('.viewtab').forEach(t=>t.onclick=()=>setView(t.dataset
 // the footer's height changes with the view and the rest timer; main and the toast read it to stay clear of it
 new ResizeObserver(([e])=>{ const h=Math.ceil(e.target.getBoundingClientRect().height); if(h) document.documentElement.style.setProperty('--foot-h',h+'px'); }).observe(document.querySelector('footer')); // 0 = hidden while typing: keep the last height so the page doesn't jump
 document.getElementById('finishBtn').onclick=finishSession;
-document.getElementById('resetLink').onclick=async()=>{ todayData={}; await sset('today:'+currentDay,{}); delete dayStartTimes[currentDay]; await sset('dayStart',dayStartTimes); render(); };
+document.getElementById('resetLink').onclick=async()=>{
+  const day=PROGRAM.find(d=>d.id===currentDay);
+  if(!await confirmSheet(`Clear everything you've logged today${day?` for ${day.name} ${day.sub}`:''}? This can't be undone.`, 'Clear', null, true)) return;
+  todayData={}; await sset('today:'+currentDay,{}); delete dayStartTimes[currentDay]; await sset('dayStart',dayStartTimes); render(); };
 
 (async function init(){
   await store.init();
