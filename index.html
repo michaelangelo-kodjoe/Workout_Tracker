@@ -134,6 +134,7 @@
   .linkbtn{font-size:13px;color:var(--light);text-decoration:none;cursor:pointer;}
   .plateau-tip .linkbtn,.note-sm .linkbtn,.first-log-note .linkbtn{font-size:inherit;text-decoration:underline;}
   #edReset{white-space:nowrap;}
+  .daylabel-h,.groupheader{font:inherit;margin:0;} h3.ex-name{font-weight:normal;margin:0;}
   .groupheader{font-size:12px;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;margin:16px 0 8px;}
   .exercise{background:var(--panel);border:1px solid var(--line);border-radius:8px;margin-bottom:12px;overflow:hidden;}
   .exercise.complete{border-color:var(--done-line);background:var(--done-bg);}
@@ -2251,7 +2252,7 @@ function render(){
   if(currentDay==='cardio'){ renderTabs(); renderBody(); renderCardioForm(); return; }
   renderTabs(); renderBody();
   const day=PROGRAM.find(d=>d.id===currentDay);
-  document.getElementById('dayLabel').innerHTML=`<span><span class="badge ${dayType(day)}">${day.sub}</span>${day.name} Day</span><span class="linkbtn" id="editLink">Edit</span>`;
+  document.getElementById('dayLabel').innerHTML=`<h2 class="daylabel-h"><span class="badge ${dayType(day)}">${day.sub}</span><span class="sr-only"> </span>${day.name} Day</h2><span class="linkbtn" id="editLink">Edit</span>`;
   document.getElementById('editLink').onclick=()=>{ setView('more'); renderEditor(); document.getElementById('edDay').value=currentDay; openSetPage('edit'); };
   const list=document.getElementById('exerciseList'); list.innerHTML='';
   let allComplete=true,lastGroup=null;
@@ -2261,7 +2262,7 @@ function render(){
   const groupOrder=[]; day.exercises.forEach(ex=>{ if(!groupOrder.includes(ex.group)) groupOrder.push(ex.group); });
   const ordered=groupOrder.flatMap(g=>day.exercises.filter(ex=>ex.group===g));
   ordered.forEach(ex=>{
-    if(ex.group!==lastGroup){ const gh=document.createElement('div'); gh.className='groupheader'; gh.textContent=ex.group; list.appendChild(gh); lastGroup=ex.group; }
+    if(ex.group!==lastGroup){ const gh=document.createElement('h3'); gh.className='groupheader'; gh.textContent=ex.group; list.appendChild(gh); lastGroup=ex.group; }
     const state=ensureState(ex); const complete=state.sets.every(s=>s.done); if(!complete) allComplete=false;
     const daySaved=lastSessionData[currentDay]&&lastSessionData[currentDay][ex.name];
     let sug=suggestWeight(ex,daySaved);
@@ -2789,14 +2790,14 @@ const CARDIO_TYPES=[
 let cardioDraft={type:'zone2',duration:'',distance:'',rpe:0,notes:'',showHow:false};
 function renderCardioForm(){
   const focusKey=listFocusKey();
-  document.getElementById('dayLabel').innerHTML=`<span><span class="badge t-cardio">Endurance</span>Conditioning</span><span class="linkbtn" id="cardioHistLink">History</span>`;
+  document.getElementById('dayLabel').innerHTML=`<h2 class="daylabel-h"><span class="badge t-cardio">Endurance</span><span class="sr-only"> </span>Conditioning</h2><span class="linkbtn" id="cardioHistLink">History</span>`;
   document.getElementById('cardioHistLink').onclick=()=>setView('history');
   const list=document.getElementById('exerciseList'); list.innerHTML='';
   const wrap=document.createElement('div'); wrap.className='exercise open';
   const t=CARDIO_TYPES.find(x=>x.key===cardioDraft.type);
   const yt='https://www.youtube.com/results?search_query='+encodeURIComponent(t.demo);
   wrap.innerHTML=`
-    <div class="ex-head" style="cursor:default"><div><div class="ex-name">Log a Session</div><div class="ex-target">Pick a type, fill in what applies</div></div></div>
+    <div class="ex-head" style="cursor:default"><div><h3 class="ex-name">Log a Session</h3><div class="ex-target">Pick a type, fill in what applies</div></div></div>
     <div class="ex-body" style="display:block">
       <div class="ctype" id="ctypeRow">${CARDIO_TYPES.map(x=>`<span data-k="${x.key}" class="${x.key===cardioDraft.type?'on':''}">${x.label}</span>`).join('')}</div>
       <div class="cue">${t.desc}</div>
