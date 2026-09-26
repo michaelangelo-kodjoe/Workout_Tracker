@@ -109,6 +109,14 @@
   .recov-row + .recov-row{border-top:1px solid var(--line);}
   .recov-row .linkbtn{white-space:nowrap;flex-shrink:0;align-self:stretch;display:flex;align-items:center;padding:0 0 0 12px;margin:0;}
   .recov-list b{color:var(--text);font-weight:normal;}
+  /* the breakdown by body area: a dot in the colour of the area's slowest muscle, its name, a summary, and its muscles below */
+  .recov-area{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;margin:0;padding:0;background:none;border:0;border-top:1px solid var(--line);color:var(--text);text-align:left;font:15px 'Georgia',serif;cursor:pointer;}
+  .recov-area:first-child{border-top:0;}
+  .recov-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;} .recov-dot.m-worked{background:#c94a3a;} .recov-dot.m-recovering{background:#d6a03a;} .recov-dot.m-ready{background:#4a9e5c;}
+  .recov-area-n{flex:1;} .recov-area-s{font-size:12px;color:var(--text-dim);}
+  .recov-chev{width:16px;height:16px;flex-shrink:0;fill:none;stroke:var(--text-dim);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .15s;}
+  .recov-area[aria-expanded="true"] .recov-chev{transform:rotate(90deg);}
+  .recov-row.sub{padding-left:22px;} .recov-row.sub + .recov-row.sub{border-top-style:dashed;}
   .daylabel{font-size:13px;color:var(--text-dim);margin:4px 0 14px;display:flex;justify-content:space-between;align-items:center;}
   .badge{display:inline-block;padding:2px 8px;border-radius:2px;font-size:12px;font-family:'Menlo',monospace;margin-right:8px;vertical-align:middle;}
   .badge.heavy{background:rgba(255,93,59,.15);color:var(--heavy);border:1px solid rgba(255,93,59,.4);}
@@ -1990,18 +1998,32 @@ function renderBody(){
 }
 // shows every tracked muscle (not just currently-recovering ones) so a fully-recovered muscle can still be
 // marked sore — the app has no way to know about an injury tweak, bad sleep, or illness on its own.
+const RECOV_AREAS=[['Legs',['quads','hamstrings','glutes','calves-gastroc','calves-soleus']],['Back',['back-lats','back-traps','lowerback']],
+  ['Chest',['chest-upper','chest-mid','chest-lower']],['Shoulders',['delt-front','delt-lateral','delt-rear']],
+  ['Arms',['biceps','brachialis','triceps-lateral','triceps-long','forearm-flexor','forearm-extensor']],['Core',['abs-upper','abs-lower','abs-obliques']]];
+let recovAreaOpen={};
 function renderRecovList(){
   const list=document.getElementById('recovList');
-  const allMuscles=Object.keys(RECOVERY_HOURS);
-  const ordered=[...allMuscles].sort((a,b)=>recoveryProgress(a)-recoveryProgress(b)||RECOVERY_LABEL[a].localeCompare(RECOVERY_LABEL[b]));
   list.innerHTML='';
-  ordered.forEach(m=>{
-    const sored=isSore(m);
-    const row=document.createElement('div'); row.className='recov-row';
-    const txt=document.createElement('span'); txt.innerHTML=`<b>${RECOVERY_LABEL[m]}</b> ${recovStatusText(m)}`;
-    const action=document.createElement('span'); action.className='linkbtn'; action.textContent=sored?'Clear':'Mark Sore';
-    action.onclick=()=>sored?clearSore(m):markSore(m);
-    row.appendChild(txt); row.appendChild(action); list.appendChild(row);
+  // six body areas, the ones with anything still recovering (or marked sore) first and open; a fully ready area is one
+  // line that opens on tap. Tapping an area remembers your choice until the page reloads.
+  const areas=RECOV_AREAS.map(([name,ms],i)=>({name,ms,i,worst:Math.min(...ms.map(recoveryProgress)),busy:ms.some(m=>recoveryProgress(m)<1||isSore(m))}))
+    .sort((a,b)=>(b.busy-a.busy)||(a.worst-b.worst)||(a.i-b.i));
+  areas.forEach(a=>{
+    const open=recovAreaOpen[a.name]??a.busy, rec=a.ms.filter(m=>recoveryProgress(m)<1).length;
+    const head=document.createElement('button'); head.className='recov-area'; head.setAttribute('aria-expanded',open);
+    head.innerHTML=`<i class="recov-dot ${recovClass(a.worst)}" aria-hidden="true"></i><span class="recov-area-n">${a.name}</span><span class="recov-area-s">${rec?`${rec} of ${a.ms.length} recovering`:'All ready'}</span><svg class="recov-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>`;
+    head.onclick=()=>{ recovAreaOpen[a.name]=!open; renderRecovList(); };
+    list.appendChild(head);
+    if(!open) return;
+    [...a.ms].sort((x,y)=>recoveryProgress(x)-recoveryProgress(y)||a.ms.indexOf(x)-a.ms.indexOf(y)).forEach(m=>{
+      const sored=isSore(m);
+      const row=document.createElement('div'); row.className='recov-row sub';
+      const txt=document.createElement('span'); txt.innerHTML=`<b>${RECOVERY_LABEL[m]}</b> ${recovStatusText(m)}`;
+      const action=document.createElement('span'); action.className='linkbtn'; action.textContent=sored?'Clear':'Mark Sore';
+      action.onclick=()=>sored?clearSore(m):markSore(m);
+      row.appendChild(txt); row.appendChild(action); list.appendChild(row);
+    });
   });
   // pinned above the nav while the long list is open, like Strength's Hide Exercises, so closing it needs no scroll back up
   const hide=document.createElement('button'); hide.className='str-hide btn'; hide.textContent='Hide Breakdown';
