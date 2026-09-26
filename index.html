@@ -420,8 +420,8 @@
   .setrm{display:flex;align-items:center;justify-content:center;height:44px;font-size:15px;}
   .linkbtn{padding:15px 0;margin:-15px 0;}
   #editLink,#cardioHistLink{padding:15px 12px;margin:-15px -12px;}
-  /* "+ add a set" sits right under the last set row: its box starts below that row instead of reaching into it */
   .reset-link{padding:15px 0;margin:9px 0 -15px;}
+  /* "+ add a set" sits right under the last set row: its box starts below that row instead of reaching into it */
   .cal-nav{padding:18px 19px;margin:-18px -11px;}
   .btn{min-height:44px;}
   .rpe-dot{padding:13px 0;min-height:44px;} /* ten across a phone can't each be 44 wide; they reach 44 tall and 26 wide */
@@ -462,10 +462,10 @@
 </head>
 <body>
 <header><div class="header-inner">
-  <div class="banner info" id="updateBanner" style="display:none"><span>A new version of Lift Log is ready.</span><span class="linkbtn" id="updateBannerBtn">refresh now</span></div>
+  <div class="banner info" id="updateBanner" style="display:none"><span>A new version of Lift Log is ready.</span><span class="linkbtn" id="updateBannerBtn">Refresh Now</span></div>
   <div class="title-row"><h1>Lift Log</h1>
     <div class="rhythm">
-      <div class="rhythm-label">this week <b id="weekCount">0</b>/4<br><span class="rhythm-total"><span id="sessionCount">0</span> sessions total</span></div>
+      <div class="rhythm-label">This Week <b id="weekCount">0</b>/4<br><span class="rhythm-total"><span id="sessionCount">0</span> Sessions Total</span></div>
       <div class="rhythm-ring">
         <svg width="28" height="28" viewBox="0 0 30 30">
           <circle cx="15" cy="15" r="12" fill="none" stroke="var(--line)" stroke-width="3.5"/>
@@ -479,11 +479,11 @@
 
 <main>
   <section id="homeView">
-    <div class="banner" id="backupBanner" style="display:none"><span>It's been a week since your last backup.</span><span class="linkbtn" id="bannerBtn">back up now</span></div>
-    <div class="banner" id="deloadBanner" style="display:none"><span>It's been a while since your last deload — a lighter week can help you keep progressing.</span><span class="linkbtn" id="deloadBannerBtn">plan a deload week</span></div>
+    <div class="banner" id="backupBanner" style="display:none"><span>It's been a week since your last backup.</span><span class="linkbtn" id="bannerBtn">Back Up Now</span></div>
+    <div class="banner" id="deloadBanner" style="display:none"><span>It's been a while since your last deload — a lighter week can help you keep progressing.</span><span class="linkbtn" id="deloadBannerBtn">Plan a Deload Week</span></div>
     <div class="banner info" id="deloadActiveBanner" style="display:none"></div>
-    <div class="banner" id="blockBanner" style="display:none"><span id="blockBannerTxt">Your training block is complete.</span><span class="linkbtn" id="blockBannerBtn">review what's changing</span></div>
-    <div class="banner" id="bwBanner" style="display:none"><span>It's been a week since you last logged your weight.</span><span class="linkbtn" id="bwBannerBtn">log it now</span></div>
+    <div class="banner" id="blockBanner" style="display:none"><span id="blockBannerTxt">Your training block is complete.</span><span class="linkbtn" id="blockBannerBtn">Review What's Changing</span></div>
+    <div class="banner" id="bwBanner" style="display:none"><span>It's been a week since you last logged your weight.</span><span class="linkbtn" id="bwBannerBtn">Log It Now</span></div>
     <div id="arrivalPanel"></div>
     <div class="bodymap" id="bodymapCard">
       <div class="recov-hero" id="recovHero">
@@ -492,7 +492,7 @@
             <circle cx="32" cy="32" r="27" fill="none" stroke="var(--line)" stroke-width="5"/>
             <circle cx="32" cy="32" r="27" fill="none" stroke="var(--green)" stroke-width="5" stroke-linecap="round" stroke-dasharray="169.6" stroke-dashoffset="0" id="recovRingArc" transform="rotate(-90 32 32)"/>
           </svg>
-          <div class="recov-score"><b id="recovPct">100%</b>ready to train</div>
+          <div class="recov-score"><b id="recovPct">100%</b>Ready to Train</div>
         </div>
         <div class="recov-sub" id="recovSub">Every muscle group is fully recovered — ready for anything today.</div>
       </div>
@@ -516,7 +516,7 @@
 <path class="muscle" data-m="forearm-extensor" fill-rule="evenodd" d="M386 403.5 369.5 379 366.5 372 361.5 352 362 332.5 371.5 345 378.5 359 383.5 379 386 403.5ZM65 405.5 66.5 389 70.5 368 78.5 348 89 333.5 90.5 337 90.5 349 88.5 362 79.5 384 71.5 394 65 405.5ZM391 441.5 386.5 441 382.5 430 369.5 406 363 379.5 381.5 406 381 407.5 378 404.5 375.5 407 387.5 431 391.5 440 391 441.5ZM62 445.5 59.5 445 59.5 442 76.5 405 74 402.5 73 403.5 72.5 402 88 381.5 82.5 405 71.5 424 62 445.5ZM65 417.5 64.5 416 68 410.5 68.5 412 65 417.5ZM387 418.5 383.5 413 384 411.5 387.5 417 387 418.5ZM398 440.5 396.5 440 396 436.5 398 440.5Z"/>
 <path class="muscle" data-m="forearm-flexor" fill-rule="evenodd" d="M360 392.5 334.5 365 329.5 352 327 331.5 344.5 349 356.5 377 360 392.5ZM92 392.5 95.5 376 105.5 352 124 332.5 122.5 350 120.5 358 116.5 366 110.5 374 92 392.5ZM73 450.5 67 447.5 66.5 446 80.5 417 94.5 396 117 373.5 117.5 375 107.5 393 83.5 428 73 450.5ZM378 450.5 365.5 422 342.5 389 334.5 375 335 373.5 357.5 396 370.5 416 384.5 447 378 450.5Z"/>
 <path class="muscle" data-m="quads" fill-rule="evenodd" d="M173 564.5 171.5 564 168.5 549 166.5 545 163.5 526 158.5 507 154.5 480 154.5 451 158.5 442 160 434.5 167.5 462 179.5 493 179.5 505 180.5 506 179.5 530 173 564.5ZM277 564.5 273.5 550 269.5 520 270.5 487 279.5 468 286.5 447 288.5 436 290 435.5 295.5 451 295.5 478 290.5 510 277 564.5ZM150 611.5 138.5 573 134.5 546 134.5 519 136.5 504 148 466.5 150.5 495 162.5 554 161.5 584 157.5 597 150 611.5ZM300 611.5 298.5 611 288.5 589 286.5 565 287.5 564 287.5 547 298.5 500 302 466.5 308.5 485 313.5 506 314.5 547 308.5 581 303.5 595 300 611.5ZM262 626.5 260 626.5 255.5 622 248.5 601 245.5 583 245.5 561 253.5 524 263 501.5 265.5 537 268.5 555 274.5 578 270.5 594 267.5 616 264.5 624 262 626.5ZM189 626.5 186.5 626 182.5 618 175.5 582 175.5 575 181.5 556 184.5 537 186 503.5 193.5 519 197.5 531 204.5 565 203.5 590 198.5 612 193.5 623 189 626.5Z"/>
-        </svg><div class="cap">front</div></div>
+        </svg><div class="cap">Front</div></div>
         <div class="fig"><svg viewBox="0 0 451 889" xmlns="http://www.w3.org/2000/svg">
 <path class="skin" fill-rule="evenodd" d="M227 116.5 223 116.5 214 112.5 198.5 113 195.5 104 187.5 90 185.5 83 183.5 66 180.5 54 180.5 43 185.5 28 191 20.5 203 13.5 220 9.5 227 3.5 229 3.5 243 12.5 246 8.5 249 9.5 254.5 15 256.5 23 259 25.5 262 24.5 263.5 26 269.5 43 269.5 57 262.5 92 256.5 100 251.5 114 247 112.5 237 112.5 227 116.5ZM176 83.5 175.5 78 177 75.5 179.5 78 179.5 80 176 83.5ZM273 92.5 271.5 89 273.5 87 273.5 84 270.5 81 273 75.5 274.5 77 274.5 89 273 92.5ZM177 90.5 177 84.5 177 90.5ZM269 100.5 266 98.5 264.5 99 266 95.5 269 98.5 270.5 98 269 100.5ZM186 100.5 183.5 98 185 96.5 186 100.5ZM182 100.5 179.5 99 180 97.5 182 100.5ZM191 123.5 188.5 114 188 101.5 193.5 114 191 123.5ZM259 124.5 258.5 118 256.5 116 262 102.5 262.5 111 259 124.5ZM246 143.5 205 143.5 208.5 134 210.5 122 208 119.5 205.5 122 202 134.5 198.5 121 205 118.5 213 118.5 223 122.5 228 122.5 238 118.5 250 119.5 252.5 121 252.5 124 250.5 126 249 132.5 247.5 132 245.5 123 243 120.5 240.5 123 240.5 128 246 143.5ZM230.5 142 232.5 140 230 137.5 227.5 140 230.5 142ZM41 524.5 39.5 524 39.5 520 45.5 496 45.5 493 42 489.5 40 489.5 35.5 495 22 521.5 19.5 521 20.5 516 33.5 487 30 483.5 20.5 492 10.5 506 7.5 507 9.5 500 24.5 478 28.5 470 29.5 463 26 460.5 23 463.5 12 468.5 3.5 468 20 458.5 28 451.5 45 445.5 50 439.5 62 447.5 72.5 450 70.5 456 70.5 471 62.5 492 60.5 516 59.5 516 59.5 501 58.5 500 59.5 496 55 490.5 48.5 498 44.5 516 41 524.5ZM411 524.5 408.5 523 401.5 496 396 490.5 391.5 496 391.5 516 390.5 516 388.5 493 380.5 472 380.5 456 378.5 451 395 444.5 401 439.5 406 445.5 421 450.5 435 461.5 447.5 468 438 468.5 427 463.5 424 460.5 421.5 463 423.5 472 427.5 480 442.5 502 443.5 506 441 506.5 439.5 505 429.5 491 422 483.5 417.5 487 430.5 516 431.5 521 429 521.5 416.5 497 409 489.5 405.5 493 405.5 496 410.5 514 411 524.5ZM132 550.5 132.5 496 133.5 491 138 490.5 132.5 519 132 550.5ZM155 514.5 153.5 513 150 490.5 210.5 491 205 494.5 194 497.5 170 498.5 166 500.5 157.5 509 155 514.5ZM296 515.5 292.5 508 285 500.5 281 498.5 257 497.5 249 495.5 240.5 491 301 490.5 296 515.5ZM319 548.5 318.5 522 313 490.5 317.5 491 318.5 497 319 548.5ZM308 588.5 305.5 574 303.5 547 300.5 532 303.5 505 307 491.5 310.5 503 313.5 529 312.5 560 308 588.5ZM143 589.5 138.5 564 137.5 528 140.5 503 142.5 493 144 492.5 149.5 521 149.5 537 146.5 553 145.5 573 143 589.5ZM318 558.5 318 554.5 318 558.5ZM170 648.5 168.5 646 170.5 643 169.5 639 166.5 633 162.5 629 168 616.5 170.5 625 176.5 637 170 648.5ZM282 645.5 278.5 645 274.5 636 283 616.5 288.5 628 283.5 634 280.5 641 282.5 644 282 645.5ZM184 885.5 171 885.5 158 878.5 148 877.5 136.5 872 137 867.5 145 864.5 156 853.5 161 858.5 164.5 856 160.5 850 161 838.5 170.5 839 169.5 863 172 865.5 175.5 861 176.5 856 176.5 839 181.5 839 185.5 862 189 866.5 191 864.5 192.5 869 192.5 879 190.5 883 184 885.5ZM189 851.5 187.5 839 191 838.5 191.5 843 189 851.5ZM262 850.5 260.5 850 259.5 844 260 838.5 263.5 839 262 850.5ZM279 885.5 266 885.5 260 882.5 258.5 880 258.5 869 260 864.5 262 866.5 264.5 864 268.5 850 270 838.5 274.5 839 274.5 857 277.5 866 280 868.5 282.5 866 280.5 861 280.5 851 279.5 850 280.5 839 289 838.5 290.5 840 290.5 849 286.5 856 290 858.5 295 853.5 304 863.5 314 867.5 314.5 872 307 876.5 290 879.5 285 883.5 279 885.5Z"/>
 <path class="muscle" data-m="abs-obliques" fill-rule="evenodd" d="M295 388.5 286 383.5 277.5 381 280.5 370 291 351.5 296.5 377 296.5 385 295 388.5ZM156 388.5 154.5 387 154.5 375 160 352.5 172.5 375 173.5 381 160 385.5 156 388.5Z"/>
@@ -532,11 +532,11 @@
 <path class="muscle" data-m="lowerback" fill-rule="evenodd" d="M225 426.5 211.5 400 203 391.5 190.5 384 215.5 325 217 324.5 221 328.5 224 324.5 226 324.5 230 329.5 235 324.5 260.5 384 250 389.5 239.5 400 225 426.5ZM227.5 348 230.5 345 232.5 333 230 330.5 221 330.5 218.5 333 219.5 339 221.5 341 220.5 345 224 348.5 227.5 348ZM226.5 369 230.5 366 232.5 355 229 351.5 226 352.5 222 351.5 219.5 354 220.5 366 223 368.5 226.5 369ZM226.5 403 230.5 398 231.5 391 226.5 387 230.5 383 231.5 373 229 370.5 226 371.5 223 370.5 219.5 375 222.5 381 221.5 384 225.5 387 220.5 391 220.5 395 221.5 399 226.5 403ZM226.5 417 229.5 414 228.5 412 230.5 409 227 404.5 224 404.5 221.5 407 221.5 409 224 411.5 226.5 411 222.5 415 225 417.5 226.5 417Z"/>
 <path class="muscle" data-m="triceps-lateral" fill-rule="evenodd" d="M99 329.5 95.5 315 95.5 293 97.5 281 100.5 271 107.5 256 115 247.5 123 242.5 123.5 244 116.5 264 114.5 286 104.5 297 101.5 305 100.5 325 99 329.5ZM351 331.5 349.5 306 345.5 296 336.5 287 334.5 266 329.5 249 326.5 244 327 242.5 333 245.5 342.5 255 347.5 264 353.5 282 355.5 295 355.5 315 351 331.5Z"/>
 <path class="muscle" data-m="triceps-long" fill-rule="evenodd" d="M125 318.5 126.5 310 125.5 292 128.5 289 135.5 276 133 273.5 122 288.5 120.5 287 120.5 277 124.5 256 128.5 243 132 238.5 136 237.5 138.5 248 141.5 274 141.5 291 138.5 305 125 318.5ZM326 318.5 312.5 305 309.5 293 310.5 261 315 237.5 320 239.5 322.5 244 330.5 279 330.5 287 329 289.5 319 275.5 316.5 278 319.5 285 325.5 292 324.5 311 326 318.5ZM100 373.5 98.5 360 91.5 340 91.5 335 93 330.5 97.5 339 96.5 349 99 351.5 101.5 349 104.5 338 107.5 304 109.5 298 117 290.5 120.5 294 120.5 314 113.5 334 113.5 344 114.5 345 113.5 353 111.5 358 105.5 364 100 373.5ZM351 373.5 345.5 364 340.5 360 337.5 353 336.5 345 337.5 336 331.5 320 329.5 309 329.5 299 330.5 295 334 290.5 340.5 297 343.5 305 345.5 318 345.5 335 347.5 339 348.5 348 351 350.5 353.5 348 353.5 339 355.5 333 357 330.5 358.5 332 359.5 339 352.5 359 351 373.5ZM119 340.5 118.5 335 121.5 328 133 317.5 133.5 319 128.5 329 119 340.5ZM331 340.5 320.5 326 317.5 320 318 317.5 329.5 328 331.5 332 331 340.5Z"/>
-        </svg><div class="cap">back</div></div>
+        </svg><div class="cap">Back</div></div>
       </div>
       <div class="tap-hint" id="tapHint">All muscles recovered. Ready to train.</div>
-      <div class="legend"><span><i style="background:#c94a3a"></i>just worked</span><span><i style="background:#d6a03a"></i>recovering</span><span><i style="background:#4a9e5c"></i>ready</span></div>
-      <div class="linkbtn" id="recovDetailToggle" style="display:none;text-align:center;margin-top:8px">see full breakdown</div>
+      <div class="legend"><span><i style="background:#c94a3a"></i>Just Worked</span><span><i style="background:#d6a03a"></i>Recovering</span><span><i style="background:#4a9e5c"></i>Ready</span></div>
+      <div class="linkbtn" id="recovDetailToggle" style="display:none;text-align:center;margin-top:8px">See Full Breakdown</div>
       <div class="recov-list" id="recovList" style="display:none"></div>
     </div>
   </section>
@@ -544,15 +544,15 @@
   <section id="logView" style="display:none">
     <div class="daylabel" id="dayLabel"></div>
     <div id="exerciseList"></div>
-    <div class="reset-link" id="resetLink">clear today's entries</div>
+    <div class="reset-link" id="resetLink">Clear Today's Entries</div>
   </section>
 
   <section id="historyView" style="display:none">
     <div class="empty" id="histEmpty" style="display:none;margin-bottom:14px">No sessions yet. Finish a workout or log a conditioning session and it will show up here.</div>
     <div class="heat-wrap">
-      <div class="heat-head"><div class="heat-title">Training rhythm</div><div class="heat-stat" id="heatStat"></div></div>
+      <div class="heat-head"><div class="heat-title">Training Rhythm</div><div class="heat-stat" id="heatStat"></div></div>
       <div class="heat-scroll"><div class="heat-grid" id="heatGrid"></div></div>
-      <div class="heat-legend">less<i></i><i class="h1"></i><i class="h2"></i><i class="h3"></i><i class="h4"></i>more</div>
+      <div class="heat-legend">Less<i></i><i class="h1"></i><i class="h2"></i><i class="h3"></i><i class="h4"></i>More</div>
     </div>
     <div class="cal-wrap">
       <div class="cal-head"><span class="cal-nav" id="calPrev">‹</span><div class="cal-title" id="calTitle">—</div><span class="cal-nav" id="calNext">›</span></div>
@@ -566,28 +566,28 @@
   <section id="strengthView" style="display:none">
     <div class="str-hero">
       <div class="str-hero-num" id="strHeroNum">—</div>
-      <div class="str-hero-lbl"><span id="strHeroLbl">current baseline</span><span class="bwlb" id="strBwPill" style="display:none"></span></div>
+      <div class="str-hero-lbl"><span id="strHeroLbl">Current Baseline</span><span class="bwlb" id="strBwPill" style="display:none"></span></div>
       <div class="scrub" id="strHeroScrub" tabindex="0" aria-label="Overall strength trend. Drag across it, or use the arrow keys, to see each session."><svg class="str-spark" id="strHeroSpark" viewBox="0 0 300 56" preserveAspectRatio="none"></svg></div>
     </div>
     <div class="str-split">
       <div class="card str-split-card" id="upperStrCard">
-        <h3>Upper strength</h3>
+        <h3>Upper Strength</h3>
         <div class="str-split-num" id="upperStrNum">—</div>
         <div class="scrub" id="upperStrScrub" tabindex="0" aria-label="Upper strength trend. Drag across it, or use the arrow keys, to see each session."><div id="upperStrSpark"></div></div>
-        <div class="str-card-hint" id="upperStrHint">see exercises</div>
+        <div class="str-card-hint" id="upperStrHint">See Exercises</div>
         <div class="str-card-exlist" id="upperStrList" style="display:none"></div>
       </div>
       <div class="card str-split-card" id="lowerStrCard">
-        <h3>Lower strength</h3>
+        <h3>Lower Strength</h3>
         <div class="str-split-num" id="lowerStrNum">—</div>
         <div class="scrub" id="lowerStrScrub" tabindex="0" aria-label="Lower strength trend. Drag across it, or use the arrow keys, to see each session."><div id="lowerStrSpark"></div></div>
-        <div class="str-card-hint" id="lowerStrHint">see exercises</div>
+        <div class="str-card-hint" id="lowerStrHint">See Exercises</div>
         <div class="str-card-exlist" id="lowerStrList" style="display:none"></div>
       </div>
     </div>
     <div class="card">
-      <h3>Body weight</h3>
-      <div class="row"><input class="in" type="text" inputmode="decimal" autocomplete="off" id="bwInput" placeholder="lb" style="width:90px"><button class="btn" id="bwLog">log today</button><span id="bwInfo" style="font-size:12px;color:var(--text-dim)"></span></div>
+      <h3>Body Weight</h3>
+      <div class="row"><input class="in" type="text" inputmode="decimal" autocomplete="off" id="bwInput" placeholder="lb" style="width:90px"><button class="btn" id="bwLog">Log Today</button><span id="bwInfo" style="font-size:12px;color:var(--text-dim)"></span></div>
       <div id="bwSpark"></div>
       <div id="bwNote"></div>
     </div>
@@ -600,60 +600,60 @@
 
   <section id="moreView" style="display:none">
     <div class="card">
-      <h3>Your name</h3>
-      <div class="row"><input class="in" id="nameInput" placeholder="optional — used in your greeting" style="flex:1"></div>
+      <h3>Your Name</h3>
+      <div class="row"><input class="in" id="nameInput" placeholder="Optional — used in your greeting" style="flex:1"></div>
     </div>
     <div class="card">
       <h3>Units</h3>
-      <div class="row"><span style="font-size:12px;color:var(--text-dim)">weight in</span>
+      <div class="row"><span style="font-size:12px;color:var(--text-dim)">Weight in</span>
         <select class="in" id="unitSel"><option value="lb">lb</option><option value="kg">kg</option></select></div>
     </div>
     <div class="card">
-      <h3>Equipment & variety</h3>
+      <h3>Equipment & Variety</h3>
       <div class="note-sm" style="margin-bottom:6px">Uncheck anything your gym doesn't have — swap alternatives and block rotation will only draw from what's left checked.</div>
       <div id="equipChks"></div>
       <div class="note-sm" id="neverList" style="margin-top:8px;display:none"></div>
     </div>
     <div class="card">
-      <h3>Exercise rotation</h3>
-      <div class="row"><label class="chk"><input type="checkbox" id="autoRotateChk"> suggest fresh variations at the end of each training block</label></div>
-      <div class="row" style="margin-top:6px" id="rotateEveryRow"><span style="font-size:12px;color:var(--text-dim)">block length</span>
+      <h3>Exercise Rotation</h3>
+      <div class="row"><label class="chk"><input type="checkbox" id="autoRotateChk"> Suggest fresh variations at the end of each training block</label></div>
+      <div class="row" style="margin-top:6px" id="rotateEveryRow"><span style="font-size:12px;color:var(--text-dim)">Block Length</span>
         <select class="in" id="blockWeeksSel"><option value="3">3 weeks</option><option value="4">4 weeks</option><option value="6">6 weeks</option></select></div>
-      <details class="how"><summary>how this works</summary><div class="note-sm">At the end of every block you get a review of what's changing before anything is applied. The first two exercises of each day are your primary lifts: they only change once they've been stuck for 3 sessions, or every other block. The rest are accessories and get a fresh variation each block, drawn from the curated picks and the full exercise library. Nothing is repeated across your four days, and a pick's natural rep range always matches its slot.</div></details>
+      <details class="how"><summary>How This Works</summary><div class="note-sm">At the end of every block you get a review of what's changing before anything is applied. The first two exercises of each day are your primary lifts: they only change once they've been stuck for 3 sessions, or every other block. The rest are accessories and get a fresh variation each block, drawn from the curated picks and the full exercise library. Nothing is repeated across your four days, and a pick's natural rep range always matches its slot.</div></details>
     </div>
     <div class="card">
-      <h3>Rest timer</h3>
-      <div class="row"><label class="chk"><input type="checkbox" id="smartRestChk"> use a smart rest time based on each exercise's rep range</label></div>
-      <details class="how"><summary>how this works</summary><div class="note-sm">Lower-rep sets (up to 10) rest ~150s, moderate sets (up to 12) rest 90s, higher-rep and hold-based sets rest 60s — heavier, lower-rep work needs more recovery between sets than light, high-rep work does.</div></details>
-      <div class="row" style="margin-top:10px"><span style="font-size:12px;color:var(--text-dim)" id="restSelLbl">fallback rest</span>
+      <h3>Rest Timer</h3>
+      <div class="row"><label class="chk"><input type="checkbox" id="smartRestChk"> Use a smart rest time based on each exercise's rep range</label></div>
+      <details class="how"><summary>How This Works</summary><div class="note-sm">Lower-rep sets (up to 10) rest ~150s, moderate sets (up to 12) rest 90s, higher-rep and hold-based sets rest 60s — heavier, lower-rep work needs more recovery between sets than light, high-rep work does.</div></details>
+      <div class="row" style="margin-top:10px"><span style="font-size:12px;color:var(--text-dim)" id="restSelLbl">Fallback Rest</span>
         <select class="in" id="restSel"><option value="60">60s</option><option value="90">90s</option><option value="120">120s</option><option value="150">150s</option><option value="180">180s</option></select>
-        <label class="chk"><input type="checkbox" id="autoTimer"> start automatically when a set is checked</label></div>
+        <label class="chk"><input type="checkbox" id="autoTimer"> Start automatically when a set is checked</label></div>
     </div>
     <div class="card">
-      <h3>Edit workouts</h3>
-      <div class="row" style="margin-bottom:8px;row-gap:16px"><select class="in" id="edDay"></select><span class="linkbtn" id="edReset">reset to default program</span></div>
+      <h3>Edit Workouts</h3>
+      <div class="row" style="margin-bottom:8px;row-gap:16px"><select class="in" id="edDay"></select><span class="linkbtn" id="edReset">Reset to Default Program</span></div>
       <div id="edList"></div>
-      <div style="margin-top:12px;font-size:12px;color:var(--text-dim)">Add an exercise</div>
+      <div style="margin-top:12px;font-size:12px;color:var(--text-dim)">Add an Exercise</div>
       <div class="row" style="margin-top:6px">
-        <input class="in" id="adName" placeholder="name" style="flex:1;min-width:140px">
-        <input class="in" id="adGroup" placeholder="group (Chest)" style="width:110px">
+        <input class="in" id="adName" placeholder="Name" style="flex:1;min-width:140px">
+        <input class="in" id="adGroup" placeholder="Group (e.g. Chest)" style="width:110px">
       </div>
       <div class="row" style="margin-top:6px">
         <input class="in" id="adTarget" placeholder="3 x 8-12" style="width:90px">
-        <input class="in" id="adStart" type="number" placeholder="start" style="width:90px">
-        <input class="in" id="adStep" type="number" placeholder="step" style="width:80px">
+        <input class="in" id="adStart" type="number" placeholder="Start" style="width:90px">
+        <input class="in" id="adStep" type="number" placeholder="Step" style="width:80px">
       </div>
       <div id="adMuscles" style="margin-top:6px"></div>
-      <textarea class="in notes" id="adCue" placeholder="form cue (optional)"></textarea>
-      <div class="row" style="margin-top:8px"><button class="btn primary" id="adBtn">add exercise</button></div>
+      <textarea class="in notes" id="adCue" placeholder="Form cue (optional)"></textarea>
+      <div class="row" style="margin-top:8px"><button class="btn primary" id="adBtn">Add Exercise</button></div>
     </div>
     <div class="card">
-      <h3>Your data</h3>
-      <div class="row"><button class="btn" id="exportBtn">export backup</button><button class="btn" id="importBtn">import backup</button><button class="btn" id="mergeBtn">merge backup</button><input type="file" id="importFile" accept="application/json" style="display:none"></div>
+      <h3>Your Data</h3>
+      <div class="row"><button class="btn" id="exportBtn">Export Backup</button><button class="btn" id="importBtn">Import Backup</button><button class="btn" id="mergeBtn">Merge Backup</button><input type="file" id="importFile" accept="application/json" style="display:none"></div>
       <div class="note-sm" style="margin-top:6px">Import replaces everything on this device with the backup file. Merge combines the backup's sessions, exercise history and body weight with what's already here instead of overwriting it — use this to bring two devices' data together.</div>
-      <div class="row" style="margin-top:10px"><label class="chk"><input type="checkbox" id="autoBackup"> auto-download a backup when I finish a session and it's been 7+ days</label></div>
+      <div class="row" style="margin-top:10px"><label class="chk"><input type="checkbox" id="autoBackup"> Auto-download a backup when I finish a session and it's been 7+ days</label></div>
       <div class="storage-warn" id="lastBackup" style="color:var(--text-dim)"></div>
-      <div class="row" style="margin-top:10px"><button class="btn danger" id="wipeBtn">erase everything</button></div>
+      <div class="row" style="margin-top:10px"><button class="btn danger" id="wipeBtn">Erase Everything</button></div>
       <div class="storage-warn" id="storageInfo"></div>
     </div>
   </section>
@@ -661,8 +661,8 @@
 
 <footer><div class="footer-inner">
   <div id="logFooter" style="display:none">
-  <div class="timer" id="timer"><div class="timer-row"><div class="t" id="timerT">1:30</div><div class="acts"><span id="tPlus">+30s</span><span id="tSkip">skip</span></div></div><div class="tbar"><i id="timerBar" style="width:100%"></i></div></div>
-  <button class="finish-btn" id="finishBtn">finish session</button>
+  <div class="timer" id="timer"><div class="timer-row"><div class="t" id="timerT">1:30</div><div class="acts"><span id="tPlus">+30s</span><span id="tSkip">Skip</span></div></div><div class="tbar"><i id="timerBar" style="width:100%"></i></div></div>
+  <button class="finish-btn" id="finishBtn">Finish Session</button>
   </div>
   <nav class="viewtabs" aria-label="Sections">
     <span class="viewtab active" data-v="home" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</span>
@@ -673,16 +673,16 @@
   </nav>
 </div></footer>
 <div class="sheet-bg" id="sheetBg"></div>
-<div class="sheet" id="sheet"><div class="sheet-head"><div><div id="sheetTitle" style="font-size:15px">Swap exercise</div><div id="sheetSub" style="font-size:12px;color:var(--text-dim);margin-top:2px"></div></div><span class="linkbtn" id="sheetClose">close</span></div><input class="in" id="sheetSearch" placeholder="search alternatives…" style="width:100%;margin-bottom:12px"><div id="sheetList"></div></div>
-<div class="toast" id="toast">saved</div>
+<div class="sheet" id="sheet"><div class="sheet-head"><div><div id="sheetTitle" style="font-size:15px">Swap Exercise</div><div id="sheetSub" style="font-size:12px;color:var(--text-dim);margin-top:2px"></div></div><span class="linkbtn" id="sheetClose">Close</span></div><input class="in" id="sheetSearch" placeholder="Search alternatives…" style="width:100%;margin-bottom:12px"><div id="sheetList"></div></div>
+<div class="toast" id="toast">Saved</div>
 <div class="celebrate-bg" id="celebrateBg"><div class="celebrate" id="celebrateInner"></div></div>
 <div class="celebrate-bg" id="onboardBg"><div class="celebrate" id="onboardInner"></div></div>
 <div class="sheet-bg" id="fatigueBg"></div>
 <div class="sheet" id="fatigueSheet">
-  <div class="sheet-head"><div><div style="font-size:16px" id="fatigueTitle">Still recovering</div><div id="fatigueSub" style="font-size:12px;color:var(--text-dim);margin-top:4px;line-height:1.45"></div></div><span class="linkbtn" id="fatigueClose">close</span></div>
-  <div class="fat-head"><span>muscle</span><span>ready in</span></div>
+  <div class="sheet-head"><div><div style="font-size:16px" id="fatigueTitle">Still recovering</div><div id="fatigueSub" style="font-size:12px;color:var(--text-dim);margin-top:4px;line-height:1.45"></div></div><span class="linkbtn" id="fatigueClose">Close</span></div>
+  <div class="fat-head"><span>Muscle</span><span>Ready In</span></div>
   <div class="fat-list" id="fatigueList"></div>
-  <div><span class="linkbtn" id="fatigueWhyToggle">why recovery matters</span></div>
+  <div><span class="linkbtn" id="fatigueWhyToggle">Why Recovery Matters</span></div>
   <div class="plateau-tip" id="fatigueWhy" style="display:none;margin:10px 0 0">Training a muscle again before it's recovered means fewer quality reps at your working weight, faster fatigue within the set, and — if it becomes a pattern — a higher risk of strain. Muscle rebuilds stronger during rest, not just during the lift, which is why these windows exist.</div>
   <div class="fat-btns">
     <button class="btn primary" id="fatigueCancel"></button>
@@ -694,37 +694,37 @@
   <div class="sheet-head"><div style="font-size:15px" id="confirmTitle">Are you sure?</div></div>
   <div class="plateau-tip" id="confirmMsg" style="margin-bottom:14px"></div>
   <div class="row" style="gap:10px;flex-wrap:nowrap">
-    <button class="btn" id="confirmCancelBtn" style="flex:1">cancel</button>
-    <button class="btn primary" id="confirmOkBtn" style="flex:1">confirm</button>
+    <button class="btn" id="confirmCancelBtn" style="flex:1">Cancel</button>
+    <button class="btn primary" id="confirmOkBtn" style="flex:1">Confirm</button>
   </div>
 </div>
 <div class="sheet-bg" id="deloadBg"></div>
 <div class="sheet" id="deloadSheet">
-  <div class="sheet-head"><div><div style="font-size:15px">Plan a deload week</div><div id="deloadStats" style="font-size:12px;color:var(--text-dim);margin-top:2px"></div></div><span class="linkbtn" id="deloadClose">close</span></div>
+  <div class="sheet-head"><div><div style="font-size:15px">Plan a deload week</div><div id="deloadStats" style="font-size:12px;color:var(--text-dim);margin-top:2px"></div></div><span class="linkbtn" id="deloadClose">Close</span></div>
   <div class="plateau-tip" style="margin-bottom:14px">A deload is a planned lighter week — usually about 10-20% less weight and/or fewer hard sets — taken every 4-8 weeks of consistent training. It gives connective tissue and your nervous system time to catch up with the muscle adaptations you've already earned, which is generally thought to lower overuse-injury risk and can help push through a stall that isn't responding to changes on a single exercise. It's not mandatory, and skipping one occasionally is fine — but going many months without one is usually when plateaus and nagging aches start to stack up.</div>
   <div class="empty" style="margin-bottom:10px">Starting one suggests weights about 10% lighter across every exercise for the next 7 days. Nothing about your logged history changes — it only affects the suggested working weight.</div>
   <div class="row" style="gap:10px;flex-wrap:nowrap">
-    <button class="btn" id="deloadNotNow" style="flex:1">not now</button>
-    <button class="btn primary" id="startDeloadBtn" style="flex:1">start deload week</button>
+    <button class="btn" id="deloadNotNow" style="flex:1">Not Now</button>
+    <button class="btn primary" id="startDeloadBtn" style="flex:1">Start Deload Week</button>
   </div>
 </div>
 <div class="sheet-bg" id="blockBg"></div>
 <div class="sheet" id="blockSheet">
-  <div class="sheet-head"><div><div style="font-size:15px" id="blockTitle">Block complete</div><div id="blockStats" style="font-size:12px;color:var(--text-dim);margin-top:2px"></div></div><span class="linkbtn" id="blockClose">close</span></div>
+  <div class="sheet-head"><div><div style="font-size:15px" id="blockTitle">Block Complete</div><div id="blockStats" style="font-size:12px;color:var(--text-dim);margin-top:2px"></div></div><span class="linkbtn" id="blockClose">Close</span></div>
   <div class="plateau-tip" style="margin-bottom:12px" id="blockIntro"></div>
   <div id="blockList"></div>
   <div class="row" style="gap:10px;flex-wrap:nowrap;margin-top:12px">
-    <button class="btn" id="blockNotNow" style="flex:1">not now</button>
-    <button class="btn primary" id="blockApply" style="flex:1">start next block</button>
+    <button class="btn" id="blockNotNow" style="flex:1">Not Now</button>
+    <button class="btn primary" id="blockApply" style="flex:1">Start Next Block</button>
   </div>
 </div>
 <div class="sheet-bg" id="cardioSuggestBg"></div>
 <div class="sheet" id="cardioSuggestSheet">
-  <div class="sheet-head"><div><div style="font-size:15px">Cardio's up next</div><div style="font-size:12px;color:var(--text-dim);margin-top:2px" id="cardioSuggestSub">Two lifting sessions in a row</div></div><span class="linkbtn" id="cardioSuggestClose">close</span></div>
+  <div class="sheet-head"><div><div style="font-size:15px">Cardio's Up Next</div><div style="font-size:12px;color:var(--text-dim);margin-top:2px" id="cardioSuggestSub">Two lifting sessions in a row</div></div><span class="linkbtn" id="cardioSuggestClose">Close</span></div>
   <div class="plateau-tip" style="margin-bottom:14px" id="cardioSuggestBody">You've done two straight lifting sessions, so conditioning work is next in the rotation — it gives your joints and nervous system a break from heavy loading while still building your aerobic base. Totally fine to lift again today if that's what you'd rather do.</div>
   <div class="row" style="gap:10px;flex-wrap:nowrap">
     <button class="btn" id="cardioSuggestLift" style="flex:1"></button>
-    <button class="btn primary" id="cardioSuggestGo" style="flex:1">do cardio</button>
+    <button class="btn primary" id="cardioSuggestGo" style="flex:1">Do Cardio</button>
   </div>
 </div>
 
@@ -732,7 +732,7 @@
 <div class="sheet" id="muscleSheet">
   <div class="sheet-head">
     <div><div id="muscleSheetTitle" style="font-size:15px"></div><div id="muscleSheetSub" style="font-size:12px;color:var(--text-dim);margin-top:2px"></div></div>
-    <span class="linkbtn" id="muscleSheetClose">close</span>
+    <span class="linkbtn" id="muscleSheetClose">Close</span>
   </div>
   <div class="row" style="margin-top:4px"><button class="btn primary" id="muscleSheetAction" style="flex:1"></button></div>
 </div>
@@ -741,7 +741,7 @@
 <div class="sheet" id="calDaySheet">
   <div class="sheet-head">
     <div id="calDaySheetTitle" style="font-size:15px"></div>
-    <span class="linkbtn" id="calDaySheetClose">close</span>
+    <span class="linkbtn" id="calDaySheetClose">Close</span>
   </div>
   <div id="calDaySheetBody"></div>
 </div>
@@ -1043,7 +1043,7 @@ const DEFAULT_PROGRAM = buildProgram();
 let PROGRAM = JSON.parse(JSON.stringify(DEFAULT_PROGRAM));
 let needsBuild=false; // true on first launch until the user accepts a program in the builder
 const EQUIP_TYPES=['barbell','dumbbell','kettlebell','cable','machine','bodyweight','band','accessory'];
-const EQUIP_LABEL={barbell:'barbell',dumbbell:'dumbbell',kettlebell:'kettlebell',cable:'cable',machine:'machine',bodyweight:'bodyweight',band:'resistance band',accessory:'other (ball/roller/etc.)'};
+const EQUIP_LABEL={barbell:'Barbell',dumbbell:'Dumbbell',kettlebell:'Kettlebell',cable:'Cable',machine:'Machine',bodyweight:'Bodyweight',band:'Resistance Band',accessory:'Other (ball, roller, etc.)'};
 // full exercise library (name/equip/muscles/cue), sourced from a third-party open dataset — no set/rep targets of its own.
 // offered as swap candidates via openSwap(), and as a last-resort fill in the builder when no curated pick passes the equipment filter
 const FULL_CATALOG=JSON.parse(document.getElementById('fullCatalog').textContent);
@@ -1398,10 +1398,10 @@ async function neverSuggest(name){
 async function rejectRotation(day,idx){
   const ex=day.exercises[idx]; await neverSuggest(ex.name);
   const exclude=allNamesInUse(); const pick=pickForSlot(day, idx, exclude);
-  if(!pick){ if(ex.rotPrev) await undoRotation(day,idx); else showToast(`won't suggest ${ex.name} again`); return; }
+  if(!pick){ if(ex.rotPrev) await undoRotation(day,idx); else showToast(`Won't suggest ${ex.name} again`); return; }
   const nu=rotatedExercise(ex,pick); if(ex.rotPrev) nu.rotPrev=ex.rotPrev;
   day.exercises[idx]=nu; if(day.id===currentDay&&todayData[ex.name]) delete todayData[ex.name];
-  await saveProgram(); showToast(`won't suggest ${ex.name} again — swapped in ${nu.name}`);
+  await saveProgram(); showToast(`Won't suggest ${ex.name} again — swapped in ${nu.name}`);
 }
 async function undoRotation(day,idx){
   const ex=day.exercises[idx]; if(!ex.rotPrev) return;
@@ -1414,7 +1414,7 @@ async function undoRotation(day,idx){
   const restored={...ex.rotPrev, rotCount:0};
   day.exercises[idx]=restored;
   if(todayData[ex.name]) delete todayData[ex.name];
-  await saveProgram(); showToast(`reverted to ${restored.name}`);
+  await saveProgram(); showToast(`Reverted to ${restored.name}`);
 }
 // ---------- deload / periodization ----------
 function plateauCountAll(){ const seen=new Set(); let n=0; PROGRAM.forEach(day=>day.exercises.forEach(ex=>{ if(seen.has(ex.name)) return; seen.add(ex.name); if(ex.start!==0 && isPlateau(ex)) n++; })); return n; }
@@ -1475,7 +1475,7 @@ const TOOL_ICONS={
   demo:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg>'
 };
 function toolsBar(howOpen, demoHref, withSwap, howId){
-  return `<div class="ex-tools"><button type="button" class="tool-howto"${howId?` id="${howId}"`:''} aria-expanded="${howOpen}">${TOOL_ICONS.how}<span>${howOpen?'Hide':'How to'}</span></button>`+
+  return `<div class="ex-tools"><button type="button" class="tool-howto"${howId?` id="${howId}"`:''} aria-expanded="${howOpen}">${TOOL_ICONS.how}<span>${howOpen?'Hide':'How To'}</span></button>`+
     (withSwap?`<button type="button" class="tool-swap">${TOOL_ICONS.swap}<span>Swap</span></button>`:'')+
     `<a class="tool-demo" href="${demoHref}" target="_blank" rel="noopener" aria-label="Demo videos (opens YouTube)">${TOOL_ICONS.demo}<span>Demo</span><span class="ext" aria-hidden="true">↗</span></a></div>`;
 }
@@ -1490,7 +1490,7 @@ function plateText(totalLb, ex, baseLbOverride){
   const b=plateBreakdown(total,bar);
   if(b.belowBar) return `${total} ${u} is under the ${bar} ${u} ${isMachine?'base weight':'bar'}`;
   const per=b.plates.length?b.plates.join(' + '):'nothing';
-  return `<b>${per}</b>${b.short?` <span class="plates-note">loads ${b.loaded} ${u}, nearest to ${total}</span>`:''}`;
+  return `<b>${per}</b>${b.short?` <span class="plates-note">Loads ${b.loaded} ${u}, nearest to ${total}</span>`:''}`;
 }
 function dedupeSortByT(arr){ const seen=new Set(); const out=[]; [...arr].sort((a,b)=>a.t-b.t).forEach(x=>{ if(!seen.has(x.t)){ seen.add(x.t); out.push(x); } }); return out; }
 function latestBW(){ return bodyweight.length?bodyweight[bodyweight.length-1].w:null; }
@@ -1596,7 +1596,7 @@ function confirmSheet(message, okLabel, cancelLabel, danger){
   return new Promise(resolve=>{
     document.getElementById('confirmMsg').textContent=message;
     const okBtn=document.getElementById('confirmOkBtn'), cancelBtn=document.getElementById('confirmCancelBtn');
-    okBtn.textContent=okLabel||'confirm'; cancelBtn.textContent=cancelLabel||'cancel';
+    okBtn.textContent=okLabel||'Confirm'; cancelBtn.textContent=cancelLabel||'Cancel';
     okBtn.classList.toggle('danger',!!danger); // anything that deletes or overwrites reads as danger, not as the go-ahead orange
     const bg=document.getElementById('confirmBg'), sheet=document.getElementById('confirmSheet');
     const done=v=>{ bg.classList.remove('on'); sheet.classList.remove('on'); okBtn.onclick=null; cancelBtn.onclick=null; bg.onclick=null; resolve(v); };
@@ -1620,7 +1620,7 @@ function lerpColor(a,b,t){ return `rgb(${Math.round(a[0]+(b[0]-a[0])*t)},${Math.
 function tick(){
   const left=Math.ceil((timer.end-Date.now())/1000);
   const t=document.getElementById('timerT'), bar=document.getElementById('timerBar'), el=document.getElementById('timer');
-  if(left<=0){ t.textContent='go'; t.classList.add('over'); t.style.color=''; bar.style.width='0%'; bar.style.background=''; el.classList.add('done'); clearInterval(timer.iv); beep(); setTimeout(stopTimer,4000); return; }
+  if(left<=0){ t.textContent='Go'; t.classList.add('over'); t.style.color=''; bar.style.width='0%'; bar.style.background=''; el.classList.add('done'); clearInterval(timer.iv); beep(); setTimeout(stopTimer,4000); return; }
   t.classList.remove('over'); t.textContent=`${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}`;
   const pct=left/timer.total; bar.style.width=(pct*100)+'%';
   const fadeT=Math.min(1,pct/TIMER_FADE_WINDOW); const col=lerpColor(TIMER_ACCENT,TIMER_BLUE,fadeT);
@@ -1751,7 +1751,7 @@ function renderRecovList(){
     const sored=!!soreOverride[m];
     const row=document.createElement('div'); row.className='recov-row';
     const txt=document.createElement('span'); txt.innerHTML=`<b>${RECOVERY_LABEL[m]}</b> ${recovStatusText(m)}`;
-    const action=document.createElement('span'); action.className='linkbtn'; action.textContent=sored?'clear':'mark sore';
+    const action=document.createElement('span'); action.className='linkbtn'; action.textContent=sored?'Clear':'Mark Sore';
     action.onclick=()=>sored?clearSore(m):markSore(m);
     row.appendChild(txt); row.appendChild(action); list.appendChild(row);
   });
@@ -1763,7 +1763,7 @@ function openMuscleSheet(m){
   document.getElementById('muscleSheetSub').textContent=recovStatusText(m);
   const sored=!!soreOverride[m];
   const btn=document.getElementById('muscleSheetAction');
-  btn.textContent=sored?'clear':'mark sore';
+  btn.textContent=sored?'Clear':'Mark Sore';
   btn.onclick=()=>{ closeMuscleSheet(); sored?clearSore(m):markSore(m); };
   document.getElementById('muscleBg').classList.add('on');
   document.getElementById('muscleSheet').classList.add('on');
@@ -1778,7 +1778,7 @@ document.getElementById('recovDetailToggle').onclick=()=>{
   const l=document.getElementById('recovList'), t=document.getElementById('recovDetailToggle');
   const open=l.style.display!=='none';
   l.style.display=open?'none':'block';
-  t.textContent=open?'see full breakdown':'hide breakdown';
+  t.textContent=open?'See Full Breakdown':'Hide Breakdown';
 };
 
 // ---------- log view ----------
@@ -1891,8 +1891,8 @@ const CARDIO_REASON_COPY={
 function cardioReasonCopy(){ const {reason,nextDay}=suggestedDay(); const c=CARDIO_REASON_COPY[reason]||CARDIO_REASON_COPY.backToBack; const f=v=>typeof v==='function'?v(nextDay):v; return {sub:f(c.sub),home:f(c.home),body:f(c.body)}; }
 function renderTabs(){ const w=document.getElementById('dayTabs'); w.innerHTML='';
   const suggested=suggestedDayId();
-  PROGRAM.forEach(d=>{ const el=document.createElement('div'); el.className='daytab '+dayType(d)+(d.id===currentDay?' active':'')+(d.id===suggested?' suggested':''); if(d.id===suggested) el.title='next up in your rotation'; if(d.id===currentDay) el.setAttribute('aria-current','true'); el.innerHTML=`${d.name}<span class="dsub">${d.sub}</span>`; el.onclick=()=>attemptLoadDay(d.id); w.appendChild(el); });
-  const c=document.createElement('div'); c.className='daytab cardio-tab t-cardio'+(currentDay==='cardio'?' active':'')+(suggested==='cardio'?' suggested':''); if(suggested==='cardio') c.title='next up in your rotation'; if(currentDay==='cardio') c.setAttribute('aria-current','true'); c.innerHTML='Cardio<span class="dsub">endurance</span>'; c.onclick=()=>loadDay('cardio'); w.appendChild(c);
+  PROGRAM.forEach(d=>{ const el=document.createElement('div'); el.className='daytab '+dayType(d)+(d.id===currentDay?' active':'')+(d.id===suggested?' suggested':''); if(d.id===suggested) el.title='Next up in your rotation'; if(d.id===currentDay) el.setAttribute('aria-current','true'); el.innerHTML=`${d.name}<span class="dsub">${d.sub}</span>`; el.onclick=()=>attemptLoadDay(d.id); w.appendChild(el); });
+  const c=document.createElement('div'); c.className='daytab cardio-tab t-cardio'+(currentDay==='cardio'?' active':'')+(suggested==='cardio'?' suggested':''); if(suggested==='cardio') c.title='Next up in your rotation'; if(currentDay==='cardio') c.setAttribute('aria-current','true'); c.innerHTML='Cardio<span class="dsub">Endurance</span>'; c.onclick=()=>loadDay('cardio'); w.appendChild(c);
 }
 
 // ---------- fatigue disclaimer: warn (don't block) when picking a day whose muscles haven't recovered ----------
@@ -1994,7 +1994,7 @@ function render(){
     }
     const card=document.createElement('div'); card.className='exercise'+(state.open?' open':'')+(complete?' complete':'');
     const head=document.createElement('div'); head.className='ex-head';
-    head.innerHTML=`<div><div class="ex-name">${ex.name}${plat?'<span class="badge plateau">plateau</span>':''}</div><div class="ex-target">${fmtTarget(ex.target)}${sugTxt?` <span class="sug">· try ${sugTxt}</span>`:''}${lvlTxt}</div>${deltaPill}</div><div class="ex-check" role="img" aria-label="${complete?'finished':'not finished'}">${complete?'✓':''}</div>`;
+    head.innerHTML=`<div><div class="ex-name">${ex.name}${plat?'<span class="badge plateau">Plateau</span>':''}</div><div class="ex-target">${fmtTarget(ex.target)}${sugTxt?` <span class="sug">· try ${sugTxt}</span>`:''}${lvlTxt}</div>${deltaPill}</div><div class="ex-check" role="img" aria-label="${complete?'finished':'not finished'}">${complete?'✓':''}</div>`;
     head.setAttribute('aria-expanded',String(!!state.open));
     head.onclick=()=>{ state.open=!state.open; render(); }; card.appendChild(head);
 
@@ -2021,15 +2021,15 @@ function render(){
       let fixed=!!(settings.fixedBar||{})[ex.name];
       // the bar weight is a compact chip; the real <select> sits invisibly on top of it at 16 px, so tapping opens the
       // native picker and iOS doesn't zoom the page the way it does for a field under 16 px
-      pl.innerHTML=`<div class="plates-row"><div class="plates-info"><span class="plates-cap"></span><span class="plates-txt"></span></div><label class="bar-chip"><span class="bar-chip-txt">${curBar} ${unitLabel()} bar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><select class="bar-sel" aria-label="bar weight">${opts.map(o=>`<option value="${o}"${Math.abs(o-curBar)<0.01?' selected':''}>${o} ${unitLabel()} bar</option>`).join('')}${opts.some(o=>Math.abs(o-curBar)<0.01)?'':`<option value="${curBar}" selected>${curBar} ${unitLabel()} bar</option>`}</select></label></div><label class="chk fixed-chk"><input type="checkbox"${fixed?' checked':''}>Fixed-weight bar (no plates)</label>`;
+      pl.innerHTML=`<div class="plates-row"><div class="plates-info"><span class="plates-cap"></span><span class="plates-txt"></span></div><label class="bar-chip"><span class="bar-chip-txt">${curBar} ${unitLabel()} bar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><select class="bar-sel" aria-label="bar weight">${opts.map(o=>`<option value="${o}"${Math.abs(o-curBar)<0.01?' selected':''}>${o} ${unitLabel()} bar</option>`).join('')}${opts.some(o=>Math.abs(o-curBar)<0.01)?'':`<option value="${curBar}" selected>${curBar} ${unitLabel()} bar</option>`}</select></label></div><label class="chk fixed-chk"><input type="checkbox"${fixed?' checked':''}>Fixed-Weight Bar (no plates)</label>`;
       const txtEl=pl.querySelector('.plates-txt'), barSel=pl.querySelector('.bar-sel'), capEl=pl.querySelector('.plates-cap'), chip=pl.querySelector('.bar-chip');
       // the weight in play: the last edited set weight, else the suggestion
       let liveLb=(state.sets.find(x=>x.w!=='')||{}).w; if(liveLb===undefined||liveLb==='') liveLb=(typeof sug==='number'&&sug>0)?sug:null;
-      const syncFixedUI=()=>{ chip.style.display=fixed?'none':''; capEl.textContent=fixed?'Fixed-weight bar':'Plates per side'; };
+      const syncFixedUI=()=>{ chip.style.display=fixed?'none':''; capEl.textContent=fixed?'Fixed-Weight Bar':'Plates per Side'; };
       updatePlates=lb=>{
         if(lb!=null&&lb!=='') liveLb=lb;
-        if(fixed){ txtEl.textContent=(liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)))?`grab the fixed bar closest to ${dispWeight(parseFloat(liveLb))} ${unitLabel()}`:'enter a weight to see which fixed bar to grab'; return; }
-        txtEl.innerHTML=(liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)))?plateText(parseFloat(liveLb),ex):'enter a weight to see plates per side';
+        if(fixed){ txtEl.textContent=(liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)))?`Grab the fixed bar closest to ${dispWeight(parseFloat(liveLb))} ${unitLabel()}`:'Enter a weight to see which fixed bar to grab'; return; }
+        txtEl.innerHTML=(liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)))?plateText(parseFloat(liveLb),ex):'Enter a weight to see plates per side';
       };
       barSel.onchange=e=>{ settings.barWeights=settings.barWeights||{}; settings.barWeights[ex.name]=storeWeight(e.target.value); sset('settings',settings); pl.querySelector('.bar-chip-txt').textContent=e.target.selectedOptions[0].textContent; updatePlates(); };
       pl.querySelector('.fixed-chk input').onchange=e=>{ fixed=e.target.checked; settings.fixedBar=settings.fixedBar||{}; settings.fixedBar[ex.name]=fixed; sset('settings',settings); syncFixedUI(); updatePlates(); };
@@ -2045,7 +2045,7 @@ function render(){
       const pl=document.createElement('div'); pl.className='plates';
       let on=!!(settings.machinePlates||{})[ex.name];
       const baseLb=(settings.machineBase||{})[ex.name]||0;
-      pl.innerHTML=`<label class="chk mach-plate-chk"><input type="checkbox"${on?' checked':''}>Plate-loaded machine</label><span class="plates-txt"></span><input class="in mach-base" type="number" inputmode="decimal" placeholder="0" value="${baseLb?dispWeight(baseLb):''}" title="machine's own base/sled weight before plates" style="width:64px;display:${on?'':'none'}">`;
+      pl.innerHTML=`<label class="chk mach-plate-chk"><input type="checkbox"${on?' checked':''}>Plate-Loaded Machine</label><span class="plates-txt"></span><input class="in mach-base" type="number" inputmode="decimal" placeholder="0" value="${baseLb?dispWeight(baseLb):''}" title="machine's own base/sled weight before plates" style="width:64px;display:${on?'':'none'}">`;
       const txtEl=pl.querySelector('.plates-txt'), baseIn=pl.querySelector('.mach-base');
       txtEl.style.display=on?'':'none';
       let liveLb=(state.sets.find(x=>x.w!=='')||{}).w; if(liveLb===undefined||liveLb==='') liveLb=(typeof sug==='number'&&sug>0)?sug:null;
@@ -2053,14 +2053,14 @@ function render(){
         if(!on) return;
         if(lb!=null&&lb!=='') liveLb=lb;
         const base=parseFloat(baseIn.value)||0;
-        txtEl.innerHTML=(liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)))?'per side: '+plateText(parseFloat(liveLb),{...ex,step:5},storeWeight(base))+' <span class="note-sm" style="display:inline">(est., assumes 1:1 loading)</span>':'enter a weight to see plates per side';
+        txtEl.innerHTML=(liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)))?'Per side: '+plateText(parseFloat(liveLb),{...ex,step:5},storeWeight(base))+' <span class="note-sm" style="display:inline">(est., assumes 1:1 loading)</span>':'Enter a weight to see plates per side';
       };
       pl.querySelector('.mach-plate-chk input').onchange=e=>{ on=e.target.checked; settings.machinePlates=settings.machinePlates||{}; settings.machinePlates[ex.name]=on; sset('settings',settings); txtEl.style.display=on?'':'none'; baseIn.style.display=on?'':'none'; updatePlates(); };
       baseIn.oninput=e=>{ settings.machineBase=settings.machineBase||{}; settings.machineBase[ex.name]=storeWeight(e.target.value); sset('settings',settings); updatePlates(); };
       updatePlates(); body.appendChild(pl);
     }
     if(plat){ const pt=document.createElement('div'); pt.className='plateau-tip'; pt.innerHTML=`No progress in 3 sessions. <span class="linkbtn" style="color:var(--amber)" data-act="variation">Try a variation</span>, take a lighter week (about 10% less, same reps), or switch the rep range for a few weeks. If several lifts feel stuck at once, <span class="linkbtn" style="color:var(--amber)" data-act="deload">consider a full deload week</span>.`; pt.querySelector('[data-act="variation"]').onclick=()=>openSwap(currentDay, ex); pt.querySelector('[data-act="deload"]').onclick=openDeloadSheet; body.appendChild(pt); }
-    if(ex.rotPrev){ const idx=day.exercises.indexOf(ex); const rt=document.createElement('div'); rt.className='plateau-tip'; rt.innerHTML=`Swapped in at the start of this block (was ${ex.rotPrev.name}). <span class="linkbtn" style="color:var(--amber)" data-act="undo">undo</span> · <span class="linkbtn" style="color:var(--amber)" data-act="never">never suggest this</span>`; rt.querySelector('[data-act="undo"]').onclick=()=>undoRotation(day,idx); rt.querySelector('[data-act="never"]').onclick=()=>rejectRotation(day,idx); body.appendChild(rt); }
+    if(ex.rotPrev){ const idx=day.exercises.indexOf(ex); const rt=document.createElement('div'); rt.className='plateau-tip'; rt.innerHTML=`Swapped in at the start of this block (was ${ex.rotPrev.name}). <span class="linkbtn" style="color:var(--amber)" data-act="undo">Undo</span> · <span class="linkbtn" style="color:var(--amber)" data-act="never">Never Suggest This</span>`; rt.querySelector('[data-act="undo"]').onclick=()=>undoRotation(day,idx); rt.querySelector('[data-act="never"]').onclick=()=>rejectRotation(day,idx); body.appendChild(rt); }
     if(sug===-1){ const fn=document.createElement('div'); fn.className='first-log-note'; fn.textContent='New lift — no history yet. Log a comfortable first set below; Lift Log will suggest a weight next time from what you log now.'; body.appendChild(fn); }
     else if(estFrom){ const fn=document.createElement('div'); fn.className='first-log-note'; fn.textContent=`New lift — the weight is a conservative estimate from ${estFrom} (same muscle group, adjusted for the implement and rep range). Adjust it to what feels right; Lift Log learns from what you log.`; body.appendChild(fn); }
 
@@ -2075,17 +2075,17 @@ function render(){
       if(bwLoaded) s.w=bwTotal(s);
       const addHint=bwLoaded?(state.sets.slice(0,i).map(x=>parseFloat(x.add)||0).filter(Boolean).pop()||lastAdd):0;
       const row=document.createElement('div'); row.className='setgrid';
-      row.innerHTML=`<div class="setnum">${i+1}</div><input type="number" inputmode="decimal" aria-label="Set ${i+1} ${bwLoaded?'added weight':'weight'}" placeholder="${bwLoaded?'+'+dispWeight(addHint):sug===null?'bw':sug===-1?unitLabel():dispWeight(sug)}" value="${bwLoaded?(s.add?dispWeight(s.add):''):(s.w?dispWeight(s.w):s.w)}"${bwLoaded?' title="extra weight held or worn (dumbbells, a dip belt) — leave blank for bodyweight only"':''}><input type="number" inputmode="numeric" aria-label="Set ${i+1} ${timed?'seconds':'reps'}" placeholder="${timed?'sec':'reps'}" value="${s.r}"><div class="setdone ${s.done?'on':''}" aria-label="set ${i+1} done" aria-pressed="${!!s.done}">${s.done?'✓':''}</div><div class="setrm" title="remove set" aria-label="remove set ${i+1}">✕</div>`;
+      row.innerHTML=`<div class="setnum">${i+1}</div><input type="number" inputmode="decimal" aria-label="Set ${i+1} ${bwLoaded?'added weight':'weight'}" placeholder="${bwLoaded?'+'+dispWeight(addHint):sug===null?'bw':sug===-1?unitLabel():dispWeight(sug)}" value="${bwLoaded?(s.add?dispWeight(s.add):''):(s.w?dispWeight(s.w):s.w)}"${bwLoaded?' title="extra weight held or worn (dumbbells, a dip belt) — leave blank for bodyweight only"':''}><input type="number" inputmode="numeric" aria-label="Set ${i+1} ${timed?'seconds':'reps'}" placeholder="${timed?'Sec':'Reps'}" value="${s.r}"><div class="setdone ${s.done?'on':''}" aria-label="set ${i+1} done" aria-pressed="${!!s.done}">${s.done?'✓':''}</div><div class="setrm" title="remove set" aria-label="remove set ${i+1}">✕</div>`;
       const [wI,rI]=row.querySelectorAll('input');
       if(bwLoaded) wI.oninput=e=>{s.add=e.target.value===''?'':storeWeight(e.target.value); s.w=bwTotal(s); touchDayStart(); sset('today:'+currentDay,todayData);};
       else wI.oninput=e=>{s.w=storeWeight(e.target.value); touchDayStart(); sset('today:'+currentDay,todayData); if(updatePlates) updatePlates(s.w);};
       rI.oninput=e=>{s.r=e.target.value; touchDayStart(); sset('today:'+currentDay,todayData);};
       row.querySelector('.setdone').onclick=()=>{
         if(hold.key===holdKey(ex,i)) stopHold(false); // fills s.r with the elapsed seconds before the check below
-        if(!s.done && s.r===''){ showToast(timed?'add the seconds first':'add reps first'); return; }
+        if(!s.done && s.r===''){ showToast(timed?'Add the seconds first':'Add reps first'); return; }
         s.done=!s.done; touchDayStart(); if(s.done&&settings.auto) startTimer(settings.smartRest?suggestedRest(ex):settings.rest); sset('today:'+currentDay,todayData); render();
       };
-      row.querySelector('.setrm').onclick=()=>{ if(state.sets.length<=1){ showToast('keep at least one set'); return; } state.sets.splice(i,1); touchDayStart(); sset('today:'+currentDay,todayData); render(); };
+      row.querySelector('.setrm').onclick=()=>{ if(state.sets.length<=1){ showToast('Keep at least one set'); return; } state.sets.splice(i,1); touchDayStart(); sset('today:'+currentDay,todayData); render(); };
       body.appendChild(row);
       if(timed&&!s.done){
         const running=hold.key===holdKey(ex,i);
@@ -2097,22 +2097,22 @@ function render(){
       }
       if(s.done){
         const rir=document.createElement('div'); rir.className='rir-row'; rir.setAttribute('role','group'); rir.setAttribute('aria-label',`Set ${i+1} reps left in tank`);
-        rir.innerHTML=`<span class="rir-lbl" aria-hidden="true">Reps left</span>`+[0,1,2,3,4].map(v=>`<span class="rir-pill${s.rir===v?' on':''}" data-v="${v}" aria-pressed="${s.rir===v}" aria-label="${v===4?'4 or more reps':v===1?'1 rep':v+' reps'} left">${v===4?'4+':v}</span>`).join('');
+        rir.innerHTML=`<span class="rir-lbl" aria-hidden="true">Reps Left</span>`+[0,1,2,3,4].map(v=>`<span class="rir-pill${s.rir===v?' on':''}" data-v="${v}" aria-pressed="${s.rir===v}" aria-label="${v===4?'4 or more reps':v===1?'1 rep':v+' reps'} left">${v===4?'4+':v}</span>`).join('');
         rir.querySelectorAll('.rir-pill').forEach(p=>p.onclick=()=>{ const v=parseInt(p.dataset.v); s.rir=(s.rir===v)?null:v; touchDayStart(); sset('today:'+currentDay,todayData); render(); });
         body.appendChild(rir);
       }
     });
-    const addset=document.createElement('button'); addset.type='button'; addset.className='addset'; addset.textContent='+ Add set';
+    const addset=document.createElement('button'); addset.type='button'; addset.className='addset'; addset.textContent='+ Add Set';
     addset.onclick=()=>{ const prev=state.sets[state.sets.length-1]; state.sets.push({w:ex.start===0?(latestBW()??''):'',r:'',done:false,rir:null,...(ex.start===0&&prev&&prev.add?{add:prev.add}:{})}); sset('today:'+currentDay,todayData); render(); }; body.appendChild(addset);
 
     const ta=document.createElement('textarea'); ta.className='notes'; ta.placeholder='Notes — seat setting, how it felt'; ta.value=notes[histKey(ex)]||'';
     ta.oninput=e=>{ notes[histKey(ex)]=e.target.value; sset('notes',notes); }; body.appendChild(ta);
 
     const lastToShow=saved?saved.sets:ex.seed;
-    if(lastToShow){ const parts=lastToShow.filter(s=>s.w||s.r).map(s=>(timed?`${s.r||'-'}s`:`${s.w?dispWeight(s.w):'-'}x${s.r||'-'}`)+`${s.rir!=null?' (RIR '+s.rir+')':''}`).join(', '); if(parts){ const d=document.createElement('div'); d.className='last-time'; d.textContent='last time'+(crossDaySub?` (${crossDaySub} day)`:'')+': '+parts; body.appendChild(d); } }
+    if(lastToShow){ const parts=lastToShow.filter(s=>s.w||s.r).map(s=>(timed?`${s.r||'-'}s`:`${s.w?dispWeight(s.w):'-'}x${s.r||'-'}`)+`${s.rir!=null?' (RIR '+s.rir+')':''}`).join(', '); if(parts){ const d=document.createElement('div'); d.className='last-time'; d.textContent='Last time'+(crossDaySub?` (${crossDaySub} day)`:'')+': '+parts; body.appendChild(d); } }
     card.appendChild(body); list.appendChild(card);
   });
-  document.getElementById('finishBtn').textContent=allComplete?'all sets done — finish session':'finish session';
+  document.getElementById('finishBtn').textContent=allComplete?'All Sets Done — Finish Session':'Finish Session';
 }
 
 // ---------- first-launch program builder ----------
@@ -2122,22 +2122,22 @@ function renderBuilder(panel){
   panel.style.display='block';
   panel.innerHTML=`
     <div class="greet-wrap">
-      <div class="greet-eyebrow">first launch</div>
+      <div class="greet-eyebrow">First Launch</div>
       <div class="greet-h1">Build your program</div>
       <div class="greet-sub">Four days a week — Upper and Lower, one heavy and one volume day each. Tick what your gym has and every slot gets a recommended exercise. Change any pick now, or swap later from the log.</div>
     </div>
     <div class="build-eq">${EQUIP_TYPES.map(t=>`<span class="eqchip${settings.equipFilter.includes(t)?' on':''}" data-t="${t}">${EQUIP_LABEL[t]}</span>`).join('')}</div>
-    ${PROGRAM.map(d=>`<div class="build-day"><div class="build-dh">${d.name} · ${d.sub}</div>${d.exercises.map((ex,i)=>`<div class="build-row${equipAllowed(ex)?'':' miss'}"><span class="bg">${ex.group}</span><span class="bn">${ex.name}<div class="bt">${ex.target}${equipAllowed(ex)?(ex.approx?` · <span class="bm">closest library match — trains ${MUSCLE_LABEL[ex.key]||ex.group} only as a secondary muscle</span>`:''):' · <span class="bm">nothing in the library for your equipment — change it, or tick more above</span>'}</div></span><span class="linkbtn bc" data-d="${d.id}" data-i="${i}">change</span></div>`).join('')}</div>`).join('')}
-    <button class="start-cta" id="buildDone">use this program</button>`;
+    ${PROGRAM.map(d=>`<div class="build-day"><div class="build-dh">${d.name} · ${d.sub}</div>${d.exercises.map((ex,i)=>`<div class="build-row${equipAllowed(ex)?'':' miss'}"><span class="bg">${ex.group}</span><span class="bn">${ex.name}<div class="bt">${ex.target}${equipAllowed(ex)?(ex.approx?` · <span class="bm">closest library match — trains ${MUSCLE_LABEL[ex.key]||ex.group} only as a secondary muscle</span>`:''):' · <span class="bm">nothing in the library for your equipment — change it, or tick more above</span>'}</div></span><span class="linkbtn bc" data-d="${d.id}" data-i="${i}">Change</span></div>`).join('')}</div>`).join('')}
+    <button class="start-cta" id="buildDone">Use This Program</button>`;
   panel.querySelectorAll('.eqchip').forEach(c=>c.onclick=()=>{
     const t=c.dataset.t; const next=settings.equipFilter.includes(t)?settings.equipFilter.filter(x=>x!==t):[...settings.equipFilter,t];
-    if(!next.length){ showToast('at least one equipment type stays on'); return; }
+    if(!next.length){ showToast('At least one equipment type stays on'); return; }
     settings.equipFilter=next; sset('settings',settings);
     const n=applyEquipPicks(PROGRAM); if(n) showToast(`${n} pick${n===1?'':'s'} changed for your equipment`);
     renderBuilder(panel);
   });
   panel.querySelectorAll('.bc').forEach(b=>b.onclick=()=>{ const day=PROGRAM.find(d=>d.id===b.dataset.d); openSwap(day.id, day.exercises[+b.dataset.i]); });
-  document.getElementById('buildDone').onclick=async()=>{ await sset('program',PROGRAM); needsBuild=false; showToast('program saved — edit it any time in Settings'); touchDayStart(); setView('log'); };
+  document.getElementById('buildDone').onclick=async()=>{ await sset('program',PROGRAM); needsBuild=false; showToast('Program saved — edit it any time in Settings'); touchDayStart(); setView('log'); };
 }
 
 // ---------- home: greeting + day carousel (returning user), first-open hero (new user), program builder ----------
@@ -2154,10 +2154,10 @@ function renderHome(){
         <div class="greet-h1">${settings.name?'Ready for cardio, '+settings.name+'?':'Ready for cardio?'}</div>
         <div class="greet-sub">${cardioReasonCopy().home}</div>
       </div>
-      <button class="start-cta" id="arrivalStart">go to cardio log</button>
+      <button class="start-cta" id="arrivalStart">Go to Cardio Log</button>
       <div class="greet-sub" style="margin-top:14px">Feeling fine? Tap a lift day to train it instead.</div>
       <div class="day-carousel">
-        ${PROGRAM.map(d=>`<div class="day-card ${dayType(d)}${d.id===currentDay?' today':''}" data-day="${d.id}">${d.id===currentDay?'<div class="ddot"></div>':''}<div class="dtag">${d.id===currentDay?'Today':''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub}</div><div class="dsub">${d.exercises.length} exercises</div></div>`).join('')}
+        ${PROGRAM.map(d=>`<div class="day-card ${dayType(d)}${d.id===currentDay?' today':''}" data-day="${d.id}">${d.id===currentDay?'<div class="ddot"></div>':''}<div class="dtag">${d.id===currentDay?'Today':''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub}</div><div class="dsub">${d.exercises.length} Exercises</div></div>`).join('')}
       </div>`;
     document.getElementById('arrivalStart').onclick=()=>setView('log');
     panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day, ()=>setView('log')));
@@ -2165,9 +2165,9 @@ function renderHome(){
   }
   const day=PROGRAM.find(d=>d.id===currentDay);
   const previewRows=day.exercises.slice(0,5).map(ex=>`<div class="preview-row"><span class="pn">${ex.name}</span><span class="pt">${fmtTarget(ex.target)}</span></div>`).join('');
-  const moreRow=day.exercises.length>5?`<span class="linkbtn preview-more" id="previewMore">+ ${day.exercises.length-5} more exercise${day.exercises.length-5===1?'':'s'}</span>`:'';
+  const moreRow=day.exercises.length>5?`<span class="linkbtn preview-more" id="previewMore">+ ${day.exercises.length-5} More Exercise${day.exercises.length-5===1?'':'s'}</span>`:'';
   const estMin=day.exercises.length*6;
-  const ctaTxt=sessionInProgress()?'return to log':`start ${day.name} — ${day.sub}`;
+  const ctaTxt=sessionInProgress()?'Return to Log':`Start ${day.name} — ${day.sub}`;
 
   if(sessionCount===0){
     const h1=settings.name?`Welcome, ${settings.name}! Your first session starts here`:'Your first session starts here';
@@ -2197,7 +2197,7 @@ function renderHome(){
         <div class="greet-sub">${dayLine}${lastTxt}</div>
       </div>
       <div class="day-carousel">
-        ${PROGRAM.map(d=>`<div class="day-card ${dayType(d)}${d.id===currentDay?' today':''}" data-day="${d.id}">${d.id===currentDay?'<div class="ddot"></div>':''}<div class="dtag">${d.id===currentDay?'Today':''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub}</div><div class="dsub">${d.exercises.length} exercises</div></div>`).join('')}
+        ${PROGRAM.map(d=>`<div class="day-card ${dayType(d)}${d.id===currentDay?' today':''}" data-day="${d.id}">${d.id===currentDay?'<div class="ddot"></div>':''}<div class="dtag">${d.id===currentDay?'Today':''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub}</div><div class="dsub">${d.exercises.length} Exercises</div></div>`).join('')}
       </div>
       <div class="preview-list">${previewRows}${moreRow}</div>
       <button class="start-cta" id="arrivalStart">${ctaTxt}</button>`;
@@ -2211,7 +2211,7 @@ async function finishSession(){
   const day=PROGRAM.find(d=>d.id===currentDay);
   const isLogged=st=>st.done||(st.w&&st.r);
   const worked=day.exercises.filter(ex=>{ const s=todayData[ex.name]; return s&&s.sets.some(isLogged); });
-  if(!worked.length){ showToast('log at least one set first'); return; }
+  if(!worked.length){ showToast('Log at least one set first'); return; }
   // every exercise's every set checked off is the same "done" the exercise list's own checkmark uses — anything
   // less (a skipped exercise, or a set left unchecked) gets a confirm rather than silently closing out the day,
   // since finishing also fires recovery, rotation-count and progress bookkeeping for the whole day at once.
@@ -2221,7 +2221,7 @@ async function finishSession(){
     const msg=skipped
       ? `${skipped} exercise${skipped===1?'':'s'} still ${skipped===1?"hasn't":"haven't"} been logged. Log this session anyway?`
       : `Not every set is checked off yet. Log this session as-is?`;
-    if(!await confirmSheet(msg, 'log it anyway')) return;
+    if(!await confirmSheet(msg, 'Log It Anyway')) return;
   }
   const now=Date.now();
 
@@ -2315,14 +2315,14 @@ function showCelebration({day,worked,nsets,vol,durationMin,pr,rhythmCount}){
     <div class="cel-sub">${worked} exercise${worked===1?'':'s'} · ${nsets} set${nsets===1?'':'s'} · ${durationMin}m</div>
     <div class="cel-stats">
       <div class="cel-stat"><b>${dispVol(vol).toLocaleString()}</b><span>${unitLabel()} moved</span></div>
-      <div class="cel-stat"><b>${nsets}</b><span>sets done</span></div>
-      <div class="cel-stat"><b>${durationMin}<span style="font-size:11px">m</span></b><span>duration</span></div>
+      <div class="cel-stat"><b>${nsets}</b><span>Sets Done</span></div>
+      <div class="cel-stat"><b>${durationMin}<span style="font-size:11px">m</span></b><span>Duration</span></div>
     </div>
     ${prHtml}
     <div class="rhythm-msg"><b>${ord(rhythmCount)} session this week</b> — ${rhythmRest}
       <div class="rhythm-dots">${Array.from({length:dotsTotal},(_,i)=>`<i class="${i<dotsOn?'on':''}"></i>`).join('')}</div>
     </div>
-    <button class="cel-cta" id="celBackBtn">return to home</button>`;
+    <button class="cel-cta" id="celBackBtn">Return to Home</button>`;
   bg.classList.add('on');
   document.getElementById('celBackBtn').onclick=()=>{ bg.classList.remove('on'); setView('home'); if(pendingBlockReview){ pendingBlockReview=false; openBlockSheet(); } };
 }
@@ -2343,7 +2343,7 @@ function renderOnboardStep(step){
     inner.innerHTML=`
       <div class="cel-h1">What should we call you?</div>
       <div class="cel-sub">Optional — used to personalize your greeting. Change it any time in Settings.</div>
-      <input class="in" id="onboardName" placeholder="your name" style="width:100%;max-width:280px;text-align:center;margin-bottom:18px;position:relative;z-index:2" value="${settings.name||''}">
+      <input class="in" id="onboardName" placeholder="Your name" style="width:100%;max-width:280px;text-align:center;margin-bottom:18px;position:relative;z-index:2" value="${settings.name||''}">
       <button class="cel-cta" id="onboardNext">Continue</button>`;
     document.getElementById('onboardName').oninput=e=>{ settings.name=e.target.value; };
     document.getElementById('onboardNext').onclick=()=>renderOnboardStep(3);
@@ -2363,12 +2363,12 @@ function renderOnboardStep(step){
         const j=JSON.parse(await f.text()); if(j.app!=='liftlog') throw 0;
         const replaceKeys=KEYS.filter(k=>!k.startsWith('today:')&&k!=='dayStart');
         for(const k of replaceKeys){ if(k in j.data) await sset(k,j.data[k]); }
-        showToast('restored — reloading');
+        showToast('Restored — reloading');
         setTimeout(()=>location.reload(),900);
       }catch(err){
         const err_=document.getElementById('onboardImportError');
         err_.style.display='block';
-        err_.innerHTML=`<div class="plateau-tip">That doesn't look like a Lift Log backup file. Try a different file above, or <span class="linkbtn" id="onboardImportSkip2" style="color:var(--amber)">skip and start fresh</span>.</div>`;
+        err_.innerHTML=`<div class="plateau-tip">That doesn't look like a Lift Log backup file. Try a different file above, or <span class="linkbtn" id="onboardImportSkip2" style="color:var(--amber)">Skip and Start Fresh</span>.</div>`;
         document.getElementById('onboardImportSkip2').onclick=()=>renderOnboardStep(4);
       }
       e.target.value='';
@@ -2412,34 +2412,34 @@ const CARDIO_TYPES=[
    desc:'6-10 rounds of 30s hard / 90s easy on a bike or rower. Raises your ceiling for sustained output. Give it 48h+ from your next Lower day.',
    cue:'Warm up 5 minutes easy first. On the hard 30s, push to about 8-9 out of 10 effort — hard enough that talking is not possible. Use the full 90s easy to bring your breathing back down before the next round. Quality over round count; stop if form or effort drops off badly.',
    demo:'HIIT interval training bike rower form'},
-  {key:'finisher',label:'Short finisher',
+  {key:'finisher',label:'Short Finisher',
    desc:'5-8 min bodyweight circuit (burpees, mountain climbers, jump rope) done for time, tacked onto a lifting day. Cheap work-capacity builder.',
    cue:'Pick 2-3 movements (e.g. burpees, mountain climbers, jump rope) and cycle through them for time with minimal rest. Move fast but keep form clean — a sloppy burpee is a wasted rep. This comes after lifting, not before, so your main lifts stay strong.',
    demo:'bodyweight finisher circuit workout'},
 ];
 let cardioDraft={type:'zone2',duration:'',distance:'',rpe:0,notes:'',showHow:false};
 function renderCardioForm(){
-  document.getElementById('dayLabel').innerHTML=`<span><span class="badge t-cardio">endurance</span>Conditioning</span><span class="linkbtn" id="cardioHistLink">history</span>`;
+  document.getElementById('dayLabel').innerHTML=`<span><span class="badge t-cardio">Endurance</span>Conditioning</span><span class="linkbtn" id="cardioHistLink">History</span>`;
   document.getElementById('cardioHistLink').onclick=()=>setView('history');
   const list=document.getElementById('exerciseList'); list.innerHTML='';
   const wrap=document.createElement('div'); wrap.className='exercise open';
   const t=CARDIO_TYPES.find(x=>x.key===cardioDraft.type);
   const yt='https://www.youtube.com/results?search_query='+encodeURIComponent(t.demo);
   wrap.innerHTML=`
-    <div class="ex-head" style="cursor:default"><div><div class="ex-name">Log a session</div><div class="ex-target">pick a type, fill in what applies</div></div></div>
+    <div class="ex-head" style="cursor:default"><div><div class="ex-name">Log a Session</div><div class="ex-target">Pick a type, fill in what applies</div></div></div>
     <div class="ex-body" style="display:block">
       <div class="ctype" id="ctypeRow">${CARDIO_TYPES.map(x=>`<span data-k="${x.key}" class="${x.key===cardioDraft.type?'on':''}">${x.label}</span>`).join('')}</div>
       <div class="cue">${t.desc}</div>
       <div style="margin-top:12px">${toolsBar(!!cardioDraft.showHow, yt, false, 'cardioHowtoBtn')}</div>
       ${cardioDraft.showHow?`<div class="cue" style="display:block">${t.cue}</div>`:''}
-      <div class="field-label">duration (minutes)</div>
+      <div class="field-label">Duration (minutes)</div>
       <div class="setgrid" style="grid-template-columns:1fr"><input type="number" inputmode="numeric" id="cDur" placeholder="e.g. 30" value="${cardioDraft.duration}"></div>
-      <div class="field-label">distance (optional, miles/km)</div>
+      <div class="field-label">Distance (optional, miles/km)</div>
       <div class="setgrid" style="grid-template-columns:1fr"><input type="text" inputmode="decimal" id="cDist" placeholder="e.g. 3.1 mi" value="${cardioDraft.distance}"></div>
-      <div class="field-label">effort (RPE, 1 easy - 10 max)</div>
+      <div class="field-label">Effort (RPE, 1 easy – 10 max)</div>
       <div class="rpe-row" id="rpeRow">${Array.from({length:10},(_,i)=>i+1).map(n=>`<div class="rpe-dot ${cardioDraft.rpe===n?'on':''}" data-n="${n}">${n}</div>`).join('')}</div>
-      <textarea class="notes" id="cNotes" placeholder="notes (route, how it felt…)">${cardioDraft.notes}</textarea>
-      <div class="row" style="margin-top:12px"><button class="btn primary" id="cardioLogBtn" style="flex:1">log session</button></div>
+      <textarea class="notes" id="cNotes" placeholder="Notes — route, how it felt">${cardioDraft.notes}</textarea>
+      <div class="row" style="margin-top:12px"><button class="btn primary" id="cardioLogBtn" style="flex:1">Log Session</button></div>
     </div>`;
   list.appendChild(wrap);
   document.getElementById('cardioHowtoBtn').onclick=()=>{ cardioDraft.showHow=!cardioDraft.showHow; renderCardioForm(); };
@@ -2453,14 +2453,14 @@ function renderCardioForm(){
   document.getElementById('resetLink').style.display='none';
 }
 async function logCardio(){
-  if(!cardioDraft.duration){ showToast('add a duration first'); return; }
+  if(!cardioDraft.duration){ showToast('Add a duration first'); return; }
   const rec={t:Date.now(), isCardio:true, ctype:cardioDraft.type, ctypeLabel:CARDIO_TYPES.find(x=>x.key===cardioDraft.type).label, duration:parseInt(cardioDraft.duration), distance:cardioDraft.distance, rpe:cardioDraft.rpe, notes:cardioDraft.notes};
   sessions.push(rec); await sset('sessions',sessions);
   cardioDraft={type:cardioDraft.type,duration:'',distance:'',rpe:0,notes:'',showHow:cardioDraft.showHow};
   // the suggestion usually moves on to the next lift day now — reload it so Home's greeting, its CTA and the
   // day-tab marker stop pointing at a cardio day that has just been done (this used to persist until a reload)
   await loadDay(suggestedDayId()); setView('home');
-  showToast('conditioning logged 🏃');
+  showToast('Conditioning logged 🏃');
   if(settings.autoBackup && backupDue()) setTimeout(()=>doExport(true),1200); else updateBackupUI();
 }
 
@@ -2482,7 +2482,7 @@ function buildHeatmap(){
     if(trained.has(key)){ const lvl=Math.max(1,Math.min(4,Math.ceil((byDay[key]||0)/maxV*4))); cell.className='h'+lvl; }
     grid.appendChild(cell);
   }
-  document.getElementById('heatStat').innerHTML=`<b>${count}</b> sessions · 14 weeks`;
+  document.getElementById('heatStat').innerHTML=`<b>${count}</b> Sessions · 14 Weeks`;
 }
 let calMonthOffset=0;
 function sessionType(s){ return s.isCardio?'cardio':(s.dayName==='Upper'?'upper':s.dayName==='Lower'?'lower':null); }
@@ -2514,41 +2514,41 @@ async function rederiveAfterSessionChange(names, dayId, t){
 }
 async function deleteSession(s){
   const label=s.isCardio?`${s.ctypeLabel} on ${fmtDate(s.t)}`:`${s.dayName} ${s.sub} on ${fmtDate(s.t)}`;
-  if(!await confirmSheet(`Delete ${label}? Its sets come out of your history and progress numbers. This cannot be undone.`, 'delete', null, true)) return false;
+  if(!await confirmSheet(`Delete ${label}? Its sets come out of your history and progress numbers. This cannot be undone.`, 'Delete', null, true)) return false;
   const i=sessionIndex(s); if(i<0) return false;
   sessions.splice(i,1); await sset('sessions',sessions);
   if(s.isCardio){ renderHeaderStats(); } else await rederiveAfterSessionChange(Object.keys(s.ex||{}), s.dayId, s.t);
-  showToast('session deleted'); return true;
+  showToast('Session deleted'); return true;
 }
 // edited: for a lift {ex:{name:[{w,r,rir}]}} (weights already in stored units), for cardio {duration,distance,rpe,notes}
 async function saveSessionEdit(s, edited){
   const i=sessionIndex(s); if(i<0) return;
-  if(s.isCardio){ Object.assign(sessions[i], edited); await sset('sessions',sessions); showToast('session updated'); return; }
+  if(s.isCardio){ Object.assign(sessions[i], edited); await sset('sessions',sessions); showToast('Session updated'); return; }
   const before=Object.keys(s.ex||{});
   const ex={}; Object.keys(edited.ex).forEach(n=>{ const sets=edited.ex[n].filter(x=>x.w!==''||x.r!==''); if(sets.length) ex[n]=sets; });
-  if(!Object.keys(ex).length){ sessions.splice(i,1); await sset('sessions',sessions); await rederiveAfterSessionChange(before, s.dayId, s.t); showToast('session deleted — nothing left in it'); return; }
+  if(!Object.keys(ex).length){ sessions.splice(i,1); await sset('sessions',sessions); await rederiveAfterSessionChange(before, s.dayId, s.t); showToast('Session deleted — nothing left in it'); return; }
   let vol=0,nsets=0;
   Object.entries(ex).forEach(([n,sets])=>{ const en=entryFor(n); const timed=!!(en&&en.target&&isTimedTarget(en.target)); sets.forEach(x=>{ nsets++; if(!timed) vol+=(parseFloat(x.w)||0)*(parseInt(x.r)||0); }); });
   sessions[i]={...s, ex, vol:Math.round(vol), sets:nsets}; await sset('sessions',sessions);
   await rederiveAfterSessionChange([...new Set([...before, ...Object.keys(ex)])], s.dayId, s.t);
-  showToast('session updated');
+  showToast('Session updated');
 }
 const RIR_OPTS=[['','RIR'],['0','0'],['1','1'],['2','2'],['3','3'],['4','4+']];
 function renderSessionEditForm(s, el, onDone){
   const det=el.querySelector('.sdet'); el.classList.add('open'); det.style.display='block';
   if(s.isCardio){
-    det.innerHTML=`<div class="field-label">duration (minutes)</div><input class="in" id="seDur" type="number" inputmode="numeric" value="${s.duration||''}" style="width:100%">
-      <div class="field-label">distance (optional)</div><input class="in" id="seDist" type="text" value="${s.distance||''}" style="width:100%">
-      <div class="field-label">effort (RPE)</div><select class="in" id="seRpe" style="width:100%"><option value="0">—</option>${Array.from({length:10},(_,k)=>k+1).map(n=>`<option value="${n}"${s.rpe===n?' selected':''}>${n}</option>`).join('')}</select>
-      <textarea class="notes" id="seNotes" placeholder="notes">${s.notes||''}</textarea>
-      <div class="se-foot"><button class="btn" data-act="cancel">cancel</button><button class="btn primary" data-act="save">save</button></div>`;
-    det.querySelector('[data-act="save"]').onclick=async e=>{ e.stopPropagation(); const dur=parseInt(det.querySelector('#seDur').value); if(!dur){ showToast('add a duration'); return; } await saveSessionEdit(s,{duration:dur,distance:det.querySelector('#seDist').value.trim(),rpe:parseInt(det.querySelector('#seRpe').value)||0,notes:det.querySelector('#seNotes').value}); onDone(); };
+    det.innerHTML=`<div class="field-label">Duration (minutes)</div><input class="in" id="seDur" type="number" inputmode="numeric" value="${s.duration||''}" style="width:100%">
+      <div class="field-label">Distance (optional)</div><input class="in" id="seDist" type="text" value="${s.distance||''}" style="width:100%">
+      <div class="field-label">Effort (RPE)</div><select class="in" id="seRpe" style="width:100%"><option value="0">—</option>${Array.from({length:10},(_,k)=>k+1).map(n=>`<option value="${n}"${s.rpe===n?' selected':''}>${n}</option>`).join('')}</select>
+      <textarea class="notes" id="seNotes" placeholder="Notes">${s.notes||''}</textarea>
+      <div class="se-foot"><button class="btn" data-act="cancel">Cancel</button><button class="btn primary" data-act="save">Save</button></div>`;
+    det.querySelector('[data-act="save"]').onclick=async e=>{ e.stopPropagation(); const dur=parseInt(det.querySelector('#seDur').value); if(!dur){ showToast('Add a duration'); return; } await saveSessionEdit(s,{duration:dur,distance:det.querySelector('#seDist').value.trim(),rpe:parseInt(det.querySelector('#seRpe').value)||0,notes:det.querySelector('#seNotes').value}); onDone(); };
   } else {
     const removed=new Set();
-    det.innerHTML=`<div class="se-row" style="margin-top:4px"><span></span><span class="n">${unitLabel()}</span><span class="n">reps</span><span class="n">RIR</span></div>`+Object.entries(s.ex).map(([n,sets])=>`<div class="se-ex" data-name="${n.replace(/"/g,'&quot;')}"><div class="se-head"><b style="font-weight:normal;color:var(--text)">${n}</b><span class="linkbtn" data-act="rm">remove</span></div>
+    det.innerHTML=`<div class="se-row" style="margin-top:4px"><span></span><span class="n">${unitLabel()}</span><span class="n">reps</span><span class="n">RIR</span></div>`+Object.entries(s.ex).map(([n,sets])=>`<div class="se-ex" data-name="${n.replace(/"/g,'&quot;')}"><div class="se-head"><b style="font-weight:normal;color:var(--text)">${n}</b><span class="linkbtn" data-act="rm">Remove</span></div>
       ${sets.map((x,k)=>`<div class="se-row"><span class="n">${k+1}</span><input class="in" type="number" inputmode="decimal" placeholder="—" value="${x.w?dispWeight(x.w):''}"><input class="in" type="number" inputmode="numeric" placeholder="—" value="${x.r||''}"><select class="in">${RIR_OPTS.map(([v,l])=>`<option value="${v}"${String(x.rir??'')===v?' selected':''}>${l}</option>`).join('')}</select></div>`).join('')}</div>`).join('')+
       `<div class="note-sm" style="margin-top:8px">Blank both fields to drop a set. Weights are in ${unitLabel()}.</div>
-      <div class="se-foot"><button class="btn" data-act="cancel">cancel</button><button class="btn primary" data-act="save">save</button></div>`;
+      <div class="se-foot"><button class="btn" data-act="cancel">Cancel</button><button class="btn primary" data-act="save">Save</button></div>`;
     det.querySelectorAll('.se-ex [data-act="rm"]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const box=b.closest('.se-ex'); removed.add(box.dataset.name); box.style.display='none'; });
     det.querySelector('[data-act="save"]').onclick=async e=>{ e.stopPropagation(); const ex={};
       det.querySelectorAll('.se-ex').forEach(box=>{ const n=box.dataset.name; if(removed.has(n)) return; ex[n]=[...box.querySelectorAll('.se-row')].map(row=>{ const [wI,rI]=row.querySelectorAll('input'); const sel=row.querySelector('select'); return {w:wI.value===''?'':storeWeight(wI.value), r:rI.value, rir:sel.value===''?null:parseInt(sel.value)}; }); });
@@ -2561,7 +2561,7 @@ function renderSessionEditForm(s, el, onDone){
 // apart. forceOpen skips the tap-to-expand step; editable adds edit/delete controls (the day sheet only).
 function buildSessionItem(s, forceOpen, editable){
   const el=document.createElement('div'); el.className='sess'+(forceOpen?' open':'');
-  const acts=editable?`<span style="white-space:nowrap"><span class="linkbtn" data-act="edit">edit</span> · <span class="linkbtn" data-act="del">delete</span></span>`:'';
+  const acts=editable?`<span style="white-space:nowrap"><span class="linkbtn" data-act="edit">Edit</span> · <span class="linkbtn" data-act="del">Delete</span></span>`:'';
   if(s.isCardio){
     el.innerHTML=`<div class="sh"><span>${fmtDate(s.t)}</span><span style="color:var(--text-dim)">${s.ctypeLabel}${acts?' &nbsp;'+acts:''}</span></div><div class="sm">${s.duration} min${s.distance?' · '+s.distance:''}${s.rpe?' · RPE '+s.rpe:''}</div><div class="sdet" style="${s.notes?'display:block;':''}border:none;padding-top:4px">${s.notes||''}</div>`;
   } else {
@@ -2649,9 +2649,9 @@ function renderHistory(){
   const thisWeek=lifts.filter(s=>s.t>=week).length, thisMonth=lifts.filter(s=>s.t>=month).length;
   const cardioWeekMin=cardio.filter(s=>s.t>=week).reduce((a,b)=>a+(b.duration||0),0);
   const wk=weekRanges(8).map(([a,b])=>lifts.filter(s=>s.t>=a&&s.t<b).length);
-  st.innerHTML=`<div class="stat"><div class="v ${thisWeek>=4?'up':''}">${thisWeek}<span style="font-size:12px;color:var(--text-dim)"> / 4</span></div><div class="l">lifting sessions this week</div></div>
-    <div class="stat"><div class="v">${thisMonth}</div><div class="l">lifting, last 30 days</div>${sparkline(wk,'var(--green)')}</div>
-    <div class="stat" style="grid-column:1 / -1"><div class="v ${cardioWeekMin>=60?'up':''}">${cardioWeekMin} min</div><div class="l">conditioning this week (2-3 sessions/wk is the target)</div></div>`;
+  st.innerHTML=`<div class="stat"><div class="v ${thisWeek>=4?'up':''}">${thisWeek}<span style="font-size:12px;color:var(--text-dim)"> / 4</span></div><div class="l">Lifting Sessions This Week</div></div>
+    <div class="stat"><div class="v">${thisMonth}</div><div class="l">Lifting, Last 30 Days</div>${sparkline(wk,'var(--green)')}</div>
+    <div class="stat" style="grid-column:1 / -1"><div class="v ${cardioWeekMin>=60?'up':''}">${cardioWeekMin} min</div><div class="l">Conditioning This Week (target: 2–3 sessions)</div></div>`;
 }
 
 // ---------- strength view ----------
@@ -2722,8 +2722,8 @@ function renderStrength(){
     const sdTxt=isTimedTarget(ex.target)?'timed hold — counted as sets, not scored for strength':`best set ${bestTxt} · ${fullH.length?fullH.length+' session'+(fullH.length>1?'s':'')+' logged':'your starting numbers'}`;
     const pastTxt=day.past?` · last done ${fmtDate(fullH[fullH.length-1].t)}, not in your program now`:'';
     const k=histKey(ex);
-    const baseTxt=isTimedTarget(ex.target)?'':baselines[k]?` · <span class="linkbtn" data-act="baseline-undo">baseline reset ${fmtDate(baselines[k])} — undo</span>`:(fullH.length>=2?` · <span class="linkbtn" data-act="baseline">reset baseline</span>`:'');
-    row.innerHTML=`<div><div class="sn">${ex.name} <span class="badge ${dayType(day)}">${day.sub}</span>${plat?'<span class="badge plateau">plateau</span>':''}</div><div class="sd">${sdTxt}${shareTxt}${pastTxt}${baseTxt}</div><div class="sd" data-scrub-readout style="display:none"></div></div><div class="sp ${cls}">${p===null?'start':fmtPct(p)}</div>${h.length?`<div class="scrub" tabindex="0" aria-label="${ex.name} trend. Drag across it, or use the arrow keys, to see each session.">${sparkline([base,...h.map(x=>x.e1rm)],cls==='down'?'var(--amber)':'var(--green)',milestoneIdx)}</div>`:''}`;
+    const baseTxt=isTimedTarget(ex.target)?'':baselines[k]?` · <span class="linkbtn" data-act="baseline-undo">Baseline Reset ${fmtDate(baselines[k])} — Undo</span>`:(fullH.length>=2?` · <span class="linkbtn" data-act="baseline">Reset Baseline</span>`:'');
+    row.innerHTML=`<div><div class="sn">${ex.name} <span class="badge ${dayType(day)}">${day.sub}</span>${plat?'<span class="badge plateau">Plateau</span>':''}</div><div class="sd">${sdTxt}${shareTxt}${pastTxt}${baseTxt}</div><div class="sd" data-scrub-readout style="display:none"></div></div><div class="sp ${cls}">${p===null?'Start':fmtPct(p)}</div>${h.length?`<div class="scrub" tabindex="0" aria-label="${ex.name} trend. Drag across it, or use the arrow keys, to see each session.">${sparkline([base,...h.map(x=>x.e1rm)],cls==='down'?'var(--amber)':'var(--green)',milestoneIdx)}</div>`:''}`;
     const rowWrap=row.querySelector('.scrub');
     if(rowWrap){
       // point 0 is the baseline itself (from pre-app seed numbers or the first session), so it has no set to show.
@@ -2735,9 +2735,9 @@ function renderStrength(){
       bindScrub(rowWrap);
       rowWrap._scrub={pts,coords:sparkCoords(vals,300,26,2),w:300,h:26,pad:2,color:cls==='down'?'var(--amber)':'var(--green)',
         onShow:pt=>{
-          spEl.textContent=pt.t===null?'start':fmtPct(pt.p);
+          spEl.textContent=pt.t===null?'Start':fmtPct(pt.p);
           spEl.className='sp '+(pt.p===null||Math.abs(pt.p)<0.05?'flat':pt.p>0?'up':'down');
-          readout.textContent=pt.t===null?'your starting numbers':`${fmtDate(pt.t)} · best set ${dispWeight(pt.w)} ${unitLabel()} × ${pt.r}`;
+          readout.textContent=pt.t===null?'Your Starting Numbers':`${fmtDate(pt.t)} · best set ${dispWeight(pt.w)} ${unitLabel()} × ${pt.r}`;
           sdEl.style.display='none'; readout.style.display='';
         },
         onReset:()=>{ spEl.textContent=rest.txt; spEl.className=rest.cls; readout.style.display='none'; sdEl.style.display=''; }};
@@ -2765,15 +2765,15 @@ function renderStrength(){
   document.getElementById('lowerStrCard').classList.toggle('open',!!strCardOpen.lower);
   document.getElementById('upperStrCard').style.display=strCardOpen.lower?'none':'';
   document.getElementById('lowerStrCard').style.display=strCardOpen.upper?'none':'';
-  document.getElementById('upperStrHint').textContent=strCardOpen.upper?'hide exercises':'see exercises';
-  document.getElementById('lowerStrHint').textContent=strCardOpen.lower?'hide exercises':'see exercises';
+  document.getElementById('upperStrHint').textContent=strCardOpen.upper?'Hide Exercises':'See Exercises';
+  document.getElementById('lowerStrHint').textContent=strCardOpen.lower?'Hide Exercises':'See Exercises';
   const avg=changes.length?changes.reduce((a,b)=>a+b,0)/changes.length:null;
   const upperP=pct(upperBase,upperTotal), lowerP=pct(lowerBase,lowerTotal);
 
   const heroNum=document.getElementById('strHeroNum');
-  heroNum.textContent=avg===null?'start':fmtPct(avg);
+  heroNum.textContent=avg===null?'Start':fmtPct(avg);
   heroNum.className='str-hero-num'+trendCls(avg);
-  document.getElementById('strHeroLbl').textContent=avg===null?'current baseline':'stronger than where you started';
+  document.getElementById('strHeroLbl').textContent=avg===null?'Current Baseline':'Stronger Than Where You Started';
   const bwPill=document.getElementById('strBwPill');
   const bodyTotal=upperTotal+lowerTotal, bodyBase=upperBase+lowerBase;
   if(bodyweight.length&&bodyBase&&bodyTotal){
@@ -2783,7 +2783,7 @@ function renderStrength(){
   } else bwPill.style.display='none';
   const renderSplitCard=(p,series,numId,sparkId,scrubId,hintId)=>{
     const numEl=document.getElementById(numId), hintEl=document.getElementById(hintId);
-    numEl.textContent=p===null?'start':fmtPct(p);
+    numEl.textContent=p===null?'Start':fmtPct(p);
     numEl.className='str-split-num'+trendCls(p);
     const sess=perSession(series), vals=sess.map(x=>x.p);
     // color from the same aggregate p driving numEl above, not from this series' own first/last points —
@@ -2817,21 +2817,21 @@ function renderStrength(){
 // screen and stays put until you tap the card again. Taps inside the exercise list don't toggle the card.
 document.getElementById('upperStrCard').onclick=e=>{ if(e.target.closest('.str-card-exlist')) return; strCardOpen.upper=!strCardOpen.upper; strCardOpen.lower=false; renderStrength(); };
 document.getElementById('lowerStrCard').onclick=e=>{ if(e.target.closest('.str-card-exlist')) return; strCardOpen.lower=!strCardOpen.lower; strCardOpen.upper=false; renderStrength(); };
-document.getElementById('bwLog').onclick=async()=>{ const raw=parseNum(document.getElementById('bwInput').value); if(!raw||raw<=0){ showToast('enter a weight like 168.5'); return; } bodyweight.push({t:Date.now(),w:storeBW(raw)}); await sset('bodyweight',bodyweight); document.getElementById('bwInput').value=''; showToast('body weight logged'); renderStrength(); updateBwUI(); };
+document.getElementById('bwLog').onclick=async()=>{ const raw=parseNum(document.getElementById('bwInput').value); if(!raw||raw<=0){ showToast('Enter a weight like 168.5'); return; } bodyweight.push({t:Date.now(),w:storeBW(raw)}); await sset('bodyweight',bodyweight); document.getElementById('bwInput').value=''; showToast('Body weight logged'); renderStrength(); updateBwUI(); };
 
 // ---------- more: settings, editor, data ----------
-function renderSettings(){ document.getElementById('nameInput').value=settings.name||''; document.getElementById('nameInput').oninput=e=>{ settings.name=e.target.value; sset('settings',settings); }; document.getElementById('restSel').value=String(settings.rest); document.getElementById('autoTimer').checked=!!settings.auto; document.getElementById('autoBackup').checked=!!settings.autoBackup; document.getElementById('smartRestChk').checked=!!settings.smartRest; document.getElementById('restSelLbl').textContent=settings.smartRest?'fallback rest':'default rest'; document.getElementById('unitSel').value=settings.unit||'lb'; updateBackupUI();
+function renderSettings(){ document.getElementById('nameInput').value=settings.name||''; document.getElementById('nameInput').oninput=e=>{ settings.name=e.target.value; sset('settings',settings); }; document.getElementById('restSel').value=String(settings.rest); document.getElementById('autoTimer').checked=!!settings.auto; document.getElementById('autoBackup').checked=!!settings.autoBackup; document.getElementById('smartRestChk').checked=!!settings.smartRest; document.getElementById('restSelLbl').textContent=settings.smartRest?'Fallback Rest':'Default Rest'; document.getElementById('unitSel').value=settings.unit||'lb'; updateBackupUI();
   document.getElementById('storageInfo').textContent = store.mode==='local'?'Data is saved on this device. Export a backup now and then so it is never trapped on one phone.':store.mode==='idb'?'Data is saved on this device (using this browser’s IndexedDB storage). Export a backup now and then so it is never trapped on one phone.':'Storage unavailable in this browser — nothing will be saved after you close the page.';
   const eqBox=document.getElementById('equipChks');
   if(!eqBox.children.length) eqBox.innerHTML=EQUIP_TYPES.map(t=>`<label class="chk"><input type="checkbox" value="${t}"> ${EQUIP_LABEL[t]}</label>`).join('');
   document.querySelectorAll('#equipChks input').forEach(i=>{ i.checked=settings.equipFilter.includes(i.value); i.onchange=()=>{
     const picked=[...document.querySelectorAll('#equipChks input:checked')].map(x=>x.value);
     settings.equipFilter=picked.length?picked:EQUIP_TYPES.slice(); sset('settings',settings);
-    if(!picked.length){ showToast('at least one equipment type stays on'); renderSettings(); }
+    if(!picked.length){ showToast('At least one equipment type stays on'); renderSettings(); }
   }; });
   const nl=document.getElementById('neverList'); const never=settings.neverSuggest||[];
   nl.style.display=never.length?'':'none';
-  if(never.length){ nl.innerHTML=`Never suggested: ${never.join(', ')} · <span class="linkbtn" id="neverClear">clear</span>`; document.getElementById('neverClear').onclick=async()=>{ settings.neverSuggest=[]; await sset('settings',settings); renderSettings(); showToast('cleared'); }; }
+  if(never.length){ nl.innerHTML=`Never suggested: ${never.join(', ')} · <span class="linkbtn" id="neverClear">Clear</span>`; document.getElementById('neverClear').onclick=async()=>{ settings.neverSuggest=[]; await sset('settings',settings); renderSettings(); showToast('Cleared'); }; }
   document.getElementById('autoRotateChk').checked=!!settings.autoRotate; document.getElementById('blockWeeksSel').value=String(settings.blockWeeks||4);
   document.getElementById('rotateEveryRow').style.display=settings.autoRotate?'':'none';
 }
@@ -2847,12 +2847,12 @@ function renderEditor(){
   const day=PROGRAM.find(d=>d.id===sel.value); const list=document.getElementById('edList'); list.innerHTML='';
   day.exercises.forEach((ex,i)=>{
     const r=document.createElement('div'); r.className='edrow';
-    r.innerHTML=`<div><div>${ex.name}</div><div class="m">${isPrimarySlot(i)?'primary · ':''}${ex.group} · ${ex.target} · ${ex.m.map(k=>MUSCLE_LABEL[k]).join(', ')}</div></div><div class="acts"><span title="swap" aria-label="swap ${ex.name}">↔</span><span aria-label="move ${ex.name} up">↑</span><span aria-label="move ${ex.name} down">↓</span><span class="x" aria-label="remove ${ex.name}">✕</span></div>`;
+    r.innerHTML=`<div><div>${ex.name}</div><div class="m">${isPrimarySlot(i)?'Primary · ':''}${ex.group} · ${ex.target} · ${ex.m.map(k=>MUSCLE_LABEL[k]).join(', ')}</div></div><div class="acts"><span title="swap" aria-label="swap ${ex.name}">↔</span><span aria-label="move ${ex.name} up">↑</span><span aria-label="move ${ex.name} down">↓</span><span class="x" aria-label="remove ${ex.name}">✕</span></div>`;
     const [ren,up,dn,x]=r.querySelectorAll('.acts span');
     ren.onclick=()=>openSwap(day.id, ex);
     up.onclick=()=>{ if(i>0){ day.exercises.splice(i-1,0,day.exercises.splice(i,1)[0]); saveProgram(); } };
     dn.onclick=()=>{ if(i<day.exercises.length-1){ day.exercises.splice(i+1,0,day.exercises.splice(i,1)[0]); saveProgram(); } };
-    x.onclick=async()=>{ if(await confirmSheet(`Remove ${ex.name} from ${day.name} ${day.sub}?`, 'remove', null, true)){ day.exercises.splice(i,1); saveProgram(); } };
+    x.onclick=async()=>{ if(await confirmSheet(`Remove ${ex.name} from ${day.name} ${day.sub}?`, 'Remove', null, true)){ day.exercises.splice(i,1); saveProgram(); } };
     list.appendChild(r);
   });
   const mus=document.getElementById('adMuscles'); if(!mus.children.length) mus.innerHTML=Object.keys(MUSCLE_LABEL).map(k=>`<label class="chk"><input type="checkbox" value="${k}">${MUSCLE_LABEL[k]}</label>`).join('');
@@ -2863,19 +2863,19 @@ document.getElementById('adBtn').onclick=()=>{
   const startRaw=document.getElementById('adStart').value, stepRaw=document.getElementById('adStep').value;
   const start=startRaw?storeWeight(startRaw):0, step=stepRaw?storeWeight(stepRaw):5, cue=document.getElementById('adCue').value.trim();
   const m=[...document.querySelectorAll('#adMuscles input:checked')].map(i=>i.value);
-  if(!name){ showToast('give it a name'); return; } if(!m.length){ showToast('pick at least one muscle'); return; }
+  if(!name){ showToast('Give it a name'); return; } if(!m.length){ showToast('Pick at least one muscle'); return; }
   const day=PROGRAM.find(d=>d.id===document.getElementById('edDay').value);
   day.exercises.push({group,name,target,m,seed:null,start,step,cue}); saveProgram();
-  ['adName','adGroup','adTarget','adStart','adStep','adCue'].forEach(id=>document.getElementById(id).value=''); document.querySelectorAll('#adMuscles input').forEach(i=>i.checked=false); showToast('added');
+  ['adName','adGroup','adTarget','adStart','adStep','adCue'].forEach(id=>document.getElementById(id).value=''); document.querySelectorAll('#adMuscles input').forEach(i=>i.checked=false); showToast('Added');
 };
-document.getElementById('edReset').onclick=async()=>{ if(await confirmSheet('Reset all four days to the recommended program for your equipment? Your logged data stays.', 'reset', null, true)){ PROGRAM=buildProgram(); applyEquipPicks(PROGRAM); await sset('program',PROGRAM); document.getElementById('edDay').innerHTML=''; renderEditor(); showToast('program reset'); } };
+document.getElementById('edReset').onclick=async()=>{ if(await confirmSheet('Reset all four days to the recommended program for your equipment? Your logged data stays.', 'Reset', null, true)){ PROGRAM=buildProgram(); applyEquipPicks(PROGRAM); await sset('program',PROGRAM); document.getElementById('edDay').innerHTML=''; renderEditor(); showToast('Program reset'); } };
 
 let lastBackup=0;
 async function doExport(silent){
   const out={}; for(const k of KEYS){ out[k]=await sget(k); }
   const blob=new Blob([JSON.stringify({app:'liftlog',v:1,exported:new Date().toISOString(),data:out},null,1)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`liftlog-backup-${new Date().toISOString().slice(0,10)}.json`; document.body.appendChild(a); a.click(); a.remove();
-  lastBackup=Date.now(); await sset('lastBackup',lastBackup); updateBackupUI(); showToast(silent?'weekly backup downloaded':'backup downloaded');
+  lastBackup=Date.now(); await sset('lastBackup',lastBackup); updateBackupUI(); showToast(silent?'Weekly backup downloaded':'Backup downloaded');
 }
 function backupDue(){ return !lastBackup || (Date.now()-lastBackup) > 7*864e5; }
 function updateBackupUI(){
@@ -2886,9 +2886,9 @@ function updateDeloadUI(){
   document.getElementById('deloadBanner').style.display = (deloadDue() && sessions.length) ? 'flex':'none';
   const active=document.getElementById('deloadActiveBanner');
   if(isDeloadActive()){
-    active.innerHTML=`<span>Deload week — suggested weights are about 10% lighter through ${fmtDate(deloadStart+7*864e5)}.</span><span class="linkbtn" id="endDeloadBtn">end early</span>`;
+    active.innerHTML=`<span>Deload week — suggested weights are about 10% lighter through ${fmtDate(deloadStart+7*864e5)}.</span><span class="linkbtn" id="endDeloadBtn">End Early</span>`;
     active.style.display='flex';
-    document.getElementById('endDeloadBtn').onclick=async()=>{ deloadStart=0; await sset('deloadStart',0); updateDeloadUI(); render(); showToast('deload week ended'); };
+    document.getElementById('endDeloadBtn').onclick=async()=>{ deloadStart=0; await sset('deloadStart',0); updateDeloadUI(); render(); showToast('Deload week ended'); };
   } else active.style.display='none';
 }
 // ---------- body weight: staleness reminder + rate-of-change note ----------
@@ -2919,7 +2919,7 @@ document.getElementById('deloadBannerBtn').onclick=openDeloadSheet;
 document.getElementById('startDeloadBtn').onclick=async()=>{
   deloadStart=Date.now(); lastDeload=deloadStart;
   await sset('deloadStart',deloadStart); await sset('lastDeload',lastDeload);
-  closeDeloadSheet(); updateDeloadUI(); render(); showToast('deload week started — suggestions are ~10% lighter');
+  closeDeloadSheet(); updateDeloadUI(); render(); showToast('Deload week started — suggestions are ~10% lighter');
 };
 document.getElementById('exportBtn').onclick=()=>doExport(false);
 document.getElementById('bannerBtn').onclick=()=>doExport(false);
@@ -3001,13 +3001,13 @@ document.getElementById('importFile').onchange=async e=>{
   const f=e.target.files[0]; if(!f) return;
   try{
     const j=JSON.parse(await f.text()); if(j.app!=='liftlog') throw 0;
-    if(importMode==='merge'){ await doMergeImport(j.data); showToast('merged — reloading'); }
-    else{ const replaceKeys=KEYS.filter(k=>!k.startsWith('today:')&&k!=='dayStart'); for(const k of replaceKeys){ if(k in j.data) await sset(k,j.data[k]); } showToast('restored — reloading'); }
+    if(importMode==='merge'){ await doMergeImport(j.data); showToast('Merged — reloading'); }
+    else{ const replaceKeys=KEYS.filter(k=>!k.startsWith('today:')&&k!=='dayStart'); for(const k of replaceKeys){ if(k in j.data) await sset(k,j.data[k]); } showToast('Restored — reloading'); }
     setTimeout(()=>location.reload(),900);
-  }catch(err){ showToast('that file is not a Lift Log backup'); }
+  }catch(err){ showToast('That file is not a Lift Log backup'); }
   e.target.value='';
 };
-document.getElementById('wipeBtn').onclick=async()=>{ if(await confirmSheet('Erase all workouts, history and settings on this device?', 'erase', null, true)&&await confirmSheet('Really erase? This cannot be undone.', 'erase everything', null, true)){ for(const k of KEYS) await sset(k,null); location.reload(); } };
+document.getElementById('wipeBtn').onclick=async()=>{ if(await confirmSheet('Erase all workouts, history and settings on this device?', 'Erase', null, true)&&await confirmSheet('Really erase? This cannot be undone.', 'Erase Everything', null, true)){ for(const k of KEYS) await sset(k,null); location.reload(); } };
 
 // ---------- swap ----------
 function closeSheet(){ document.getElementById('sheet').classList.remove('on'); document.getElementById('sheetBg').classList.remove('on'); }
@@ -3079,7 +3079,7 @@ function openSwap(dayId, ex){
   const render1=(alt,tag,searchable)=>{
     const el=document.createElement('div'); el.className='alt'+(searchable?' alt-searchable':'');
     if(searchable) el.dataset.name=alt.name.toLowerCase();
-    el.innerHTML=`<div class="an">${alt.name}${tag?` <span class="e1rm">· ${tag}</span>`:''}</div><div class="am">${slotTargetFor(slotTarget,alt)} · ${alt.m.map(k=>MUSCLE_LABEL[k]).join(', ')}</div><div class="ac">${alt.cue||''}</div><div class="ab"><button class="btn primary">use this</button></div>`;
+    el.innerHTML=`<div class="an">${alt.name}${tag?` <span class="e1rm">· ${tag}</span>`:''}</div><div class="am">${slotTargetFor(slotTarget,alt)} · ${alt.m.map(k=>MUSCLE_LABEL[k]).join(', ')}</div><div class="ac">${alt.cue||''}</div><div class="ab"><button class="btn primary">Use This</button></div>`;
     el.querySelector('button').onclick=()=>{ doSwap(day, idx, alt); };
     list.appendChild(el);
   };
@@ -3088,7 +3088,7 @@ function openSwap(dayId, ex){
   // the same rule-based pick a block review would make for this slot, shown first
   const suggested=pickForSlot(day, idx, allNamesInUse());
   if(suggested){ const h=document.createElement('div'); h.className='alt-sec'; h.textContent='Suggested for this slot'; list.appendChild(h); render1(suggested, (isPlateau(ex)?'a fresh variation to break the stall':'a fresh variation')+(suggested.lib?' · from the full library':'')); seen.add(suggested.name);
-    const skip=document.createElement('div'); skip.className='note-sm'; skip.style.margin='-4px 0 10px'; skip.innerHTML=`Not for you? <span class="linkbtn">never suggest ${suggested.name}</span>`; skip.querySelector('.linkbtn').onclick=async()=>{ await neverSuggest(suggested.name); openSwap(dayId, ex); }; list.appendChild(skip); }
+    const skip=document.createElement('div'); skip.className='note-sm'; skip.style.margin='-4px 0 10px'; skip.innerHTML=`Not for you? <span class="linkbtn">Never suggest ${suggested.name}</span>`; skip.querySelector('.linkbtn').onclick=async()=>{ await neverSuggest(suggested.name); openSwap(dayId, ex); }; list.appendChild(skip); }
   if(original && original.name!==ex.name){ const h=document.createElement('div'); h.className='alt-sec'; h.textContent='Original'; list.appendChild(h); render1(original,'back to the program'); seen.add(original.name); }
   const h1=document.createElement('div'); h1.className='alt-sec'; h1.textContent=`${ex.group} alternatives`; list.appendChild(h1);
   // same-group options: the curated pool for this group (the program's own recommended picks live there too)
@@ -3106,13 +3106,13 @@ function openSwap(dayId, ex){
   const libResults=document.createElement('div'); list.appendChild(libResults);
 
   const h2=document.createElement('div'); h2.className='alt-sec'; h2.textContent='Something else'; list.appendChild(h2);
-  const c=document.createElement('div'); c.className='alt'; c.innerHTML=`<div class="an">Custom name</div><div class="am">Keeps this slot's muscles and rep range; just renames it (e.g. a different machine brand).</div><div class="ab"><button class="btn">rename</button></div>`;
-  c.querySelector('button').onclick=()=>{ const n=prompt('New exercise name:',ex.name); if(n&&n.trim()){ ex.name=n.trim(); ex.seed=null; ex.start=ex.start===0?0:-1; saveProgram(); closeSheet(); showToast('renamed'); } };
+  const c=document.createElement('div'); c.className='alt'; c.innerHTML=`<div class="an">Custom name</div><div class="am">Keeps this slot's muscles and rep range; just renames it (e.g. a different machine brand).</div><div class="ab"><button class="btn">Rename</button></div>`;
+  c.querySelector('button').onclick=()=>{ const n=prompt('New exercise name:',ex.name); if(n&&n.trim()){ ex.name=n.trim(); ex.seed=null; ex.start=ex.start===0?0:-1; saveProgram(); closeSheet(); showToast('Renamed'); } };
   list.appendChild(c);
 
   const search=document.getElementById('sheetSearch');
   search.style.display='';
-  search.placeholder=`search alternatives or ${libPoolSize} more in the full library…`;
+  search.placeholder=`Search alternatives or ${libPoolSize} more in the full library…`;
   search.value='';
   search.oninput=()=>{
     const term=search.value.trim().toLowerCase();
@@ -3131,7 +3131,7 @@ function openSwap(dayId, ex){
     matches.forEach(a=>{
       const alt={name:a.name, target:ex.target, m:[a.key,...a.m.filter(x=>x!==a.key)], cue:a.cue, step:(a.equip==='bodyweight'&&!/^weighted\b/i.test(a.name))?0:5, equip:a.equip, region:a.region};
       const el=document.createElement('div'); el.className='alt';
-      el.innerHTML=`<div class="an">${alt.name}</div><div class="am">${alt.target} · ${alt.m.map(k=>MUSCLE_LABEL[k]||k).join(', ')}</div><div class="ac">${alt.cue}</div><div class="ab"><button class="btn primary">use this</button></div>`;
+      el.innerHTML=`<div class="an">${alt.name}</div><div class="am">${alt.target} · ${alt.m.map(k=>MUSCLE_LABEL[k]||k).join(', ')}</div><div class="ac">${alt.cue}</div><div class="ab"><button class="btn primary">Use This</button></div>`;
       el.querySelector('button').onclick=()=>{ doSwap(day, idx, alt); };
       libResults.appendChild(el);
     });
@@ -3147,7 +3147,7 @@ async function doSwap(day, idx, alt){
   const nu = isOriginal ? JSON.parse(JSON.stringify(alt)) : {group:old.group,key:groupKeyFor(old),name:alt.name,equip:alt.equip,target:slotTargetFor(anchorOf(old).target,alt),m:alt.m.slice(),seed:null,start:(alt.step===0||alt.start===0)?0:-1,step:alt.step||5,cue:alt.cue||'',region:alt.region,rotAnchor:anchorOf(old),rotCount:0,rotBlocks:0};
   day.exercises[idx]=nu;
   if(todayData[old.name]) { delete todayData[old.name]; await sset('today:'+day.id,todayData); }
-  await saveProgram(); closeSheet(); showToast(`swapped in ${nu.name}`);
+  await saveProgram(); closeSheet(); showToast(`Swapped in ${nu.name}`);
 }
 
 // ---------- views ----------
