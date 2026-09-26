@@ -907,7 +907,8 @@
 </div></footer>
 <div class="sheet-bg" id="sheetBg"></div>
 <div class="sheet" id="sheet"><div class="sheet-head"><div><div id="sheetTitle" style="font-size:15px">Swap Exercise</div><div id="sheetSub" style="font-size:12px;color:var(--text-dim);margin-top:2px"></div></div><span class="linkbtn" id="sheetClose">Close</span></div><input class="in" id="sheetSearch" placeholder="Search alternatives…" style="width:100%;margin-bottom:12px"><div id="sheetList"></div></div>
-<div class="toast" id="toast">Saved</div>
+<div class="toast" id="toast" role="status" aria-live="polite">Saved</div>
+<div class="sr-only" id="timerLive" aria-live="polite"></div>
 <div class="celebrate-bg" id="celebrateBg"><div class="celebrate" id="celebrateInner"></div></div>
 <div class="celebrate-bg" id="onboardBg" role="dialog" aria-modal="true" aria-labelledby="onboardTitle"><div class="celebrate" id="onboardInner"></div></div>
 <div class="sheet-bg" id="fatigueBg"></div>
@@ -1853,7 +1854,7 @@ function beep(){ try{ if(!timer.ctx) timer.ctx=new (window.AudioContext||window.
 function startTimer(sec){
   try{ if(!timer.ctx) timer.ctx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
   timer.total=sec; timer.end=Date.now()+sec*1000; clearInterval(timer.iv);
-  const el=document.getElementById('timer'); el.classList.add('on'); el.classList.remove('done');
+  const el=document.getElementById('timer'); el.classList.add('on'); el.classList.remove('done'); document.getElementById('timerLive').textContent='';
   tick(); timer.iv=setInterval(tick,1000);
 }
 // timer runs cool blue while there's plenty of rest left, then fades to the accent color over the final quarter of the rest as a "time's almost up" cue
@@ -1862,7 +1863,7 @@ function lerpColor(a,b,t){ return `rgb(${Math.round(a[0]+(b[0]-a[0])*t)},${Math.
 function tick(){
   const left=Math.ceil((timer.end-Date.now())/1000);
   const t=document.getElementById('timerT'), bar=document.getElementById('timerBar'), el=document.getElementById('timer');
-  if(left<=0){ t.textContent='Go'; t.classList.add('over'); t.style.color=''; bar.style.width='0%'; bar.style.background=''; el.classList.add('done'); clearInterval(timer.iv); beep(); setTimeout(stopTimer,4000); return; }
+  if(left<=0){ t.textContent='Go'; t.classList.add('over'); t.style.color=''; bar.style.width='0%'; bar.style.background=''; el.classList.add('done'); clearInterval(timer.iv); beep(); document.getElementById('timerLive').textContent='Rest over — next set'; setTimeout(stopTimer,4000); return; }
   t.classList.remove('over'); t.textContent=`${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}`;
   const pct=left/timer.total; bar.style.width=(pct*100)+'%';
   const fadeT=Math.min(1,pct/TIMER_FADE_WINDOW); const col=lerpColor(TIMER_ACCENT,TIMER_BLUE,fadeT);
