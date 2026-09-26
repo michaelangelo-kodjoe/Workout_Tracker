@@ -737,18 +737,18 @@
 
   <section id="moreView" style="display:none">
     <div class="card">
-      <h3>Your Name</h3>
-      <div class="row"><input class="in" id="nameInput" placeholder="Optional — used in your greeting" style="flex:1"></div>
+      <h3><label for="nameInput">Your Name</label></h3>
+      <div class="row"><input class="in" id="nameInput" placeholder="Optional — used in your greeting" autocomplete="given-name" style="flex:1"></div>
     </div>
     <div class="card">
       <h3>Units</h3>
-      <div class="row"><span style="font-size:12px;color:var(--text-dim)">Weight in</span>
+      <div class="row"><label for="unitSel" style="font-size:12px;color:var(--text-dim)">Weight in</label>
         <select class="in" id="unitSel"><option value="lb">lb</option><option value="kg">kg</option></select></div>
     </div>
     <div class="card">
-      <h3>Text Size</h3>
-      <div class="row"><span style="font-size:12px;color:var(--text-dim)">Everything in the app, scaled together</span>
-        <select class="in" id="textSizeSel"><option value="standard">Standard</option><option value="large">Large</option><option value="larger">Larger</option></select></div>
+      <h3 id="textSizeH">Text Size</h3>
+      <div class="row"><span style="font-size:12px;color:var(--text-dim)" id="textSizeHint">Everything in the app, scaled together</span>
+        <select class="in" id="textSizeSel" aria-labelledby="textSizeH" aria-describedby="textSizeHint"><option value="standard">Standard</option><option value="large">Large</option><option value="larger">Larger</option></select></div>
     </div>
     <div class="card">
       <h3>Equipment & Variety</h3>
@@ -759,7 +759,7 @@
     <div class="card">
       <h3>Exercise Rotation</h3>
       <div class="row"><label class="chk"><input type="checkbox" id="autoRotateChk"> Suggest fresh variations at the end of each training block</label></div>
-      <div class="row" style="margin-top:6px" id="rotateEveryRow"><span style="font-size:12px;color:var(--text-dim)">Block Length</span>
+      <div class="row" style="margin-top:6px" id="rotateEveryRow"><label for="blockWeeksSel" style="font-size:12px;color:var(--text-dim)">Block Length</label>
         <select class="in" id="blockWeeksSel"><option value="3">3 weeks</option><option value="4">4 weeks</option><option value="6">6 weeks</option></select></div>
       <details class="how"><summary>How This Works</summary><div class="note-sm">At the end of every block you get a review of what's changing before anything is applied. The first two exercises of each day are your primary lifts: they only change once they've been stuck for 3 sessions, or every other block. The rest are accessories and get a fresh variation each block, drawn from the curated picks and the full exercise library. Nothing is repeated across your four days, and a pick's natural rep range always matches its slot.</div></details>
     </div>
@@ -767,13 +767,13 @@
       <h3>Rest Timer</h3>
       <div class="row"><label class="chk"><input type="checkbox" id="smartRestChk"> Use a smart rest time based on each exercise's rep range</label></div>
       <details class="how"><summary>How This Works</summary><div class="note-sm">Lower-rep sets (up to 10) rest ~150s, moderate sets (up to 12) rest 90s, higher-rep and hold-based sets rest 60s — heavier, lower-rep work needs more recovery between sets than light, high-rep work does.</div></details>
-      <div class="row" style="margin-top:10px"><span style="font-size:12px;color:var(--text-dim)" id="restSelLbl">Fallback Rest</span>
+      <div class="row" style="margin-top:10px"><label for="restSel" style="font-size:12px;color:var(--text-dim)" id="restSelLbl">Fallback Rest</label>
         <select class="in" id="restSel"><option value="60">60s</option><option value="90">90s</option><option value="120">120s</option><option value="150">150s</option><option value="180">180s</option></select>
         <label class="chk"><input type="checkbox" id="autoTimer"> Start automatically when a set is checked</label></div>
     </div>
     <div class="card">
       <h3>Edit Workouts</h3>
-      <div class="row" style="margin-bottom:8px;row-gap:16px"><select class="in" id="edDay"></select><span class="linkbtn danger" id="edReset">Reset to Default Program</span></div>
+      <div class="row" style="margin-bottom:8px;row-gap:16px"><select class="in" id="edDay" aria-label="Day to Edit"></select><span class="linkbtn danger" id="edReset">Reset to Default Program</span></div>
       <div id="edList"></div>
       <div style="margin-top:12px;font-size:12px;color:var(--text-dim)">Add an Exercise</div>
       <div class="row" style="margin-top:6px">
