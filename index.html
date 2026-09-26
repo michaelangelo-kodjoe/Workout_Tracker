@@ -365,7 +365,7 @@
   .ctype{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 4px;}
   .ctype span{padding:8px 12px;border-radius:3px;border:1px solid var(--line);background:var(--panel-raised);font-size:13px;cursor:pointer;color:var(--text-dim);}
   .ctype span.on{border-color:var(--light);color:var(--text);background:rgba(79,163,209,.12);}
-  .field-label{font-size:12px;color:var(--text-dim);margin:12px 0 4px;}
+  .field-label{display:block;font-size:12px;color:var(--text-dim);margin:12px 0 4px;}
   /* Add an Exercise: every field has a visible label above it, not a placeholder that gets cut off */
   .ad-h{font-size:15px;font-weight:normal;margin:24px 0 0;padding-top:16px;border-top:1px solid var(--line);}
   .ad-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;}
@@ -2404,7 +2404,7 @@ function render(){
     const addset=document.createElement('button'); addset.type='button'; addset.className='addset'; addset.textContent='+ Add Set';
     addset.onclick=()=>{ const prev=state.sets[state.sets.length-1]; state.sets.push({w:ex.start===0?(latestBW()??''):'',r:'',done:false,rir:null,...(ex.start===0&&prev&&prev.add?{add:prev.add}:{})}); sset('today:'+currentDay,todayData); render(); }; body.appendChild(addset);
 
-    const ta=document.createElement('textarea'); ta.className='notes'; ta.placeholder='Notes — seat setting, how it felt'; ta.value=notes[histKey(ex)]||'';
+    const ta=document.createElement('textarea'); ta.className='notes'; ta.placeholder='Notes — seat setting, how it felt'; ta.setAttribute('aria-label',`Notes for ${ex.name}`); ta.value=notes[histKey(ex)]||'';
     ta.oninput=e=>{ notes[histKey(ex)]=e.target.value; sset('notes',notes); }; body.appendChild(ta);
 
     const lastToShow=saved?saved.sets:ex.seed;
@@ -2803,13 +2803,13 @@ function renderCardioForm(){
       <div class="cue">${t.desc}</div>
       <div style="margin-top:12px">${toolsBar(!!cardioDraft.showHow, yt, false, 'cardioHowtoBtn')}</div>
       ${cardioDraft.showHow?`<div class="cue" style="display:block">${t.cue}</div>`:''}
-      <div class="field-label">Duration (minutes)</div>
+      <label class="field-label" for="cDur">Duration (minutes)</label>
       <div class="setgrid" style="grid-template-columns:1fr"><input type="number" inputmode="numeric" id="cDur" placeholder="e.g. 30" value="${cardioDraft.duration}"></div>
-      <div class="field-label">Distance (optional, miles/km)</div>
+      <label class="field-label" for="cDist">Distance (optional, miles/km)</label>
       <div class="setgrid" style="grid-template-columns:1fr"><input type="text" inputmode="decimal" id="cDist" placeholder="e.g. 3.1 mi" value="${cardioDraft.distance}"></div>
       <div class="field-label">Effort (RPE, 1 easy – 10 max)</div>
       <div class="rpe-row" id="rpeRow">${Array.from({length:10},(_,i)=>i+1).map(n=>`<div class="rpe-dot ${cardioDraft.rpe===n?'on':''}" data-n="${n}">${n}</div>`).join('')}</div>
-      <textarea class="notes" id="cNotes" placeholder="Notes — route, how it felt">${cardioDraft.notes}</textarea>
+      <textarea class="notes" id="cNotes" aria-label="Notes" placeholder="Notes — route, how it felt">${cardioDraft.notes}</textarea>
       <div class="row" style="margin-top:12px"><button class="btn primary" id="cardioLogBtn" style="flex:1">Log Session</button></div>
     </div>`;
   list.appendChild(wrap);
@@ -2910,10 +2910,10 @@ const RIR_OPTS=[['','RIR'],['0','0'],['1','1'],['2','2'],['3','3'],['4','4+']];
 function renderSessionEditForm(s, el, onDone){
   const det=el.querySelector('.sdet');
   if(s.isCardio){
-    det.innerHTML=`<div class="field-label">Duration (minutes)</div><input class="in" id="seDur" type="number" inputmode="numeric" value="${s.duration||''}" style="width:100%">
-      <div class="field-label">Distance (optional)</div><input class="in" id="seDist" type="text" value="${s.distance||''}" style="width:100%">
-      <div class="field-label">Effort (RPE)</div><select class="in" id="seRpe" style="width:100%"><option value="0">—</option>${Array.from({length:10},(_,k)=>k+1).map(n=>`<option value="${n}"${s.rpe===n?' selected':''}>${n}</option>`).join('')}</select>
-      <textarea class="notes" id="seNotes" placeholder="Notes">${s.notes||''}</textarea>
+    det.innerHTML=`<label class="field-label" for="seDur">Duration (minutes)</label><input class="in" id="seDur" type="number" inputmode="numeric" value="${s.duration||''}" style="width:100%">
+      <label class="field-label" for="seDist">Distance (optional)</label><input class="in" id="seDist" type="text" value="${s.distance||''}" style="width:100%">
+      <label class="field-label" for="seRpe">Effort (RPE)</label><select class="in" id="seRpe" style="width:100%"><option value="0">—</option>${Array.from({length:10},(_,k)=>k+1).map(n=>`<option value="${n}"${s.rpe===n?' selected':''}>${n}</option>`).join('')}</select>
+      <textarea class="notes" id="seNotes" aria-label="Notes" placeholder="Notes">${s.notes||''}</textarea>
       <div class="se-foot"><button class="btn" data-act="cancel">Cancel</button><button class="btn primary" data-act="save">Save</button></div>`;
     det.querySelector('[data-act="save"]').onclick=async e=>{ e.stopPropagation(); const dur=parseInt(det.querySelector('#seDur').value); if(!dur){ showToast('Add a duration'); return; } await saveSessionEdit(s,{duration:dur,distance:det.querySelector('#seDist').value.trim(),rpe:parseInt(det.querySelector('#seRpe').value)||0,notes:det.querySelector('#seNotes').value}); onDone(); };
   } else {
