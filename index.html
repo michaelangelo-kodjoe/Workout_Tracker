@@ -447,6 +447,10 @@
   .cal-wrap{padding:16px 10px;} .cal-grid,.cal-dow{gap:2px;}
   .eqchip{padding:9px 12px;}
   .ctype span{padding:11px 14px;}
+  /* tap feedback: the system tap highlight is off (it flashed a grey box over whole cards), so every control dims for
+     the moment it's pressed instead — quick in, a little slower out, never moving anything */
+  :is(button,.btn,a[href],[role=button],.linkbtn,summary,.eqchip,.ctype span,.rpe-dot,.rir-pill){transition:opacity .15s ease-out;}
+  :is(button,.btn,a[href],[role=button],.linkbtn,summary,.eqchip,.ctype span,.rpe-dot,.rir-pill):active{opacity:.6;transition-duration:.05s;}
   /* long Settings explanations fold behind a native disclosure, so each card shows its controls first */
   .how{margin-top:6px;} .how .note-sm{margin-top:6px;}
   .how summary{display:inline-block;font-size:13px;color:var(--light);cursor:pointer;padding:15px 0;margin:-15px 0;list-style:none;}
@@ -3349,6 +3353,8 @@ function tagClickables(root){
   }
 }
 tagClickables(document.body);
+// iOS Safari only applies :active (the tap feedback above) on a page that listens for touches
+document.addEventListener('touchstart',()=>{},{passive:true});
 new MutationObserver(ms=>{ for(const m of ms) for(const n of m.addedNodes) if(n.nodeType===1) tagClickables(n); })
   .observe(document.body,{childList:true,subtree:true});
 document.addEventListener('keydown',e=>{
