@@ -1920,6 +1920,12 @@ const PLURAL_MUSCLES=new Set(['quads','hamstrings','glutes','calves-gastroc','ca
 // the status fragment shared by the breakdown list and the muscle-tap sheet — kept in one place so the two
 // surfaces can never show a % in one and a stale time-left in the other.
 // shared by the breakdown list and the muscle sheet; a muscle you marked sore says so, not just its percentage
+// a recovery sub-region's muscle group, e.g. 'chest-upper' → 'chest', 'delt-rear' → 'shoulders', 'abs-lower' → 'abs'
+function recovGroup(m){
+  if(MUSCLE_LABEL[m]) return m;
+  const pre=m.split('-')[0];
+  return {delt:'shoulders',forearm:'forearms',brachialis:'biceps'}[pre]||pre;
+}
 function recovStatusText(m){
   const p=recoveryProgress(m), sore=soreOverride[m]?' · marked sore':'';
   if(p<1){ const r=effectiveRecovery(m); const left=Math.max(0,r.hours-(Date.now()-r.start)/3600000); return `${Math.round(p*100)}% · ~${fmtTimeLeft(left)} left${sore}`; }
@@ -1959,16 +1965,18 @@ function renderBody(){
   // a fully-recovered muscle can still be reached to mark it sore, so the toggle stays available either way.
   toggle.style.display='block';
 
+  // the line under the map says what the map is for; the sentence above carries the details, so they don't repeat
+  hint.textContent='Tap a muscle to see its recovery or mark it sore.';
   if(!active.length){
     sub.textContent='Every muscle group is fully recovered — ready for anything today.';
-    hint.textContent='All muscles recovered. Ready to train.';
   } else {
     const worst=active[0], wr=effectiveRecovery(worst), leftH=Math.max(0,wr.hours-(Date.now()-wr.start)/3600000);
     const day=new Date(wr.start).toLocaleDateString(undefined,{weekday:'long'});
-    const readyNames=allMuscles.filter(m=>!active.includes(m)).map(m=>RECOVERY_LABEL[m]);
-    const readyTxt=readyNames.length?`${readyNames.slice(0,3).join(', ')}${readyNames.length>3?' and more':''} ${readyNames.length===1?'is':'are'} fully recovered. `:'';
-    sub.textContent=`${readyTxt}${RECOVERY_LABEL[worst]} ${PLURAL_MUSCLES.has(worst)?'are':'is'} still coming back from ${day} — light work only.`;
-    hint.innerHTML=`<b>${RECOVERY_LABEL[worst]}</b> ready in ${fmtTimeLeft(leftH)}`;
+    // ready muscles by group, so chest reads once rather than as "Upper chest, Mid chest, Lower chest"
+    const groups=Object.keys(MUSCLE_LABEL).filter(g=>allMuscles.some(m=>recovGroup(m)===g));
+    const readyGroups=groups.filter(g=>allMuscles.filter(m=>recovGroup(m)===g).every(m=>!active.includes(m))).map(g=>MUSCLE_LABEL[g]);
+    const readyTxt=readyGroups.length?`${readyGroups.slice(0,3).join(', ')}${readyGroups.length>3?' and more':''} ${readyGroups.length===1&&!['Quads','Hamstrings','Glutes','Shoulders','Biceps','Triceps','Forearms','Calves'].includes(readyGroups[0])?'is':'are'} fully recovered. `:'';
+    sub.textContent=`${readyTxt}${RECOVERY_LABEL[worst]} ${PLURAL_MUSCLES.has(worst)?'are':'is'} still coming back from ${day} — about ${fmtTimeLeft(leftH)} to go, so keep it light.`;
   }
   renderRecovList();
 }
