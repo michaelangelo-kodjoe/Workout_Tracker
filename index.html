@@ -1616,10 +1616,10 @@ function plateText(totalLb, ex, baseLbOverride){
 }
 function dedupeSortByT(arr){ const seen=new Set(); const out=[]; [...arr].sort((a,b)=>a.t-b.t).forEach(x=>{ if(!seen.has(x.t)){ seen.add(x.t); out.push(x); } }); return out; }
 function latestBW(){ return bodyweight.length?bodyweight[bodyweight.length-1].w:null; }
-function sparkline(points,color,milestoneIdx){
+function sparkline(points,color,milestoneIdx,minSpan){
   if(!points||points.length<2) return '';
   const w=300,h=26,pad=2;
-  const coords=sparkCoords(points,w,h,pad);
+  const coords=sparkCoords(points,w,h,pad,minSpan);
   const pts=coords.map(c=>c.join(',')).join(' ');
   const dot=(milestoneIdx!=null&&coords[milestoneIdx])?`<circle class="milestone" cx="${coords[milestoneIdx][0]}" cy="${coords[milestoneIdx][1]}" r="2.6"/>`:'';
   return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline fill="none" stroke="${color||'var(--light)'}" stroke-width="1.6" points="${pts}"/>${dot}</svg>`;
@@ -1659,8 +1659,11 @@ function buildAggregateSeries(events,baseByName,mode){
 // one point per logged session: every exercise in a session shares its timestamp, so without this a single
 // session would be several stacked points and the scrub would step through one workout exercise by exercise
 function perSession(series){ const m=new Map(); series.forEach(x=>{ if(x.p!=null) m.set(x.t,x.p); }); return [...m].map(([t,p])=>({t,p})); }
-function sparkCoords(points,w,h,pad){
-  const min=Math.min(...points),max=Math.max(...points),span=(max-min)||1;
+// minSpan keeps a small wobble small: the chart shows at least that range, centred on the data, instead of
+// stretching a 2 lb change to the full height
+function sparkCoords(points,w,h,pad,minSpan){
+  let min=Math.min(...points),max=Math.max(...points),span=(max-min)||1;
+  if(minSpan&&span<minSpan){ min=(min+max)/2-minSpan/2; span=minSpan; }
   return points.map((v,i)=>[pad+(i/(points.length-1))*(w-2*pad),h-pad-((v-min)/span)*(h-2*pad)]);
 }
 // Stock-app-style scrub: drag a finger (or hover a mouse) across a chart and a crosshair snaps to the nearest
@@ -2999,7 +3002,7 @@ function renderStrength(){
     onReset:()=>{ heroNum.textContent=heroRest.num; heroNum.className=heroRest.cls; heroLbl.textContent=heroRest.lbl; bwPill.style.visibility=''; }};
   // bodyweight card
   const info=document.getElementById('bwInfo'), sp=document.getElementById('bwSpark'), bwNote=document.getElementById('bwNote');
-  if(bodyweight.length){ const f=bodyweight[0].w,l=bodyweight[bodyweight.length-1].w; const dl=dispBW(l), delta=dispBW(l)-dispBW(f); info.textContent=`${dl} ${unitLabel()} now · ${delta>=0?'+':''}${Math.round(delta*10)/10} since ${fmtDate(bodyweight[0].t)}`; sp.innerHTML=bodyweight.length>1?sparkline(bodyweight.map(b=>dispBW(b.w)),'var(--amber)'):''; document.getElementById('bwInput').placeholder=String(dl); }
+  if(bodyweight.length){ const f=bodyweight[0].w,l=bodyweight[bodyweight.length-1].w; const dl=dispBW(l), delta=dispBW(l)-dispBW(f); info.textContent=`${dl} ${unitLabel()} now · ${delta>=0?'+':''}${Math.round(delta*10)/10} since ${fmtDate(bodyweight[0].t)}`; const bwVals=bodyweight.map(b=>dispBW(b.w)); sp.innerHTML=bodyweight.length>1?sparkline(bwVals,'var(--amber)',null,0.04*bwVals.reduce((a,b)=>a+b,0)/bwVals.length):''; document.getElementById('bwInput').placeholder=String(dl); }
   else { info.textContent=''; sp.innerHTML=''; document.getElementById('bwInput').placeholder=unitLabel(); }
   const bwRate=bwWeeklyRate();
   bwNote.innerHTML=(bwRate!==null && bwRate<=-1)?`<div class="plateau-tip" style="margin-top:10px">Losing about ${Math.abs(bwRate).toFixed(1)}% of body weight a week — research on rate of loss suggests staying closer to 0.5-1%/week better preserves strength and muscle. Fine if it's a short intentional push; worth easing off if it's not.</div>`:'';
