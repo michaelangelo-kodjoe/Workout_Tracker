@@ -2799,7 +2799,7 @@ function renderCardioForm(){
   wrap.innerHTML=`
     <div class="ex-head" style="cursor:default"><div><h3 class="ex-name">Log a Session</h3><div class="ex-target">Pick a type, fill in what applies</div></div></div>
     <div class="ex-body" style="display:block">
-      <div class="ctype" id="ctypeRow">${CARDIO_TYPES.map(x=>`<span data-k="${x.key}" class="${x.key===cardioDraft.type?'on':''}">${x.label}</span>`).join('')}</div>
+      <div class="ctype" id="ctypeRow" role="group" aria-label="Session Type">${CARDIO_TYPES.map(x=>`<span data-k="${x.key}" class="${x.key===cardioDraft.type?'on':''}" aria-pressed="${x.key===cardioDraft.type}">${x.label}</span>`).join('')}</div>
       <div class="cue">${t.desc}</div>
       <div style="margin-top:12px">${toolsBar(!!cardioDraft.showHow, yt, false, 'cardioHowtoBtn')}</div>
       ${cardioDraft.showHow?`<div class="cue" style="display:block">${t.cue}</div>`:''}
@@ -2807,8 +2807,8 @@ function renderCardioForm(){
       <div class="setgrid" style="grid-template-columns:1fr"><input type="number" inputmode="numeric" id="cDur" placeholder="e.g. 30" value="${cardioDraft.duration}"></div>
       <label class="field-label" for="cDist">Distance (optional, miles/km)</label>
       <div class="setgrid" style="grid-template-columns:1fr"><input type="text" inputmode="decimal" id="cDist" placeholder="e.g. 3.1 mi" value="${cardioDraft.distance}"></div>
-      <div class="field-label">Effort (RPE, 1 easy – 10 max)</div>
-      <div class="rpe-row" id="rpeRow">${Array.from({length:10},(_,i)=>i+1).map(n=>`<div class="rpe-dot ${cardioDraft.rpe===n?'on':''}" data-n="${n}">${n}</div>`).join('')}</div>
+      <div class="field-label" id="rpeLbl">Effort (RPE, 1 easy – 10 max)</div>
+      <div class="rpe-row" id="rpeRow" role="group" aria-labelledby="rpeLbl">${Array.from({length:10},(_,i)=>i+1).map(n=>`<div class="rpe-dot ${cardioDraft.rpe===n?'on':''}" data-n="${n}" aria-pressed="${cardioDraft.rpe===n}" aria-label="Effort ${n}">${n}</div>`).join('')}</div>
       <textarea class="notes" id="cNotes" aria-label="Notes" placeholder="Notes — route, how it felt">${cardioDraft.notes}</textarea>
       <div class="row" style="margin-top:12px"><button class="btn primary" id="cardioLogBtn" style="flex:1">Log Session</button></div>
     </div>`;
