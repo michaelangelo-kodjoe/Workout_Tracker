@@ -2402,7 +2402,7 @@ function render(){
         // one orange button per card: the next set's, unless a hold is already counting on this exercise
         const nextUp=i===state.sets.findIndex(x=>!x.done) && !state.sets.some((x,j)=>hold.key===holdKey(ex,j));
         const hrow=document.createElement('div'); hrow.className='hold-row';
-        hrow.innerHTML=`<span class="hold-t${running&&holdElapsed()>=hold.target?' hit':''}">${fmtHold(running?holdElapsed():0)}</span><span class="hold-target">hold · target ${topRep(ex.target)}s${running?' · counting':''}</span><button type="button" class="btn${nextUp?' primary':''}">${running?'stop':'start hold'}</button>`;
+        hrow.innerHTML=`<span class="hold-t${running&&holdElapsed()>=hold.target?' hit':''}">${fmtHold(running?holdElapsed():0)}</span><span class="hold-target">Hold · Target ${topRep(ex.target)}s${running?' · Counting':''}</span><button type="button" class="btn${nextUp?' primary':''}">${running?'Stop':'Start Hold'}</button>`;
         hrow.querySelector('button').onclick=()=>{ running?stopHold(true):startHold(ex,i,s); };
         if(running){ hold.el=hrow.querySelector('.hold-t'); hold.inp=row.querySelectorAll('input')[1]; }
         body.appendChild(hrow);
