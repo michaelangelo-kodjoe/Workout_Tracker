@@ -220,6 +220,8 @@
   .fat-btns .btn{min-height:48px;font-size:13px;}
   .sheet{display:none;position:fixed;left:0;right:0;bottom:0;max-height:78vh;overflow-y:auto;background:var(--panel);border-top:1px solid var(--line);border-radius:10px 10px 0 0;padding:14px 16px calc(16px + env(safe-area-inset-bottom));z-index:31;}
   .sheet.on,.sheet-bg.on{display:block;}
+  .sheet{overscroll-behavior:contain;} .sheet:focus{outline:none;}
+  html.sheet-open,html.sheet-open body{overflow:hidden;}
   .sheet-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
   .alt{border:1px solid var(--line);border-radius:4px;padding:10px 12px;margin-bottom:8px;background:var(--panel-raised);}
   .alt .an{font-size:15px;} .alt .am{font-size:12px;color:var(--text-dim);margin-top:2px;}
@@ -711,7 +713,7 @@
 </div>
 <div class="sheet-bg" id="deloadBg"></div>
 <div class="sheet" id="deloadSheet">
-  <div class="sheet-head"><div><div style="font-size:15px">Plan a deload week</div><div id="deloadStats" style="font-size:12px;color:var(--text-dim);margin-top:2px"></div></div><span class="linkbtn" id="deloadClose">Close</span></div>
+  <div class="sheet-head"><div><div style="font-size:15px" id="deloadTitle">Plan a deload week</div><div id="deloadStats" style="font-size:12px;color:var(--text-dim);margin-top:2px"></div></div><span class="linkbtn" id="deloadClose">Close</span></div>
   <div class="plateau-tip" style="margin-bottom:14px">A deload is a planned lighter week — usually about 10-20% less weight and/or fewer hard sets — taken every 4-8 weeks of consistent training. It gives connective tissue and your nervous system time to catch up with the muscle adaptations you've already earned, which is generally thought to lower overuse-injury risk and can help push through a stall that isn't responding to changes on a single exercise. It's not mandatory, and skipping one occasionally is fine — but going many months without one is usually when plateaus and nagging aches start to stack up.</div>
   <div class="empty" style="margin-bottom:10px">Starting one suggests weights about 10% lighter across every exercise for the next 7 days. Nothing about your logged history changes — it only affects the suggested working weight.</div>
   <div class="row" style="gap:10px;flex-wrap:nowrap">
@@ -731,7 +733,7 @@
 </div>
 <div class="sheet-bg" id="cardioSuggestBg"></div>
 <div class="sheet" id="cardioSuggestSheet">
-  <div class="sheet-head"><div><div style="font-size:15px">Cardio's Up Next</div><div style="font-size:12px;color:var(--text-dim);margin-top:2px" id="cardioSuggestSub">Two lifting sessions in a row</div></div><span class="linkbtn" id="cardioSuggestClose">Close</span></div>
+  <div class="sheet-head"><div><div style="font-size:15px" id="cardioSuggestTitle">Cardio's Up Next</div><div style="font-size:12px;color:var(--text-dim);margin-top:2px" id="cardioSuggestSub">Two lifting sessions in a row</div></div><span class="linkbtn" id="cardioSuggestClose">Close</span></div>
   <div class="plateau-tip" style="margin-bottom:14px" id="cardioSuggestBody">You've done two straight lifting sessions, so conditioning work is next in the rotation — it gives your joints and nervous system a break from heavy loading while still building your aerobic base. Totally fine to lift again today if that's what you'd rather do.</div>
   <div class="row" style="gap:10px;flex-wrap:nowrap">
     <button class="btn" id="cardioSuggestLift" style="flex:1"></button>
@@ -3354,6 +3356,33 @@ function tagClickables(root){
   }
 }
 tagClickables(document.body);
+// ---------- sheets as dialogs ----------
+// Every bottom sheet opens by gaining .on (each opener does that its own way), so one observer per sheet gives them all
+// the same dialog behaviour: a dialog role labelled by its title, focus moved into it (the sheet itself, so a screen
+// reader reads its title first and no field pops the keyboard) and kept there, Escape closes it the same way tapping
+// the backdrop does, the page behind stops scrolling, and focus goes back to whatever opened it.
+const SHEET_FOCUSABLE='button:not([disabled]),a[href],input:not([type=hidden]),select,textarea,summary,[tabindex="0"]';
+const sheetReturnFocus=new Map(); // open sheets, oldest first → the element to refocus when each closes
+document.querySelectorAll('.sheet').forEach(sh=>{
+  sh.setAttribute('role','dialog'); sh.setAttribute('aria-modal','true'); sh.tabIndex=-1;
+  const title=sh.querySelector('.sheet-head [id]'); if(title) sh.setAttribute('aria-labelledby',title.id);
+  new MutationObserver(()=>{
+    const on=sh.classList.contains('on');
+    if(on&&!sheetReturnFocus.has(sh)){ sheetReturnFocus.set(sh,document.activeElement); sh.scrollTop=0; requestAnimationFrame(()=>sh.focus({preventScroll:true})); }
+    else if(!on&&sheetReturnFocus.has(sh)){ const back=sheetReturnFocus.get(sh); sheetReturnFocus.delete(sh); if(back&&back.focus&&document.contains(back)) back.focus({preventScroll:true}); }
+    document.documentElement.classList.toggle('sheet-open',sheetReturnFocus.size>0);
+  }).observe(sh,{attributes:true,attributeFilter:['class']});
+});
+document.addEventListener('keydown',e=>{
+  const top=[...sheetReturnFocus.keys()].pop(); if(!top) return; // the most recently opened sheet is the one on top
+  if(e.key==='Escape'){ e.preventDefault(); const bg=top.previousElementSibling; if(bg&&bg.classList.contains('sheet-bg')) bg.click(); return; }
+  if(e.key!=='Tab') return;
+  const f=[...top.querySelectorAll(SHEET_FOCUSABLE)].filter(x=>x.offsetParent); if(!f.length){ e.preventDefault(); return; }
+  const first=f[0], last=f[f.length-1], a=document.activeElement;
+  if(!top.contains(a)||a===top){ e.preventDefault(); (e.shiftKey?last:first).focus(); }
+  else if(e.shiftKey&&a===first){ e.preventDefault(); last.focus(); }
+  else if(!e.shiftKey&&a===last){ e.preventDefault(); first.focus(); }
+});
 // iOS Safari only applies :active (the tap feedback above) on a page that listens for touches
 document.addEventListener('touchstart',()=>{},{passive:true});
 new MutationObserver(ms=>{ for(const m of ms) for(const n of m.addedNodes) if(n.nodeType===1) tagClickables(n); })
