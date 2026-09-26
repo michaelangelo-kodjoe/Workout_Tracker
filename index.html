@@ -7,12 +7,15 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Lift Log">
 <meta name="theme-color" content="#14161a">
+<meta name="color-scheme" content="dark">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Lift Log</title>
 <style>
-  :root{--upper:#a98bf5;--lower:#38b7a8;--cardio:#5fa8e0;--danger:#f0619a;--bg:#14161a;--panel:#1c1f25;--panel-raised:#22262e;--line:#2c3038;--text:#e8e9ec;--text-dim:#8b8f98;--accent:#ff5d3b;--heavy:#ff5d3b;--light:#4fa3d1;--done-bg:#1f2a20;--done-line:#3d5c3f;--green:#5cbb6f;--amber:#d6a03a;--gold:#e8b23d;}
+  /* the app is dark-only: declaring it gives native controls (select menus, checkboxes, number spinners, scrollbars)
+     their dark system styling instead of light boxes on a dark page */
+  :root{color-scheme:dark;--upper:#a98bf5;--lower:#38b7a8;--cardio:#5fa8e0;--danger:#f0619a;--bg:#14161a;--panel:#1c1f25;--panel-raised:#22262e;--line:#2c3038;--text:#e8e9ec;--text-dim:#8b8f98;--accent:#ff5d3b;--heavy:#ff5d3b;--light:#4fa3d1;--done-bg:#1f2a20;--done-line:#3d5c3f;--green:#5cbb6f;--amber:#d6a03a;--gold:#e8b23d;}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Georgia','Iowan Old Style',serif;min-height:100vh;}
   button,input,textarea,select{font-family:'Menlo','SF Mono',monospace;}
@@ -134,6 +137,8 @@
   .exgif img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
   .exgif img:last-child{animation:exgifFlip 1.4s steps(1) infinite;}
   @keyframes exgifFlip{0%,49.9%{opacity:0;}50%,100%{opacity:1;}}
+  /* with reduced motion the demo holds still on its start position instead of flipping between frames */
+  @media (prefers-reduced-motion: reduce){ .exgif img:last-child{animation:none;opacity:0;} }
   .howto.open .cue{display:block;}
   .plateau-tip{font-size:12px;line-height:1.5;color:var(--amber);margin:0 0 10px;padding:8px 10px;background:rgba(214,160,58,.08);border-left:2px solid var(--amber);border-radius:3px;}
   .setgrid{display:grid;grid-template-columns:28px 1fr 1fr 30px 20px;gap:8px;align-items:center;margin-bottom:6px;font-size:13px;}
@@ -312,7 +317,8 @@
   .celebrate{min-height:100%;position:relative;background:radial-gradient(circle at 50% 0%,rgba(255,93,59,.18),transparent 55%);display:flex;flex-direction:column;align-items:center;padding:calc(48px + env(safe-area-inset-top)) 24px 40px;text-align:center;overflow:hidden;}
   .confetti{position:absolute;top:0;width:7px;height:12px;border-radius:2px;opacity:.85;animation:fall 3.4s ease-in infinite;}
   @keyframes fall{0%{transform:translateY(-40px) rotate(0deg);opacity:0;}10%{opacity:.9;}100%{transform:translateY(680px) rotate(400deg);opacity:0;}}
-  .cel-badge{width:74px;height:74px;border-radius:50%;background:radial-gradient(circle,rgba(255,93,59,.35),rgba(255,93,59,.05) 70%);border:1px solid rgba(255,93,59,.5);display:flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:18px;position:relative;z-index:2;}
+  .cel-badge{width:74px;height:74px;border-radius:50%;background:radial-gradient(circle,rgba(255,93,59,.35),rgba(255,93,59,.05) 70%);border:1px solid rgba(255,93,59,.5);display:flex;align-items:center;justify-content:center;margin-bottom:18px;position:relative;z-index:2;}
+  .cel-badge svg{width:36px;height:36px;fill:none;stroke:var(--accent);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;} /* the Log tab's dumbbell, not an emoji */
   .onboard-logo{width:84px;height:84px;border-radius:20px;margin-bottom:18px;position:relative;z-index:2;box-shadow:0 8px 24px rgba(255,93,59,.35);}
   .cel-h1{font-size:22px;margin:0 0 6px;position:relative;z-index:2;}
   .cel-sub{font-size:13px;color:var(--text-dim);margin-bottom:26px;position:relative;z-index:2;}
@@ -442,6 +448,10 @@
   .cal-wrap{padding:16px 10px;} .cal-grid,.cal-dow{gap:2px;}
   .eqchip{padding:9px 12px;}
   .ctype span{padding:11px 14px;}
+  /* tap feedback: the system tap highlight is off (it flashed a grey box over whole cards), so every control dims for
+     the moment it's pressed instead — quick in, a little slower out, never moving anything */
+  :is(button,.btn,a[href],[role=button],.linkbtn,summary,.eqchip,.ctype span,.rpe-dot,.rir-pill){transition:opacity .15s ease-out;}
+  :is(button,.btn,a[href],[role=button],.linkbtn,summary,.eqchip,.ctype span,.rpe-dot,.rir-pill):active{opacity:.6;transition-duration:.05s;}
   /* long Settings explanations fold behind a native disclosure, so each card shows its controls first */
   .how{margin-top:6px;} .how .note-sm{margin-top:6px;}
   .how summary{display:inline-block;font-size:13px;color:var(--light);cursor:pointer;padding:15px 0;margin:-15px 0;list-style:none;}
@@ -2311,7 +2321,7 @@ function showCelebration({day,worked,nsets,vol,durationMin,pr,rhythmCount}){
   const ord=n=>n===1?'1st':n===2?'2nd':n===3?'3rd':n+'th';
   const rhythmRest=rhythmCount>dotsTotal?`ahead of ${ref}.`:rhythmCount===dotsTotal?`right on ${ref}.`:rh.learned?`you usually get in ${dotsTotal} a week.`:`your plan is ${dotsTotal} a week.`;
   inner.innerHTML=`${confetti}
-    <div class="cel-badge">💪</div>
+    <div class="cel-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5v11M17.5 6.5v11M3 9.5v5M21 9.5v5M6.5 12h11"/></svg></div>
     <div class="cel-h1">${day.name} — ${day.sub}, logged</div>
     <div class="cel-sub">${worked} exercise${worked===1?'':'s'} · ${nsets} set${nsets===1?'':'s'} · ${durationMin}m</div>
     <div class="cel-stats">
@@ -2461,7 +2471,7 @@ async function logCardio(){
   // the suggestion usually moves on to the next lift day now — reload it so Home's greeting, its CTA and the
   // day-tab marker stop pointing at a cardio day that has just been done (this used to persist until a reload)
   await loadDay(suggestedDayId()); setView('home');
-  showToast('Conditioning logged 🏃');
+  showToast('Conditioning logged');
   if(settings.autoBackup && backupDue()) setTimeout(()=>doExport(true),1200); else updateBackupUI();
 }
 
@@ -3344,6 +3354,8 @@ function tagClickables(root){
   }
 }
 tagClickables(document.body);
+// iOS Safari only applies :active (the tap feedback above) on a page that listens for touches
+document.addEventListener('touchstart',()=>{},{passive:true});
 new MutationObserver(ms=>{ for(const m of ms) for(const n of m.addedNodes) if(n.nodeType===1) tagClickables(n); })
   .observe(document.body,{childList:true,subtree:true});
 document.addEventListener('keydown',e=>{
