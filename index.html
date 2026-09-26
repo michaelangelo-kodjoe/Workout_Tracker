@@ -1987,6 +1987,10 @@ function renderRecovList(){
     action.onclick=()=>sored?clearSore(m):markSore(m);
     row.appendChild(txt); row.appendChild(action); list.appendChild(row);
   });
+  // pinned above the nav while the long list is open, like Strength's Hide Exercises, so closing it needs no scroll back up
+  const hide=document.createElement('button'); hide.className='str-hide btn'; hide.textContent='Hide Breakdown';
+  hide.onclick=()=>{ setRecovOpen(false); document.getElementById('recovDetailToggle').scrollIntoView({block:'center'}); };
+  list.appendChild(hide);
 }
 function markSore(m){ soreOverride[m]={start:Date.now(),hours:RECOVERY_HOURS[m]}; sset('soreOverride',soreOverride); renderBody(); renderHome(); showToast(`${RECOVERY_LABEL[m]} marked sore`); }
 function clearSore(m){ delete soreOverride[m]; sset('soreOverride',soreOverride); renderBody(); renderHome(); showToast(`${RECOVERY_LABEL[m]} cleared`); }
@@ -2006,12 +2010,13 @@ function closeMuscleSheet(){
 }
 document.getElementById('muscleSheetClose').onclick=closeMuscleSheet;
 document.getElementById('muscleBg').onclick=closeMuscleSheet;
-document.getElementById('recovDetailToggle').onclick=()=>{
+function setRecovOpen(open){
   const l=document.getElementById('recovList'), t=document.getElementById('recovDetailToggle');
-  const open=l.style.display!=='none';
-  l.style.display=open?'none':'block';
-  t.textContent=open?'See Full Breakdown':'Hide Breakdown';
-};
+  l.style.display=open?'block':'none';
+  t.textContent=open?'Hide Breakdown':'See Full Breakdown'; t.setAttribute('aria-expanded',open);
+}
+document.getElementById('recovDetailToggle').setAttribute('aria-expanded','false');
+document.getElementById('recovDetailToggle').onclick=()=>setRecovOpen(document.getElementById('recovList').style.display==='none');
 
 // ---------- log view ----------
 function weekStart(){ const d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-d.getDay()); return d.getTime(); }
