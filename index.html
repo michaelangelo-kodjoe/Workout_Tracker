@@ -445,22 +445,24 @@
   .empty-plan b{color:var(--text);}
 
   /* ---------- history heatmap ---------- */
-  .heat-wrap{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:12px;}
-  .heat-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;}
   .heat-title,.cal-title{font-size:13px;font-weight:normal;margin:0;}
-  .heat-stat{font-family:'Menlo',monospace;font-size:12px;color:var(--text-dim);}
-  .heat-stat b{color:var(--green);}
-  .heat-scroll{overflow-x:auto;padding-bottom:2px;}
-  .heat-grid{display:grid;grid-template-rows:repeat(7,10px);grid-auto-flow:column;grid-auto-columns:10px;gap:3px;width:max-content;}
-  .heat-grid i{border-radius:2px;background:var(--line);display:block;}
-  .heat-grid i.h1{background:rgba(92,187,111,.28);}
-  .heat-grid i.h2{background:rgba(92,187,111,.52);}
-  .heat-grid i.h3{background:rgba(92,187,111,.78);}
-  .heat-grid i.h4{background:var(--green);}
-  .heat-legend{display:flex;justify-content:flex-end;align-items:center;gap:4px;margin-top:10px;font-size:12px;color:var(--text-dim);}
-  .heat-legend i{width:9px;height:9px;border-radius:2px;display:inline-block;background:var(--line);}
-  .heat-legend i.h1{background:rgba(92,187,111,.28);} .heat-legend i.h2{background:rgba(92,187,111,.52);} .heat-legend i.h3{background:rgba(92,187,111,.78);}
-  .heat-legend i.h4{background:var(--green);}
+  /* Training Rhythm: the two headline counts over a bar per week, with the 4-a-week goal as a dashed line. It replaced
+     a heatmap that filled half its card and an 8-week sparkline that said "30 days" */
+  .rhythm-card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:12px;}
+  .rhythm-card .heat-title{font-size:15px;margin-bottom:12px;}
+  .rh-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .rh-stats b{display:block;font:22px 'Menlo',monospace;font-weight:normal;} .rh-stats b.up{color:var(--green);}
+  .rh-stats b small{font-size:12px;color:var(--text-dim);} .rh-stats span{font-size:12px;color:var(--text-dim);}
+  .rh-chart{position:relative;margin-top:28px;}
+  .rh-goal{position:absolute;left:0;right:0;top:0;border-top:1px dashed var(--field-line,#646a76);}
+  .rh-goal span{position:absolute;right:0;top:-18px;font-size:11px;color:var(--text-dim);}
+  .rh-bars{display:flex;gap:4px;align-items:flex-end;height:72px;}
+  .rh-bars i{flex:1;min-height:2px;border-radius:4px 4px 0 0;background:rgba(92,187,111,.7);}
+  .rh-bars i.zero{background:var(--line);} .rh-bars i.met{background:var(--green);}
+  .rh-bars i.now{background:rgba(92,187,111,.3);box-shadow:inset 0 0 0 1px var(--green);}
+  .rh-axis{display:flex;gap:4px;margin-top:6px;padding-top:4px;border-top:1px solid var(--line);font-size:11px;color:var(--text-dim);}
+  .rh-axis span{flex:1;white-space:nowrap;overflow:visible;}
+  .rh-cap{font-size:12px;color:var(--text-dim);margin-top:8px;}
 
   /* ---------- history calendar ---------- */
   .cal-wrap{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:12px;}
@@ -662,10 +664,11 @@
 
   <section id="historyView" style="display:none">
     <div class="empty" id="histEmpty" style="display:none;margin-bottom:14px">No sessions yet. Finish a workout or log a conditioning session and it will show up here.</div>
-    <div class="heat-wrap">
-      <div class="heat-head"><h3 class="heat-title">Training Rhythm</h3><div class="heat-stat" id="heatStat"></div></div>
-      <div class="heat-scroll"><div class="heat-grid" id="heatGrid"></div></div>
-      <div class="heat-legend">Less<i></i><i class="h1"></i><i class="h2"></i><i class="h3"></i><i class="h4"></i>More</div>
+    <div class="rhythm-card">
+      <h3 class="heat-title">Training Rhythm</h3>
+      <div class="rh-stats" id="rhStats"></div>
+      <div class="rh-chart" id="rhChart" role="img"></div>
+      <div class="rh-cap">Sessions per week, last 12 weeks</div>
     </div>
     <div class="cal-wrap">
       <div class="cal-head"><span class="cal-nav" id="calPrev" aria-label="Previous Month"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></span><h3 class="cal-title" id="calTitle" aria-live="polite">—</h3><span class="cal-nav" id="calNext" aria-label="Next Month"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></div>
@@ -673,7 +676,6 @@
       <div class="cal-grid" id="calGrid"></div>
       <div class="cal-legend" id="calLegend"></div>
     </div>
-    <div class="stats2" id="histStats"></div>
   </section>
 
   <section id="strengthView" style="display:none">
@@ -2657,24 +2659,25 @@ async function logCardio(){
 }
 
 // ---------- history view ----------
-function buildHeatmap(){
-  const grid=document.getElementById('heatGrid'); grid.innerHTML='';
-  const days=98; const today=new Date(); today.setHours(0,0,0,0);
-  const start=new Date(today); start.setDate(start.getDate()-(days-1));
-  for(let i=0;i<start.getDay();i++){ const pad=document.createElement('i'); pad.style.visibility='hidden'; grid.appendChild(pad); }
-  // shading is by volume, but a day counts as trained because a session was logged on it — a session logged with
-  // its weights left blank (0 lb moved) used to leave its day empty and drop out of the count. The count is
-  // sessions, as the label says, not distinct days.
-  const byDay={}, trained=new Set(), startT=start.getTime(); let count=0;
-  sessions.forEach(s=>{ const d=new Date(s.t); d.setHours(0,0,0,0); const key=d.getTime(); byDay[key]=(byDay[key]||0)+(s.isCardio?(s.duration||0)*100:(s.vol||0)); trained.add(key); if(s.t>=startT) count++; });
-  const maxV=Math.max(1,...Object.values(byDay));
-  for(let i=0;i<days;i++){
-    const d=new Date(start); d.setDate(d.getDate()+i); const key=d.getTime();
-    const cell=document.createElement('i');
-    if(trained.has(key)){ const lvl=Math.max(1,Math.min(4,Math.ceil((byDay[key]||0)/maxV*4))); cell.className='h'+lvl; }
-    grid.appendChild(cell);
-  }
-  document.getElementById('heatStat').innerHTML=`<b>${count}</b> Sessions · 14 Weeks`;
+// Training Rhythm: sessions in the last 30 days and conditioning this week, over lifting sessions per week for 12 weeks.
+// The goal line is the header's 4 a week; the current week is outlined, since it's still in progress.
+const RHYTHM_GOAL=4;
+function renderRhythm(){
+  const week=weekStart(), month=Date.now()-30*864e5;
+  const lifts=sessions.filter(s=>!s.isCardio), cardioWeek=sessions.filter(s=>s.isCardio&&s.t>=week);
+  const cardioMin=cardioWeek.reduce((a,b)=>a+(b.duration||0),0);
+  document.getElementById('rhStats').innerHTML=`<div><b>${lifts.filter(s=>s.t>=month).length}</b><span>Lifting, Last 30 Days</span></div>
+    <div><b class="${cardioWeek.length>=2?'up':''}">${cardioWeek.length}<small> / 2–3</small></b><span>Conditioning This Week${cardioMin?` · ${cardioMin} min`:''}</span></div>`;
+  const ranges=weekRanges(12), counts=ranges.map(([a,b])=>lifts.filter(s=>s.t>=a&&s.t<b).length);
+  const top=Math.max(RHYTHM_GOAL,...counts);
+  const bars=counts.map((n,i)=>{ const cur=i===counts.length-1;
+    return `<i class="${cur?'now':n===0?'zero':n>=RHYTHM_GOAL?'met':''}" style="height:${n?Math.max(4,n/top*100):3}%" title="${fmtDate(ranges[i][0])}: ${n}"></i>`; }).join('');
+  // a month label under the first week that starts in it
+  const axis=ranges.map(([a],i)=>{ const d=new Date(a), prev=i?new Date(ranges[i-1][0]):null;
+    return `<span>${!prev||prev.getMonth()!==d.getMonth()?d.toLocaleDateString(undefined,{month:'short'}):''}</span>`; }).join('');
+  const chart=document.getElementById('rhChart');
+  chart.innerHTML=`<div class="rh-goal" style="top:${(1-RHYTHM_GOAL/top)*72}px"><span>Goal ${RHYTHM_GOAL}</span></div><div class="rh-bars">${bars}</div><div class="rh-axis">${axis}</div>`;
+  chart.setAttribute('aria-label',`Lifting sessions per week, last 12 weeks, oldest first: ${counts.join(', ')}. This week so far: ${counts[counts.length-1]}. Goal ${RHYTHM_GOAL} a week.`);
 }
 let calMonthOffset=0;
 function sessionType(s){ return s.isCardio?'cardio':(s.dayName==='Upper'?'upper':s.dayName==='Lower'?'lower':null); }
@@ -2833,17 +2836,8 @@ document.getElementById('calPrev').onclick=()=>{ calMonthOffset--; renderCalenda
 document.getElementById('calNext').onclick=()=>{ if(calMonthOffset<0){ calMonthOffset++; renderCalendar(); } };
 function renderHistory(){
   document.getElementById('histEmpty').style.display=sessions.length?'none':'block';
-  buildHeatmap();
+  renderRhythm();
   renderCalendar();
-  const st=document.getElementById('histStats');
-  const week=weekStart(), month=Date.now()-30*864e5;
-  const lifts=sessions.filter(s=>!s.isCardio), cardio=sessions.filter(s=>s.isCardio);
-  const thisWeek=lifts.filter(s=>s.t>=week).length, thisMonth=lifts.filter(s=>s.t>=month).length;
-  const cardioWeek=cardio.filter(s=>s.t>=week), cardioWeekMin=cardioWeek.reduce((a,b)=>a+(b.duration||0),0);
-  const wk=weekRanges(8).map(([a,b])=>lifts.filter(s=>s.t>=a&&s.t<b).length);
-  st.innerHTML=`<div class="stat"><div class="v ${thisWeek>=4?'up':''}">${thisWeek}<span style="font-size:12px;color:var(--text-dim)"> / 4</span></div><div class="l">Lifting Sessions This Week</div></div>
-    <div class="stat"><div class="v">${thisMonth}</div><div class="l">Lifting, Last 30 Days</div>${sparkline(wk,'var(--green)')}<div class="l">Per Week, Last 8 Weeks</div></div>
-    <div class="stat" style="grid-column:1 / -1"><div class="v ${cardioWeek.length>=2?'up':''}">${cardioWeek.length}<span style="font-size:12px;color:var(--text-dim)"> / 2–3</span></div><div class="l">Conditioning Sessions This Week${cardioWeekMin?` · ${cardioWeekMin} min`:''}</div></div>`;
 }
 
 // ---------- strength view ----------
