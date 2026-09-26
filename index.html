@@ -350,6 +350,12 @@
   .ctype span{padding:8px 12px;border-radius:3px;border:1px solid var(--line);background:var(--panel-raised);font-size:13px;cursor:pointer;color:var(--text-dim);}
   .ctype span.on{border-color:var(--light);color:var(--text);background:rgba(79,163,209,.12);}
   .field-label{font-size:12px;color:var(--text-dim);margin:12px 0 4px;}
+  /* Add an Exercise: every field has a visible label above it, not a placeholder that gets cut off */
+  .ad-h{font-size:15px;font-weight:normal;margin:24px 0 0;padding-top:16px;border-top:1px solid var(--line);}
+  .ad-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;}
+  .ad-f{display:flex;flex-direction:column;gap:4px;min-width:0;font-size:12px;color:var(--text-dim);}
+  .ad-f .in{width:100%;min-width:0;} .ad-wide{grid-column:1 / -1;}
+  .ad-muscles{border:0;padding:0;margin:12px 0 0;min-width:0;} .ad-muscles legend{padding:0;font-size:12px;color:var(--text-dim);}
   .chk{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--text-dim);margin:2px 6px 2px 0;font-family:'Georgia',serif;}
   .empty{font-size:13px;color:var(--text-dim);line-height:1.6;padding:6px 0;}
   .storage-warn{font-size:12px;color:var(--amber);margin-top:8px;}
@@ -775,18 +781,17 @@
       <h3>Edit Workouts</h3>
       <div class="row" style="margin-bottom:8px;row-gap:16px"><select class="in" id="edDay" aria-label="Day to Edit"></select><span class="linkbtn danger" id="edReset">Reset to Default Program</span></div>
       <div id="edList"></div>
-      <div style="margin-top:12px;font-size:12px;color:var(--text-dim)">Add an Exercise</div>
-      <div class="row" style="margin-top:6px">
-        <input class="in" id="adName" placeholder="Name" style="flex:1;min-width:140px">
-        <input class="in" id="adGroup" placeholder="Group (e.g. Chest)" style="width:110px">
+      <h4 class="ad-h">Add an Exercise</h4>
+      <div class="ad-grid">
+        <label class="ad-f ad-wide">Name<input class="in" id="adName" placeholder="e.g. Cable Crunch"></label>
+        <label class="ad-f">Muscle Group<input class="in" id="adGroup" placeholder="e.g. Chest"></label>
+        <label class="ad-f">Target<input class="in" id="adTarget" placeholder="e.g. 3 x 8-12"></label>
+        <label class="ad-f"><span>Starting Weight · <span data-unit>lb</span></span><input class="in" id="adStart" type="number" inputmode="decimal" placeholder="e.g. 50"></label>
+        <label class="ad-f"><span>Increase Step · <span data-unit>lb</span></span><input class="in" id="adStep" type="number" inputmode="decimal" placeholder="e.g. 5"></label>
       </div>
-      <div class="row" style="margin-top:6px">
-        <input class="in" id="adTarget" placeholder="3 x 8-12" style="width:90px">
-        <input class="in" id="adStart" type="number" placeholder="Start" style="width:90px">
-        <input class="in" id="adStep" type="number" placeholder="Step" style="width:80px">
-      </div>
-      <div id="adMuscles" style="margin-top:6px"></div>
-      <textarea class="in notes" id="adCue" placeholder="Form cue (optional)"></textarea>
+      <div class="note-sm" style="margin-top:8px">Leave Starting Weight blank for a body-weight exercise. Increase Step is how much the suggested weight goes up once you reach the top of the rep range.</div>
+      <fieldset class="ad-muscles"><legend>Muscles Worked</legend><div id="adMuscles"></div></fieldset>
+      <label class="ad-f" style="margin-top:12px">Form Cue (optional)<textarea class="in notes" id="adCue" placeholder="e.g. Elbows tucked, pause at the bottom" style="margin-top:0"></textarea></label>
       <div class="row" style="margin-top:8px"><button class="btn primary" id="adBtn">Add Exercise</button></div>
     </div>
     <div class="card">
@@ -3108,6 +3113,8 @@ function renderEditor(){
     x.onclick=async()=>{ if(await confirmSheet(`Remove ${ex.name} from ${day.name} ${day.sub}?`, 'Remove', null, true)){ day.exercises.splice(i,1); saveProgram(); } };
     list.appendChild(r);
   });
+  document.querySelectorAll('#moreView [data-unit]').forEach(u=>u.textContent=unitLabel());
+  document.getElementById('adStep').placeholder='e.g. '+dispWeight(5);
   const mus=document.getElementById('adMuscles'); if(!mus.children.length) mus.innerHTML=Object.keys(MUSCLE_LABEL).map(k=>`<label class="chk"><input type="checkbox" value="${k}">${MUSCLE_LABEL[k]}</label>`).join('');
 }
 async function saveProgram(){ await sset('program',PROGRAM); renderEditor(); if(view==='log') render(); if(view==='home') renderHome(); }
