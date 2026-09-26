@@ -2892,7 +2892,8 @@ function renderStrength(){
     const base=baselineFor(ex), cur=currentFor(ex), h=histFrom(ex), fullH=hist[histKey(ex)]||[];
     const p=h.length?pct(base,cur):null;
     const firstOccurrence=!countedNames.has(ex.name); countedNames.add(ex.name);
-    if(firstOccurrence){
+    // retired ("Past") lifts keep their rows, but the summary numbers only measure what you're training now
+    if(firstOccurrence&&!day.past){
       if(p!==null) changes.push(p);
       if(day.name==='Upper'){ upperTotal+=cur; upperBase+=base; }
       else if(day.name==='Lower'){ lowerTotal+=cur; lowerBase+=base; }
