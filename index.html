@@ -317,7 +317,8 @@
   .celebrate{min-height:100%;position:relative;background:radial-gradient(circle at 50% 0%,rgba(255,93,59,.18),transparent 55%);display:flex;flex-direction:column;align-items:center;padding:calc(48px + env(safe-area-inset-top)) 24px 40px;text-align:center;overflow:hidden;}
   .confetti{position:absolute;top:0;width:7px;height:12px;border-radius:2px;opacity:.85;animation:fall 3.4s ease-in infinite;}
   @keyframes fall{0%{transform:translateY(-40px) rotate(0deg);opacity:0;}10%{opacity:.9;}100%{transform:translateY(680px) rotate(400deg);opacity:0;}}
-  .cel-badge{width:74px;height:74px;border-radius:50%;background:radial-gradient(circle,rgba(255,93,59,.35),rgba(255,93,59,.05) 70%);border:1px solid rgba(255,93,59,.5);display:flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:18px;position:relative;z-index:2;}
+  .cel-badge{width:74px;height:74px;border-radius:50%;background:radial-gradient(circle,rgba(255,93,59,.35),rgba(255,93,59,.05) 70%);border:1px solid rgba(255,93,59,.5);display:flex;align-items:center;justify-content:center;margin-bottom:18px;position:relative;z-index:2;}
+  .cel-badge svg{width:36px;height:36px;fill:none;stroke:var(--accent);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;} /* the Log tab's dumbbell, not an emoji */
   .onboard-logo{width:84px;height:84px;border-radius:20px;margin-bottom:18px;position:relative;z-index:2;box-shadow:0 8px 24px rgba(255,93,59,.35);}
   .cel-h1{font-size:22px;margin:0 0 6px;position:relative;z-index:2;}
   .cel-sub{font-size:13px;color:var(--text-dim);margin-bottom:26px;position:relative;z-index:2;}
@@ -2320,7 +2321,7 @@ function showCelebration({day,worked,nsets,vol,durationMin,pr,rhythmCount}){
   const ord=n=>n===1?'1st':n===2?'2nd':n===3?'3rd':n+'th';
   const rhythmRest=rhythmCount>dotsTotal?`ahead of ${ref}.`:rhythmCount===dotsTotal?`right on ${ref}.`:rh.learned?`you usually get in ${dotsTotal} a week.`:`your plan is ${dotsTotal} a week.`;
   inner.innerHTML=`${confetti}
-    <div class="cel-badge">💪</div>
+    <div class="cel-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5v11M17.5 6.5v11M3 9.5v5M21 9.5v5M6.5 12h11"/></svg></div>
     <div class="cel-h1">${day.name} — ${day.sub}, logged</div>
     <div class="cel-sub">${worked} exercise${worked===1?'':'s'} · ${nsets} set${nsets===1?'':'s'} · ${durationMin}m</div>
     <div class="cel-stats">
@@ -2470,7 +2471,7 @@ async function logCardio(){
   // the suggestion usually moves on to the next lift day now — reload it so Home's greeting, its CTA and the
   // day-tab marker stop pointing at a cardio day that has just been done (this used to persist until a reload)
   await loadDay(suggestedDayId()); setView('home');
-  showToast('Conditioning logged 🏃');
+  showToast('Conditioning logged');
   if(settings.autoBackup && backupDue()) setTimeout(()=>doExport(true),1200); else updateBackupUI();
 }
 
