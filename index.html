@@ -15,22 +15,25 @@
 <style>
   /* with viewport-fit=cover a landscape phone puts the notch and rounded corners inside the page, so every edge-to-edge
      surface keeps at least its usual inset or the safe area, whichever is larger */
-  :root{--safe-l:max(16px,env(safe-area-inset-left));--safe-r:max(16px,env(safe-area-inset-right));}
+  /* the Text Size setting zooms the whole app (--tz), and zoom scales env() insets too — dividing keeps a safe area
+     the size of the notch or home indicator it clears, not 1.3× it */
+  :root{--sa-t:calc(env(safe-area-inset-top) / var(--tz,1));--sa-b:calc(env(safe-area-inset-bottom) / var(--tz,1));--sa-l:calc(env(safe-area-inset-left) / var(--tz,1));--sa-r:calc(env(safe-area-inset-right) / var(--tz,1));}
+  :root{--safe-l:max(16px,var(--sa-l));--safe-r:max(16px,var(--sa-r));}
   /* the app is dark-only: declaring it gives native controls (select menus, checkboxes, number spinners, scrollbars)
      their dark system styling instead of light boxes on a dark page */
   :root{color-scheme:dark;--upper:#a98bf5;--lower:#38b7a8;--cardio:#5fa8e0;--danger:#f0619a;--bg:#14161a;--panel:#1c1f25;--panel-raised:#22262e;--line:#2c3038;--text:#e8e9ec;--text-dim:#8b8f98;--accent:#ff5d3b;--heavy:#ff5d3b;--light:#4fa3d1;--done-bg:#1f2a20;--done-line:#3d5c3f;--green:#5cbb6f;--amber:#d6a03a;--gold:#e8b23d;}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Georgia','Iowan Old Style',serif;min-height:100vh;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Georgia','Iowan Old Style',serif;min-height:100%;}
   button,input,textarea,select{font-family:'Menlo','SF Mono',monospace;}
   /* iOS Safari zooms the page in on focus of any field under 16px. Pinch-zoom is allowed (the viewport no longer
      locks scale), so on touch screens every field is held at 16px to keep tapping a set input from jumping the page. */
   @media (pointer:coarse){ input,textarea,select{font-size:16px!important;} }
   /* while typing on a phone the footer would sit on top of the on-screen keyboard and cover the field (see "on-screen keyboard") */
   @media (pointer:coarse){ body.typing footer{display:none;} }
-  header{position:sticky;top:0;z-index:10;background:var(--bg);padding:calc(14px + env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) 10px max(18px,env(safe-area-inset-left));border-bottom:1px solid var(--line);}
+  header{position:sticky;top:0;z-index:10;background:var(--bg);padding:calc(14px + var(--sa-t)) max(18px,var(--sa-r)) 10px max(18px,var(--sa-l));border-bottom:1px solid var(--line);}
   .header-inner{max-width:560px;margin:0 auto;}
   .title-row{display:flex;align-items:center;justify-content:space-between;}
-  h1{font-size:22px;margin:0;font-weight:normal;letter-spacing:.3px;}
+  h1{font-size:22px;margin:0;font-weight:normal;letter-spacing:.3px;white-space:nowrap;} /* the wordmark never breaks */
   .rhythm{display:flex;align-items:center;gap:8px;}
   .rhythm-ring{flex:0 0 auto;}
   .rhythm-label{font-size:12px;color:var(--text-dim);line-height:1.35;text-align:right;}
@@ -42,8 +45,10 @@
   #logFooter{margin:0 -16px;padding:10px 16px;border-bottom:1px solid var(--line);}
   .viewtab{flex:1 1 0;display:flex;flex-direction:column;align-items:center;gap:3px;min-height:48px;justify-content:center;font-size:12px;color:var(--text-dim);cursor:pointer;}
   .viewtab svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
-  .viewtab.active{color:var(--text);} .viewtab.active svg{stroke:var(--accent);}
+  .viewtab.active{color:var(--text);}
+  .viewtab{min-width:0;} .vt-l{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;} /* large text shortens a label, it never runs into the next one */ .viewtab.active svg{stroke:var(--accent);}
   .daytabs{display:flex;gap:6px;margin-top:12px;overflow-x:auto;padding-bottom:2px;}
+  .daytabs.more-right{-webkit-mask-image:linear-gradient(to right,#000 85%,transparent);mask-image:linear-gradient(to right,#000 85%,transparent);}
   .daytab{position:relative;flex:1 0 auto;text-align:center;padding:8px 8px;border-radius:3px;border:1px solid var(--line);background:var(--panel);color:var(--text-dim);font-size:12px;cursor:pointer;white-space:nowrap;}
   .daytab.suggested{border-color:rgba(255,93,59,.55);background:rgba(255,93,59,.09);color:var(--text);}
   .daytab.suggested.active{background:var(--panel-raised);}
@@ -120,7 +125,7 @@
   .howto{margin:0 0 12px;}
   /* the card's tools: How to · Swap · Demo as one segmented bar (see toolsBar()) */
   .ex-tools{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--panel-raised);}
-  .ex-tools>*{height:44px;display:flex;align-items:center;justify-content:center;gap:6px;margin:0;padding:0 6px;background:none;border:0;color:var(--text);font:13px 'Georgia',serif;text-decoration:none;cursor:pointer;white-space:nowrap;}
+  .ex-tools>*{min-height:44px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px 6px;margin:0;padding:4px 6px;background:none;border:0;color:var(--text);font:13px/1.2 'Georgia',serif;text-decoration:none;cursor:pointer;text-align:center;min-width:0;} /* at large text sizes a label wraps inside its segment */
   .ex-tools>*+*{border-left:1px solid var(--line);}
   .ex-tools>*:active{background:var(--panel);}
   .ex-tools svg{width:16px;height:16px;flex-shrink:0;fill:none;stroke:var(--light);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
@@ -148,6 +153,7 @@
   .setrm{color:var(--text-dim);cursor:pointer;font-size:13px;text-align:center;}
   .setrm:hover{color:var(--danger);}
   .setgrid.head{color:var(--text-dim);font-size:11px;letter-spacing:.06em;text-transform:uppercase;text-align:center;}
+  .setgrid.head>div{min-width:0;overflow:hidden;text-overflow:ellipsis;} /* at large text a head shortens rather than running into its neighbour */
   .setnum{color:var(--text-dim);text-align:center;font-family:'Menlo',monospace;}
   .setgrid.head .bw-note{opacity:.75;margin-left:3px;white-space:nowrap;}
   /* hold counter for timed sets (planks etc.): a stopwatch under the set row that fills the seconds field */
@@ -172,20 +178,20 @@
   .plates b{color:var(--text);font-weight:normal;font-family:'Menlo',monospace;}
   /* bar-loaded lifts: "Plates per side" and its value on the left, the bar chip on the right, fixed-bar toggle below */
   .bar-plates{display:flex;flex-direction:column;align-items:stretch;gap:0;margin:0 0 4px;}
-  .plates-row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;}
+  .plates-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px;min-height:44px;}
   .plates-info{display:flex;flex-direction:column;gap:2px;min-width:0;}
   .plates-cap{font-size:12px;color:var(--text-dim);}
   .bar-plates .plates-txt{font-size:13px;color:var(--text-dim);}
   .bar-plates .plates-txt b{font-size:17px;}
   .plates-note{font-size:12px;color:var(--text-dim);}
-  .bar-chip{position:relative;display:inline-flex;align-items:center;gap:6px;flex-shrink:0;height:36px;padding:0 10px 0 12px;border:1px solid var(--field-line,#646a76);border-radius:8px;background:var(--panel-raised);color:var(--text);font:13px 'Menlo',monospace;cursor:pointer;}
+  .bar-chip{position:relative;display:inline-flex;align-items:center;gap:6px;flex-shrink:0;min-height:36px;white-space:nowrap;padding:0 10px 0 12px;border:1px solid var(--field-line,#646a76);border-radius:8px;background:var(--panel-raised);color:var(--text);font:13px 'Menlo',monospace;cursor:pointer;}
   .bar-chip svg{width:14px;height:14px;fill:none;stroke:var(--text-dim);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
   .bar-chip select{position:absolute;left:0;right:0;top:-5px;bottom:-5px;width:100%;opacity:0;font-size:16px;cursor:pointer;}
   .bar-chip:has(select:focus-visible){outline:2px solid var(--light);outline-offset:2px;}
   .plates .fixed-chk,.plates .mach-plate-chk{margin:0;gap:10px;font-size:13px;color:var(--text-dim);}
   .plates .fixed-chk input,.plates .mach-plate-chk input{margin:0;width:18px;height:18px;}
   .plates .mach-base{padding:3px 6px;font-size:12px;text-align:center;}
-  footer{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--line);padding:0 var(--safe-r) calc(2px + env(safe-area-inset-bottom)) var(--safe-l);z-index:9;}
+  footer{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--line);padding:0 var(--safe-r) calc(2px + var(--sa-b)) var(--safe-l);z-index:9;}
   .footer-inner{max-width:528px;margin:0 auto;}
   .finish-btn{width:100%;background:var(--accent);color:#1a0d08;border:none;border-radius:4px;padding:13px;font-size:13px;letter-spacing:.3px;cursor:pointer;}
   .timer{display:none;flex-direction:column;background:var(--panel-raised);border:1px solid rgba(255,93,59,.35);border-radius:8px;padding:12px 16px;margin-bottom:8px;font-size:13px;position:relative;overflow:hidden;}
@@ -202,7 +208,9 @@
   /* destructive, so it's an outlined button in the danger colour — same shape as + Add Set, and it asks first */
   .reset-link{display:block;width:100%;height:44px;margin-top:24px;padding:0;border:1px solid var(--line);border-radius:8px;background:none;color:var(--danger);font:13px 'Georgia',serif;cursor:pointer;}
   .reset-link:active{background:var(--panel-raised);}
-  .sheet-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:30;}
+  /* sheets open from something the user just tapped, so they sit above the full-screen onboarding and celebration
+     overlays (40) — a muscle tapped on onboarding's recovery-map step used to open its sheet invisibly underneath */
+  .sheet-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:45;}
   /* the confirm sheet can be opened from inside another already-open sheet (deleting a session from the calendar
      day sheet, removing an exercise from the editor) — same z-index as a regular sheet means whichever is later in
      the DOM wins, which put it behind the day sheet. It always needs to win, so it sits above every other overlay,
@@ -210,7 +218,7 @@
   #confirmBg{z-index:50;} #confirmSheet{z-index:51;}
   /* recovery warning: one tall sheet that lists every recovering muscle. It grows with the list up to nearly the full
      screen; past that only the list scrolls, so the two choices stay in view however many muscles a day hits. */
-  #fatigueSheet.on{display:flex;flex-direction:column;max-height:calc(100dvh - 40px - env(safe-area-inset-top));overflow:hidden;}
+  #fatigueSheet.on{display:flex;flex-direction:column;max-height:calc(100% - 40px - var(--sa-t));overflow:hidden;}
   .fat-head{display:flex;justify-content:space-between;font-family:'Menlo',monospace;font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:var(--text-dim);margin-top:6px;padding-bottom:5px;border-bottom:1px solid var(--line);}
   .fat-list{flex:0 1 auto;min-height:0;overflow-y:auto;margin-bottom:12px;}
   .fat-row{display:grid;grid-template-columns:minmax(0,1fr) 72px 64px;gap:10px;align-items:center;padding:9px 6px 9px 0;border-bottom:1px dashed var(--line);font-size:13px;}
@@ -221,7 +229,7 @@
   .fat-left{font-family:'Menlo',monospace;font-size:12px;color:var(--text-dim);text-align:right;white-space:nowrap;}
   .fat-btns{display:flex;flex-direction:column;gap:8px;margin-top:auto;padding-top:14px;}
   .fat-btns .btn{min-height:48px;font-size:13px;}
-  .sheet{display:none;position:fixed;left:0;right:0;bottom:0;max-height:78vh;overflow-y:auto;background:var(--panel);border-top:1px solid var(--line);border-radius:12px 12px 0 0;padding:16px var(--safe-r) calc(16px + env(safe-area-inset-bottom)) var(--safe-l);z-index:31;}
+  .sheet{display:none;position:fixed;left:0;right:0;bottom:0;max-height:78%;overflow-y:auto;background:var(--panel);border-top:1px solid var(--line);border-radius:12px 12px 0 0;padding:16px var(--safe-r) calc(16px + var(--sa-b)) var(--safe-l);z-index:46;}
   .sheet.on,.sheet-bg.on{display:block;}
   .sheet{overscroll-behavior:contain;max-width:560px;margin:0 auto;} .sheet:focus{outline:none;}
   @media (min-width:600px){ .sheet{border-left:1px solid var(--line);border-right:1px solid var(--line);} }
@@ -232,7 +240,7 @@
   .alt .ac{font-size:12px;line-height:1.5;color:var(--text);margin-top:6px;opacity:.85;}
   .alt .ab{margin-top:8px;display:flex;gap:8px;}
   .alt-sec{font-size:12px;color:var(--text-dim);margin:12px 0 6px;}
-  .toast{position:fixed;bottom:calc(var(--foot-h,80px) + 16px);left:50%;transform:translateX(-50%);background:var(--panel-raised);border:1px solid var(--done-line);color:#cfe8cf;padding:10px 18px;border-radius:4px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:20;max-width:88vw;text-align:center;}
+  .toast{position:fixed;bottom:calc(var(--foot-h,80px) + 16px);left:50%;transform:translateX(-50%);background:var(--panel-raised);border:1px solid var(--done-line);color:#cfe8cf;padding:10px 18px;border-radius:4px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:20;max-width:88%;text-align:center;}
   .toast.show{opacity:1;}
   .stats2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
   .stat{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;}
@@ -297,7 +305,7 @@
   .se-head{display:flex;justify-content:space-between;align-items:center;min-height:44px;margin-top:4px;}
   /* an action bar pinned to the bottom of a scrolling sheet: it sits over the sheet's own bottom padding (not above
      it), so nothing scrolls through underneath, and a hairline separates it from the content */
-  .sheet-actions,.se-foot{position:sticky;bottom:calc(-16px - env(safe-area-inset-bottom));z-index:1;background:var(--panel);box-shadow:0 -1px 0 var(--line);padding:12px 0 calc(16px + env(safe-area-inset-bottom));margin:12px 0 calc(-16px - env(safe-area-inset-bottom));display:flex;gap:8px;}
+  .sheet-actions,.se-foot{position:sticky;bottom:calc(-16px - var(--sa-b));z-index:1;background:var(--panel);box-shadow:0 -1px 0 var(--line);padding:12px 0 calc(16px + var(--sa-b));margin:12px 0 calc(-16px - var(--sa-b));display:flex;gap:8px;}
   .se-foot .btn{flex:1;}
   .edrow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line);font-size:13px;}
   .edrow .m{font-size:12px;color:var(--text-dim);}
@@ -327,12 +335,45 @@
   /* ---------- celebration screen ---------- */
   .celebrate-bg{display:none;position:fixed;inset:0;background:var(--bg);z-index:40;overflow-y:auto;}
   .celebrate-bg.on{display:block;}
-  .celebrate{min-height:100%;position:relative;background:radial-gradient(circle at 50% 0%,rgba(255,93,59,.18),transparent 55%);display:flex;flex-direction:column;align-items:center;padding:calc(48px + env(safe-area-inset-top)) 24px 40px;text-align:center;overflow:hidden;}
+  .celebrate{min-height:100%;position:relative;background:radial-gradient(circle at 50% 0%,rgba(255,93,59,.18),transparent 55%);display:flex;flex-direction:column;align-items:center;padding:calc(48px + var(--sa-t)) 24px 40px;text-align:center;overflow:hidden;}
   .confetti{position:absolute;top:0;width:7px;height:12px;border-radius:2px;opacity:.85;animation:fall 3.4s ease-in infinite;}
   @keyframes fall{0%{transform:translateY(-40px) rotate(0deg);opacity:0;}10%{opacity:.9;}100%{transform:translateY(680px) rotate(400deg);opacity:0;}}
   .cel-badge{width:74px;height:74px;border-radius:50%;background:radial-gradient(circle,rgba(255,93,59,.35),rgba(255,93,59,.05) 70%);border:1px solid rgba(255,93,59,.5);display:flex;align-items:center;justify-content:center;margin-bottom:18px;position:relative;z-index:2;}
   .cel-badge svg{width:36px;height:36px;fill:none;stroke:var(--accent);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;} /* the Log tab's dumbbell, not an emoji */
   .onboard-logo{width:84px;height:84px;border-radius:20px;margin-bottom:18px;position:relative;z-index:2;box-shadow:0 8px 24px rgba(255,93,59,.35);}
+  #onboardTitle:focus{outline:none;} /* focused so a screen reader starts at each step's question, not to show a ring */
+  /* onboarding: back, progress and skip on top, the question centred, the action pinned low where a thumb rests */
+  .celebrate.onb{align-items:stretch;overflow:visible;padding:calc(8px + var(--sa-t)) 16px 0;}
+  .onb-top{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;}
+  .onb-back,.onb-skip{min-width:44px;height:44px;padding:0 4px;background:none;border:0;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .onb-skip{color:var(--text-dim);font:13px 'Georgia',serif;}
+  .onb-back svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  .onb-prog{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;}
+  .onb-bars{display:flex;gap:4px;width:140px;} .onb-bars i{flex:1;height:4px;border-radius:2px;background:var(--line);} .onb-bars i.on{background:var(--accent);}
+  .onb-body{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px;padding:24px 8px;}
+  .onb-body .cel-h1,.onb-body .cel-sub{margin:0;max-width:320px;} .onb-body .cel-sub{line-height:1.5;}
+  .onb-body .onboard-logo{margin-bottom:6px;}
+  .onb-field{display:flex;flex-direction:column;gap:6px;width:100%;max-width:300px;margin-top:12px;text-align:left;font-size:12px;color:var(--text-dim);}
+  .onb-field .in{width:100%;min-height:52px;text-align:center;font-size:17px;}
+  .onb-seg{display:flex;gap:4px;padding:4px;width:100%;max-width:300px;margin-top:12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);}
+  .onb-seg button{flex:1;height:44px;border:0;border-radius:6px;background:none;color:var(--text-dim);font-size:13px;cursor:pointer;}
+  .onb-seg button[aria-pressed="true"]{background:var(--text);color:var(--bg);}
+  .onb-seg+.onb-field{margin-top:0;}
+  .onb-opts{display:flex;flex-direction:column;gap:8px;width:100%;max-width:300px;margin-top:12px;}
+  .onb-opt{display:flex;align-items:center;justify-content:space-between;min-height:56px;padding:0 16px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--text);font:15px 'Georgia',serif;cursor:pointer;}
+  .onb-opt[aria-pressed="true"]{border-color:var(--accent);background:var(--panel-raised);}
+  .onb-opt b{font-weight:normal;color:var(--text-dim);}
+  /* the recovery-map step shows a sample day, since a new user's own map is all green and can't show the colours it explains */
+  .onb-ex{width:100%;max-width:360px;margin-top:8px;padding:16px;background:var(--panel);border:1px solid var(--line);border-radius:8px;text-align:left;}
+  .onb-ex-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12px;color:var(--text-dim);}
+  .onb-ex-h span:first-child{font-size:11px;letter-spacing:.08em;text-transform:uppercase;} .onb-ex-h span:last-child{text-align:right;}
+  .onb-ex .figures{margin:12px 0 8px;} .onb-ex .figures svg{max-height:200px;}
+  .muscle-ex{stroke:#101216;stroke-width:1.6;stroke-linejoin:round;}
+  .onb-ex-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);font-size:15px;}
+  .onb-ex-row i{width:12px;height:12px;border-radius:50%;flex-shrink:0;} .onb-ex-row span{flex:1;} .onb-ex-row b{font-weight:normal;font-size:13px;color:var(--text-dim);text-align:right;}
+  .onb-note{font-size:12px;color:var(--text-dim);max-width:320px;line-height:1.5;}
+  .onb-foot{position:sticky;bottom:0;z-index:2;display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 0 calc(24px + var(--sa-b));background:var(--bg);box-shadow:0 -16px 16px -4px var(--bg);}
+  .cel-cta.alt{background:none;color:var(--text);border:1px solid var(--field-line,#646a76);}
   .cel-h1{font-size:22px;margin:0 0 6px;position:relative;z-index:2;}
   .cel-sub{font-size:13px;color:var(--text-dim);margin-bottom:26px;position:relative;z-index:2;}
   .cel-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;width:100%;max-width:320px;position:relative;z-index:2;margin-bottom:20px;}
@@ -353,7 +394,7 @@
   .cel-cta{width:100%;max-width:320px;background:var(--accent);color:#1a0d08;border:none;border-radius:4px;padding:14px;font-size:13px;font-family:'Menlo',monospace;letter-spacing:.3px;cursor:pointer;position:relative;z-index:2;}
   /* a short (landscape) screen: tighter spacing so Return to Home fits without scrolling */
   @media (max-height:500px){
-    .celebrate{padding-top:calc(16px + env(safe-area-inset-top));padding-bottom:16px;}
+    .celebrate{padding-top:calc(16px + var(--sa-t));padding-bottom:16px;}
     .cel-badge{width:48px;height:48px;margin-bottom:8px;} .cel-badge svg{width:26px;height:26px;}
     .cel-sub{margin-bottom:12px;} .cel-stats{margin-bottom:12px;} .cel-stat{padding:8px 6px;}
     .rhythm-msg,.pr-card{margin-bottom:12px;}
@@ -474,7 +515,9 @@
   .rir-pill::after{content:'';position:absolute;inset:-6px -2px;}
   /* 44 px day cells: a slimmer card inset and gap leave the 7 columns room at phone width */
   .cal-wrap{padding:16px 10px;} .cal-grid,.cal-dow{gap:2px;}
-  .eqchip{padding:9px 12px;}
+  .eqchip{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:22px;}
+  /* the builder's one action stays in reach while the 29 picks scroll under it */
+  #buildDone{position:sticky;bottom:calc(var(--foot-h,80px) + 12px);z-index:3;box-shadow:0 -16px 16px -4px var(--bg),0 12px 0 0 var(--bg);}
   .ctype span{padding:11px 14px;}
   /* tap feedback: the system tap highlight is off (it flashed a grey box over whole cards), so every control dims for
      the moment it's pressed instead — quick in, a little slower out, never moving anything */
@@ -503,7 +546,7 @@
      to leave 41 px for the workout. On short landscape screens only: the title, day tabs and weekly ring share one row
      that scrolls away with the page, and the rest timer and Finish share one row above the nav. Portrait is untouched. */
   @media (orientation:landscape) and (max-height:500px){
-    header{position:relative;padding-top:calc(8px + env(safe-area-inset-top));padding-bottom:8px;}
+    header{position:relative;padding-top:calc(8px + var(--sa-t));padding-bottom:8px;}
     .header-inner{display:flex;flex-wrap:wrap;align-items:center;column-gap:16px;row-gap:8px;max-width:none;}
     .header-inner>.banner{flex:1 0 100%;margin-bottom:0;}
     .title-row{display:contents;}
@@ -677,6 +720,11 @@
         <select class="in" id="unitSel"><option value="lb">lb</option><option value="kg">kg</option></select></div>
     </div>
     <div class="card">
+      <h3>Text Size</h3>
+      <div class="row"><span style="font-size:12px;color:var(--text-dim)">Everything in the app, scaled together</span>
+        <select class="in" id="textSizeSel"><option value="standard">Standard</option><option value="large">Large</option><option value="larger">Larger</option></select></div>
+    </div>
+    <div class="card">
       <h3>Equipment & Variety</h3>
       <div class="note-sm" style="margin-bottom:6px">Uncheck anything your gym doesn't have — swap alternatives and block rotation will only draw from what's left checked.</div>
       <div id="equipChks"></div>
@@ -733,18 +781,18 @@
   <button class="finish-btn" id="finishBtn">Finish Session</button>
   </div>
   <nav class="viewtabs" aria-label="Sections">
-    <span class="viewtab active" data-v="home" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</span>
-    <span class="viewtab" data-v="log"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5v11M17.5 6.5v11M3 9.5v5M21 9.5v5M6.5 12h11"/></svg>Log</span>
-    <span class="viewtab" data-v="history"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>History</span>
-    <span class="viewtab" data-v="strength"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg>Strength</span>
-    <span class="viewtab" data-v="more"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Settings</span>
+    <span class="viewtab active" data-v="home" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span class="vt-l">Home</span></span>
+    <span class="viewtab" data-v="log"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5v11M17.5 6.5v11M3 9.5v5M21 9.5v5M6.5 12h11"/></svg><span class="vt-l">Log</span></span>
+    <span class="viewtab" data-v="history"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg><span class="vt-l">History</span></span>
+    <span class="viewtab" data-v="strength"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg><span class="vt-l">Strength</span></span>
+    <span class="viewtab" data-v="more"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span class="vt-l">Settings</span></span>
   </nav>
 </div></footer>
 <div class="sheet-bg" id="sheetBg"></div>
 <div class="sheet" id="sheet"><div class="sheet-head"><div><div id="sheetTitle" style="font-size:15px">Swap Exercise</div><div id="sheetSub" style="font-size:12px;color:var(--text-dim);margin-top:2px"></div></div><span class="linkbtn" id="sheetClose">Close</span></div><input class="in" id="sheetSearch" placeholder="Search alternatives…" style="width:100%;margin-bottom:12px"><div id="sheetList"></div></div>
 <div class="toast" id="toast">Saved</div>
 <div class="celebrate-bg" id="celebrateBg"><div class="celebrate" id="celebrateInner"></div></div>
-<div class="celebrate-bg" id="onboardBg"><div class="celebrate" id="onboardInner"></div></div>
+<div class="celebrate-bg" id="onboardBg" role="dialog" aria-modal="true" aria-labelledby="onboardTitle"><div class="celebrate" id="onboardInner"></div></div>
 <div class="sheet-bg" id="fatigueBg"></div>
 <div class="sheet" id="fatigueSheet">
   <div class="sheet-head"><div><div style="font-size:17px" id="fatigueTitle">Still Recovering</div><div id="fatigueSub" style="font-size:12px;color:var(--text-dim);margin-top:4px;line-height:1.45"></div></div><span class="linkbtn" id="fatigueClose">Close</span></div>
@@ -1115,7 +1163,7 @@ const EQUIP_LABEL={barbell:'Barbell',dumbbell:'Dumbbell',kettlebell:'Kettlebell'
 // full exercise library (name/equip/muscles/cue), sourced from a third-party open dataset — no set/rep targets of its own.
 // offered as swap candidates via openSwap(), and as a last-resort fill in the builder when no curated pick passes the equipment filter
 const FULL_CATALOG=JSON.parse(document.getElementById('fullCatalog').textContent);
-let currentDay='d1', todayData={}, lastSessionData={}, sessionCount=0, recovery={}, familiarity={}, soreOverride={}, recoveryLog=[], hist={}, sessions=[], notes={}, lastByName={}, bodyweight=[], settings={rest:90, auto:true, autoBackup:true, smartRest:true, unit:'lb', autoRotate:true, blockWeeks:4, neverSuggest:[], equipFilter:EQUIP_TYPES.slice(), name:'', onboarded:false}, view='home';
+let currentDay='d1', todayData={}, lastSessionData={}, sessionCount=0, recovery={}, familiarity={}, soreOverride={}, recoveryLog=[], hist={}, sessions=[], notes={}, lastByName={}, bodyweight=[], settings={rest:90, auto:true, autoBackup:true, smartRest:true, unit:'lb', autoRotate:true, blockWeeks:4, neverSuggest:[], equipFilter:EQUIP_TYPES.slice(), name:'', onboarded:false, textSize:'standard'}, view='home';
 let dayStartTimes={}; // persisted under 'dayStart' so a reload mid-session doesn't reset the session duration to 1m
 let pendingBlockReview=false; // set by finishSession() when the block is complete; the review sheet opens once the celebration screen closes rather than underneath its full-screen overlay
 let lastDeload=0, deloadStart=0;
@@ -1506,6 +1554,9 @@ function plateauBreakIdx(h){
 function fmtDate(t){ const d=new Date(t); return d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}); }
 // ---------- units: everything is stored in lb always; these convert only at the display boundary ----------
 const LB_PER_KG=1/0.45359237;
+// Text Size zooms the whole app rather than just the type, so every layout keeps its proportions and nothing overlaps
+const TEXT_SIZES={standard:1,large:1.15,larger:1.3};
+function applyTextSize(){ const z=TEXT_SIZES[settings.textSize]||1, r=document.documentElement; r.style.zoom=z===1?'':z; r.style.setProperty('--tz',z); }
 function unitLabel(){ return settings.unit==='kg'?'kg':'lb'; }
 function dispWeight(lb){ if(lb===''||lb==null) return lb; const n=parseFloat(lb); if(isNaN(n)) return lb; return settings.unit==='kg'?Math.round(n/LB_PER_KG*2)/2:n; }
 function storeWeight(val){ const n=parseFloat(val); if(isNaN(n)) return val; return settings.unit==='kg'?Math.round(n*LB_PER_KG*10)/10:n; }
@@ -1626,8 +1677,9 @@ function bindScrub(wrap){
     const s=wrap._scrub, svg=wrap.querySelector('svg'); if(!s||s.pts.length<2||!svg) return;
     idx=Math.max(0,Math.min(s.pts.length-1,i));
     const r=svg.getBoundingClientRect(), wr=wrap.getBoundingClientRect(), [cx,cy]=s.coords[idx];
-    const x=r.left-wr.left+cx/s.w*r.width, y=r.top-wr.top+cy/s.h*r.height;
-    line.style.cssText=`display:block;left:${x}px;top:${r.top-wr.top}px;height:${r.height}px`;
+    const k=wr.width?wrap.offsetWidth/wr.width:1; // undoes the Text Size zoom, which client rects include
+    const x=(r.left-wr.left+cx/s.w*r.width)*k, y=(r.top-wr.top+cy/s.h*r.height)*k;
+    line.style.cssText=`display:block;left:${x}px;top:${(r.top-wr.top)*k}px;height:${r.height*k}px`;
     dot.style.cssText=`display:block;left:${x}px;top:${y}px;background:${s.color}`;
     s.onShow(s.pts[idx]);
   };
@@ -2193,11 +2245,11 @@ function renderBuilder(panel){
   panel.innerHTML=`
     <div class="greet-wrap">
       <div class="greet-eyebrow">First Launch</div>
-      <div class="greet-h1">Build your program</div>
+      <div class="greet-h1">Build Your Program</div>
       <div class="greet-sub">Four days a week — Upper and Lower, one heavy and one volume day each. Tick what your gym has and every slot gets a recommended exercise. Change any pick now, or swap later from the log.</div>
     </div>
-    <div class="build-eq">${EQUIP_TYPES.map(t=>`<span class="eqchip${settings.equipFilter.includes(t)?' on':''}" data-t="${t}">${EQUIP_LABEL[t]}</span>`).join('')}</div>
-    ${PROGRAM.map(d=>`<div class="build-day"><div class="build-dh">${d.name} · ${d.sub}</div>${d.exercises.map((ex,i)=>`<div class="build-row${equipAllowed(ex)?'':' miss'}"><span class="bg">${ex.group}</span><span class="bn">${ex.name}<div class="bt">${ex.target}${equipAllowed(ex)?(ex.approx?` · <span class="bm">closest library match — trains ${MUSCLE_LABEL[ex.key]||ex.group} only as a secondary muscle</span>`:''):' · <span class="bm">nothing in the library for your equipment — change it, or tick more above</span>'}</div></span><span class="linkbtn bc" data-d="${d.id}" data-i="${i}">Change</span></div>`).join('')}</div>`).join('')}
+    <div class="build-eq">${EQUIP_TYPES.map(t=>`<span class="eqchip${settings.equipFilter.includes(t)?' on':''}" data-t="${t}" aria-pressed="${settings.equipFilter.includes(t)}">${EQUIP_LABEL[t]}</span>`).join('')}</div>
+    ${PROGRAM.map(d=>`<div class="build-day"><div class="build-dh">${d.name} · ${d.sub}</div>${d.exercises.map((ex,i)=>`<div class="build-row${equipAllowed(ex)?'':' miss'}"><span class="bg">${ex.group}</span><span class="bn">${ex.name}<div class="bt">${fmtTarget(ex.target)}${equipAllowed(ex)?(ex.approx?` · <span class="bm">closest library match — trains ${MUSCLE_LABEL[ex.key]||ex.group} only as a secondary muscle</span>`:''):' · <span class="bm">nothing in the library for your equipment — change it, or tick more above</span>'}</div></span><span class="linkbtn bc" data-d="${d.id}" data-i="${i}" aria-label="Change ${ex.name.replace(/"/g,'&quot;')}">Change</span></div>`).join('')}</div>`).join('')}
     <button class="start-cta" id="buildDone">Use This Program</button>`;
   panel.querySelectorAll('.eqchip').forEach(c=>c.onclick=()=>{
     const t=c.dataset.t; const next=settings.equipFilter.includes(t)?settings.equipFilter.filter(x=>x!==t):[...settings.equipFilter,t];
@@ -2397,37 +2449,39 @@ function showCelebration({day,worked,nsets,vol,durationMin,pr,rhythmCount}){
   document.getElementById('celBackBtn').onclick=()=>{ bg.classList.remove('on'); setView('home'); if(pendingBlockReview){ pendingBlockReview=false; openBlockSheet(); } };
 }
 
-// ---------- first-launch onboarding: welcome -> name -> import? -> body weight -> body-map intro ----------
+// ---------- first-launch onboarding: welcome (import or start new) -> name -> units & body weight -> text size -> body-map intro ----------
 // shown once, on top of whatever init() already rendered underneath (Home showing the program builder,
-// since this only fires when needsBuild is true). Reuses the celebration overlay's CSS, unrelated content.
+// since this only fires when needsBuild is true). Reuses the celebration overlay's look, unrelated content.
+const ONB_STEPS=4;
+let onbBw=null; // the body-weight entry this onboarding logged, so going Back and changing it edits rather than duplicates
+function onbShell(step,{skip,body,foot}){
+  return `<div class="onb-top">
+      <button class="onb-back" id="onboardBack" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="onb-prog">Step ${step} of ${ONB_STEPS}<div class="onb-bars" aria-hidden="true">${Array.from({length:ONB_STEPS},(_,i)=>`<i class="${i<step?'on':''}"></i>`).join('')}</div></div>
+      ${skip?'<button class="onb-skip" id="onboardSkip">Skip</button>':'<span style="width:44px"></span>'}
+    </div>
+    <div class="onb-body">${body}</div>
+    <div class="onb-foot">${foot}</div>`;
+}
 function renderOnboardStep(step){
-  const inner=document.getElementById('onboardInner');
-  if(step===1){
-    inner.innerHTML=`
-      <img class="onboard-logo" src="icon-192.png" alt="Lift Log">
-      <div class="cel-h1">Welcome to Lift Log</div>
-      <div class="cel-sub">Track your lifts, watch your body recover, and let the app learn your numbers as you go.</div>
-      <button class="cel-cta" id="onboardNext">Get started</button>`;
-    document.getElementById('onboardNext').onclick=()=>renderOnboardStep(2);
-  } else if(step===2){
-    inner.innerHTML=`
-      <div class="cel-h1">What should we call you?</div>
-      <div class="cel-sub">Optional — used to personalize your greeting. Change it any time in Settings.</div>
-      <input class="in" id="onboardName" placeholder="Your name" style="width:100%;max-width:280px;text-align:center;margin-bottom:18px;position:relative;z-index:2" value="${settings.name||''}">
-      <button class="cel-cta" id="onboardNext">Continue</button>`;
-    document.getElementById('onboardName').oninput=e=>{ settings.name=e.target.value; };
-    document.getElementById('onboardNext').onclick=()=>renderOnboardStep(3);
-  } else if(step===3){
-    inner.innerHTML=`
-      <div class="cel-h1">Setting up a new device?</div>
-      <div class="cel-sub">If you've used Lift Log before, import your backup file to bring your program, history, and settings with you.</div>
-      <input type="file" id="onboardImportFile" accept="application/json" style="display:none">
-      <button class="cel-cta" id="onboardImportBtn">Import my data</button>
-      <div class="linkbtn" id="onboardImportSkip" style="margin-top:16px;position:relative;z-index:2">No backup — start fresh</div>
-      <div id="onboardImportError" style="display:none;margin-top:16px;position:relative;z-index:2"></div>`;
-    document.getElementById('onboardImportBtn').onclick=()=>document.getElementById('onboardImportFile').click();
-    document.getElementById('onboardImportSkip').onclick=()=>renderOnboardStep(4);
-    document.getElementById('onboardImportFile').onchange=async e=>{
+  const inner=document.getElementById('onboardInner'), $=id=>document.getElementById(id);
+  inner.classList.add('onb');
+  if(step===0){
+    inner.innerHTML=`<div class="onb-body">
+        <img class="onboard-logo" src="icon-192.png" alt="Lift Log">
+        <div class="cel-h1" id="onboardTitle" tabindex="-1">Welcome to Lift Log</div>
+        <div class="cel-sub">Track your lifts, watch your body recover, and let the app learn your numbers as you go.</div>
+      </div>
+      <div class="onb-foot">
+        <div id="onboardImportError" role="alert" class="onb-note" style="display:none"></div>
+        <input type="file" id="onboardImportFile" accept="application/json" style="display:none">
+        <button class="cel-cta" id="onboardImportBtn">Import My Data</button>
+        <button class="cel-cta alt" id="onboardNext">Start as New User</button>
+        <div class="onb-note">Used Lift Log before? Import your backup file to bring your program, history and settings with you.</div>
+      </div>`;
+    $('onboardImportBtn').onclick=()=>$('onboardImportFile').click();
+    $('onboardNext').onclick=()=>renderOnboardStep(1);
+    $('onboardImportFile').onchange=async e=>{
       const f=e.target.files[0]; if(!f) return;
       try{
         const j=JSON.parse(await f.text()); if(j.app!=='liftlog') throw 0;
@@ -2436,38 +2490,101 @@ function renderOnboardStep(step){
         showToast('Restored — reloading');
         setTimeout(()=>location.reload(),900);
       }catch(err){
-        const err_=document.getElementById('onboardImportError');
+        const err_=$('onboardImportError');
         err_.style.display='block';
-        err_.innerHTML=`<div class="plateau-tip">That doesn't look like a Lift Log backup file. Try a different file above, or <span class="linkbtn" id="onboardImportSkip2" style="color:var(--amber)">Skip and Start Fresh</span>.</div>`;
-        document.getElementById('onboardImportSkip2').onclick=()=>renderOnboardStep(4);
+        err_.innerHTML=`<div class="plateau-tip">That doesn't look like a Lift Log backup file. Try a different file, or start as a new user.</div>`;
       }
       e.target.value='';
     };
-  } else if(step===4){
-    inner.innerHTML=`
-      <div class="cel-h1">What do you weigh today?</div>
-      <div class="cel-sub">Optional — body-weight exercises (push-ups, dips, and the like) start pre-filled with this instead of blank. Log it any time from Strength.</div>
-      <input class="in" id="onboardBw" type="text" inputmode="decimal" autocomplete="off" placeholder="${unitLabel()}" style="width:140px;text-align:center;margin-bottom:18px;position:relative;z-index:2">
-      <button class="cel-cta" id="onboardNext">Continue</button>`;
-    document.getElementById('onboardNext').onclick=async()=>{
-      const raw=parseNum(document.getElementById('onboardBw').value);
-      if(raw&&raw>0){ bodyweight.push({t:Date.now(),w:storeBW(raw)}); await sset('bodyweight',bodyweight); updateBwUI(); }
-      renderOnboardStep(5);
+  } else if(step===1){
+    inner.innerHTML=onbShell(1,{skip:true,
+      body:`<div class="cel-h1" id="onboardTitle" tabindex="-1">What should we call you?</div>
+        <div class="cel-sub">Used to personalize your greeting. Change it any time in Settings.</div>
+        <label class="onb-field">Your Name<input class="in" id="onboardName" placeholder="e.g. Sam" autocomplete="given-name"></label>`,
+      foot:`<button class="cel-cta" id="onboardNext">Continue</button>`});
+    $('onboardName').value=settings.name||'';
+    $('onboardNext').onclick=()=>{ settings.name=$('onboardName').value.trim(); renderOnboardStep(2); };
+    $('onboardSkip').onclick=()=>{ settings.name=''; renderOnboardStep(2); };
+    $('onboardBack').onclick=()=>renderOnboardStep(0);
+  } else if(step===2){
+    const seg=u=>`<button aria-pressed="${settings.unit===u}" data-u="${u}">${u}</button>`;
+    inner.innerHTML=onbShell(2,{skip:true,
+      body:`<div class="cel-h1" id="onboardTitle" tabindex="-1">What do you weigh today?</div>
+        <div class="cel-sub">Body-weight exercises — push-ups, dips and the like — start pre-filled with this. Log it any time from Strength.</div>
+        <div class="onb-seg" role="group" aria-label="Units">${seg('lb')}${seg('kg')}</div>
+        <label class="onb-field"><span id="onboardBwLbl">Body Weight · ${unitLabel()}</span><input class="in" id="onboardBw" type="text" inputmode="decimal" autocomplete="off" placeholder="e.g. ${settings.unit==='kg'?76:168}" value="${onbBw?dispBW(onbBw.w):''}"></label>
+        <div class="onb-note">Units apply everywhere — change them later in Settings.</div>`,
+      foot:`<button class="cel-cta" id="onboardNext">Continue</button>`});
+    inner.querySelectorAll('.onb-seg button').forEach(b=>b.onclick=()=>{
+      settings.unit=b.dataset.u;
+      inner.querySelectorAll('.onb-seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+      $('onboardBwLbl').textContent=`Body Weight · ${unitLabel()}`; $('onboardBw').placeholder=`e.g. ${settings.unit==='kg'?76:168}`;
+    });
+    $('onboardNext').onclick=async()=>{
+      const raw=parseNum($('onboardBw').value);
+      if(raw&&raw>0){ if(onbBw) onbBw.w=storeBW(raw); else { onbBw={t:Date.now(),w:storeBW(raw)}; bodyweight.push(onbBw); } }
+      else if(onbBw){ bodyweight.splice(bodyweight.indexOf(onbBw),1); onbBw=null; }
+      await sset('bodyweight',bodyweight); updateBwUI();
+      renderOnboardStep(3);
     };
+    $('onboardSkip').onclick=async()=>{ if(onbBw){ bodyweight.splice(bodyweight.indexOf(onbBw),1); onbBw=null; await sset('bodyweight',bodyweight); updateBwUI(); } renderOnboardStep(3); };
+    $('onboardBack').onclick=()=>renderOnboardStep(1);
+  } else if(step===3){
+    // picking an option applies it straight away, so the whole screen previews the size before you commit to it
+    const opt=(k,label,px)=>`<button class="onb-opt" data-k="${k}" aria-pressed="${(settings.textSize||'standard')===k}">${label}<b style="font-size:${px}px" aria-hidden="true">Aa</b></button>`;
+    inner.innerHTML=onbShell(3,{skip:false,
+      body:`<div class="cel-h1" id="onboardTitle" tabindex="-1">How big should text be?</div>
+        <div class="cel-sub">Pick what's easy to read at arm's length between sets. Change it any time in Settings.</div>
+        <div class="onb-opts" role="group" aria-label="Text size">${opt('standard','Standard',15)}${opt('large','Large',17)}${opt('larger','Larger',20)}</div>`,
+      foot:`<button class="cel-cta" id="onboardNext">Continue</button>`});
+    inner.querySelectorAll('.onb-opt').forEach(b=>b.onclick=()=>{
+      settings.textSize=b.dataset.k; applyTextSize();
+      inner.querySelectorAll('.onb-opt').forEach(x=>x.setAttribute('aria-pressed',x===b));
+    });
+    $('onboardNext').onclick=()=>renderOnboardStep(4);
+    $('onboardBack').onclick=()=>renderOnboardStep(2);
   } else {
-    inner.innerHTML=`
-      <div class="cel-h1">Meet your recovery map</div>
-      <div class="cel-sub">After a session, the muscles you trained show up red, then fade through amber to green as they recover. Check in here before every session.</div>
-      <div id="onboardBodymapSlot" style="width:100%;position:relative;z-index:2"></div>
-      <button class="cel-cta" id="onboardDone" style="margin-top:18px">Let's build your program</button>`;
-    document.getElementById('onboardBodymapSlot').appendChild(document.getElementById('bodymapCard'));
-    document.getElementById('onboardDone').onclick=finishOnboarding;
+    inner.innerHTML=onbShell(4,{skip:false,
+      body:`<div class="cel-h1" id="onboardTitle" tabindex="-1">Meet Your Recovery Map</div>
+        <div class="cel-sub">After a session, the muscles you trained show up red, then fade through amber to green as they recover. Check in here before every session.</div>
+        <div class="onb-ex">
+          <div class="onb-ex-h"><span>Example</span><span>The Day After Upper Heavy</span></div>
+          <div id="onboardExFigs"></div>
+          <div class="onb-ex-row"><i style="background:#c94a3a"></i><span>Chest & Back</span><b>Worked Yesterday</b></div>
+          <div class="onb-ex-row"><i style="background:#d6a03a"></i><span>Shoulders & Arms</span><b>Recovering</b></div>
+          <div class="onb-ex-row"><i style="background:#4a9e5c"></i><span>Legs & Core</span><b>Ready</b></div>
+          <div class="onb-note" style="margin-top:4px">Yours starts all green — nothing's been trained yet.</div>
+        </div>`,
+      foot:`<button class="cel-cta" id="onboardDone">Let's Build Your Program</button>`});
+    $('onboardExFigs').replaceWith(exampleRecoveryFigures());
+    $('onboardDone').onclick=finishOnboarding;
+    $('onboardBack').onclick=()=>renderOnboardStep(3);
   }
+  const title=$('onboardTitle'); if(title) title.focus({preventScroll:true});
+  inner.parentElement.scrollTop=0;
 }
+// a copy of the body-map figures tinted as they'd look the day after Upper Heavy. The copy's paths lose the .muscle class
+// and data-m, so renderBody() never recolours them or wires up their taps.
+const EX_WORKED=['chest-upper','chest-mid','chest-lower','back-lats','back-traps','delt-front'];
+const EX_RECOVERING=['delt-lateral','delt-rear','biceps','brachialis','triceps-lateral','triceps-long','forearm-flexor','forearm-extensor'];
+function exampleRecoveryFigures(){
+  const figs=document.querySelector('#bodymapCard .figures').cloneNode(true);
+  figs.setAttribute('aria-hidden','true');
+  figs.querySelectorAll('.muscle-glow,defs').forEach(el=>el.remove());
+  figs.querySelectorAll('.muscle').forEach(el=>{
+    const m=el.dataset.m;
+    el.setAttribute('class','muscle-ex '+(EX_WORKED.includes(m)?'m-worked':EX_RECOVERING.includes(m)?'m-recovering':'m-ready'));
+    el.removeAttribute('data-m');
+  });
+  return figs;
+}
+// while a full-screen overlay is up, the app behind it can't be reached by keyboard or screen reader
+function setAppInert(on){ ['header','main','footer'].forEach(sel=>document.querySelector(sel).toggleAttribute('inert',on)); }
 async function finishOnboarding(){
+  setAppInert(false);
   settings.onboarded=true;
   await sset('settings',settings);
-  document.getElementById('arrivalPanel').insertAdjacentElement('afterend', document.getElementById('bodymapCard'));
+  render(); renderHistory(); renderStrength(); // units may have changed underneath
   document.getElementById('onboardBg').classList.remove('on');
   renderHome();
 }
@@ -2890,7 +3007,7 @@ document.getElementById('lowerStrCard').onclick=e=>{ if(e.target.closest('.str-c
 document.getElementById('bwLog').onclick=async()=>{ const raw=parseNum(document.getElementById('bwInput').value); if(!raw||raw<=0){ showToast('Enter a weight like 168.5'); return; } bodyweight.push({t:Date.now(),w:storeBW(raw)}); await sset('bodyweight',bodyweight); document.getElementById('bwInput').value=''; showToast('Body weight logged'); renderStrength(); updateBwUI(); };
 
 // ---------- more: settings, editor, data ----------
-function renderSettings(){ document.getElementById('nameInput').value=settings.name||''; document.getElementById('nameInput').oninput=e=>{ settings.name=e.target.value; sset('settings',settings); }; document.getElementById('restSel').value=String(settings.rest); document.getElementById('autoTimer').checked=!!settings.auto; document.getElementById('autoBackup').checked=!!settings.autoBackup; document.getElementById('smartRestChk').checked=!!settings.smartRest; document.getElementById('restSelLbl').textContent=settings.smartRest?'Fallback Rest':'Default Rest'; document.getElementById('unitSel').value=settings.unit||'lb'; updateBackupUI();
+function renderSettings(){ document.getElementById('nameInput').value=settings.name||''; document.getElementById('nameInput').oninput=e=>{ settings.name=e.target.value; sset('settings',settings); }; document.getElementById('restSel').value=String(settings.rest); document.getElementById('autoTimer').checked=!!settings.auto; document.getElementById('autoBackup').checked=!!settings.autoBackup; document.getElementById('smartRestChk').checked=!!settings.smartRest; document.getElementById('restSelLbl').textContent=settings.smartRest?'Fallback Rest':'Default Rest'; document.getElementById('unitSel').value=settings.unit||'lb'; document.getElementById('textSizeSel').value=settings.textSize||'standard'; updateBackupUI();
   document.getElementById('storageInfo').textContent = store.mode==='local'?'Data is saved on this device. Export a backup now and then so it is never trapped on one phone.':store.mode==='idb'?'Data is saved on this device (using this browser’s IndexedDB storage). Export a backup now and then so it is never trapped on one phone.':'Storage unavailable in this browser — nothing will be saved after you close the page.';
   const eqBox=document.getElementById('equipChks');
   if(!eqBox.children.length) eqBox.innerHTML=EQUIP_TYPES.map(t=>`<label class="chk"><input type="checkbox" value="${t}"> ${EQUIP_LABEL[t]}</label>`).join('');
@@ -2908,6 +3025,7 @@ function renderSettings(){ document.getElementById('nameInput').value=settings.n
 document.getElementById('restSel').onchange=e=>{ settings.rest=parseInt(e.target.value); sset('settings',settings); };
 document.getElementById('autoTimer').onchange=e=>{ settings.auto=e.target.checked; sset('settings',settings); };
 document.getElementById('smartRestChk').onchange=e=>{ settings.smartRest=e.target.checked; sset('settings',settings); renderSettings(); };
+document.getElementById('textSizeSel').onchange=e=>{ settings.textSize=e.target.value; sset('settings',settings); applyTextSize(); };
 document.getElementById('unitSel').onchange=e=>{ settings.unit=e.target.value; sset('settings',settings); render(); renderHistory(); renderStrength(); };
 document.getElementById('autoRotateChk').onchange=e=>{ settings.autoRotate=e.target.checked; sset('settings',settings); renderSettings(); updateBlockUI(); };
 document.getElementById('blockWeeksSel').onchange=e=>{ settings.blockWeeks=parseInt(e.target.value); sset('settings',settings); updateBlockUI(); };
@@ -3231,7 +3349,7 @@ function setView(v){
 }
 document.querySelectorAll('.viewtab').forEach(t=>t.onclick=()=>setView(t.dataset.v));
 // the footer's height changes with the view and the rest timer; main and the toast read it to stay clear of it
-new ResizeObserver(([e])=>{ const h=Math.ceil(e.target.getBoundingClientRect().height); if(h) document.documentElement.style.setProperty('--foot-h',h+'px'); }).observe(document.querySelector('footer')); // 0 = hidden while typing: keep the last height so the page doesn't jump
+new ResizeObserver(([e])=>{ const h=e.target.offsetHeight; if(h) document.documentElement.style.setProperty('--foot-h',h+'px'); }).observe(document.querySelector('footer')); // 0 = hidden while typing: keep the last height so the page doesn't jump
 document.getElementById('finishBtn').onclick=finishSession;
 document.getElementById('resetLink').onclick=async()=>{
   const day=PROGRAM.find(d=>d.id===currentDay);
@@ -3310,7 +3428,8 @@ document.getElementById('resetLink').onclick=async()=>{
   if(backfillOrphanedMuscleKeys(recovery,validMuscleKeys)) await sset('recovery',recovery);
   if(backfillOrphanedMuscleKeys(familiarity,validMuscleKeys)) await sset('familiarity',familiarity);
 
-  settings=Object.assign({rest:90,auto:true,autoBackup:true,smartRest:true,unit:'lb',autoRotate:true,blockWeeks:4,neverSuggest:[],equipFilter:EQUIP_TYPES.slice(),name:'',onboarded:false},(await sget('settings'))||{});
+  settings=Object.assign({rest:90,auto:true,autoBackup:true,smartRest:true,unit:'lb',autoRotate:true,blockWeeks:4,neverSuggest:[],equipFilter:EQUIP_TYPES.slice(),name:'',onboarded:false,textSize:'standard'},(await sget('settings'))||{});
+  applyTextSize();
   blockStart=(await sget('blockStart'))||0; blockNum=(await sget('blockNum'))||1;
   lastBackup=(await sget('lastBackup'))||0; updateBackupUI();
   lastDeload=(await sget('lastDeload'))||0; deloadStart=(await sget('deloadStart'))||0; updateDeloadUI(); updateBwUI();
@@ -3352,7 +3471,7 @@ document.getElementById('resetLink').onclick=async()=>{
 
   await loadDay(suggestedDayId());
   if(currentDay==='cardio') setView('log'); // cardio is a decisive rotation call, not a day to choose from Home — go straight to logging it
-  if(needsBuild && !settings.onboarded){ document.getElementById('onboardBg').classList.add('on'); renderOnboardStep(1); }
+  if(needsBuild && !settings.onboarded){ setAppInert(true); document.getElementById('onboardBg').classList.add('on'); renderOnboardStep(0); }
   setInterval(renderBody,60000);
 })();
 if('serviceWorker' in navigator) window.addEventListener('load',()=>{
@@ -3440,6 +3559,9 @@ document.addEventListener('keydown',e=>{
   else if(e.shiftKey&&a===first){ e.preventDefault(); last.focus(); }
   else if(!e.shiftKey&&a===last){ e.preventDefault(); first.focus(); }
 });
+// the day-tab strip fades on its right edge while more tabs sit off-screen (narrow phones, large text)
+(()=>{ const dt=document.getElementById('dayTabs'); const sync=()=>dt.classList.toggle('more-right',dt.scrollLeft+dt.clientWidth<dt.scrollWidth-2);
+  dt.addEventListener('scroll',sync,{passive:true}); new ResizeObserver(sync).observe(dt); new MutationObserver(sync).observe(dt,{childList:true}); })();
 // iOS Safari only applies :active (the tap feedback above) on a page that listens for touches
 document.addEventListener('touchstart',()=>{},{passive:true});
 new MutationObserver(ms=>{ for(const m of ms) for(const n of m.addedNodes) if(n.nodeType===1) tagClickables(n); })
