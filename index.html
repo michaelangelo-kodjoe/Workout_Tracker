@@ -2385,7 +2385,14 @@ function render(){
         }
         s.done=!s.done; touchDayStart(); if(s.done&&settings.auto) startTimer(settings.smartRest?suggestedRest(ex):settings.rest); sset('today:'+currentDay,todayData); render();
       };
-      row.querySelector('.setrm').onclick=()=>{ if(state.sets.length<=1){ showToast('Keep at least one set'); return; } state.sets.splice(i,1); touchDayStart(); sset('today:'+currentDay,todayData); render(); };
+      row.querySelector('.setrm').onclick=async()=>{
+        if(state.sets.length<=1){ showToast('Keep at least one set'); return; }
+        // an empty set goes in one tap; one with anything logged asks first, since ✕ sits right beside Done
+        const logged=s.done||s.r!==''||(bwLoaded?!!parseFloat(s.add):(s.w!==''&&s.w!=null));
+        const fk=listFocusKey();
+        if(logged&&!await confirmSheet(`Remove set ${i+1} of ${ex.name}? What's logged in it will be lost.`,'Remove Set',null,true)) return;
+        state.sets.splice(i,1); touchDayStart(); sset('today:'+currentDay,todayData); render(); restoreListFocus(fk);
+      };
       body.appendChild(row);
       if(timed&&!s.done){
         const running=hold.key===holdKey(ex,i);
