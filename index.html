@@ -338,6 +338,7 @@
   .blk-row .m{font-size:12px;color:var(--text-dim);margin-top:2px;}
   .edrow .acts span{cursor:pointer;color:var(--light);font-size:15px;margin-left:10px;}
   .edrow .acts span.x{color:var(--danger);}
+  .edrow .acts span.off{color:var(--text-dim);opacity:.35;cursor:default;}
   .cardio-tab{border-style:dashed;}
   .rpe-row{display:flex;gap:6px;margin-top:6px;}
   .rpe-dot{flex:1;text-align:center;padding:8px 0;border-radius:3px;border:1px solid var(--line);background:var(--panel-raised);font-size:12px;cursor:pointer;color:var(--text-dim);}
@@ -3105,7 +3106,9 @@ function renderEditor(){
   const day=PROGRAM.find(d=>d.id===sel.value); const list=document.getElementById('edList'); list.innerHTML='';
   day.exercises.forEach((ex,i)=>{
     const r=document.createElement('div'); r.className='edrow';
-    r.innerHTML=`<div><div>${ex.name}</div><div class="m">${isPrimarySlot(i)?'Primary · ':''}${ex.group} · ${ex.target} · ${ex.m.map(k=>MUSCLE_LABEL[k]).join(', ')}</div></div><div class="acts"><span title="swap" aria-label="swap ${ex.name}">↔</span><span aria-label="move ${ex.name} up">↑</span><span aria-label="move ${ex.name} down">↓</span><span class="x" aria-label="remove ${ex.name}">✕</span></div>`;
+    // the first row can't move up and the last can't move down, so those arrows show as off instead of doing nothing
+    const first=i===0, last=i===day.exercises.length-1;
+    r.innerHTML=`<div><div>${ex.name}</div><div class="m">${isPrimarySlot(i)?'Primary · ':''}${ex.group} · ${fmtTarget(ex.target)} · ${ex.m.map(k=>MUSCLE_LABEL[k]).join(', ')}</div></div><div class="acts"><span title="Swap" aria-label="Swap ${ex.name}">↔</span><span${first?' class="off" aria-disabled="true"':''} aria-label="Move ${ex.name} Up">↑</span><span${last?' class="off" aria-disabled="true"':''} aria-label="Move ${ex.name} Down">↓</span><span class="x" aria-label="Remove ${ex.name}">✕</span></div>`;
     const [ren,up,dn,x]=r.querySelectorAll('.acts span');
     ren.onclick=()=>openSwap(day.id, ex);
     up.onclick=()=>{ if(i>0){ day.exercises.splice(i-1,0,day.exercises.splice(i,1)[0]); saveProgram(); } };
