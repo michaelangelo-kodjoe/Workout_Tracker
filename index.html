@@ -360,6 +360,8 @@
   .chk{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--text-dim);margin:2px 6px 2px 0;font-family:'Georgia',serif;}
   .empty{font-size:13px;color:var(--text-dim);line-height:1.6;padding:6px 0;}
   .storage-warn{font-size:12px;color:var(--amber);margin-top:8px;}
+  /* Export on its own row, Import and Merge side by side under it — they used to wrap 2 + 1, Merge alone */
+  .data-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;} .data-btns .btn{width:100%;margin:0;} .data-btns #exportBtn{grid-column:1 / -1;}
 
   /* ---------- celebration screen ---------- */
   .celebrate-bg{display:none;position:fixed;inset:0;background:var(--bg);z-index:40;overflow-y:auto;}
@@ -797,7 +799,7 @@
     </div>
     <div class="card">
       <h3>Your Data</h3>
-      <div class="row"><button class="btn" id="exportBtn">Export Backup</button><button class="btn" id="importBtn">Import Backup</button><button class="btn" id="mergeBtn">Merge Backup</button><input type="file" id="importFile" accept="application/json" style="display:none"></div>
+      <div class="data-btns"><button class="btn" id="exportBtn">Export Backup</button><button class="btn" id="importBtn">Import Backup</button><button class="btn" id="mergeBtn">Merge Backup</button><input type="file" id="importFile" accept="application/json" style="display:none"></div>
       <div class="note-sm" style="margin-top:6px">Import replaces everything on this device with the backup file. Merge combines the backup's sessions, exercise history and body weight with what's already here instead of overwriting it — use this to bring two devices' data together.</div>
       <div class="row" style="margin-top:10px"><label class="chk"><input type="checkbox" id="autoBackup"> Auto-download a backup when I finish a session and it's been 7+ days</label></div>
       <div class="storage-warn" id="lastBackup" style="color:var(--text-dim)"></div>
