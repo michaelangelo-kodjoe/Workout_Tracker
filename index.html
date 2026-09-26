@@ -360,6 +360,7 @@
   .chk{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--text-dim);margin:2px 6px 2px 0;font-family:'Georgia',serif;}
   .empty{font-size:13px;color:var(--text-dim);line-height:1.6;padding:6px 0;}
   .storage-warn{font-size:12px;color:var(--amber);margin-top:8px;}
+  .storage-warn.ok{color:var(--text-dim);} /* amber only when storage is actually unavailable */
   /* Export on its own row, Import and Merge side by side under it — they used to wrap 2 + 1, Merge alone */
   .data-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;} .data-btns .btn{width:100%;margin:0;} .data-btns #exportBtn{grid-column:1 / -1;}
 
@@ -3081,6 +3082,7 @@ document.getElementById('bwLog').onclick=async()=>{ const raw=parseNum(document.
 
 // ---------- more: settings, editor, data ----------
 function renderSettings(){ document.getElementById('nameInput').value=settings.name||''; document.getElementById('nameInput').oninput=e=>{ settings.name=e.target.value; sset('settings',settings); }; document.getElementById('restSel').value=String(settings.rest); document.getElementById('autoTimer').checked=!!settings.auto; document.getElementById('autoBackup').checked=!!settings.autoBackup; document.getElementById('smartRestChk').checked=!!settings.smartRest; document.getElementById('restSelLbl').textContent=settings.smartRest?'Fallback Rest':'Default Rest'; document.getElementById('unitSel').value=settings.unit||'lb'; document.getElementById('textSizeSel').value=settings.textSize||'standard'; updateBackupUI();
+  document.getElementById('storageInfo').classList.toggle('ok', store.mode==='local'||store.mode==='idb');
   document.getElementById('storageInfo').textContent = store.mode==='local'?'Data is saved on this device. Export a backup now and then so it is never trapped on one phone.':store.mode==='idb'?'Data is saved on this device (using this browser’s IndexedDB storage). Export a backup now and then so it is never trapped on one phone.':'Storage unavailable in this browser — nothing will be saved after you close the page.';
   const eqBox=document.getElementById('equipChks');
   if(!eqBox.children.length) eqBox.innerHTML=EQUIP_TYPES.map(t=>`<label class="chk"><input type="checkbox" value="${t}"> ${EQUIP_LABEL[t]}</label>`).join('');
