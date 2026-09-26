@@ -2198,7 +2198,7 @@ function renderBuilder(panel){
   panel.innerHTML=`
     <div class="greet-wrap">
       <div class="greet-eyebrow">First Launch</div>
-      <div class="greet-h1">Build your program</div>
+      <div class="greet-h1">Build Your Program</div>
       <div class="greet-sub">Four days a week — Upper and Lower, one heavy and one volume day each. Tick what your gym has and every slot gets a recommended exercise. Change any pick now, or swap later from the log.</div>
     </div>
     <div class="build-eq">${EQUIP_TYPES.map(t=>`<span class="eqchip${settings.equipFilter.includes(t)?' on':''}" data-t="${t}" aria-pressed="${settings.equipFilter.includes(t)}">${EQUIP_LABEL[t]}</span>`).join('')}</div>
@@ -2412,7 +2412,7 @@ function renderOnboardStep(step){
       <img class="onboard-logo" src="icon-192.png" alt="Lift Log">
       <div class="cel-h1" id="onboardTitle" tabindex="-1">Welcome to Lift Log</div>
       <div class="cel-sub">Track your lifts, watch your body recover, and let the app learn your numbers as you go.</div>
-      <button class="cel-cta" id="onboardNext">Get started</button>`;
+      <button class="cel-cta" id="onboardNext">Get Started</button>`;
     document.getElementById('onboardNext').onclick=()=>renderOnboardStep(2);
   } else if(step===2){
     inner.innerHTML=`
@@ -2427,8 +2427,8 @@ function renderOnboardStep(step){
       <div class="cel-h1" id="onboardTitle" tabindex="-1">Setting up a new device?</div>
       <div class="cel-sub">If you've used Lift Log before, import your backup file to bring your program, history, and settings with you.</div>
       <input type="file" id="onboardImportFile" accept="application/json" style="display:none">
-      <button class="cel-cta" id="onboardImportBtn">Import my data</button>
-      <div class="linkbtn" id="onboardImportSkip" style="margin-top:16px;position:relative;z-index:2">No backup — start fresh</div>
+      <button class="cel-cta" id="onboardImportBtn">Import My Data</button>
+      <div class="linkbtn" id="onboardImportSkip" style="margin-top:16px;position:relative;z-index:2">No Backup — Start Fresh</div>
       <div id="onboardImportError" role="alert" style="display:none;margin-top:16px;position:relative;z-index:2"></div>`;
     document.getElementById('onboardImportBtn').onclick=()=>document.getElementById('onboardImportFile').click();
     document.getElementById('onboardImportSkip').onclick=()=>renderOnboardStep(4);
@@ -2461,10 +2461,10 @@ function renderOnboardStep(step){
     };
   } else {
     inner.innerHTML=`
-      <div class="cel-h1" id="onboardTitle" tabindex="-1">Meet your recovery map</div>
+      <div class="cel-h1" id="onboardTitle" tabindex="-1">Meet Your Recovery Map</div>
       <div class="cel-sub">After a session, the muscles you trained show up red, then fade through amber to green as they recover. Check in here before every session.</div>
       <div id="onboardBodymapSlot" style="width:100%;position:relative;z-index:2"></div>
-      <button class="cel-cta" id="onboardDone" style="margin-top:18px">Let's build your program</button>`;
+      <button class="cel-cta" id="onboardDone" style="margin-top:18px">Let's Build Your Program</button>`;
     document.getElementById('onboardBodymapSlot').appendChild(document.getElementById('bodymapCard'));
     document.getElementById('onboardDone').onclick=finishOnboarding;
   }
