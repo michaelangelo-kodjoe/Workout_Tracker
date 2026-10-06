@@ -2340,9 +2340,10 @@ function render(){
       // the weight per side is what's left after the bar, halved; − / + move it by the smallest plate, on both sides at once,
       // and set the first unchecked set's weight to match
       const inc=settings.unit==='kg'?1.25:2.5, stepEl=document.createElement('span'); stepEl.className='side-step';
-      stepEl.innerHTML=`<button type="button" data-d="-1" aria-label="Remove ${inc} ${unitLabel()} from each side">−</button><button type="button" data-d="1" aria-label="Add ${inc} ${unitLabel()} to each side">+</button>`;
+      stepEl.innerHTML=`<button type="button" class="side-btn" data-d="-1" aria-label="Remove ${inc} ${unitLabel()} from each side">−</button><button type="button" class="side-btn" data-d="1" aria-label="Add ${inc} ${unitLabel()} to each side">+</button>`;
       const line=document.createElement('div'); line.className='side-line'; txtEl.replaceWith(line); line.append(txtEl,stepEl);
       stepEl.onclick=e=>{ const b=e.target.closest('button'); if(!b) return;
+        b.focus({preventScroll:true}); // Safari doesn't focus a tapped button, and the redraw hands focus back to whatever had it last (e.g. a Done check)
         const target=state.sets.find(x=>!x.done); if(!target){ showToast('Every set is already logged'); return; }
         const bar=dispWeight(barWeightLb(ex)), have=liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)), cur=have?dispWeight(parseFloat(liveLb)):bar;
         const side=Math.max(0,Math.round(((cur-bar)/2+parseInt(b.dataset.d)*inc)*100)/100);
