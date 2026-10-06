@@ -361,6 +361,7 @@
   .rpe-dot{flex:1;text-align:center;padding:8px 0;border-radius:3px;border:1px solid var(--line);background:var(--panel-raised);font-size:12px;cursor:pointer;color:var(--text-dim);}
   .rpe-dot.on{background:var(--light);border-color:var(--light);color:#0d1a22;}
   .rir-row{display:flex;align-items:center;gap:5px;margin:-2px 0 8px;flex-wrap:wrap;}
+  .rir-row[hidden]{display:none;}
   .rir-lbl{font-size:12px;color:var(--text-dim);margin-right:2px;white-space:nowrap;}
   .rir-pill{font-size:12px;color:var(--text-dim);background:var(--panel-raised);border:1px solid var(--line);border-radius:10px;padding:3px 9px;cursor:pointer;}
   .rir-pill.on{background:var(--light);border-color:var(--light);color:#0d1a22;}
@@ -2389,10 +2390,11 @@ function render(){
       const [wI,rI]=row.querySelectorAll('input');
       if(bwLoaded) wI.oninput=e=>{s.add=e.target.value===''?'':storeWeight(e.target.value); s.w=bwTotal(s); touchDayStart(); sset('today:'+currentDay,todayData);};
       else wI.oninput=e=>{s.w=storeWeight(e.target.value); touchDayStart(); sset('today:'+currentDay,todayData); if(updatePlates) updatePlates(s.w);};
-      rI.oninput=e=>{s.r=e.target.value; touchDayStart(); sset('today:'+currentDay,todayData);};
+      rI.oninput=e=>{s.r=e.target.value; touchDayStart(); sset('today:'+currentDay,todayData); const rr=row.nextElementSibling; if(rr&&rr.classList.contains('rir-row')) rr.hidden=!(s.done||s.r!=='');};
       row.querySelector('.setdone').onclick=()=>{
         if(hold.key===holdKey(ex,i)) stopHold(false); // fills s.r with the elapsed seconds before the check below
         if(!s.done && s.r===''){ showToast(timed?'Add the seconds first':'Add reps first'); return; }
+        if(!s.done && !timed && s.rir==null){ showToast('Pick reps left first'); return; }
         // the grey weight in an empty box is only a suggestion — ticking used to save the set with no weight at all.
         // A tick means "did what's shown", so it takes that number; with none to take (a new lift), it asks for one.
         if(!s.done && !bwLoaded && !timed && (s.w===''||s.w==null)){
@@ -2419,8 +2421,9 @@ function render(){
         if(running){ hold.el=hrow.querySelector('.hold-t'); hold.inp=row.querySelectorAll('input')[1]; }
         body.appendChild(hrow);
       }
-      if(s.done&&!timed){
-        const rir=document.createElement('div'); rir.className='rir-row'; rir.setAttribute('role','group'); rir.setAttribute('aria-label',`Set ${i+1} reps left in tank`);
+      if(!timed){
+        // hidden until reps are in, then picked before the set can be checked; stays after Done so it can still be changed
+        const rir=document.createElement('div'); rir.className='rir-row'; rir.hidden=!(s.done||s.r!==''); rir.setAttribute('role','group'); rir.setAttribute('aria-label',`Set ${i+1} reps left in tank`);
         rir.innerHTML=`<span class="rir-lbl" aria-hidden="true">Reps Left</span>`+[0,1,2,3,4].map(v=>`<span class="rir-pill${s.rir===v?' on':''}" data-v="${v}" aria-pressed="${s.rir===v}" aria-label="${v===4?'4 or more reps':v===1?'1 rep':v+' reps'} left">${v===4?'4+':v}</span>`).join('');
         rir.querySelectorAll('.rir-pill').forEach(p=>p.onclick=()=>{ const v=parseInt(p.dataset.v); s.rir=(s.rir===v)?null:v; touchDayStart(); sset('today:'+currentDay,todayData); render(); });
         body.appendChild(rir);
