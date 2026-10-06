@@ -188,7 +188,8 @@
   .setgrid input:disabled{color:var(--text-dim);-webkit-text-fill-color:var(--text-dim);cursor:not-allowed;}
   input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)!important;}
   .setdone{width:28px;height:28px;border-radius:6px;border:1px solid var(--line);background:var(--panel-raised);color:transparent;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;padding:0;}
-  .setdone.on{background:var(--green);border-color:var(--green);color:#0d1a0f;animation:popcheck .4s ease;box-shadow:0 0 0 4px rgba(92,187,111,.18);}
+  .setdone.on{background:var(--green);border-color:var(--green);color:#0d1a0f;box-shadow:0 0 0 4px rgba(92,187,111,.18);}
+  .setdone.on.pop{animation:popcheck .4s ease;} /* only the tap that checks it: a redraw rebuilds every check, and replaying the pop made untouched ones pulse */
   @keyframes popcheck{0%{transform:scale(.7);}55%{transform:scale(1.18);}100%{transform:scale(1);}}
   .delta-up{font-family:'Menlo',monospace;font-size:12px;color:var(--green);white-space:nowrap;}
   .first-log-note{font-size:12px;line-height:1.55;color:var(--light);background:rgba(79,163,209,.08);border-left:2px solid var(--light);padding:9px 11px;border-radius:3px;margin:0 0 10px;}
@@ -206,6 +207,10 @@
   .bar-plates .plates-txt{font-size:13px;color:var(--text-dim);}
   .bar-plates .plates-txt b{font-size:17px;}
   .plates-note{font-size:12px;color:var(--text-dim);}
+  /* per-side weight with a − / + beside it, one smallest plate per tap */
+  .side-line{display:flex;align-items:center;gap:4px;}
+  .side-step{display:inline-flex;}
+  .side-step button{width:44px;height:44px;margin:-6px 0;border:0;background:none;color:var(--text);font-size:20px;padding:0;cursor:pointer;}
   .bar-chip{position:relative;display:inline-flex;align-items:center;gap:6px;flex-shrink:0;min-height:36px;white-space:nowrap;padding:0 10px 0 12px;border:1px solid var(--field-line,#646a76);border-radius:8px;background:var(--panel-raised);color:var(--text);font:13px 'Menlo',monospace;cursor:pointer;}
   .bar-chip svg{width:14px;height:14px;fill:none;stroke:var(--text-dim);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
   .bar-chip select{position:absolute;left:0;right:0;top:-5px;bottom:-5px;width:100%;opacity:0;font-size:16px;cursor:pointer;}
@@ -288,7 +293,7 @@
   .str-split-num.down{color:var(--amber);}
   .str-hero-num.flat,.str-split-num.flat{color:var(--text-dim);}
   .str-split-card{cursor:pointer;}
-  .str-card-hint{font-size:12px;color:var(--light);margin-top:8px;}
+  .str-card-hint{font-size:12px;color:var(--light);margin-top:0;padding:14px 0 12px;min-height:44px;box-sizing:border-box;display:flex;align-items:center;}
   .str-card-hint.scrub-date{color:var(--text-dim);}
   /* pan-y: vertical drags still scroll the page, horizontal drags scrub the chart */
   .scrub{position:relative;touch-action:pan-y;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;outline:none;}
@@ -361,6 +366,7 @@
   .rpe-dot{flex:1;text-align:center;padding:8px 0;border-radius:3px;border:1px solid var(--line);background:var(--panel-raised);font-size:12px;cursor:pointer;color:var(--text-dim);}
   .rpe-dot.on{background:var(--light);border-color:var(--light);color:#0d1a22;}
   .rir-row{display:flex;align-items:center;gap:5px;margin:-2px 0 8px;flex-wrap:wrap;}
+  .rir-row[hidden]{display:none;}
   .rir-lbl{font-size:12px;color:var(--text-dim);margin-right:2px;white-space:nowrap;}
   .rir-pill{font-size:12px;color:var(--text-dim);background:var(--panel-raised);border:1px solid var(--line);border-radius:10px;padding:3px 9px;cursor:pointer;}
   .rir-pill.on{background:var(--light);border-color:var(--light);color:#0d1a22;}
@@ -1901,7 +1907,7 @@ function stopHold(markDone){
   clearInterval(hold.iv);
   const sec=holdElapsed(), s=hold.set, ex=hold.ex;
   hold={key:null,start:0,iv:null,el:null,set:null,ex:null,target:0,beeped:false};
-  if(s){ s.r=String(sec); if(markDone){ s.done=true; if(settings.auto) startTimer(settings.smartRest?suggestedRest(ex):settings.rest); } }
+  if(s){ s.r=String(sec); if(markDone){ s.done=true; popSet=s; if(settings.auto) startTimer(settings.smartRest?suggestedRest(ex):settings.rest); } }
   sset('today:'+currentDay,todayData); render();
 }
 document.getElementById('tSkip').onclick=stopTimer;
@@ -2258,6 +2264,7 @@ function restoreListFocus(k){
   const same=card.querySelectorAll(k.sig); const el=same[Math.min(k.i,same.length-1)]||card.querySelector('.ex-head');
   if(el) el.focus({preventScroll:true});
 }
+let popSet=null; // the set whose check was just ticked, so only its check plays the pop
 function render(){
   const focusKey=listFocusKey();
   // several settings handlers (unit, auto-rotate, rotate-every, deload start/end) re-render the log after a change
@@ -2331,12 +2338,25 @@ function render(){
       pl.innerHTML=`<div class="plates-row"><div class="plates-info"><span class="plates-cap"></span><span class="plates-txt"></span></div><label class="bar-chip"><span class="bar-chip-txt">${curBar} ${unitLabel()} bar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><select class="bar-sel" aria-label="bar weight">${opts.map(o=>`<option value="${o}"${Math.abs(o-curBar)<0.01?' selected':''}>${o} ${unitLabel()} bar</option>`).join('')}${opts.some(o=>Math.abs(o-curBar)<0.01)?'':`<option value="${curBar}" selected>${curBar} ${unitLabel()} bar</option>`}</select></label></div><label class="chk fixed-chk"><span>Fixed-Weight Bar (no plates)</span><input type="checkbox" class="switch"${fixed?' checked':''}></label>`;
       const txtEl=pl.querySelector('.plates-txt'), barSel=pl.querySelector('.bar-sel'), capEl=pl.querySelector('.plates-cap'), chip=pl.querySelector('.bar-chip');
       // the weight in play: the last edited set weight, else the suggestion
-      let liveLb=(state.sets.find(x=>x.w!=='')||{}).w; if(liveLb===undefined||liveLb==='') liveLb=(typeof sug==='number'&&sug>0)?sug:null;
-      const syncFixedUI=()=>{ chip.style.display=fixed?'none':''; capEl.textContent=fixed?'Fixed-Weight Bar':'Plates per Side'; };
+      let liveLb=(state.sets.find(x=>!x.done&&x.w!=='')||state.sets.find(x=>x.w!=='')||{}).w; if(liveLb===undefined||liveLb==='') liveLb=(typeof sug==='number'&&sug>0)?sug:null;
+      // the weight per side is what's left after the bar, halved; − / + move it by the smallest plate, on both sides at once,
+      // and set the first unchecked set's weight to match
+      const inc=settings.unit==='kg'?1.25:2.5, stepEl=document.createElement('span'); stepEl.className='side-step';
+      stepEl.innerHTML=`<button type="button" class="side-btn" data-d="-1" aria-label="Remove ${inc} ${unitLabel()} from each side">−</button><button type="button" class="side-btn" data-d="1" aria-label="Add ${inc} ${unitLabel()} to each side">+</button>`;
+      const line=document.createElement('div'); line.className='side-line'; txtEl.replaceWith(line); line.append(txtEl,stepEl);
+      stepEl.onclick=e=>{ const b=e.target.closest('button'); if(!b) return;
+        b.focus({preventScroll:true}); // Safari doesn't focus a tapped button, and the redraw hands focus back to whatever had it last (e.g. a Done check)
+        const target=state.sets.find(x=>!x.done); if(!target){ showToast('Every set is already logged'); return; }
+        const bar=dispWeight(barWeightLb(ex)), have=liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)), cur=have?dispWeight(parseFloat(liveLb)):bar;
+        const side=Math.max(0,Math.round(((cur-bar)/2+parseInt(b.dataset.d)*inc)*100)/100);
+        target.w=storeWeight(Math.round((bar+2*side)*100)/100); touchDayStart(); sset('today:'+currentDay,todayData); render(); };
+      const syncFixedUI=()=>{ chip.style.display=fixed?'none':''; stepEl.style.display=fixed?'none':''; capEl.textContent=fixed?'Fixed-Weight Bar':'Plates per Side'; };
       updatePlates=lb=>{
         if(lb!=null&&lb!=='') liveLb=lb;
         if(fixed){ txtEl.textContent=(liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)))?`Grab the fixed bar closest to ${dispWeight(parseFloat(liveLb))} ${unitLabel()}`:'Enter a weight to see which fixed bar to grab'; return; }
-        txtEl.innerHTML=(liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)))?plateText(parseFloat(liveLb),ex):'Enter a weight to see plates per side';
+        if(liveLb==null||liveLb===''||isNaN(parseFloat(liveLb))){ txtEl.textContent='Enter a weight to see plates per side'; return; }
+        const tot=dispWeight(parseFloat(liveLb)), bar=dispWeight(barWeightLb(ex));
+        txtEl.innerHTML=tot<bar?`${tot} ${unitLabel()} is under the ${bar} ${unitLabel()} bar`:`<b>${Math.round((tot-bar)/2*100)/100} ${unitLabel()}</b>`;
       };
       barSel.onchange=e=>{ settings.barWeights=settings.barWeights||{}; settings.barWeights[ex.name]=storeWeight(e.target.value); sset('settings',settings); pl.querySelector('.bar-chip-txt').textContent=e.target.selectedOptions[0].textContent; updatePlates(); };
       pl.querySelector('.fixed-chk input').onchange=e=>{ fixed=e.target.checked; settings.fixedBar=settings.fixedBar||{}; settings.fixedBar[ex.name]=fixed; sset('settings',settings); syncFixedUI(); updatePlates(); };
@@ -2385,20 +2405,21 @@ function render(){
       if(bwLoaded) s.w=bwTotal(s);
       const addHint=bwLoaded?(state.sets.slice(0,i).map(x=>parseFloat(x.add)||0).filter(Boolean).pop()||lastAdd):0;
       const row=document.createElement('div'); row.className='setgrid';
-      row.innerHTML=`<div class="setnum">${i+1}</div><input type="number" inputmode="decimal" aria-label="Set ${i+1} ${bwLoaded?'added weight':'weight'}" placeholder="${bwLoaded?'+'+dispWeight(addHint):sug===null?'bw':sug===-1?unitLabel():dispWeight(sug)}" value="${bwLoaded?(s.add?dispWeight(s.add):''):(s.w?dispWeight(s.w):s.w)}"${bwLoaded?' title="extra weight held or worn (dumbbells, a dip belt) — leave blank for bodyweight only"':''}><input type="number" inputmode="numeric" aria-label="Set ${i+1} ${timed?'seconds':'reps'}" placeholder="${timed?'Sec':'Reps'}" value="${s.r}"><div class="setdone ${s.done?'on':''}" aria-label="set ${i+1} done" aria-pressed="${!!s.done}">${s.done?'✓':''}</div><div class="setrm" title="remove set" aria-label="remove set ${i+1}">✕</div>`;
+      row.innerHTML=`<div class="setnum">${i+1}</div><input type="number" inputmode="decimal" aria-label="Set ${i+1} ${bwLoaded?'added weight':'weight'}" placeholder="${bwLoaded?'+'+dispWeight(addHint):sug===null?'bw':sug===-1?unitLabel():dispWeight(sug)}" value="${bwLoaded?(s.add?dispWeight(s.add):''):(s.w?dispWeight(s.w):s.w)}"${bwLoaded?' title="extra weight held or worn (dumbbells, a dip belt) — leave blank for bodyweight only"':''}><input type="number" inputmode="numeric" aria-label="Set ${i+1} ${timed?'seconds':'reps'}" placeholder="${timed?'Sec':'Reps'}" value="${s.r}"><div class="setdone ${s.done?'on':''}${popSet===s?' pop':''}" aria-label="set ${i+1} done" aria-pressed="${!!s.done}">${s.done?'✓':''}</div><div class="setrm" title="remove set" aria-label="remove set ${i+1}">✕</div>`;
       const [wI,rI]=row.querySelectorAll('input');
       if(bwLoaded) wI.oninput=e=>{s.add=e.target.value===''?'':storeWeight(e.target.value); s.w=bwTotal(s); touchDayStart(); sset('today:'+currentDay,todayData);};
       else wI.oninput=e=>{s.w=storeWeight(e.target.value); touchDayStart(); sset('today:'+currentDay,todayData); if(updatePlates) updatePlates(s.w);};
-      rI.oninput=e=>{s.r=e.target.value; touchDayStart(); sset('today:'+currentDay,todayData);};
+      rI.oninput=e=>{s.r=e.target.value; touchDayStart(); sset('today:'+currentDay,todayData); const rr=row.nextElementSibling; if(rr&&rr.classList.contains('rir-row')) rr.hidden=!(s.done||s.r!=='');};
       row.querySelector('.setdone').onclick=()=>{
         if(hold.key===holdKey(ex,i)) stopHold(false); // fills s.r with the elapsed seconds before the check below
         if(!s.done && s.r===''){ showToast(timed?'Add the seconds first':'Add reps first'); return; }
+        if(!s.done && !timed && s.rir==null){ showToast('Pick reps left first'); return; }
         // the grey weight in an empty box is only a suggestion — ticking used to save the set with no weight at all.
         // A tick means "did what's shown", so it takes that number; with none to take (a new lift), it asks for one.
         if(!s.done && !bwLoaded && !timed && (s.w===''||s.w==null)){
           if(sug!=null && sug!==-1) s.w=storeWeight(dispWeight(sug)); else { showToast('Add the weight first'); return; }
         }
-        s.done=!s.done; touchDayStart(); if(s.done&&settings.auto) startTimer(settings.smartRest?suggestedRest(ex):settings.rest); sset('today:'+currentDay,todayData); render();
+        s.done=!s.done; popSet=s.done?s:null; touchDayStart(); if(s.done&&settings.auto) startTimer(settings.smartRest?suggestedRest(ex):settings.rest); sset('today:'+currentDay,todayData); render();
       };
       row.querySelector('.setrm').onclick=async()=>{
         if(state.sets.length<=1){ showToast('Keep at least one set'); return; }
@@ -2419,8 +2440,9 @@ function render(){
         if(running){ hold.el=hrow.querySelector('.hold-t'); hold.inp=row.querySelectorAll('input')[1]; }
         body.appendChild(hrow);
       }
-      if(s.done){
-        const rir=document.createElement('div'); rir.className='rir-row'; rir.setAttribute('role','group'); rir.setAttribute('aria-label',`Set ${i+1} reps left in tank`);
+      if(!timed){
+        // hidden until reps are in, then picked before the set can be checked; stays after Done so it can still be changed
+        const rir=document.createElement('div'); rir.className='rir-row'; rir.hidden=!(s.done||s.r!==''); rir.setAttribute('role','group'); rir.setAttribute('aria-label',`Set ${i+1} reps left in tank`);
         rir.innerHTML=`<span class="rir-lbl" aria-hidden="true">Reps Left</span>`+[0,1,2,3,4].map(v=>`<span class="rir-pill${s.rir===v?' on':''}" data-v="${v}" aria-pressed="${s.rir===v}" aria-label="${v===4?'4 or more reps':v===1?'1 rep':v+' reps'} left">${v===4?'4+':v}</span>`).join('');
         rir.querySelectorAll('.rir-pill').forEach(p=>p.onclick=()=>{ const v=parseInt(p.dataset.v); s.rir=(s.rir===v)?null:v; touchDayStart(); sset('today:'+currentDay,todayData); render(); });
         body.appendChild(rir);
@@ -2446,6 +2468,7 @@ function render(){
   document.getElementById('dayLabel').innerHTML=`<h2 class="sr-only">${day.name} ${day.sub}</h2><span class="day-prog">${nDone} of ${nEx} Done · About ${nEx*6} min</span><span class="linkbtn" id="editLink">Edit Day</span><div class="day-bar" aria-hidden="true"><i style="width:${Math.round(nDone/nEx*100)}%"></i></div>`;
   document.getElementById('editLink').onclick=()=>{ setView('more'); renderEditor(); document.getElementById('edDay').value=currentDay; openSetPage('edit'); };
   updateLogChrome();
+  popSet=null;
   restoreListFocus(focusKey);
 }
 
@@ -2478,6 +2501,8 @@ function renderBuilder(panel){
 // Home is the landing tab — picking a day here (or accepting a built program) hands off to the Log tab, which now
 // always shows the active day's exercise list with no arrival/dismiss state of its own.
 let homePreviewOpen=false;
+// the loaded day is "Today" until a lift has been logged today; after that it's the next one in the rotation
+function dayTagText(){ const t0=new Date(); t0.setHours(0,0,0,0); return sessions.some(x=>!x.isCardio&&x.t>=t0.getTime())?'Next':'Today'; }
 function renderHome(){
   updateBlockUI();
   const panel=document.getElementById('arrivalPanel');
@@ -2492,7 +2517,7 @@ function renderHome(){
       <button class="start-cta" id="arrivalStart">Go to Cardio Log</button>
       <div class="greet-sub" style="margin-top:14px">Feeling fine? Tap a lift day to train it instead.</div>
       <div class="day-carousel">
-        ${PROGRAM.map(d=>`<div class="day-card ${dayType(d)}${d.id===currentDay?' today':''}" data-day="${d.id}">${d.id===currentDay?'<div class="ddot"></div>':''}<div class="dtag">${d.id===currentDay?'Today':''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub}</div><div class="dsub">${d.exercises.length} Exercises</div></div>`).join('')}
+        ${PROGRAM.map(d=>`<div class="day-card ${dayType(d)}${d.id===currentDay?' today':''}" data-day="${d.id}">${d.id===currentDay?'<div class="ddot"></div>':''}<div class="dtag">${d.id===currentDay?dayTagText():''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub}</div><div class="dsub">${d.exercises.length} Exercises</div></div>`).join('')}
       </div>`;
     document.getElementById('arrivalStart').onclick=()=>setView('log');
     panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day, ()=>setView('log')));
@@ -2535,7 +2560,7 @@ function renderHome(){
         <div class="greet-sub">${dayLine}${lastTxt}</div>
       </div>
       <div class="day-carousel">
-        ${PROGRAM.map(d=>`<div class="day-card ${dayType(d)}${d.id===currentDay?' today':''}" data-day="${d.id}">${d.id===currentDay?'<div class="ddot"></div>':''}<div class="dtag">${d.id===currentDay?'Today':''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub}</div><div class="dsub">${d.exercises.length} Exercises</div></div>`).join('')}
+        ${PROGRAM.map(d=>`<div class="day-card ${dayType(d)}${d.id===currentDay?' today':''}" data-day="${d.id}">${d.id===currentDay?'<div class="ddot"></div>':''}<div class="dtag">${d.id===currentDay?dayTagText():''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub}</div><div class="dsub">${d.exercises.length} Exercises</div></div>`).join('')}
       </div>
       <div class="preview-list">${previewRows}${moreRow}</div>
       <button class="start-cta" id="arrivalStart">${ctaTxt}</button>`;
