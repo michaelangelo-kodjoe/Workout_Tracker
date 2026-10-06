@@ -206,6 +206,10 @@
   .bar-plates .plates-txt{font-size:13px;color:var(--text-dim);}
   .bar-plates .plates-txt b{font-size:17px;}
   .plates-note{font-size:12px;color:var(--text-dim);}
+  /* per-side weight with a − / + beside it, one smallest plate per tap */
+  .side-line{display:flex;align-items:center;gap:4px;}
+  .side-step{display:inline-flex;}
+  .side-step button{width:44px;height:44px;margin:-6px 0;border:0;background:none;color:var(--text);font-size:20px;padding:0;cursor:pointer;}
   .bar-chip{position:relative;display:inline-flex;align-items:center;gap:6px;flex-shrink:0;min-height:36px;white-space:nowrap;padding:0 10px 0 12px;border:1px solid var(--field-line,#646a76);border-radius:8px;background:var(--panel-raised);color:var(--text);font:13px 'Menlo',monospace;cursor:pointer;}
   .bar-chip svg{width:14px;height:14px;fill:none;stroke:var(--text-dim);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
   .bar-chip select{position:absolute;left:0;right:0;top:-5px;bottom:-5px;width:100%;opacity:0;font-size:16px;cursor:pointer;}
@@ -2332,12 +2336,24 @@ function render(){
       pl.innerHTML=`<div class="plates-row"><div class="plates-info"><span class="plates-cap"></span><span class="plates-txt"></span></div><label class="bar-chip"><span class="bar-chip-txt">${curBar} ${unitLabel()} bar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><select class="bar-sel" aria-label="bar weight">${opts.map(o=>`<option value="${o}"${Math.abs(o-curBar)<0.01?' selected':''}>${o} ${unitLabel()} bar</option>`).join('')}${opts.some(o=>Math.abs(o-curBar)<0.01)?'':`<option value="${curBar}" selected>${curBar} ${unitLabel()} bar</option>`}</select></label></div><label class="chk fixed-chk"><span>Fixed-Weight Bar (no plates)</span><input type="checkbox" class="switch"${fixed?' checked':''}></label>`;
       const txtEl=pl.querySelector('.plates-txt'), barSel=pl.querySelector('.bar-sel'), capEl=pl.querySelector('.plates-cap'), chip=pl.querySelector('.bar-chip');
       // the weight in play: the last edited set weight, else the suggestion
-      let liveLb=(state.sets.find(x=>x.w!=='')||{}).w; if(liveLb===undefined||liveLb==='') liveLb=(typeof sug==='number'&&sug>0)?sug:null;
-      const syncFixedUI=()=>{ chip.style.display=fixed?'none':''; capEl.textContent=fixed?'Fixed-Weight Bar':'Plates per Side'; };
+      let liveLb=(state.sets.find(x=>!x.done&&x.w!=='')||state.sets.find(x=>x.w!=='')||{}).w; if(liveLb===undefined||liveLb==='') liveLb=(typeof sug==='number'&&sug>0)?sug:null;
+      // the weight per side is what's left after the bar, halved; − / + move it by the smallest plate, on both sides at once,
+      // and set the first unchecked set's weight to match
+      const inc=settings.unit==='kg'?1.25:2.5, stepEl=document.createElement('span'); stepEl.className='side-step';
+      stepEl.innerHTML=`<button type="button" data-d="-1" aria-label="Remove ${inc} ${unitLabel()} from each side">−</button><button type="button" data-d="1" aria-label="Add ${inc} ${unitLabel()} to each side">+</button>`;
+      const line=document.createElement('div'); line.className='side-line'; txtEl.replaceWith(line); line.append(txtEl,stepEl);
+      stepEl.onclick=e=>{ const b=e.target.closest('button'); if(!b) return;
+        const target=state.sets.find(x=>!x.done); if(!target){ showToast('Every set is already logged'); return; }
+        const bar=dispWeight(barWeightLb(ex)), have=liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)), cur=have?dispWeight(parseFloat(liveLb)):bar;
+        const side=Math.max(0,Math.round(((cur-bar)/2+parseInt(b.dataset.d)*inc)*100)/100);
+        target.w=storeWeight(Math.round((bar+2*side)*100)/100); touchDayStart(); sset('today:'+currentDay,todayData); render(); };
+      const syncFixedUI=()=>{ chip.style.display=fixed?'none':''; stepEl.style.display=fixed?'none':''; capEl.textContent=fixed?'Fixed-Weight Bar':'Plates per Side'; };
       updatePlates=lb=>{
         if(lb!=null&&lb!=='') liveLb=lb;
         if(fixed){ txtEl.textContent=(liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)))?`Grab the fixed bar closest to ${dispWeight(parseFloat(liveLb))} ${unitLabel()}`:'Enter a weight to see which fixed bar to grab'; return; }
-        txtEl.innerHTML=(liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)))?plateText(parseFloat(liveLb),ex):'Enter a weight to see plates per side';
+        if(liveLb==null||liveLb===''||isNaN(parseFloat(liveLb))){ txtEl.textContent='Enter a weight to see plates per side'; return; }
+        const tot=dispWeight(parseFloat(liveLb)), bar=dispWeight(barWeightLb(ex));
+        txtEl.innerHTML=tot<bar?`${tot} ${unitLabel()} is under the ${bar} ${unitLabel()} bar`:`<b>${Math.round((tot-bar)/2*100)/100} ${unitLabel()}</b>`;
       };
       barSel.onchange=e=>{ settings.barWeights=settings.barWeights||{}; settings.barWeights[ex.name]=storeWeight(e.target.value); sset('settings',settings); pl.querySelector('.bar-chip-txt').textContent=e.target.selectedOptions[0].textContent; updatePlates(); };
       pl.querySelector('.fixed-chk input').onchange=e=>{ fixed=e.target.checked; settings.fixedBar=settings.fixedBar||{}; settings.fixedBar[ex.name]=fixed; sset('settings',settings); syncFixedUI(); updatePlates(); };
