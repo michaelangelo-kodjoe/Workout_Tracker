@@ -2419,7 +2419,7 @@ function render(){
         if(running){ hold.el=hrow.querySelector('.hold-t'); hold.inp=row.querySelectorAll('input')[1]; }
         body.appendChild(hrow);
       }
-      if(s.done){
+      if(s.done&&!timed){
         const rir=document.createElement('div'); rir.className='rir-row'; rir.setAttribute('role','group'); rir.setAttribute('aria-label',`Set ${i+1} reps left in tank`);
         rir.innerHTML=`<span class="rir-lbl" aria-hidden="true">Reps Left</span>`+[0,1,2,3,4].map(v=>`<span class="rir-pill${s.rir===v?' on':''}" data-v="${v}" aria-pressed="${s.rir===v}" aria-label="${v===4?'4 or more reps':v===1?'1 rep':v+' reps'} left">${v===4?'4+':v}</span>`).join('');
         rir.querySelectorAll('.rir-pill').forEach(p=>p.onclick=()=>{ const v=parseInt(p.dataset.v); s.rir=(s.rir===v)?null:v; touchDayStart(); sset('today:'+currentDay,todayData); render(); });
