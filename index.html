@@ -384,6 +384,16 @@
   .cf-in{width:100%;height:44px;background:var(--panel-raised);border:1px solid var(--line);border-radius:8px;color:var(--text);text-align:center;font-size:15px;padding:0 8px;}
   .cf-disc{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:48px;padding:0;background:none;border:0;border-top:1px solid var(--line);color:var(--light);font:13px 'Georgia',serif;text-align:left;cursor:pointer;}
   .cf-rpe{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:6px;} .cf-rpe button{min-height:56px;border-radius:8px;border:1px solid var(--line);background:var(--panel-raised);font:17px 'Georgia',serif;color:var(--text-dim);cursor:pointer;} .cf-rpe button.on{background:var(--light);border-color:var(--light);color:#0d1a22;}
+  .cf-top{display:flex;align-items:center;justify-content:space-between;min-height:44px;margin-top:-4px;}
+  .cf-live{display:flex;align-items:center;gap:8px;font:12px 'Menlo',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--green);} .cf-live i{width:8px;height:8px;border-radius:50%;background:var(--green);} .cf-live.pause{color:var(--amber);} .cf-live.pause i{background:var(--amber);}
+  .cf-clock{text-align:center;padding:24px 16px;background:var(--panel);border:1px solid var(--line);border-radius:8px;margin:12px 0;} .cf-clock .t{font:48px 'Menlo',monospace;letter-spacing:.02em;color:var(--text);line-height:1.1;} .cf-clock .s{font-size:13px;color:var(--text-dim);margin-top:6px;}
+  .cf-phase{display:inline-block;font:12px 'Menlo',monospace;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:3px;margin-bottom:8px;} .cf-phase.work{background:rgba(255,93,59,.14);color:var(--accent);border:1px solid var(--accent);} .cf-phase.rest{background:rgba(95,168,224,.14);color:var(--cardio);border:1px solid var(--cardio);}
+  .cf-bar{height:4px;border-radius:2px;background:var(--line);margin:14px 0 0;overflow:hidden;} .cf-bar i{display:block;height:100%;background:var(--cardio);}
+  .cf-ctrl{display:flex;gap:8px;margin:12px 0;} .cf-ctrl .btn{flex:1;min-height:52px;font-size:15px;}
+  .cf-now{font:11px 'Menlo',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin:20px 0 8px;}
+  .cf-dots{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px;} .cf-dots i{width:10px;height:10px;border-radius:50%;background:var(--line);} .cf-dots i.d{background:var(--cardio);} .cf-dots i.c{background:var(--accent);}
+  .cf-sum{display:flex;gap:8px;margin:12px 0;} .cf-sum div{flex:1;min-width:0;padding:12px 8px;text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:8px;} .cf-sum b{display:block;font:22px 'Menlo',monospace;font-weight:normal;overflow:hidden;text-overflow:ellipsis;} .cf-sum span{font-size:12px;color:var(--text-dim);}
+  .cf-past{text-align:center;margin-top:16px;}
   .cf-rpe-note{font-size:13px;color:var(--text);margin-top:12px;padding:10px 12px;border-left:2px solid var(--light);background:var(--panel-raised);border-radius:3px;}
 
   .rpe-row{display:flex;gap:6px;margin-top:6px;}
@@ -1055,7 +1065,7 @@ const store = {
     });
     else this.mem[k]=v; }catch(e){ console.error(e); } }
 };
-const KEYS = ['lastBackup','program','recovery','familiarity','soreOverride','recoveryLog','hist','sessions','notes','lastByName','bodyweight','settings','meta:sessionCount','meta:histMigratedV2','today:d1','today:d2','today:d3','today:d4','last:d1','last:d2','last:d3','last:d4','lastDeload','deloadStart','dayStart','blockStart','blockNum','baselines'];
+const KEYS = ['lastBackup','program','recovery','familiarity','soreOverride','recoveryLog','hist','sessions','notes','lastByName','bodyweight','settings','meta:sessionCount','meta:histMigratedV2','today:d1','today:d2','today:d3','today:d4','today:cardio','last:d1','last:d2','last:d3','last:d4','lastDeload','deloadStart','dayStart','blockStart','blockNum','baselines'];
 const RECOVERY_LOG_CAP=2000;
 const RECOVERY_HOURS = { 'chest-upper':72, 'chest-mid':72, 'chest-lower':72, 'back-lats':72, 'back-traps':72, quads:72, hamstrings:72, glutes:72, lowerback:72, 'delt-front':48, 'delt-lateral':48, 'delt-rear':48, biceps:48, brachialis:48, 'triceps-lateral':48, 'triceps-long':48, 'forearm-flexor':48, 'forearm-extensor':48, 'calves-gastroc':48, 'calves-soleus':48, 'abs-upper':36, 'abs-lower':36, 'abs-obliques':36 };
 const MUSCLE_LABEL = { chest:'Chest', back:'Back', quads:'Quads', hamstrings:'Hamstrings', glutes:'Glutes', lowerback:'Lower back', shoulders:'Shoulders', biceps:'Biceps', triceps:'Triceps', forearms:'Forearms', calves:'Calves', abs:'Core' };
@@ -2931,15 +2941,17 @@ function cardioRecent(){ // the last four distinct activities, newest first
 }
 function cardioWhen(t){ const d0=new Date(); d0.setHours(0,0,0,0); const n=Math.round((d0-new Date(new Date(t).setHours(0,0,0,0)))/864e5);
   return n<=0?'Today':n===1?'Yesterday':n<7?new Date(t).toLocaleDateString(undefined,{weekday:'short'}):new Date(t).toLocaleDateString(undefined,{month:'short',day:'numeric'}); }
-function newCardioDraft(){ const r=cardioRecent()[0]; return {step:1,group:r?cardioAct(r.k).g:'Machine',act:null,structure:'steady',duration:'',vals:{},work:'30',rest:'90',rounds:'8',name:'',rpe:0,notes:'',more:false,effort:false,focus:null}; }
+function newCardioDraft(){ const r=cardioRecent()[0]; return {step:1,group:r?cardioAct(r.k).g:'Machine',act:null,structure:'steady',duration:'',vals:{},work:'30',rest:'90',rounds:'8',name:'',rpe:0,notes:'',more:false,effort:false,focus:null,manual:false}; }
 let cardioDraft=newCardioDraft();
 function cardioIntervalTotal(d){ const w=parseFloat(d.work)||0, r=parseFloat(d.rest)||0, n=parseInt(d.rounds)||0; const a=cardioAct(d.act);
   return Math.round(((w+r)*n)/60+(parseFloat(d.vals.warm)||0)+(parseFloat(d.vals.cool)||0)); }
 function cardioPick(k){ const a=cardioAct(k), prev=cardioDraft;
-  cardioDraft={...newCardioDraft(),act:k,group:a.g,step:2,structure:a.iv==='default'||a.iv==='only'?'intervals':'steady',rpe:prev.rpe,notes:prev.notes};
+  cardioDraft={...newCardioDraft(),manual:true,act:k,group:a.g,step:2,structure:a.iv==='default'||a.iv==='only'?'intervals':'steady',rpe:prev.rpe,notes:prev.notes};
   if(a.ivd){ [cardioDraft.work,cardioDraft.rest,cardioDraft.rounds]=a.ivd.map(String); }
   cardioDraft.focus='cfBack'; renderCardioForm(); window.scrollTo(0,0); }
 function renderCardioForm(){
+  clearInterval(cardioTickId); cardioTickId=null;
+  if(cardioLive){ renderCardioLive(); return; }
   const d=cardioDraft;
   document.getElementById('dayLabel').innerHTML=`<h2 class="sr-only">Cardio</h2><span></span><span class="linkbtn" id="cardioHistLink">History</span>`;
   document.getElementById('cardioHistLink').onclick=()=>setView('history');
@@ -2949,12 +2961,14 @@ function renderCardioForm(){
   if(d.step===1){
     const rec=cardioRecent(), accts=CARDIO_ACTS.filter(a=>a.g===d.group);
     const sub=a=>{ const m=a.main.map(k=>CARDIO_FIELDS[k].l); if(a.iv==='default'||a.iv==='only') m.unshift('Rounds'); return m.length?m.slice(0,2).join(', '):'Duration'; };
-    wrap.innerHTML=`${steps(1)}<h3 class="cf-h">What Did You Do?</h3><p class="cf-lede">Pick an activity. You'll add the numbers next.</p>
+    wrap.innerHTML=`${d.manual?steps(1):''}<h3 class="cf-h">Pick an Activity</h3><p class="cf-lede">${d.manual?'Then add what you did.':'Tap one to start the clock.'}</p>
       ${rec.length?`<div class="cf-sub" style="margin-top:0">Recent</div><div class="cf-scroll">${rec.map(r=>{ const a=cardioAct(r.k); return `<button type="button" class="cf-rc" data-k="${a.k}">${a.l}<small>${r.s.duration} min · ${cardioWhen(r.s.t)}</small></button>`; }).join('')}</div>`:''}
       <div class="cf-seg" id="cfGroups" role="group" aria-label="Activity Group" style="margin-top:${rec.length?20:0}px">${CARDIO_GROUPS.map(g=>`<button type="button" data-g="${g}" class="${g===d.group?'on':''}" aria-pressed="${g===d.group}">${g}</button>`).join('')}</div>
-      <div class="cf-grid">${accts.map(a=>`<button type="button" class="cf-tile" data-k="${a.k}">${cardioIcon(a.ic)}<span>${a.l}</span><small>${sub(a)}</small></button>`).join('')}</div>`;
+      <div class="cf-grid">${accts.map(a=>`<button type="button" class="cf-tile" data-k="${a.k}">${cardioIcon(a.ic)}<span>${a.l}</span><small>${sub(a)}</small></button>`).join('')}</div>
+      <div class="cf-past"><span class="linkbtn" id="cfMode">${d.manual?'Start a Live Session Instead':'Log a Past Session'}</span></div>`;
     list.appendChild(wrap);
-    wrap.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>cardioPick(b.dataset.k));
+    wrap.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>d.manual?cardioPick(b.dataset.k):cardioStart(b.dataset.k));
+    document.getElementById('cfMode').onclick=()=>{ d.manual=!d.manual; d.focus='cfMode'; renderCardioForm(); };
     wrap.querySelectorAll('#cfGroups button').forEach(b=>b.onclick=()=>{ d.group=b.dataset.g; d.focus='g:'+b.dataset.g; renderCardioForm(); });
   } else {
     const a=cardioAct(d.act), du=cardioDu(), iv=d.structure==='intervals', canIv=a.iv!=='no';
@@ -2998,16 +3012,18 @@ function renderCardioForm(){
   const f=d.focus; d.focus=null; // a redraw drops focus on the tapped control, so hand it back
   if(f){ const el=f.startsWith('g:')?wrap.querySelector(`#cfGroups [data-g="${f.slice(2)}"]`):f.startsWith('s:')?wrap.querySelector(`#cfStruct [data-s="${f.slice(2)}"]`):f.startsWith('r:')?wrap.querySelector(`#rpeRow [data-n="${f.slice(2)}"]`):document.getElementById(f); if(el) el.focus({preventScroll:true}); }
 }
-async function logCardio(){
-  const d=cardioDraft, a=cardioAct(d.act), du=cardioDu(), iv=d.structure==='intervals';
-  const duration=iv?cardioIntervalTotal(d):parseInt(d.duration);
-  if(!duration){ showToast(iv?'Add work, rest and rounds first':'Add a duration first'); return; }
+// one cardio record from a draft or live session: its fields, in the unit the Settings page uses
+function buildCardioRec(d,duration,t){
+  const a=cardioAct(d.act), du=cardioDu(), iv=d.structure==='intervals';
   const f={}; a.main.concat(a.more,iv?['warm','cool']:[]).forEach(k=>{ const v=(d.vals[k]??'').toString().trim(); if(v!=='' && k!=='dist') f[k]=v; });
   const dist=(d.vals.dist||'').toString().trim();
-  const rec={t:Date.now(), isCardio:true, cact:a.k, structure:d.structure, ctype:d.structure, ctypeLabel:a.k==='other'&&d.name.trim()?d.name.trim():a.l, duration, du, rpe:d.rpe, notes:d.notes};
+  const rec={t, isCardio:true, cact:a.k, structure:d.structure, ctype:d.structure, ctypeLabel:a.k==='other'&&d.name.trim()?d.name.trim():a.l, duration, du, rpe:d.rpe, notes:d.notes};
   if(dist) rec.distance=`${dist} ${du}`;
   if(Object.keys(f).length) rec.f=f;
   if(iv){ rec.work=parseInt(d.work)||0; rec.rest=parseInt(d.rest)||0; rec.rounds=parseInt(d.rounds)||0; }
+  return rec;
+}
+async function saveCardioRec(rec){
   sessions.push(rec); await sset('sessions',sessions);
   cardioDraft=newCardioDraft();
   // the suggestion usually moves on to the next lift day now — reload it so Home's greeting, its CTA and the
@@ -3015,6 +3031,106 @@ async function logCardio(){
   await loadDay(suggestedDayId()); setView('home');
   showToast('Conditioning logged');
   if(settings.autoBackup && backupDue()) setTimeout(()=>doExport(true),1200); else updateBackupUI();
+}
+async function logCardio(){
+  const d=cardioDraft, iv=d.structure==='intervals';
+  const duration=iv?cardioIntervalTotal(d):parseInt(d.duration);
+  if(!duration){ showToast(iv?'Add work, rest and rounds first':'Add a duration first'); return; }
+  await saveCardioRec(buildCardioRec(d,duration,Date.now()));
+}
+// ---------- live cardio session ----------
+// Tapping an activity starts a clock. The session lives in 'today:cardio' so it survives a reload, and the clock is
+// worked out from timestamps (start, paused time, skipped time) rather than counted, so a locked phone or a
+// backgrounded tab can't lose time. Intervals walk Work → Rest through the rounds and beep at each change.
+let cardioLive=null, cardioTickId=null, cardioLastKey=null;
+function saveCardioLive(){ return sset('today:cardio',cardioLive); }
+function cardioElapsed(L,now=Date.now()){ return Math.max(0,((L.pausedAt||now)-L.startedAt-(L.pausedMs||0)+(L.skipMs||0))/1000); }
+function cardioClock(sec){ sec=Math.max(0,Math.floor(sec)); const h=Math.floor(sec/3600), m=Math.floor(sec%3600/60), s=sec%60; return h?`${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`:`${m}:${String(s).padStart(2,'0')}`; }
+// where an interval session is at a given elapsed second: {k, phase:'work'|'rest'|'done', left, len}
+function cardioPhase(L,e){ const w=parseInt(L.work)||0, r=parseInt(L.rest)||0, n=parseInt(L.rounds)||0; if(w<=0||n<=0) return null;
+  const cyc=w+r, total=n*w+(n-1)*r; if(e>=total) return {k:n-1,phase:'done',left:0,len:0,w,r,n,total};
+  const k=Math.floor(e/cyc), within=e-k*cyc; return within<w?{k,phase:'work',left:w-within,len:w,w,r,n,total}:{k,phase:'rest',left:cyc-within,len:r,w,r,n,total}; }
+function cardioStart(k){
+  try{ if(!timer.ctx) timer.ctx=new (window.AudioContext||window.webkitAudioContext)(); if(timer.ctx.resume) timer.ctx.resume(); }catch(e){} // sound needs a tap to unlock
+  const a=cardioAct(k), base=newCardioDraft(); const iv=a.iv==='default'||a.iv==='only';
+  cardioLive={...base,act:k,group:a.g,step:'live',structure:iv?'intervals':'steady',startedAt:Date.now(),pausedAt:null,pausedMs:0,skipMs:0};
+  if(a.ivd) [cardioLive.work,cardioLive.rest,cardioLive.rounds]=a.ivd.map(String);
+  cardioLive.focus='cfPause'; saveCardioLive(); renderCardioForm(); window.scrollTo(0,0);
+}
+function cardioTick(){
+  const L=cardioLive; const clock=document.getElementById('cfClock');
+  if(!L||L.step!=='live'||!clock){ clearInterval(cardioTickId); cardioTickId=null; return; }
+  const e=cardioElapsed(L), p=L.structure==='intervals'?cardioPhase(L,e):null;
+  if(!p){ clock.textContent=cardioClock(e); return; }
+  const key=p.phase==='done'?'done':`${p.k}:${p.phase}`;
+  if(cardioLastKey!==null&&key!==cardioLastKey&&!L.pausedAt){ beep(); if(p.phase==='done') setTimeout(beep,350); }
+  cardioLastKey=key;
+  const ph=document.getElementById('cfPhase'); ph.className='cf-phase '+(p.phase==='done'?'rest':p.phase);
+  ph.textContent=p.phase==='done'?'Rounds Complete':`${p.phase==='work'?'Work':'Rest'} · Round ${p.k+1} of ${p.n}`;
+  clock.textContent=p.phase==='done'?'Done':cardioClock(Math.ceil(p.left));
+  const nxt=p.phase==='work'?(p.k<p.n-1?`Rest is ${cardioClock(p.r)} next`:'Last round'):p.phase==='rest'?`Work is ${cardioClock(p.w)} next`:'Tap Finish to save';
+  document.getElementById('cfClockSub').textContent=`Total ${cardioClock(e)} · ${nxt}`;
+  document.getElementById('cfBar').style.width=(p.len?Math.min(100,100*(p.len-p.left)/p.len):100)+'%';
+  const dots=document.getElementById('cfDots'); if(dots.dataset.key!==key){ dots.dataset.key=key; dots.innerHTML=Array.from({length:p.n},(_,i)=>`<i class="${i<p.k||p.phase==='done'?'d':i===p.k?'c':''}"></i>`).join(''); }
+}
+function renderCardioLive(){
+  const L=cardioLive, a=cardioAct(L.act), du=cardioDu();
+  document.getElementById('dayLabel').innerHTML=`<h2 class="sr-only">Cardio</h2><span></span><span class="linkbtn" id="cardioHistLink">History</span>`;
+  document.getElementById('cardioHistLink').onclick=()=>setView('history');
+  const list=document.getElementById('exerciseList'); list.innerHTML='';
+  const wrap=document.createElement('div'); wrap.className='cf-flow'; list.appendChild(wrap);
+  const fld=(k,ctx)=>{ const f=CARDIO_FIELDS[k]; return `<div><label class="field-label" for="${ctx}_${k}">${cardioFieldLabel(k,du)}</label><input class="cf-in" id="${ctx}_${k}" data-f="${k}" ${f.text?`type="text" placeholder="${f.ph||''}"`:'type="text" inputmode="decimal"'} value="${(L.vals[k]??'').toString().replace(/"/g,'&quot;')}"></div>`; };
+  const bind=()=>wrap.querySelectorAll('[data-f]').forEach(i=>i.oninput=e=>{ L.vals[i.dataset.f]=e.target.value; saveCardioLive(); });
+  if(L.step==='finish'){
+    const e=cardioElapsed(L), m=a.main[0], shown=a.main.slice(0,2).filter(k=>(L.vals[k]??'')!=='');
+    wrap.innerHTML=`<button type="button" class="cf-back" id="cfKeep"><svg class="cf-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>Keep Going</button>
+      <h3 class="cf-h">Nice Work</h3><p class="cf-lede">${a.k==='other'&&L.name.trim()?L.name.trim():a.l} · fix anything that's off, then save.</p>
+      <div class="cf-sum"><div><b>${cardioClock(e)}</b><span>Time</span></div>${shown.map(k=>`<div><b>${(L.vals[k]+'').slice(0,7)}</b><span>${CARDIO_FIELDS[k].u==='du'?du:(CARDIO_FIELDS[k].u==='spd'?(du==='km'?'km/h':'mph'):CARDIO_FIELDS[k].u==='%'?'% '+CARDIO_FIELDS[k].l.toLowerCase():CARDIO_FIELDS[k].l)}</span></div>`).join('')}</div>
+      <div class="cf-fld"><div><label class="field-label" for="cfDur">Duration (min)</label><input class="cf-in" id="cfDur" type="text" inputmode="numeric" value="${L.duration}"></div>${m?fld(m,'cfs'):''}</div>
+      <div class="field-label" id="rpeLbl" style="margin-top:4px">Effort (RPE, 1 easy – 10 max)</div><div class="cf-rpe" id="rpeRow" role="group" aria-labelledby="rpeLbl">${Array.from({length:10},(_,i)=>i+1).map(n=>`<button type="button" class="${L.rpe===n?'on':''}" data-n="${n}" aria-pressed="${L.rpe===n}" aria-label="Effort ${n}">${n}</button>`).join('')}</div>
+      ${L.rpe?`<div class="cf-rpe-note">${L.rpe}: ${CARDIO_RPE[L.rpe]}</div>`:''}
+      <textarea class="notes" id="cNotes" aria-label="Notes" placeholder="Notes — route, how it felt">${L.notes}</textarea>
+      <div class="row" style="margin-top:16px"><button class="btn primary" id="cfSave" style="flex:1">Save Session</button></div>`;
+    bind();
+    document.getElementById('cfDur').oninput=ev=>{ L.duration=ev.target.value.replace(/[^\d]/g,''); saveCardioLive(); };
+    document.getElementById('cNotes').oninput=ev=>{ L.notes=ev.target.value; saveCardioLive(); };
+    wrap.querySelectorAll('#rpeRow button').forEach(b=>b.onclick=()=>{ L.rpe=L.rpe===+b.dataset.n?0:+b.dataset.n; L.focus='r:'+b.dataset.n; saveCardioLive(); renderCardioForm(); });
+    document.getElementById('cfKeep').onclick=()=>{ if(L.autoPaused){ L.pausedMs+=Date.now()-L.pausedAt; L.pausedAt=null; L.autoPaused=false; } L.step='live'; L.focus='cfPause'; saveCardioLive(); renderCardioForm(); };
+    document.getElementById('cfSave').onclick=saveLiveCardio;
+  } else {
+    const iv=L.structure==='intervals', canIv=a.iv!=='no', paused=!!L.pausedAt;
+    const more=a.more.concat(iv?['warm','cool']:[]);
+    const yt='https://www.youtube.com/results?search_query='+encodeURIComponent((a.l+' form how to').replace(/\s*\/\s*/g,' '));
+    wrap.innerHTML=`<div class="cf-top"><span class="cf-live ${paused?'pause':''}" role="status"><i></i>${paused?'Paused':'In Progress'}</span><span class="linkbtn danger" id="cfDiscard">Discard</span></div>
+      <h3 class="cf-h">${a.k==='other'&&L.name.trim()?L.name.trim():a.l}</h3><p class="cf-lede">${a.hint} <a class="linkbtn" href="${yt}" target="_blank" rel="noopener" aria-label="Demo videos (opens YouTube)">Demo Videos ↗</a></p>
+      ${a.k==='other'?`<label class="field-label" for="cfName">Activity Name</label><input class="cf-in" id="cfName" type="text" placeholder="e.g. Dance Cardio" value="${L.name.replace(/"/g,'&quot;')}" style="margin-bottom:12px">`:''}
+      ${canIv&&a.iv!=='only'?`<div class="cf-seg" id="cfStruct" role="group" aria-label="Structure">${[['steady','Steady State'],['intervals','Intervals']].map(([v,t])=>`<button type="button" data-s="${v}" class="${L.structure===v?'on':''}" aria-pressed="${L.structure===v}">${t}</button>`).join('')}</div>`:''}
+      <div class="cf-clock">${iv?'<span class="cf-phase work" id="cfPhase"></span>':''}<div class="t" id="cfClock" aria-live="off">0:00</div><div class="s" id="cfClockSub">${iv?'':'Started '+new Date(L.startedAt).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})}</div>${iv?'<div class="cf-bar"><i id="cfBar" style="width:0"></i></div><div class="cf-dots" id="cfDots"></div>':''}</div>
+      <div class="cf-ctrl"><button type="button" class="btn" id="cfPause">${paused?'Resume':'Pause'}</button>${iv?'<button type="button" class="btn" id="cfSkip">Skip</button>':''}<button type="button" class="btn primary" id="cfFinish">Finish</button></div>
+      ${a.main.length?`<div class="cf-now">Right Now</div><div class="cf-fld">${a.main.map(k=>fld(k,'cfl')).join('')}</div>`:''}
+      ${(more.length||iv)?`<button type="button" class="cf-disc" id="cfMoreBtn" aria-expanded="${L.more}"><span>${iv?'Interval Setup &amp; ':''}Add Details: ${more.map(k=>CARDIO_FIELDS[k].l).join(', ')}</span>${L.more?CARDIO_CHEV_UP:CARDIO_CHEV}</button>${L.more?`${iv?`<div class="cf-fld cf-3"><div><label class="field-label" for="cfWork">Work (sec)</label><input class="cf-in" id="cfWork" type="text" inputmode="numeric" value="${L.work}"></div><div><label class="field-label" for="cfRest">Rest (sec)</label><input class="cf-in" id="cfRest" type="text" inputmode="numeric" value="${L.rest}"></div><div><label class="field-label" for="cfRounds">Rounds</label><input class="cf-in" id="cfRounds" type="text" inputmode="numeric" value="${L.rounds}"></div></div>`:''}<div class="cf-fld">${more.map(k=>fld(k,'cfl')).join('')}</div>`:''}`:''}`;
+    bind();
+    const nm=document.getElementById('cfName'); if(nm) nm.oninput=ev=>{ L.name=ev.target.value; saveCardioLive(); };
+    [['cfWork','work'],['cfRest','rest'],['cfRounds','rounds']].forEach(([id,key])=>{ const el=document.getElementById(id); if(el) el.oninput=ev=>{ L[key]=ev.target.value.replace(/[^\d]/g,''); saveCardioLive(); cardioTick(); }; });
+    const st=document.getElementById('cfStruct'); if(st) st.querySelectorAll('button').forEach(b=>b.onclick=()=>{ L.structure=b.dataset.s; L.focus='s:'+b.dataset.s; saveCardioLive(); renderCardioForm(); });
+    const mb=document.getElementById('cfMoreBtn'); if(mb) mb.onclick=()=>{ L.more=!L.more; L.focus='cfMoreBtn'; saveCardioLive(); renderCardioForm(); };
+    document.getElementById('cfPause').onclick=()=>{ if(L.pausedAt){ L.pausedMs+=Date.now()-L.pausedAt; L.pausedAt=null; } else L.pausedAt=Date.now(); L.focus='cfPause'; saveCardioLive(); renderCardioForm(); };
+    const sk=document.getElementById('cfSkip'); if(sk) sk.onclick=()=>{ const p=cardioPhase(L,cardioElapsed(L)); if(p&&p.phase!=='done'){ L.skipMs+=Math.ceil(p.left*1000)+50; saveCardioLive(); cardioTick(); } };
+    document.getElementById('cfFinish').onclick=()=>{ if(!L.pausedAt){ L.pausedAt=Date.now(); L.autoPaused=true; } L.duration=String(Math.max(1,Math.round(cardioElapsed(L)/60))); L.step='finish'; saveCardioLive(); renderCardioForm(); window.scrollTo(0,0); };
+    document.getElementById('cfDiscard').onclick=async()=>{ if(await confirmSheet("Discard this session? The time and numbers you've logged will be lost.",'Discard',null,true)){ cardioLive=null; cardioDraft=newCardioDraft(); await sset('today:cardio',null); renderCardioForm(); } };
+    cardioLastKey=null; clearInterval(cardioTickId); cardioTick(); if(!paused) cardioTickId=setInterval(cardioTick,250);
+  }
+  document.getElementById('finishBtn').style.display='none';
+  document.getElementById('resetLink').style.display='none';
+  tagClickables(wrap);
+  const f=L.focus; L.focus=null; // a redraw drops focus on the tapped control, so hand it back
+  if(f){ const el=f.startsWith('s:')?wrap.querySelector(`#cfStruct [data-s="${f.slice(2)}"]`):f.startsWith('r:')?wrap.querySelector(`#rpeRow [data-n="${f.slice(2)}"]`):document.getElementById(f); if(el) el.focus({preventScroll:true}); }
+}
+async function saveLiveCardio(){
+  const L=cardioLive, dur=parseInt(L.duration);
+  if(!dur){ showToast('Add a duration first'); return; }
+  await saveCardioRec(buildCardioRec(L,dur,L.startedAt));
+  cardioLive=null; await sset('today:cardio',null);
 }
 
 // ---------- history view ----------
@@ -3867,6 +3983,7 @@ document.getElementById('resetLink').onclick=async()=>{
   sessionCount=(await sget('meta:sessionCount'))||0; document.getElementById('sessionCount').textContent=sessionCount;
   dayStartTimes=(await sget('dayStart'))||{};
   baselines=(await sget('baselines'))||{};
+  cardioLive=(await sget('today:cardio'))||null;
   recovery=(await sget('recovery'))||{}; familiarity=(await sget('familiarity'))||{}; soreOverride=(await sget('soreOverride'))||{}; recoveryLog=(await sget('recoveryLog'))||[]; hist=(await sget('hist'))||{}; sessions=(await sget('sessions'))||[]; notes=(await sget('notes'))||{}; lastByName=(await sget('lastByName'))||{}; bodyweight=(await sget('bodyweight'))||[];
 
   // one-time: hist/notes used to be keyed per (day,exercise) — "d1|Hammer Curl" and "d3|Hammer Curl" were
