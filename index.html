@@ -3365,13 +3365,20 @@ function renderConditioning(){
   const rpeDelta = (avgRpeEarly&&avgRpeRecent)? avgRpeRecent-avgRpeEarly : null;
   const durTrend = cardio.map(s=>s.duration||0);
   const rpeTrend = cardio.filter(s=>s.rpe).map(s=>s.rpe);
-  const paced = cardio.filter(s=>parsePace(s.distance)&&s.duration);
+  // pace only means something between like sessions: the same activity, in the same unit. Cycling kilometres next to
+  // treadmill miles read as a collapse in pace, so the trend follows the activity you've logged distance for most.
+  const paceKey=s=>`${s.cact||'legacy'}|${/km/i.test(s.distance||'')?'km':'mi'}`;
+  const pacedAll = cardio.filter(s=>parsePace(s.distance)&&s.duration);
+  const groups={}; pacedAll.forEach(s=>(groups[paceKey(s)]=groups[paceKey(s)]||[]).push(s));
+  const best=Object.values(groups).sort((x,y)=>y.length-x.length||y[y.length-1].t-x[x.length-1].t)[0]||[];
+  const paced=best;
   let paceHtml='';
   if(paced.length>=2){
+    const unit=/km/i.test(paced[0].distance)?'km':'mi', actName=paced[0].cact&&cardioAct(paced[0].cact)?cardioAct(paced[0].cact).l:'Earlier Sessions';
     const paceVals = paced.map(s=>s.duration/parsePace(s.distance)); // min per mile/km
     const p0=paceVals[0], p1=paceVals[paceVals.length-1];
     const paceChange = ((p0-p1)/p0*100); // positive = faster pace now
-    paceHtml = `<div class="srow" style="grid-template-columns:1fr 70px 64px"><div><div class="sn">Pace (min per mile/km)</div><div class="sd">${paced.length} sessions with distance logged</div></div><div class="se">${p1.toFixed(1)}</div><div class="sp ${paceChange>0.5?'up':paceChange<-0.5?'down':'flat'}">${paceChange>0.5?'Faster':paceChange<-0.5?'Slower':'Steady'}</div>${sparkline(paceVals,'var(--light)')}</div>`;
+    paceHtml = `<div class="srow" style="grid-template-columns:1fr 70px 64px"><div><div class="sn">Pace (min per ${unit})</div><div class="sd">${actName} · ${paced.length} sessions with distance logged</div></div><div class="se">${p1.toFixed(1)}</div><div class="sp ${paceChange>0.5?'up':paceChange<-0.5?'down':'flat'}">${paceChange>0.5?'Faster':paceChange<-0.5?'Slower':'Steady'}</div>${sparkline(paceVals,'var(--light)')}</div>`;
   }
   out.innerHTML = `
     <div class="stats2" style="margin-bottom:10px">
