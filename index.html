@@ -393,6 +393,7 @@
   .cf-now{font:11px 'Menlo',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin:20px 0 8px;}
   .cf-dots{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px;} .cf-dots i{width:10px;height:10px;border-radius:50%;background:var(--line);} .cf-dots i.d{background:var(--cardio);} .cf-dots i.c{background:var(--accent);}
   .cf-sum{display:flex;gap:8px;margin:12px 0;} .cf-sum div{flex:1;min-width:0;padding:12px 8px;text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:8px;} .cf-sum b{display:block;font:22px 'Menlo',monospace;font-weight:normal;overflow:hidden;text-overflow:ellipsis;} .cf-sum span{font-size:12px;color:var(--text-dim);}
+  .cf-clock .ms{font-size:28px;color:var(--text-dim);} .cf-clock .t.big{font-size:96px;line-height:1.1;margin-top:8px;}
   .cf-past{text-align:center;margin-top:16px;}
   .cf-rpe-note{font-size:13px;color:var(--text);margin-top:12px;padding:10px 12px;border-left:2px solid var(--light);background:var(--panel-raised);border-radius:3px;}
 
@@ -712,6 +713,7 @@
 
 <main>
   <section id="homeView">
+    <div class="banner info" id="cardioLiveBanner" style="display:none"><span id="cardioLiveTxt"></span><span class="linkbtn" id="cardioLiveBtn">Resume</span></div>
     <div class="banner" id="backupBanner" style="display:none"><span>It's been a week since your last backup.</span><span class="linkbtn" id="bannerBtn">Back Up Now</span></div>
     <div class="banner" id="deloadBanner" style="display:none"><span>It's been a while since your last deload — a lighter week can help you keep progressing.</span><span class="linkbtn" id="deloadBannerBtn">Plan a Deload Week</span></div>
     <div class="banner info" id="deloadActiveBanner" style="display:none"></div>
@@ -2548,7 +2550,7 @@ let homePreviewOpen=false;
 // the loaded day is "Today" until a lift has been logged today; after that it's the next one in the rotation
 function dayTagText(){ const t0=new Date(); t0.setHours(0,0,0,0); return sessions.some(x=>!x.isCardio&&x.t>=t0.getTime())?'Next':'Today'; }
 function renderHome(){
-  updateBlockUI();
+  updateBlockUI(); updateCardioLiveBanner();
   const panel=document.getElementById('arrivalPanel');
   if(needsBuild){ renderBuilder(panel); return; }
   if(currentDay==='cardio'){
@@ -2950,7 +2952,7 @@ function cardioPick(k){ const a=cardioAct(k), prev=cardioDraft;
   if(a.ivd){ [cardioDraft.work,cardioDraft.rest,cardioDraft.rounds]=a.ivd.map(String); }
   cardioDraft.focus='cfBack'; renderCardioForm(); window.scrollTo(0,0); }
 function renderCardioForm(){
-  clearInterval(cardioTickId); cardioTickId=null;
+  stopCardioTick();
   if(cardioLive){ renderCardioLive(); return; }
   const d=cardioDraft;
   document.getElementById('dayLabel').innerHTML=`<h2 class="sr-only">Cardio</h2><span></span><span class="linkbtn" id="cardioHistLink">History</span>`;
@@ -3042,6 +3044,7 @@ async function logCardio(){
 // Tapping an activity starts a clock. The session lives in 'today:cardio' so it survives a reload, and the clock is
 // worked out from timestamps (start, paused time, skipped time) rather than counted, so a locked phone or a
 // backgrounded tab can't lose time. Intervals walk Work → Rest through the rounds and beep at each change.
+const CARDIO_COUNTDOWN=3; // seconds of get-ready before the clock starts
 let cardioLive=null, cardioTickId=null, cardioLastKey=null;
 function saveCardioLive(){ return sset('today:cardio',cardioLive); }
 function cardioElapsed(L,now=Date.now()){ return Math.max(0,((L.pausedAt||now)-L.startedAt-(L.pausedMs||0)+(L.skipMs||0))/1000); }
@@ -3050,24 +3053,40 @@ function cardioClock(sec){ sec=Math.max(0,Math.floor(sec)); const h=Math.floor(s
 function cardioPhase(L,e){ const w=parseInt(L.work)||0, r=parseInt(L.rest)||0, n=parseInt(L.rounds)||0; if(w<=0||n<=0) return null;
   const cyc=w+r, total=n*w+(n-1)*r; if(e>=total) return {k:n-1,phase:'done',left:0,len:0,w,r,n,total};
   const k=Math.floor(e/cyc), within=e-k*cyc; return within<w?{k,phase:'work',left:w-within,len:w,w,r,n,total}:{k,phase:'rest',left:cyc-within,len:r,w,r,n,total}; }
+function cardioClockMs(sec){ sec=Math.max(0,sec); const c=Math.floor(sec*100), h=Math.floor(sec/3600), m=Math.floor(sec%3600/60), s=Math.floor(sec%60), f=String(c%100).padStart(2,'0');
+  return (h?`${h}:${String(m).padStart(2,'0')}`:`${m}`)+`:${String(s).padStart(2,'0')}<span class="ms">.${f}</span>`; }
+function stopCardioTick(){ if(cardioTickId!==null) cancelAnimationFrame(cardioTickId); cardioTickId=null; }
+function cardioTickLoop(){ if(cardioTickId===null) return; cardioTick(); if(cardioTickId!==null) cardioTickId=requestAnimationFrame(cardioTickLoop); }
+// Home's banner for a session that's running, with its own once-a-second clock
+let cardioBannerId=null;
+function updateCardioLiveBanner(){
+  const b=document.getElementById('cardioLiveBanner'); clearInterval(cardioBannerId); cardioBannerId=null;
+  if(!cardioLive){ b.style.display='none'; return; }
+  const a=cardioAct(cardioLive.act), name=a.k==='other'&&cardioLive.name.trim()?cardioLive.name.trim():a.l;
+  const paint=()=>{ const L=cardioLive; if(!L||view!=='home'){ clearInterval(cardioBannerId); cardioBannerId=null; if(!L) b.style.display='none'; return; }
+    const e=cardioElapsed(L), pre=Date.now()<L.startedAt;
+    document.getElementById('cardioLiveTxt').textContent=`${name} ${L.step==='finish'?'is ready to save':L.pausedAt?'is paused':'is in progress'} · ${pre?'starting':cardioClock(e)}`; };
+  b.style.display=''; paint(); cardioBannerId=setInterval(paint,1000);
+  document.getElementById('cardioLiveBtn').onclick=async()=>{ await loadDay('cardio'); setView('log'); };
+}
 function cardioStart(k){
   try{ if(!timer.ctx) timer.ctx=new (window.AudioContext||window.webkitAudioContext)(); if(timer.ctx.resume) timer.ctx.resume(); }catch(e){} // sound needs a tap to unlock
   const a=cardioAct(k), base=newCardioDraft(); const iv=a.iv==='default'||a.iv==='only';
-  cardioLive={...base,act:k,group:a.g,step:'live',structure:iv?'intervals':'steady',startedAt:Date.now(),pausedAt:null,pausedMs:0,skipMs:0};
+  cardioLive={...base,act:k,group:a.g,step:'live',structure:iv?'intervals':'steady',startedAt:Date.now()+CARDIO_COUNTDOWN*1000,pausedAt:null,pausedMs:0,skipMs:0};
   if(a.ivd) [cardioLive.work,cardioLive.rest,cardioLive.rounds]=a.ivd.map(String);
-  cardioLive.focus='cfPause'; saveCardioLive(); renderCardioForm(); window.scrollTo(0,0);
+  cardioLive.focus='cfCancel'; saveCardioLive(); renderCardioForm(); window.scrollTo(0,0);
 }
 function cardioTick(){
   const L=cardioLive; const clock=document.getElementById('cfClock');
-  if(!L||L.step!=='live'||!clock){ clearInterval(cardioTickId); cardioTickId=null; return; }
+  if(!L||L.step!=='live'||!clock){ stopCardioTick(); return; }
   const e=cardioElapsed(L), p=L.structure==='intervals'?cardioPhase(L,e):null;
-  if(!p){ clock.textContent=cardioClock(e); return; }
+  if(!p){ clock.innerHTML=cardioClockMs(e); return; }
   const key=p.phase==='done'?'done':`${p.k}:${p.phase}`;
   if(cardioLastKey!==null&&key!==cardioLastKey&&!L.pausedAt){ beep(); if(p.phase==='done') setTimeout(beep,350); }
   cardioLastKey=key;
   const ph=document.getElementById('cfPhase'); ph.className='cf-phase '+(p.phase==='done'?'rest':p.phase);
   ph.textContent=p.phase==='done'?'Rounds Complete':`${p.phase==='work'?'Work':'Rest'} · Round ${p.k+1} of ${p.n}`;
-  clock.textContent=p.phase==='done'?'Done':cardioClock(Math.ceil(p.left));
+  clock.innerHTML=p.phase==='done'?'Done':cardioClockMs(p.left);
   const nxt=p.phase==='work'?(p.k<p.n-1?`Rest is ${cardioClock(p.r)} next`:'Last round'):p.phase==='rest'?`Work is ${cardioClock(p.w)} next`:'Tap Finish to save';
   document.getElementById('cfClockSub').textContent=`Total ${cardioClock(e)} · ${nxt}`;
   document.getElementById('cfBar').style.width=(p.len?Math.min(100,100*(p.len-p.left)/p.len):100)+'%';
@@ -3081,7 +3100,16 @@ function renderCardioLive(){
   const wrap=document.createElement('div'); wrap.className='cf-flow'; list.appendChild(wrap);
   const fld=(k,ctx)=>{ const f=CARDIO_FIELDS[k]; return `<div><label class="field-label" for="${ctx}_${k}">${cardioFieldLabel(k,du)}</label><input class="cf-in" id="${ctx}_${k}" data-f="${k}" ${f.text?`type="text" placeholder="${f.ph||''}"`:'type="text" inputmode="decimal"'} value="${(L.vals[k]??'').toString().replace(/"/g,'&quot;')}"></div>`; };
   const bind=()=>wrap.querySelectorAll('[data-f]').forEach(i=>i.oninput=e=>{ L.vals[i.dataset.f]=e.target.value; saveCardioLive(); });
-  if(L.step==='finish'){
+  if(L.step==='live'&&Date.now()<L.startedAt){ // get-ready countdown
+    wrap.innerHTML=`<div class="cf-top"><span class="cf-live" role="status"><i></i>Starting</span><span></span></div><h3 class="cf-h">${a.k==='other'&&L.name.trim()?L.name.trim():a.l}</h3><p class="cf-lede">Get set. The clock starts at zero.</p>
+      <div class="cf-clock cf-ready"><div class="s">Get Ready</div><div class="t big" id="cfReady" role="timer" aria-live="polite"></div></div>
+      <div class="row"><button type="button" class="btn" id="cfCancel" style="flex:1">Cancel</button></div>`;
+    const num=document.getElementById('cfReady'); let last=null;
+    const go=()=>{ const left=Math.ceil((L.startedAt-Date.now())/1000); if(left<=0){ stopCardioTick(); L.focus='cfPause'; renderCardioForm(); return; }
+      if(left!==last){ last=left; num.textContent=left; beep(); } };
+    document.getElementById('cfCancel').onclick=async()=>{ stopCardioTick(); cardioLive=null; await sset('today:cardio',null); renderCardioForm(); };
+    go(); cardioTickId=requestAnimationFrame(function loop(){ if(cardioTickId===null) return; go(); if(cardioTickId!==null) cardioTickId=requestAnimationFrame(loop); });
+  } else if(L.step==='finish'){
     const e=cardioElapsed(L), m=a.main[0], shown=a.main.slice(0,2).filter(k=>(L.vals[k]??'')!=='');
     wrap.innerHTML=`<button type="button" class="cf-back" id="cfKeep"><svg class="cf-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>Keep Going</button>
       <h3 class="cf-h">Nice Work</h3><p class="cf-lede">${a.k==='other'&&L.name.trim()?L.name.trim():a.l} · fix anything that's off, then save.</p>
@@ -3118,7 +3146,7 @@ function renderCardioLive(){
     const sk=document.getElementById('cfSkip'); if(sk) sk.onclick=()=>{ const p=cardioPhase(L,cardioElapsed(L)); if(p&&p.phase!=='done'){ L.skipMs+=Math.ceil(p.left*1000)+50; saveCardioLive(); cardioTick(); } };
     document.getElementById('cfFinish').onclick=()=>{ if(!L.pausedAt){ L.pausedAt=Date.now(); L.autoPaused=true; } L.duration=String(Math.max(1,Math.round(cardioElapsed(L)/60))); L.step='finish'; saveCardioLive(); renderCardioForm(); window.scrollTo(0,0); };
     document.getElementById('cfDiscard').onclick=async()=>{ if(await confirmSheet("Discard this session? The time and numbers you've logged will be lost.",'Discard',null,true)){ cardioLive=null; cardioDraft=newCardioDraft(); await sset('today:cardio',null); renderCardioForm(); } };
-    cardioLastKey=null; clearInterval(cardioTickId); cardioTick(); if(!paused) cardioTickId=setInterval(cardioTick,250);
+    cardioLastKey=null; stopCardioTick(); cardioTick(); if(!paused){ cardioTickId=requestAnimationFrame(cardioTickLoop); }
   }
   document.getElementById('finishBtn').style.display='none';
   document.getElementById('resetLink').style.display='none';
@@ -3129,8 +3157,8 @@ function renderCardioLive(){
 async function saveLiveCardio(){
   const L=cardioLive, dur=parseInt(L.duration);
   if(!dur){ showToast('Add a duration first'); return; }
+  cardioLive=null; await sset('today:cardio',null); // cleared first so Home's banner is gone when it opens
   await saveCardioRec(buildCardioRec(L,dur,L.startedAt));
-  cardioLive=null; await sset('today:cardio',null);
 }
 
 // ---------- history view ----------
