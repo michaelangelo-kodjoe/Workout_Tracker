@@ -362,6 +362,30 @@
   .edrow .acts span.x{color:var(--danger);}
   .edrow .acts span.off{color:var(--text-dim);opacity:.35;cursor:default;}
   .cardio-tab{border-style:dashed;}
+  /* cardio log: two steps, pick an activity then its details */
+  .cf-flow{padding:4px 0 0;}
+  .cf-steps{display:flex;align-items:center;gap:8px;margin:4px 0 16px;font-size:12px;color:var(--text-dim);} .cf-steps i{flex:1;height:3px;border-radius:2px;background:var(--line);} .cf-steps i.on{background:var(--cardio);} .cf-steps b{font-weight:normal;color:var(--text);white-space:nowrap;}
+  .cf-ico{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;}
+  .cf-back{display:inline-flex;align-items:center;gap:2px;min-height:44px;margin:-8px 0 0 -4px;padding:0 10px 0 0;background:none;border:0;color:var(--light);font:15px 'Georgia',serif;cursor:pointer;}
+  .cf-h{font-size:22px;font-weight:normal;margin:0 0 4px;} .cf-lede{font-size:13px;color:var(--text-dim);margin:0 0 16px;line-height:1.5;} .cf-lede .linkbtn{white-space:nowrap;}
+  .cf-sub{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin:20px 0 8px;font-family:'Menlo',monospace;}
+  .cf-scroll{display:flex;gap:8px;overflow-x:auto;margin:0 -16px;padding:0 16px 4px;scrollbar-width:none;} .cf-scroll::-webkit-scrollbar{display:none;}
+  .cf-rc{flex:none;min-height:56px;min-width:116px;padding:8px 14px;border-radius:8px;background:var(--panel-raised);border:1px solid var(--line);color:var(--text);font:15px 'Georgia',serif;text-align:left;cursor:pointer;} .cf-rc small{display:block;font-size:12px;color:var(--text-dim);margin-top:2px;}
+  .cf-seg{display:flex;background:var(--panel-raised);border:1px solid var(--line);border-radius:8px;padding:3px;gap:3px;margin-bottom:16px;}
+  .cf-seg button{flex:1;min-height:44px;border:0;border-radius:6px;background:none;font:13px 'Georgia',serif;color:var(--text-dim);cursor:pointer;} .cf-seg button.on{background:rgba(95,168,224,.16);color:var(--text);box-shadow:inset 0 0 0 1px var(--cardio);}
+  .cf-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .cf-tile{display:flex;flex-direction:column;align-items:flex-start;min-height:84px;padding:12px;border-radius:8px;background:var(--panel);border:1px solid var(--line);color:var(--text);font:15px 'Georgia',serif;text-align:left;cursor:pointer;} .cf-tile .cf-ico{color:var(--cardio);margin-bottom:8px;} .cf-tile small{font-size:12px;color:var(--text-dim);margin-top:2px;}
+  .cf-big{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;background:var(--panel);border:1px solid var(--line);border-radius:8px;margin-bottom:12px;}
+  .cf-big .lb{display:block;font-size:13px;color:var(--text-dim);} .cf-big .v{font:32px 'Menlo',monospace;color:var(--text);display:flex;align-items:baseline;} .cf-big .v small{font-size:13px;color:var(--text-dim);margin-left:4px;}
+  .cf-big input{width:4ch;min-width:0;background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;color:var(--text);font:inherit;padding:0;} .cf-big input:focus{border-bottom-color:var(--cardio);outline:none;}
+  .cf-math{font-size:12px;color:var(--text-dim);text-align:right;line-height:1.4;}
+  .cf-stp{display:flex;gap:8px;} .cf-stp button{width:44px;height:44px;border-radius:8px;border:1px solid var(--line);background:var(--panel-raised);color:var(--text);font-size:22px;cursor:pointer;}
+  .cf-fld{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;} .cf-fld.cf-3{grid-template-columns:1fr 1fr 1fr;} .cf-fld .field-label{margin-top:0;}
+  .cf-in{width:100%;height:44px;background:var(--panel-raised);border:1px solid var(--line);border-radius:8px;color:var(--text);text-align:center;font-size:15px;padding:0 8px;}
+  .cf-disc{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:48px;padding:0;background:none;border:0;border-top:1px solid var(--line);color:var(--light);font:13px 'Georgia',serif;text-align:left;cursor:pointer;}
+  .cf-rpe{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:6px;} .cf-rpe button{min-height:56px;border-radius:8px;border:1px solid var(--line);background:var(--panel-raised);font:17px 'Georgia',serif;color:var(--text-dim);cursor:pointer;} .cf-rpe button.on{background:var(--light);border-color:var(--light);color:#0d1a22;}
+  .cf-rpe-note{font-size:13px;color:var(--text);margin-top:12px;padding:10px 12px;border-left:2px solid var(--light);background:var(--panel-raised);border-radius:3px;}
+
   .rpe-row{display:flex;gap:6px;margin-top:6px;}
   .rpe-dot{flex:1;text-align:center;padding:8px 0;border-radius:3px;border:1px solid var(--line);background:var(--panel-raised);font-size:12px;cursor:pointer;color:var(--text-dim);}
   .rpe-dot.on{background:var(--light);border-color:var(--light);color:#0d1a22;}
@@ -370,9 +394,6 @@
   .rir-lbl{font-size:12px;color:var(--text-dim);margin-right:2px;white-space:nowrap;}
   .rir-pill{font-size:12px;color:var(--text-dim);background:var(--panel-raised);border:1px solid var(--line);border-radius:10px;padding:3px 9px;cursor:pointer;}
   .rir-pill.on{background:var(--light);border-color:var(--light);color:#0d1a22;}
-  .ctype{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 4px;}
-  .ctype span{padding:8px 12px;border-radius:3px;border:1px solid var(--line);background:var(--panel-raised);font-size:13px;cursor:pointer;color:var(--text-dim);}
-  .ctype span.on{border-color:var(--light);color:var(--text);background:rgba(79,163,209,.12);}
   .field-label{display:block;font-size:12px;color:var(--text-dim);margin:12px 0 4px;}
   /* Add an Exercise: every field has a visible label above it, not a placeholder that gets cut off */
   .ad-h{font-size:15px;font-weight:normal;margin:24px 0 0;padding-top:16px;border-top:1px solid var(--line);}
@@ -593,7 +614,6 @@
   .cal-nav{padding:18px 19px;margin:-18px -11px;}
   .btn{min-height:44px;}
   .rpe-dot{padding:13px 0;min-height:44px;} /* ten across a phone can't each be 44 wide; they reach 44 tall and 26 wide */
-  .ctype span{display:inline-flex;align-items:center;min-height:44px;}
   .in{min-height:44px;}
   .chk{min-height:44px;gap:8px;}
   .chk input{margin:0;} /* the browser's default 3-4 px checkbox margin set every box 4 px in from the text edge */
@@ -610,7 +630,6 @@
   .eqchip{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:22px;}
   /* the builder's one action stays in reach while the 29 picks scroll under it */
   #buildDone{position:sticky;bottom:calc(var(--foot-h,80px) + 12px);z-index:3;box-shadow:0 -16px 16px -4px var(--bg),0 12px 0 0 var(--bg);}
-  .ctype span{padding:11px 14px;}
   /* tap feedback: the system tap highlight is off (it flashed a grey box over whole cards). Only the bottom tabs dim while
      pressed — dimming every control darkened whole cards, e.g. the Upper/Lower cards while you held a chart to scrub it */
   .viewtab{transition:opacity .15s ease-out;}
@@ -2847,62 +2866,150 @@ async function finishOnboarding(){
 }
 
 // ---------- cardio ----------
-const CARDIO_TYPES=[
-  {key:'zone2',label:'Zone 2 (steady state)',
-   desc:'20-40 min at a pace you could hold a conversation. Bike, incline walk, row, or jog. This builds your aerobic base more than intervals do.',
-   cue:'Pick a pace where you could speak in full sentences but not sing. Roughly 60-70% of max heart rate if you track it, or "comfortably annoying" by feel. Keep it steady the whole time; do not surge. The goal is time at that pace, not distance.',
-   demo:'zone 2 cardio training form'},
-  {key:'hiit',label:'Intervals / HIIT',
-   desc:'6-10 rounds of 30s hard / 90s easy on a bike or rower. Raises your ceiling for sustained output. Give it 48h+ from your next Lower day.',
-   cue:'Warm up 5 minutes easy first. On the hard 30s, push to about 8-9 out of 10 effort — hard enough that talking is not possible. Use the full 90s easy to bring your breathing back down before the next round. Quality over round count; stop if form or effort drops off badly.',
-   demo:'HIIT interval training bike rower form'},
-  {key:'finisher',label:'Short Finisher',
-   desc:'5-8 min bodyweight circuit (burpees, mountain climbers, jump rope) done for time, tacked onto a lifting day. Cheap work-capacity builder.',
-   cue:'Pick 2-3 movements (e.g. burpees, mountain climbers, jump rope) and cycle through them for time with minimal rest. Move fast but keep form clean — a sloppy burpee is a wasted rep. This comes after lifting, not before, so your main lifts stay strong.',
-   demo:'bodyweight finisher circuit workout'},
+// A cardio log is two steps: pick an activity, then fill in its details. Each activity says which fields lead (main),
+// which sit under "Add Details" (more), and whether it's done in intervals ('no' | 'yes' | 'default' = starts on
+// Intervals | 'only' = always intervals). Distance is typed in the unit the Settings page uses (mi, or km with kg) and
+// kept as text in `distance`, which is what History's pace trend already reads; the record's `du` remembers the unit.
+const CARDIO_GROUPS=['Outdoor','Machine','Conditioning'];
+const CARDIO_FIELDS={
+  dist:{l:'Distance',u:'du'}, distm:{l:'Distance',u:'m'}, incline:{l:'Incline',u:'%'}, speed:{l:'Speed',u:'spd'},
+  level:{l:'Level'}, floors:{l:'Floors'}, feet:{l:'Feet Climbed',u:'ft'}, rpm:{l:'RPM'}, cal:{l:'Calories'},
+  hr:{l:'Avg HR',u:'bpm'}, spm:{l:'Strokes/Min'}, split:{l:'Split',u:'per 500 m',text:1,ph:'2:05'}, laps:{l:'Laps'},
+  reps:{l:'Reps'}, lanes:{l:'Lanes'}, steps:{l:'Steps'}, watts:{l:'Watts'}, jumps:{l:'Jump Count'},
+  warm:{l:'Warm-Up',u:'min'}, cool:{l:'Cooldown',u:'min'}
+};
+const CARDIO_ACTS=[
+  {k:'run',l:'Running',g:'Outdoor',ic:'run',main:['dist'],more:['hr','cal'],iv:'yes',hint:'Easy runs are RPE 3–4: full sentences. Tempo runs are RPE 6–7.'},
+  {k:'walk',l:'Walking',g:'Outdoor',ic:'walk',main:['dist','steps'],more:['hr','cal'],iv:'no',hint:'RPE 2–4. A brisk walk where you can still talk.'},
+  {k:'hike',l:'Hiking',g:'Outdoor',ic:'walk',main:['dist'],more:['hr','cal'],iv:'no',hint:'RPE 3–6, depending on the climb.'},
+  {k:'cycle',l:'Cycling (Outdoor)',g:'Outdoor',ic:'bike',main:['dist','speed'],more:['rpm','hr','cal'],iv:'yes',hint:'Zone 2 is RPE 3–4: you can speak in full sentences.'},
+  {k:'swim',l:'Swimming',g:'Outdoor',ic:'swim',main:['distm','laps'],more:['hr','cal'],iv:'yes',hint:'RPE 4–7. Rest as needed between lengths.'},
+  {k:'rowwater',l:'Rowing on Water',g:'Outdoor',ic:'row',main:['distm','split'],more:['spm','hr'],iv:'yes',hint:'Zone 2 is RPE 3–4. Keep the stroke rate steady.'},
+  {k:'tread',l:'Treadmill',g:'Machine',ic:'tread',main:['dist','incline'],more:['speed','cal','hr'],iv:'yes',hint:'Zone 2 is RPE 3–4: full sentences, no gasping. Intervals run RPE 8–9.'},
+  {k:'incwalk',l:'Incline Walking',g:'Machine',ic:'tread',main:['incline','speed'],more:['dist','cal','hr'],iv:'yes',hint:'RPE 4–6. Raise the incline, not the speed.'},
+  {k:'stair',l:'Stair Climber',g:'Machine',ic:'stairs',main:['level','floors'],more:['cal','hr'],iv:'yes',hint:'RPE 5–6: short sentences. Let go of the rails if you can.'},
+  {k:'ellip',l:'Elliptical',g:'Machine',ic:'ell',main:['level','incline'],more:['dist','cal','hr'],iv:'yes',hint:'RPE 3–6. Drive through the whole foot.'},
+  {k:'arc',l:'Arc Trainer',g:'Machine',ic:'ell',main:['level','incline'],more:['cal','hr'],iv:'yes',hint:'RPE 4–6.'},
+  {k:'versa',l:'Versa Climber',g:'Machine',ic:'stairs',main:['feet'],more:['cal','hr'],iv:'yes',hint:'RPE 6–9. Short, hard efforts work best.'},
+  {k:'bike',l:'Stationary Bike',g:'Machine',ic:'bike',main:['level','rpm'],more:['dist','cal','hr','watts'],iv:'yes',hint:'Zone 2 is RPE 3–4: full sentences. Intervals run RPE 8–9.'},
+  {k:'airbike',l:'Air Bike',g:'Machine',ic:'hiit',main:['cal'],more:['rpm','dist','hr'],iv:'default',ivd:[20,40,8],hint:'RPE 8–10 on the hard rounds, 2–3 on the easy ones.'},
+  {k:'rower',l:'Rowing Machine',g:'Machine',ic:'row',main:['distm','split'],more:['spm','cal','hr'],iv:'yes',hint:'Zone 2 is RPE 3–4 at 18–22 strokes a minute. Sprints are RPE 9.'},
+  {k:'skierg',l:'Ski Erg',g:'Machine',ic:'row',main:['distm','split'],more:['spm','cal'],iv:'yes',hint:'Zone 2 is RPE 3–4. Sprints are RPE 8–9.'},
+  {k:'rope',l:'Jump Rope',g:'Conditioning',ic:'rope',main:['jumps'],more:['hr'],iv:'default',ivd:[60,30,6],hint:'RPE 6–9. Stop a round when your form goes.'},
+  {k:'battle',l:'Battle Ropes',g:'Conditioning',ic:'hiit',main:[],more:['hr','cal'],iv:'default',ivd:[30,30,8],hint:'RPE 8–9 on the work rounds.'},
+  {k:'sled',l:'Sled Push / Pull',g:'Conditioning',ic:'hiit',main:['lanes','distm'],more:['hr'],iv:'yes',hint:'RPE 8–9. Rest fully between pushes.'},
+  {k:'box',l:'Boxing / Heavy Bag',g:'Conditioning',ic:'box',main:[],more:['hr','cal'],iv:'default',ivd:[180,60,5],hint:'Three-minute rounds, RPE 6–9.'},
+  {k:'shadow',l:'Shadow Boxing',g:'Conditioning',ic:'box',main:[],more:['hr','cal'],iv:'default',ivd:[180,60,4],hint:'Three-minute rounds, RPE 4–7.'},
+  {k:'hiitc',l:'HIIT Circuit',g:'Conditioning',ic:'hiit',main:[],more:['cal','hr'],iv:'only',ivd:[40,20,8],hint:'RPE 8–9 on the work rounds, 2–3 while you rest. Warm up for 5 minutes first.'},
+  {k:'burpee',l:'Burpees',g:'Conditioning',ic:'hiit',main:['reps'],more:['hr'],iv:'yes',hint:'RPE 8–9. Keep each rep clean.'},
+  {k:'sport',l:'Sports',g:'Conditioning',ic:'run',main:[],more:['cal','hr'],iv:'no',hint:'Basketball, soccer, anything else. Rate the effort by feel.'},
+  {k:'other',l:'Other Cardio',g:'Conditioning',ic:'more',main:['dist'],more:['cal','hr'],iv:'yes',hint:'Name it below. Rate the effort by feel.'}
 ];
-let cardioDraft={type:'zone2',duration:'',distance:'',rpe:0,notes:'',showHow:false};
+const CARDIO_ICONS={run:'<circle cx="14" cy="5" r="2"/><path d="m8 21 3-6 3 2 2 4M10 12l3-3 3 3 3 1M7 12l3-3"/>',walk:'<circle cx="13" cy="4.5" r="2"/><path d="m10 21 2-6-2-3 1-4 3 2 3 1M8 12l3-3"/>',tread:'<path d="M3 17h18M5 17l2-6h5l2 6M12 11 10 6h3"/>',stairs:'<path d="M4 20h4v-4h4v-4h4V8h4"/>',bike:'<circle cx="6" cy="16" r="3.5"/><circle cx="18" cy="16" r="3.5"/><path d="M6 16l4-8h5l3 8M10 8H8"/>',row:'<path d="M3 15h18M6 15l3-6h6M4 19h16"/>',ell:'<path d="M5 19h14M8 19l2-12M16 19l-2-12M7 7h10"/>',rope:'<path d="M6 4v8a6 6 0 0 0 12 0V4"/>',box:'<path d="M6 10a4 4 0 0 1 4-4h5a3 3 0 0 1 3 3v5a5 5 0 0 1-5 5H9a3 3 0 0 1-3-3z"/>',hiit:'<path d="M13 3 5 14h6l-1 7 8-11h-6z"/>',swim:'<path d="M3 17c2 0 2-1.5 4.5-1.5S10 17 12 17s2.5-1.5 4.5-1.5S19 17 21 17M3 21c2 0 2-1.5 4.5-1.5S10 21 12 21s2.5-1.5 4.5-1.5S19 21 21 21M9 13l3-5 4 3"/>',more:'<path d="M5 12h14M12 5v14"/>'};
+const cardioIcon=k=>`<svg class="cf-ico" viewBox="0 0 24 24" aria-hidden="true">${CARDIO_ICONS[k]||CARDIO_ICONS.more}</svg>`;
+const CARDIO_CHEV='<svg class="cf-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>', CARDIO_CHEV_UP='<svg class="cf-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>';
+const CARDIO_RPE={1:'Very light. Barely moving.',2:'Light. Easy conversation.',3:'Easy. Full sentences.',4:'Easy to moderate. Full sentences are fine.',5:'Moderate. Short sentences.',6:'Somewhat hard. A few words at a time.',7:'Hard. Only a few words.',8:'Very hard. Talking is a struggle.',9:'Near max. You can\'t talk.',10:'All out.'};
+const cardioAct=k=>CARDIO_ACTS.find(a=>a.k===k);
+const cardioDu=()=>settings.unit==='kg'?'km':'mi';
+function cardioFieldLabel(k,du){ const f=CARDIO_FIELDS[k]; const u=f.u==='du'?du:f.u==='spd'?(du==='km'?'km/h':'mph'):f.u; return u?`${f.l} (${u})`:f.l; }
+function cardioFieldText(k,v,du){ // one logged value as History reads it
+  switch(k){ case 'distm':return `${v} m`; case 'incline':return `${v}%`; case 'speed':return `${v} ${du==='km'?'km/h':'mph'}`; case 'level':return `Level ${v}`;
+    case 'floors':return `${v} floors`; case 'feet':return `${v} ft`; case 'rpm':return `${v} rpm`; case 'cal':return `${v} cal`; case 'hr':return `${v} bpm`; case 'spm':return `${v} spm`;
+    case 'split':return `${v} /500 m`; case 'laps':return `${v} laps`; case 'reps':return `${v} reps`; case 'lanes':return `${v} lanes`; case 'steps':return `${v} steps`;
+    case 'watts':return `${v} W`; case 'jumps':return `${v} jumps`; case 'warm':return `${v} min warm-up`; case 'cool':return `${v} min cooldown`; } return String(v); }
+// History's one-line summary of a cardio session; older logs only have duration, distance and effort
+function cardioMeta(s){
+  const a=s.cact&&cardioAct(s.cact), du=s.du||'mi';
+  const parts=[`${s.duration} min`, s.distance];
+  if(s.structure==='intervals'&&s.rounds) parts.push(`${s.rounds} × ${s.work}s / ${s.rest}s`);
+  if(a&&s.f) a.main.concat(a.more).filter(k=>k!=='dist'&&s.f[k]!=null&&s.f[k]!=='').slice(0,2).forEach(k=>parts.push(cardioFieldText(k,s.f[k],du)));
+  if(s.rpe) parts.push(`RPE ${s.rpe}`);
+  return parts.filter(Boolean).join(' · ');
+}
+function cardioRecent(){ // the last four distinct activities, newest first
+  const out=[]; [...sessions].filter(s=>s.isCardio&&s.cact&&cardioAct(s.cact)).sort((a,b)=>b.t-a.t).forEach(s=>{ if(out.length<4&&!out.some(x=>x.k===s.cact)) out.push({k:s.cact,s}); }); return out;
+}
+function cardioWhen(t){ const d0=new Date(); d0.setHours(0,0,0,0); const n=Math.round((d0-new Date(new Date(t).setHours(0,0,0,0)))/864e5);
+  return n<=0?'Today':n===1?'Yesterday':n<7?new Date(t).toLocaleDateString(undefined,{weekday:'short'}):new Date(t).toLocaleDateString(undefined,{month:'short',day:'numeric'}); }
+function newCardioDraft(){ const r=cardioRecent()[0]; return {step:1,group:r?cardioAct(r.k).g:'Machine',act:null,structure:'steady',duration:'',vals:{},work:'30',rest:'90',rounds:'8',name:'',rpe:0,notes:'',more:false,effort:false,focus:null}; }
+let cardioDraft=newCardioDraft();
+function cardioIntervalTotal(d){ const w=parseFloat(d.work)||0, r=parseFloat(d.rest)||0, n=parseInt(d.rounds)||0; const a=cardioAct(d.act);
+  return Math.round(((w+r)*n)/60+(parseFloat(d.vals.warm)||0)+(parseFloat(d.vals.cool)||0)); }
+function cardioPick(k){ const a=cardioAct(k), prev=cardioDraft;
+  cardioDraft={...newCardioDraft(),act:k,group:a.g,step:2,structure:a.iv==='default'||a.iv==='only'?'intervals':'steady',rpe:prev.rpe,notes:prev.notes};
+  if(a.ivd){ [cardioDraft.work,cardioDraft.rest,cardioDraft.rounds]=a.ivd.map(String); }
+  cardioDraft.focus='cfBack'; renderCardioForm(); window.scrollTo(0,0); }
 function renderCardioForm(){
-  const focusKey=listFocusKey();
+  const d=cardioDraft;
   document.getElementById('dayLabel').innerHTML=`<h2 class="sr-only">Cardio</h2><span></span><span class="linkbtn" id="cardioHistLink">History</span>`;
   document.getElementById('cardioHistLink').onclick=()=>setView('history');
   const list=document.getElementById('exerciseList'); list.innerHTML='';
-  const wrap=document.createElement('div'); wrap.className='exercise open';
-  const t=CARDIO_TYPES.find(x=>x.key===cardioDraft.type);
-  const yt='https://www.youtube.com/results?search_query='+encodeURIComponent(t.demo);
-  wrap.innerHTML=`
-    <div class="ex-head" style="cursor:default"><div><h3 class="ex-name">Log a Session</h3><div class="ex-target">Pick a type, fill in what applies</div></div></div>
-    <div class="ex-body" style="display:block">
-      <div class="ctype" id="ctypeRow" role="group" aria-label="Session Type">${CARDIO_TYPES.map(x=>`<span data-k="${x.key}" class="${x.key===cardioDraft.type?'on':''}" aria-pressed="${x.key===cardioDraft.type}">${x.label}</span>`).join('')}</div>
-      <div class="cue">${t.desc}</div>
-      <div style="margin-top:12px">${toolsBar(!!cardioDraft.showHow, yt, false, 'cardioHowtoBtn')}</div>
-      ${cardioDraft.showHow?`<div class="cue" style="display:block">${t.cue}</div>`:''}
-      <label class="field-label" for="cDur">Duration (minutes)</label>
-      <div class="setgrid" style="grid-template-columns:1fr"><input type="number" inputmode="numeric" id="cDur" placeholder="e.g. 30" value="${cardioDraft.duration}"></div>
-      <label class="field-label" for="cDist">Distance (optional, miles/km)</label>
-      <div class="setgrid" style="grid-template-columns:1fr"><input type="text" inputmode="decimal" id="cDist" placeholder="e.g. 3.1 mi" value="${cardioDraft.distance}"></div>
-      <div class="field-label" id="rpeLbl">Effort (RPE, 1 easy – 10 max)</div>
-      <div class="rpe-row" id="rpeRow" role="group" aria-labelledby="rpeLbl">${Array.from({length:10},(_,i)=>i+1).map(n=>`<div class="rpe-dot ${cardioDraft.rpe===n?'on':''}" data-n="${n}" aria-pressed="${cardioDraft.rpe===n}" aria-label="Effort ${n}">${n}</div>`).join('')}</div>
-      <textarea class="notes" id="cNotes" aria-label="Notes" placeholder="Notes — route, how it felt">${cardioDraft.notes}</textarea>
-      <div class="row" style="margin-top:12px"><button class="btn primary" id="cardioLogBtn" style="flex:1">Log Session</button></div>
-    </div>`;
-  list.appendChild(wrap);
-  document.getElementById('cardioHowtoBtn').onclick=()=>{ cardioDraft.showHow=!cardioDraft.showHow; renderCardioForm(); };
-  wrap.querySelectorAll('#ctypeRow span').forEach(el=>el.onclick=()=>{ cardioDraft.type=el.dataset.k; renderCardioForm(); });
-  wrap.querySelectorAll('.rpe-dot').forEach(el=>el.onclick=()=>{ cardioDraft.rpe=parseInt(el.dataset.n); renderCardioForm(); });
-  document.getElementById('cDur').oninput=e=>cardioDraft.duration=e.target.value;
-  document.getElementById('cDist').oninput=e=>cardioDraft.distance=e.target.value;
-  document.getElementById('cNotes').oninput=e=>cardioDraft.notes=e.target.value;
-  document.getElementById('cardioLogBtn').onclick=logCardio;
+  const wrap=document.createElement('div'); wrap.className='cf-flow';
+  const steps=n=>`<div class="cf-steps" role="img" aria-label="Step ${n} of 2"><b>Step ${n} of 2</b><i class="on"></i><i class="${n>1?'on':''}"></i></div>`;
+  if(d.step===1){
+    const rec=cardioRecent(), accts=CARDIO_ACTS.filter(a=>a.g===d.group);
+    const sub=a=>{ const m=a.main.map(k=>CARDIO_FIELDS[k].l); if(a.iv==='default'||a.iv==='only') m.unshift('Rounds'); return m.length?m.slice(0,2).join(', '):'Duration'; };
+    wrap.innerHTML=`${steps(1)}<h3 class="cf-h">What Did You Do?</h3><p class="cf-lede">Pick an activity. You'll add the numbers next.</p>
+      ${rec.length?`<div class="cf-sub" style="margin-top:0">Recent</div><div class="cf-scroll">${rec.map(r=>{ const a=cardioAct(r.k); return `<button type="button" class="cf-rc" data-k="${a.k}">${a.l}<small>${r.s.duration} min · ${cardioWhen(r.s.t)}</small></button>`; }).join('')}</div>`:''}
+      <div class="cf-seg" id="cfGroups" role="group" aria-label="Activity Group" style="margin-top:${rec.length?20:0}px">${CARDIO_GROUPS.map(g=>`<button type="button" data-g="${g}" class="${g===d.group?'on':''}" aria-pressed="${g===d.group}">${g}</button>`).join('')}</div>
+      <div class="cf-grid">${accts.map(a=>`<button type="button" class="cf-tile" data-k="${a.k}">${cardioIcon(a.ic)}<span>${a.l}</span><small>${sub(a)}</small></button>`).join('')}</div>`;
+    list.appendChild(wrap);
+    wrap.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>cardioPick(b.dataset.k));
+    wrap.querySelectorAll('#cfGroups button').forEach(b=>b.onclick=()=>{ d.group=b.dataset.g; d.focus='g:'+b.dataset.g; renderCardioForm(); });
+  } else {
+    const a=cardioAct(d.act), du=cardioDu(), iv=d.structure==='intervals', canIv=a.iv!=='no';
+    const fld=(k,extra='')=>{ const f=CARDIO_FIELDS[k]; return `<div><label class="field-label" for="cf_${k}">${cardioFieldLabel(k,du)}</label><input class="cf-in" id="cf_${k}" data-f="${k}" ${f.text?`type="text" placeholder="${f.ph||''}"`:'type="text" inputmode="decimal"'} value="${(d.vals[k]??'').toString().replace(/"/g,'&quot;')}" ${extra}></div>`; };
+    const more=a.more.concat(iv?['warm','cool']:[]);
+    const yt='https://www.youtube.com/results?search_query='+encodeURIComponent((a.l+' form how to').replace(/\s*\/\s*/g,' '));
+    wrap.innerHTML=`<button type="button" class="cf-back" id="cfBack"><svg class="cf-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>Back</button>${steps(2)}
+      <h3 class="cf-h">${a.l}</h3><p class="cf-lede">${a.hint} <a class="linkbtn" href="${yt}" target="_blank" rel="noopener" aria-label="Demo videos (opens YouTube)">Demo Videos ↗</a></p>
+      ${a.k==='other'?`<label class="field-label" for="cfName">Activity Name</label><input class="cf-in" id="cfName" type="text" placeholder="e.g. Dance Cardio" value="${d.name.replace(/"/g,'&quot;')}" style="margin-bottom:12px">`:''}
+      ${canIv&&a.iv!=='only'?`<div class="cf-seg" id="cfStruct" role="group" aria-label="Structure">${[['steady','Steady State'],['intervals','Intervals']].map(([v,t])=>`<button type="button" data-s="${v}" class="${d.structure===v?'on':''}" aria-pressed="${d.structure===v}">${t}</button>`).join('')}</div>`:''}
+      ${iv?`<div class="cf-fld cf-3"><div><label class="field-label" for="cfWork">Work (sec)</label><input class="cf-in" id="cfWork" type="text" inputmode="numeric" value="${d.work}"></div><div><label class="field-label" for="cfRest">Rest (sec)</label><input class="cf-in" id="cfRest" type="text" inputmode="numeric" value="${d.rest}"></div><div><label class="field-label" for="cfRounds">Rounds</label><input class="cf-in" id="cfRounds" type="text" inputmode="numeric" value="${d.rounds}"></div></div>
+        <div class="cf-big"><div><div class="lb">Total Time</div><div class="v"><span id="cfTotal">${cardioIntervalTotal(d)}</span><small>min</small></div></div><span class="cf-math" id="cfMath"></span></div>`
+      :`<div class="cf-big"><div><label class="lb" for="cfDur">Duration</label><div class="v"><input id="cfDur" type="text" inputmode="numeric" aria-label="Duration in minutes" value="${d.duration}" placeholder="0"><small>min</small></div></div><div class="cf-stp"><button type="button" id="cfLess" aria-label="5 minutes less">−</button><button type="button" id="cfMore" aria-label="5 minutes more">+</button></div></div>`}
+      ${a.main.length?`<div class="cf-fld">${a.main.map(k=>fld(k)).join('')}</div>`:''}
+      ${more.length?`<button type="button" class="cf-disc" id="cfMoreBtn" aria-expanded="${d.more}"><span>Add Details: ${more.map(k=>CARDIO_FIELDS[k].l).join(', ')}</span>${d.more?CARDIO_CHEV_UP:CARDIO_CHEV}</button>${d.more?`<div class="cf-fld">${more.map(k=>fld(k)).join('')}</div>`:''}`:''}
+      <button type="button" class="cf-disc ${d.effort?'open':''}" id="cfEffBtn" aria-expanded="${d.effort}"><span>Effort &amp; Notes (Optional)</span>${d.effort?CARDIO_CHEV_UP:CARDIO_CHEV}</button>
+      ${d.effort?`<div class="field-label" id="rpeLbl" style="margin-top:4px">Effort (RPE, 1 easy – 10 max)</div><div class="cf-rpe" id="rpeRow" role="group" aria-labelledby="rpeLbl">${Array.from({length:10},(_,i)=>i+1).map(n=>`<button type="button" class="${d.rpe===n?'on':''}" data-n="${n}" aria-pressed="${d.rpe===n}" aria-label="Effort ${n}">${n}</button>`).join('')}</div>
+        ${d.rpe?`<div class="cf-rpe-note">${d.rpe}: ${CARDIO_RPE[d.rpe]}</div>`:''}
+        <textarea class="notes" id="cNotes" aria-label="Notes" placeholder="Notes — route, how it felt">${d.notes}</textarea>`:''}
+      <div class="row" style="margin-top:16px"><button class="btn primary" id="cardioLogBtn" style="flex:1">Log Session</button></div>`;
+    list.appendChild(wrap);
+    const mathEl=document.getElementById('cfMath'), upd=()=>{ if(!iv) return; document.getElementById('cfTotal').textContent=cardioIntervalTotal(d);
+      mathEl.innerHTML=`(${d.work||0} + ${d.rest||0}) × ${d.rounds||0}`+((parseFloat(d.vals.warm)||0)+(parseFloat(d.vals.cool)||0)?'<br>plus warm-up and cooldown':''); }; upd();
+    document.getElementById('cfBack').onclick=()=>{ d.step=1; d.focus=null; renderCardioForm(); window.scrollTo(0,0); };
+    const st=document.getElementById('cfStruct'); if(st) st.querySelectorAll('button').forEach(b=>b.onclick=()=>{ d.structure=b.dataset.s; d.focus='s:'+b.dataset.s; renderCardioForm(); });
+    if(!iv){ const du2=document.getElementById('cfDur'); du2.oninput=e=>d.duration=e.target.value.replace(/[^\d]/g,'');
+      const bump=n=>{ d.duration=String(Math.max(0,(parseInt(d.duration)||0)+n)); du2.value=d.duration==='0'?'':d.duration; };
+      document.getElementById('cfLess').onclick=()=>bump(-5); document.getElementById('cfMore').onclick=()=>bump(5); }
+    else { [['cfWork','work'],['cfRest','rest'],['cfRounds','rounds']].forEach(([id,key])=>document.getElementById(id).oninput=e=>{ d[key]=e.target.value.replace(/[^\d]/g,''); upd(); }); }
+    wrap.querySelectorAll('[data-f]').forEach(i=>i.oninput=e=>{ d.vals[i.dataset.f]=e.target.value; if(iv&&(i.dataset.f==='warm'||i.dataset.f==='cool')) upd(); });
+    const nm=document.getElementById('cfName'); if(nm) nm.oninput=e=>d.name=e.target.value;
+    const mb=document.getElementById('cfMoreBtn'); if(mb) mb.onclick=()=>{ d.more=!d.more; d.focus='cfMoreBtn'; renderCardioForm(); };
+    document.getElementById('cfEffBtn').onclick=()=>{ d.effort=!d.effort; d.focus='cfEffBtn'; renderCardioForm(); };
+    wrap.querySelectorAll('#rpeRow button').forEach(b=>b.onclick=()=>{ d.rpe=d.rpe===+b.dataset.n?0:+b.dataset.n; d.focus='r:'+b.dataset.n; renderCardioForm(); });
+    const nt=document.getElementById('cNotes'); if(nt) nt.oninput=e=>d.notes=e.target.value;
+    document.getElementById('cardioLogBtn').onclick=logCardio;
+  }
   document.getElementById('finishBtn').style.display='none';
   document.getElementById('resetLink').style.display='none';
-  restoreListFocus(focusKey);
+  tagClickables(wrap);
+  const f=d.focus; d.focus=null; // a redraw drops focus on the tapped control, so hand it back
+  if(f){ const el=f.startsWith('g:')?wrap.querySelector(`#cfGroups [data-g="${f.slice(2)}"]`):f.startsWith('s:')?wrap.querySelector(`#cfStruct [data-s="${f.slice(2)}"]`):f.startsWith('r:')?wrap.querySelector(`#rpeRow [data-n="${f.slice(2)}"]`):document.getElementById(f); if(el) el.focus({preventScroll:true}); }
 }
 async function logCardio(){
-  if(!cardioDraft.duration){ showToast('Add a duration first'); return; }
-  const rec={t:Date.now(), isCardio:true, ctype:cardioDraft.type, ctypeLabel:CARDIO_TYPES.find(x=>x.key===cardioDraft.type).label, duration:parseInt(cardioDraft.duration), distance:cardioDraft.distance, rpe:cardioDraft.rpe, notes:cardioDraft.notes};
+  const d=cardioDraft, a=cardioAct(d.act), du=cardioDu(), iv=d.structure==='intervals';
+  const duration=iv?cardioIntervalTotal(d):parseInt(d.duration);
+  if(!duration){ showToast(iv?'Add work, rest and rounds first':'Add a duration first'); return; }
+  const f={}; a.main.concat(a.more,iv?['warm','cool']:[]).forEach(k=>{ const v=(d.vals[k]??'').toString().trim(); if(v!=='' && k!=='dist') f[k]=v; });
+  const dist=(d.vals.dist||'').toString().trim();
+  const rec={t:Date.now(), isCardio:true, cact:a.k, structure:d.structure, ctype:d.structure, ctypeLabel:a.k==='other'&&d.name.trim()?d.name.trim():a.l, duration, du, rpe:d.rpe, notes:d.notes};
+  if(dist) rec.distance=`${dist} ${du}`;
+  if(Object.keys(f).length) rec.f=f;
+  if(iv){ rec.work=parseInt(d.work)||0; rec.rest=parseInt(d.rest)||0; rec.rounds=parseInt(d.rounds)||0; }
   sessions.push(rec); await sset('sessions',sessions);
-  cardioDraft={type:cardioDraft.type,duration:'',distance:'',rpe:0,notes:'',showHow:cardioDraft.showHow};
+  cardioDraft=newCardioDraft();
   // the suggestion usually moves on to the next lift day now — reload it so Home's greeting, its CTA and the
   // day-tab marker stop pointing at a cardio day that has just been done (this used to persist until a reload)
   await loadDay(suggestedDayId()); setView('home');
@@ -3016,7 +3123,7 @@ function sessionExLines(s){
 function buildSessionItem(s){
   const el=document.createElement('div'); el.className='sess';
   const p=sessionPlan(s);
-  const meta=s.isCardio?[`${s.duration} min`,s.distance,s.rpe?`RPE ${s.rpe}`:''].filter(Boolean).join(' · ')
+  const meta=s.isCardio?cardioMeta(s)
     :`${Object.keys(s.ex||{}).length} exercises · ${s.sets} sets · ${dispVol(s.vol||0).toLocaleString()} ${unitLabel()}`;
   const body=s.isCardio?(s.notes?`<div class="sess-notes"></div>`:'')
     :sessionExLines(s).map(([n,sets])=>`<div class="sess-ex"><b>${n}</b><span>${sets.map(x=>`<i>${x}</i>`).join('')}</span></div>`).join('');
@@ -3945,7 +4052,7 @@ document.addEventListener('focusout',e=>{
 // Nearly every tappable control is a div/span wired with onclick, which a keyboard or screen reader can't reach.
 // Tag them as buttons as they're rendered (render() rebuilds cards constantly, hence the observer) and let
 // Enter/Space fire the same click a tap would.
-const KB_CLICKABLE='.viewtab,.daytab,.day-card,.ex-head,.linkbtn,.addset,.setdone,.setrm,.rpe-dot,.rir-pill,.ctype span,.eqchip,.cal-nav,.cal-cell.has-session,.str-split-card,.edrow .acts span,.reset-link';
+const KB_CLICKABLE='.viewtab,.daytab,.day-card,.ex-head,.linkbtn,.addset,.setdone,.setrm,.rpe-dot,.rir-pill,.eqchip,.cal-nav,.cal-cell.has-session,.str-split-card,.edrow .acts span,.reset-link';
 function tagClickables(root){
   const els=[...(root.matches(KB_CLICKABLE)?[root]:[]),...root.querySelectorAll(KB_CLICKABLE)];
   for(const el of els){
