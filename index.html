@@ -3084,7 +3084,12 @@ function cardioTick(){
   const L=cardioLive; const clock=document.getElementById('cfClock');
   if(!L||L.step!=='live'||!clock){ stopCardioTick(); return; }
   const e=cardioElapsed(L), p=L.structure==='intervals'?cardioPhase(L,cardioPhaseAt(L)):null;
-  if(!p){ clock.innerHTML=cardioClockMs(e); return; }
+  if(!p){ clock.innerHTML=cardioClockMs(e);
+    if(L.structure==='intervals'){ // Work of 0 or no rounds: say so, instead of leaving the last round's badge up
+      cardioLastKey=null; const ph=document.getElementById('cfPhase'); ph.className='cf-phase rest'; ph.textContent='Intervals Not Set';
+      document.getElementById('cfClockSub').textContent='Add work, rest and rounds under Interval Setup';
+      document.getElementById('cfBar').style.width='0'; const dots=document.getElementById('cfDots'); dots.dataset.key=''; dots.innerHTML=''; }
+    return; }
   const key=p.phase==='done'?'done':`${p.k}:${p.phase}`;
   if(cardioLastKey!==null&&key!==cardioLastKey&&!L.pausedAt){ beep(); if(p.phase==='done') setTimeout(beep,350); }
   cardioLastKey=key;
