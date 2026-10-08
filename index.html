@@ -1126,7 +1126,7 @@ const TEMPLATE = [
     { group:'Shoulders', key:'shoulders', target:'3 x 12-15', pick:'Face Pulls' },
     { group:'Shoulders', key:'shoulders', target:'3 x 12-15', pick:'Reverse Pec Deck' },
     { group:'Arms', key:'biceps', target:'3 x 12', pick:'Hammer Curl' },
-    { group:'Arms', key:'triceps', target:'3 x 12-15', pick:'Overhead Tricep Extension' },
+    { group:'Arms', key:'triceps', target:'3 x 12-15', pick:'Dumbbell Overhead Tricep Extension' },
     { group:'Forearms', key:'forearms', target:'3 x 12-15', pick:'Reverse Wrist Curl' },
   ]},
   { id:'d4', name:'Lower', sub:'Volume', badge:'light', factor:0.85, slots:[
@@ -1194,7 +1194,7 @@ const ALTS = {
   ],
   triceps:[
     {name:'Seated Tricep Press',equip:'machine', target:'3 x 8-10',m:['triceps'],rk:['triceps-lateral'],step:5,cue:'Elbows tucked in, not flared. Push handles down until arms are straight, squeeze triceps, then let them rise to about 90 degrees.'},
-    {name:'Overhead Tricep Extension',equip:'dumbbell', region:'overhead', target:'3 x 12-15',m:['triceps'],rk:['triceps-long'],step:2.5,cue:'One dumbbell held overhead in both hands, elbows pointing to the ceiling and close to your head. Lower behind your head until forearms pass parallel, then extend fully.'},
+    {name:'Dumbbell Overhead Tricep Extension',equip:'dumbbell', region:'overhead', target:'3 x 12-15',m:['triceps'],rk:['triceps-long'],step:2.5,cue:'One dumbbell held overhead in both hands, elbows pointing to the ceiling and close to your head. Lower behind your head until forearms pass parallel, then extend fully.'},
     {name:'Rope Overhead Tricep Extension',equip:'cable', region:'overhead', target:'3 x 12-15',m:['triceps'],rk:['triceps-long'],step:5,cue:'Cable low or high, rope held overhead with your back to the stack, elbows pointing forward and close to your head. Lower behind your head until your forearms pass parallel, then extend fully and split the rope.'},
     {name:'Rope Pushdown',equip:'cable', target:'3 x 12-15',m:['triceps'],rk:['triceps-lateral'],step:5,cue:'Elbows tucked, rope at chest height. Push down and split the rope at the bottom, squeeze, then let it rise to chest level.',gif:["https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Triceps_Pushdown/0.jpg","https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Triceps_Pushdown/1.jpg"]},
     {name:'Dumbbell Skullcrusher',equip:'dumbbell', target:'3 x 10-12',m:['triceps'],rk:['triceps-long','triceps-lateral'],step:2.5,cue:'Lying on a bench, dumbbells over your head. Lower toward your forehead by bending only the elbows, then extend back up.'},
@@ -3765,6 +3765,29 @@ document.getElementById('resetLink').onclick=async()=>{
   if(custom&&Array.isArray(custom)&&custom.length===4) PROGRAM=custom;
   else if(sessionCount>0 || sessions.length>0){ await sset('program',PROGRAM); } // logged before a program was ever saved (the old fixed defaults): keep those exercises name-for-name so history keys still match, skip the builder
   else { needsBuild=true; applyEquipPicks(PROGRAM); }
+
+  // renamed exercises: every store that keys on the name moves to the new one, so history, notes, last-used
+  // weights and the program slot carry over. Idempotent: a no-op once nothing is stored under an old name.
+  const EXERCISE_RENAMES={'Overhead Tricep Extension':'Dumbbell Overhead Tricep Extension'};
+  let renamed=false;
+  const rn=n=>EXERCISE_RENAMES[n]||n;
+  PROGRAM.forEach(day=>day.exercises.forEach(ex=>{
+    if(EXERCISE_RENAMES[ex.name]){ ex.name=rn(ex.name); renamed=true; }
+    if(ex.rotAnchor&&EXERCISE_RENAMES[ex.rotAnchor.name]){ ex.rotAnchor.name=rn(ex.rotAnchor.name); renamed=true; }
+    if(ex.rotPrev&&EXERCISE_RENAMES[ex.rotPrev.name]){ ex.rotPrev.name=rn(ex.rotPrev.name); renamed=true; }
+  }));
+  const renameKeys=(obj,merge)=>{ let hit=false; Object.keys(EXERCISE_RENAMES).forEach(o=>{ if(!obj||!(o in obj)) return; const n=EXERCISE_RENAMES[o]; obj[n]=(n in obj)?merge(obj[n],obj[o]):obj[o]; delete obj[o]; hit=true; }); return hit; };
+  const keepNew=(a,b)=>a, histMerge=(a,b)=>dedupeSortByT([...a,...b]), noteMerge=(a,b)=>a||b, lastMerge=(a,b)=>b.t>a.t?b:a;
+  if(renameKeys(hist,histMerge)){ await sset('hist',hist); renamed=true; }
+  if(renameKeys(notes,noteMerge)){ await sset('notes',notes); renamed=true; }
+  if(renameKeys(lastByName,lastMerge)){ await sset('lastByName',lastByName); renamed=true; }
+  if(renameKeys(baselines,(a,b)=>Math.min(a,b))){ await sset('baselines',baselines); renamed=true; }
+  let sessionsHit=false; sessions.forEach(s=>{ if(s.ex&&renameKeys(s.ex,keepNew)) sessionsHit=true; });
+  if(sessionsHit){ await sset('sessions',sessions); renamed=true; }
+  for(const k of ['today:d1','today:d2','today:d3','today:d4','last:d1','last:d2','last:d3','last:d4']){
+    const v=await sget(k); if(v&&typeof v==='object'&&renameKeys(v,keepNew)) await sset(k,v);
+  }
+  if(renamed) await sset('program',PROGRAM);
 
   // self-heal exercises swapped in from the Log before doSwap copied equip: without it a swapped-in machine lift
   // loses its plate-loaded option and implement-aware scoring/estimates treat it as unknown. Idempotent.
