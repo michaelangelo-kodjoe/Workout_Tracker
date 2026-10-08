@@ -378,6 +378,7 @@
   .ad-h{font-size:15px;font-weight:normal;margin:24px 0 0;padding-top:16px;border-top:1px solid var(--line);}
   .ad-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;}
   .ad-f{display:flex;flex-direction:column;gap:4px;min-width:0;font-size:12px;color:var(--text-dim);}
+  .ad-f[hidden]{display:none;}
   .ad-f .in{width:100%;min-width:0;} .ad-wide{grid-column:1 / -1;}
   .ad-muscles{border:0;padding:0;margin:12px 0 0;min-width:0;} .ad-muscles legend{padding:0;font-size:12px;color:var(--text-dim);}
   .chk{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--text-dim);margin:2px 6px 2px 0;font-family:'Georgia',serif;}
@@ -823,6 +824,7 @@
       </div>
       <div class="set-group-h">Your Data</div>
       <div class="set-group">
+        <button class="set-row" data-page="move"><span class="set-lbl">Move History</span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
         <button class="set-row" data-page="data"><span class="set-lbl">Back Up &amp; Restore</span><span class="set-val" id="sv-data"></span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
         <label class="set-row static" for="autoBackup"><span class="set-lbl">Weekly Auto-Backup<span class="set-cap">Downloads a backup when you finish a session, once it's been 7+ days</span></span><input type="checkbox" class="switch" id="autoBackup"></label>
       </div>
@@ -891,6 +893,18 @@
       <div class="row" style="margin-top:8px"><button class="btn primary" id="adBtn">Add Exercise</button><button class="btn" id="adCancel">Cancel</button></div>
       </div>
       <button type="button" class="linkbtn danger set-reset" id="edReset">Reset to Default Program</button>
+    </div>
+    <div class="set-page" id="sp-move" hidden>
+      <div class="set-sub"><button class="set-back" aria-label="Back to Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Settings</button><h2 tabindex="-1">Move History</h2></div>
+      <div class="card">
+      <div class="note-sm" style="margin-bottom:8px">Moves logged sets from one exercise to another, for when history was logged under the wrong name.</div>
+      <label class="ad-f" for="mvFrom">From<select class="in" id="mvFrom"></select></label>
+      <label class="ad-f" for="mvTo" style="margin-top:10px">To<select class="in" id="mvTo"></select></label>
+      <div class="ad-f" style="margin-top:10px"><span id="mvWhichL">Which Sessions</span><div class="onb-seg set-seg" role="group" aria-labelledby="mvWhichL" style="width:100%" id="mvWhich"><button data-w="before" aria-pressed="true">Before a Date</button><button data-w="all" aria-pressed="false">All</button></div></div>
+      <label class="ad-f" for="mvDate" style="margin-top:10px" id="mvDateWrap">Moves Sessions Before<input class="in" type="date" id="mvDate"></label>
+      <div class="note-sm" id="mvInfo" style="margin-top:10px" aria-live="polite"></div>
+      <button class="btn primary" id="mvGo" style="width:100%;margin-top:12px">Move History</button>
+      </div>
     </div>
     <div class="set-page" id="sp-data" hidden>
       <div class="set-sub"><button class="set-back" aria-label="Back to Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Settings</button><h2 tabindex="-1">Back Up &amp; Restore</h2></div>
@@ -3325,6 +3339,7 @@ function openSetPage(k){
   setPage=k; document.getElementById('setMain').hidden=true;
   document.querySelectorAll('.set-page').forEach(pg=>pg.hidden=pg.id!=='sp-'+k);
   if(k==='edit') renderEditor();
+  if(k==='move'){ mvState.which='before'; document.getElementById('mvDate').value=localDateStr(Date.now()); renderMovePage(false); }
   window.scrollTo(0,0); document.querySelector(`#sp-${k} h2`).focus({preventScroll:true});
 }
 function closeSetPage(){
@@ -3337,6 +3352,62 @@ document.querySelectorAll('.set-back').forEach(b=>b.onclick=closeSetPage);
 document.querySelectorAll('#setMain .set-seg button').forEach(b=>b.onclick=()=>{ if(settings.unit===b.dataset.u) return; settings.unit=b.dataset.u; sset('settings',settings); renderSetMain(); render(); renderHistory(); renderStrength(); });
 document.getElementById('autoRotateChk').onchange=e=>{ settings.autoRotate=e.target.checked; sset('settings',settings); renderSettings(); updateBlockUI(); };
 document.getElementById('blockWeeksSel').onchange=e=>{ settings.blockWeeks=parseInt(e.target.value); sset('settings',settings); updateBlockUI(); };
+
+// ---------- move history: re-label logged sets from one exercise to another ----------
+// For history logged under the wrong exercise (e.g. a rope variation that was saved under the dumbbell one's name).
+// sessions[] is the source of truth, so the sets are re-keyed there and hist / lastByName / last:d# are re-derived
+// per session with the same helper the session editor uses.
+const mvState={which:'before'};
+const localDateStr=t=>{ const d=new Date(t); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+function moveCutoff(){ const v=document.getElementById('mvDate').value; if(!v) return null; const [y,m,d]=v.split('-').map(Number); return new Date(y,m-1,d).getTime(); }
+function moveSessions(){
+  const from=document.getElementById('mvFrom').value; if(!from) return [];
+  const cut=mvState.which==='before'?moveCutoff():Infinity; if(cut==null) return [];
+  return sessions.filter(x=>!x.isCardio&&x.ex&&x.ex[from]&&x.t<cut).sort((a,b)=>a.t-b.t);
+}
+function renderMovePage(keepFrom){
+  const counts={}; sessions.forEach(x=>{ if(!x.isCardio&&x.ex) Object.keys(x.ex).forEach(n=>counts[n]=(counts[n]||0)+1); });
+  const names=Object.keys(counts).sort();
+  const fromSel=document.getElementById('mvFrom'), toSel=document.getElementById('mvTo');
+  const prevFrom=keepFrom&&names.includes(fromSel.value)?fromSel.value:(names.find(n=>n==='Dumbbell Overhead Tricep Extension')||names[0]||'');
+  fromSel.innerHTML=names.map(n=>`<option value="${n.replace(/"/g,'&quot;')}">${n} · ${counts[n]} session${counts[n]===1?'':'s'}</option>`).join('')||'<option value="">No history yet</option>';
+  fromSel.value=prevFrom;
+  const fe=entryFor(prevFrom); const gk=fe?groupKeyFor(fe):null;
+  const same=new Set([...(gk&&ALTS[gk]?ALTS[gk].map(a=>a.name):[]), ...PROGRAM.flatMap(d=>d.exercises).filter(e=>gk&&groupKeyFor(e)===gk).map(e=>e.name)]);
+  const others=new Set([...Object.values(ALTS).flat().map(a=>a.name), ...PROGRAM.flatMap(d=>d.exercises).map(e=>e.name), ...names]);
+  same.delete(prevFrom); others.delete(prevFrom); same.forEach(n=>others.delete(n));
+  const opts=set=>[...set].sort().map(n=>`<option value="${n.replace(/"/g,'&quot;')}">${n}</option>`).join('');
+  const prevTo=toSel.value;
+  toSel.innerHTML=(same.size?`<optgroup label="Same Muscle">${opts(same)}</optgroup>`:'')+`<optgroup label="Other Exercises">${opts(others)}</optgroup>`;
+  const pick=[...same][0]&&[...same].includes('Rope Overhead Tricep Extension')&&prevFrom==='Dumbbell Overhead Tricep Extension'?'Rope Overhead Tricep Extension':null;
+  if(prevTo&&prevTo!==prevFrom&&[...toSel.options].some(o=>o.value===prevTo)&&keepFrom) toSel.value=prevTo; else if(pick) toSel.value=pick;
+  updateMoveInfo();
+}
+function updateMoveInfo(){
+  const list=moveSessions(), from=document.getElementById('mvFrom').value, total=sessions.filter(x=>!x.isCardio&&x.ex&&x.ex[from]).length;
+  const info=document.getElementById('mvInfo'), go=document.getElementById('mvGo');
+  document.getElementById('mvDateWrap').hidden=mvState.which==='all';
+  document.querySelectorAll('#mvWhich button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.w===mvState.which)));
+  if(!list.length){ info.textContent=from?'No sessions match, so nothing would move.':'There is no logged history to move yet.'; go.disabled=true; return; }
+  const stay=total-list.length;
+  info.textContent=`${list.length} session${list.length===1?'':'s'} move${list.length===1?'s':''}, ${fmtDate(list[0].t)}${list.length>1?' – '+fmtDate(list[list.length-1].t):''}.${stay?` ${stay} stay${stay===1?'s':''}.`:''}`;
+  go.disabled=!document.getElementById('mvTo').value;
+}
+async function doMoveHistory(){
+  const from=document.getElementById('mvFrom').value, to=document.getElementById('mvTo').value, list=moveSessions();
+  if(!from||!to||from===to||!list.length) return;
+  if(!await confirmSheet(`Move ${list.length} session${list.length===1?'':'s'} of ${from} to ${to}? Strength history and last-used weights are recalculated for both.`, 'Move History')) return;
+  list.forEach(s=>{ const i=sessionIndex(s); const ex=sessions[i].ex; ex[to]=[...(ex[to]||[]),...ex[from]]; delete ex[from]; });
+  await sset('sessions',sessions);
+  for(const s of list) await rederiveAfterSessionChange([from,to], s.dayId, s.t);
+  showToast(`Moved ${list.length} session${list.length===1?'':'s'}`);
+  renderMovePage(true);
+}
+document.getElementById('mvFrom').onchange=()=>renderMovePage(true);
+document.getElementById('mvTo').onchange=updateMoveInfo;
+document.getElementById('mvDate').oninput=updateMoveInfo;
+document.querySelectorAll('#mvWhich button').forEach(b=>b.onclick=()=>{ mvState.which=b.dataset.w; updateMoveInfo(); });
+document.getElementById('mvGo').onclick=doMoveHistory;
 
 function renderEditor(){
   const sel=document.getElementById('edDay'); if(!sel.options.length){ PROGRAM.forEach(d=>{ const o=document.createElement('option'); o.value=d.id; o.textContent=`${d.name} · ${d.sub}`; sel.appendChild(o); }); sel.value=PROGRAM.some(d=>d.id===currentDay)?currentDay:PROGRAM[0].id; sel.onchange=renderEditor; }
