@@ -2922,6 +2922,8 @@ const cardioIcon=k=>`<svg class="cf-ico" viewBox="0 0 24 24" aria-hidden="true">
 const CARDIO_CHEV='<svg class="cf-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>', CARDIO_CHEV_UP='<svg class="cf-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>';
 const CARDIO_RPE={1:'Very light. Barely moving.',2:'Light. Easy conversation.',3:'Easy. Full sentences.',4:'Easy to moderate. Full sentences are fine.',5:'Moderate. Short sentences.',6:'Somewhat hard. A few words at a time.',7:'Hard. Only a few words.',8:'Very hard. Talking is a struggle.',9:'Near max. You can\'t talk.',10:'All out.'};
 const cardioAct=k=>CARDIO_ACTS.find(a=>a.k===k);
+const cardioEsc=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); // an Other Cardio name is typed text and goes into innerHTML
+const cardioLabel=(a,d)=>a.k==='other'&&d.name.trim()?d.name.trim():a.l;
 const cardioDu=()=>settings.unit==='kg'?'km':'mi';
 function cardioFieldLabel(k,du){ const f=CARDIO_FIELDS[k]; const u=f.u==='du'?du:f.u==='spd'?(du==='km'?'km/h':'mph'):f.u; return u?`${f.l} (${u})`:f.l; }
 function cardioFieldText(k,v,du){ // one logged value as History reads it
@@ -2979,7 +2981,7 @@ function renderCardioForm(){
     const yt='https://www.youtube.com/results?search_query='+encodeURIComponent((a.l+' form how to').replace(/\s*\/\s*/g,' '));
     wrap.innerHTML=`<button type="button" class="cf-back" id="cfBack"><svg class="cf-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>Back</button>${steps(2)}
       <h3 class="cf-h">${a.l}</h3><p class="cf-lede">${a.hint} <a class="linkbtn" href="${yt}" target="_blank" rel="noopener" aria-label="Demo videos (opens YouTube)">Demo Videos ↗</a></p>
-      ${a.k==='other'?`<label class="field-label" for="cfName">Activity Name</label><input class="cf-in" id="cfName" type="text" placeholder="e.g. Dance Cardio" value="${d.name.replace(/"/g,'&quot;')}" style="margin-bottom:12px">`:''}
+      ${a.k==='other'?`<label class="field-label" for="cfName">Activity Name</label><input class="cf-in" id="cfName" type="text" placeholder="e.g. Dance Cardio" value="${cardioEsc(d.name)}" style="margin-bottom:12px">`:''}
       ${canIv&&a.iv!=='only'?`<div class="cf-seg" id="cfStruct" role="group" aria-label="Structure">${[['steady','Steady State'],['intervals','Intervals']].map(([v,t])=>`<button type="button" data-s="${v}" class="${d.structure===v?'on':''}" aria-pressed="${d.structure===v}">${t}</button>`).join('')}</div>`:''}
       ${iv?`<div class="cf-fld cf-3"><div><label class="field-label" for="cfWork">Work (sec)</label><input class="cf-in" id="cfWork" type="text" inputmode="numeric" value="${d.work}"></div><div><label class="field-label" for="cfRest">Rest (sec)</label><input class="cf-in" id="cfRest" type="text" inputmode="numeric" value="${d.rest}"></div><div><label class="field-label" for="cfRounds">Rounds</label><input class="cf-in" id="cfRounds" type="text" inputmode="numeric" value="${d.rounds}"></div></div>
         <div class="cf-big"><div><div class="lb">Total Time</div><div class="v"><span id="cfTotal">${cardioIntervalTotal(d)}</span><small>min</small></div></div><span class="cf-math" id="cfMath"></span></div>`
@@ -3019,7 +3021,7 @@ function buildCardioRec(d,duration,t){
   const a=cardioAct(d.act), du=cardioDu(), iv=d.structure==='intervals';
   const f={}; a.main.concat(a.more,iv?['warm','cool']:[]).forEach(k=>{ const v=(d.vals[k]??'').toString().trim(); if(v!=='' && k!=='dist') f[k]=v; });
   const dist=(d.vals.dist||'').toString().trim();
-  const rec={t, isCardio:true, cact:a.k, structure:d.structure, ctype:d.structure, ctypeLabel:a.k==='other'&&d.name.trim()?d.name.trim():a.l, duration, du, rpe:d.rpe, notes:d.notes};
+  const rec={t, isCardio:true, cact:a.k, structure:d.structure, ctype:d.structure, ctypeLabel:cardioLabel(a,d), duration, du, rpe:d.rpe, notes:d.notes};
   if(dist) rec.distance=`${dist} ${du}`;
   if(Object.keys(f).length) rec.f=f;
   if(iv){ rec.work=parseInt(d.work)||0; rec.rest=parseInt(d.rest)||0; rec.rounds=parseInt(d.rounds)||0; }
@@ -3103,7 +3105,7 @@ function renderCardioLive(){
   const fld=(k,ctx)=>{ const f=CARDIO_FIELDS[k]; return `<div><label class="field-label" for="${ctx}_${k}">${cardioFieldLabel(k,du)}</label><input class="cf-in" id="${ctx}_${k}" data-f="${k}" ${f.text?`type="text" placeholder="${f.ph||''}"`:'type="text" inputmode="decimal"'} value="${(L.vals[k]??'').toString().replace(/"/g,'&quot;')}"></div>`; };
   const bind=()=>wrap.querySelectorAll('[data-f]').forEach(i=>i.oninput=e=>{ L.vals[i.dataset.f]=e.target.value; saveCardioLive(); });
   if(L.step==='live'&&Date.now()<L.startedAt){ // get-ready countdown
-    wrap.innerHTML=`<div class="cf-top"><span class="cf-live" role="status"><i></i>Starting</span><span></span></div><h3 class="cf-h">${a.k==='other'&&L.name.trim()?L.name.trim():a.l}</h3><p class="cf-lede">Get set. The clock starts at zero.</p>
+    wrap.innerHTML=`<div class="cf-top"><span class="cf-live" role="status"><i></i>Starting</span><span></span></div><h3 class="cf-h">${cardioEsc(cardioLabel(a,L))}</h3><p class="cf-lede">Get set. The clock starts at zero.</p>
       <div class="cf-clock cf-ready"><div class="s">Get Ready</div><div class="t big" id="cfReady" role="timer" aria-live="polite"></div></div>
       <div class="row"><button type="button" class="btn" id="cfCancel" style="flex:1">Cancel</button></div>`;
     const num=document.getElementById('cfReady'); let last=null;
@@ -3114,7 +3116,7 @@ function renderCardioLive(){
   } else if(L.step==='finish'){
     const e=cardioElapsed(L), m=a.main[0], shown=a.main.slice(0,2).filter(k=>(L.vals[k]??'')!=='');
     wrap.innerHTML=`<button type="button" class="cf-back" id="cfKeep"><svg class="cf-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>Keep Going</button>
-      <h3 class="cf-h">Nice Work</h3><p class="cf-lede">${a.k==='other'&&L.name.trim()?L.name.trim():a.l} · fix anything that's off, then save.</p>
+      <h3 class="cf-h">Nice Work</h3><p class="cf-lede">${cardioEsc(cardioLabel(a,L))} · fix anything that's off, then save.</p>
       <div class="cf-sum"><div><b>${cardioClock(e)}</b><span>Time</span></div>${shown.map(k=>`<div><b>${(L.vals[k]+'').slice(0,7)}</b><span>${CARDIO_FIELDS[k].u==='du'?du:(CARDIO_FIELDS[k].u==='spd'?(du==='km'?'km/h':'mph'):CARDIO_FIELDS[k].u==='%'?'% '+CARDIO_FIELDS[k].l.toLowerCase():CARDIO_FIELDS[k].l)}</span></div>`).join('')}</div>
       <div class="cf-fld"><div><label class="field-label" for="cfDur">Duration (min)</label><input class="cf-in" id="cfDur" type="text" inputmode="numeric" value="${L.duration}"></div>${m?fld(m,'cfs'):''}</div>
       <div class="field-label" id="rpeLbl" style="margin-top:4px">Effort (RPE, 1 easy – 10 max)</div><div class="cf-rpe" id="rpeRow" role="group" aria-labelledby="rpeLbl">${Array.from({length:10},(_,i)=>i+1).map(n=>`<button type="button" class="${L.rpe===n?'on':''}" data-n="${n}" aria-pressed="${L.rpe===n}" aria-label="Effort ${n}">${n}</button>`).join('')}</div>
@@ -3132,8 +3134,8 @@ function renderCardioLive(){
     const more=a.more.concat(iv?['warm','cool']:[]);
     const yt='https://www.youtube.com/results?search_query='+encodeURIComponent((a.l+' form how to').replace(/\s*\/\s*/g,' '));
     wrap.innerHTML=`<div class="cf-top"><span class="cf-live ${paused?'pause':''}" role="status"><i></i>${paused?'Paused':'In Progress'}</span><span class="linkbtn danger" id="cfDiscard">Discard</span></div>
-      <h3 class="cf-h">${a.k==='other'&&L.name.trim()?L.name.trim():a.l}</h3><p class="cf-lede">${a.hint} <a class="linkbtn" href="${yt}" target="_blank" rel="noopener" aria-label="Demo videos (opens YouTube)">Demo Videos ↗</a></p>
-      ${a.k==='other'?`<label class="field-label" for="cfName">Activity Name</label><input class="cf-in" id="cfName" type="text" placeholder="e.g. Dance Cardio" value="${L.name.replace(/"/g,'&quot;')}" style="margin-bottom:12px">`:''}
+      <h3 class="cf-h">${cardioEsc(cardioLabel(a,L))}</h3><p class="cf-lede">${a.hint} <a class="linkbtn" href="${yt}" target="_blank" rel="noopener" aria-label="Demo videos (opens YouTube)">Demo Videos ↗</a></p>
+      ${a.k==='other'?`<label class="field-label" for="cfName">Activity Name</label><input class="cf-in" id="cfName" type="text" placeholder="e.g. Dance Cardio" value="${cardioEsc(L.name)}" style="margin-bottom:12px">`:''}
       ${canIv&&a.iv!=='only'?`<div class="cf-seg" id="cfStruct" role="group" aria-label="Structure">${[['steady','Steady State'],['intervals','Intervals']].map(([v,t])=>`<button type="button" data-s="${v}" class="${L.structure===v?'on':''}" aria-pressed="${L.structure===v}">${t}</button>`).join('')}</div>`:''}
       <div class="cf-clock">${iv?'<span class="cf-phase work" id="cfPhase"></span>':''}<div class="t" id="cfClock" aria-live="off">0:00</div><div class="s" id="cfClockSub">${iv?'':'Started '+new Date(L.startedAt).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})}</div>${iv?'<div class="cf-bar"><i id="cfBar" style="width:0"></i></div><div class="cf-dots" id="cfDots"></div>':''}</div>
       <div class="cf-ctrl"><button type="button" class="btn" id="cfPause">${paused?'Resume':'Pause'}</button>${iv?'<button type="button" class="btn" id="cfSkip">Skip</button>':''}<button type="button" class="btn primary" id="cfFinish">Finish</button></div>
@@ -3273,7 +3275,7 @@ function buildSessionItem(s){
     :`${Object.keys(s.ex||{}).length} exercises · ${s.sets} sets · ${dispVol(s.vol||0).toLocaleString()} ${unitLabel()}`;
   const body=s.isCardio?(s.notes?`<div class="sess-notes"></div>`:'')
     :sessionExLines(s).map(([n,sets])=>`<div class="sess-ex"><b>${n}</b><span>${sets.map(x=>`<i>${x}</i>`).join('')}</span></div>`).join('');
-  el.innerHTML=`<div class="sess-head"><span class="sess-main"><span class="sess-name"><i class="cal-tag t-${p.type}" aria-hidden="true">${p.tag}</i>${s.isCardio?s.ctypeLabel:p.label}</span><span class="sess-meta">${meta}</span></span></div>
+  el.innerHTML=`<div class="sess-head"><span class="sess-main"><span class="sess-name"><i class="cal-tag t-${p.type}" aria-hidden="true">${p.tag}</i>${s.isCardio?cardioEsc(s.ctypeLabel):p.label}</span><span class="sess-meta">${meta}</span></span></div>
     <div class="sdet">${body}<div class="sess-acts"><span class="linkbtn" data-act="edit">Edit</span><span class="linkbtn danger" data-act="del">Delete</span></div></div>`;
   if(s.isCardio&&s.notes) el.querySelector('.sess-notes').textContent=s.notes;
   el.querySelector('[data-act="edit"]').onclick=e=>{ e.stopPropagation(); el.classList.add('editing'); renderSessionEditForm(s, el, ()=>refreshCalDaySheet()); };
