@@ -3046,6 +3046,7 @@ async function logCardio(){
 // Tapping an activity starts a clock. The session lives in 'today:cardio' so it survives a reload, and the clock is
 // worked out from timestamps (start, paused time, skipped time) rather than counted, so a locked phone or a
 // backgrounded tab can't lose time. Intervals walk Work → Rest through the rounds and beep at each change.
+const CARDIO_LONG_SEC=4*3600; // a session longer than this is probably one that was never stopped
 const CARDIO_COUNTDOWN=3; // seconds of get-ready before the clock starts
 let cardioLive=null, cardioTickId=null, cardioLastKey=null;
 function saveCardioLive(){ return sset('today:cardio',cardioLive); }
@@ -3154,7 +3155,10 @@ function renderCardioLive(){
     const mb=document.getElementById('cfMoreBtn'); if(mb) mb.onclick=()=>{ L.more=!L.more; L.focus='cfMoreBtn'; saveCardioLive(); renderCardioForm(); };
     document.getElementById('cfPause').onclick=()=>{ if(L.pausedAt){ L.pausedMs+=Date.now()-L.pausedAt; L.pausedAt=null; } else L.pausedAt=Date.now(); L.focus='cfPause'; saveCardioLive(); renderCardioForm(); };
     const sk=document.getElementById('cfSkip'); if(sk) sk.onclick=()=>{ const p=cardioPhase(L,cardioPhaseAt(L)); if(p&&p.phase!=='done'){ L.skipMs+=Math.ceil(p.left*1000)+50; saveCardioLive(); cardioTick(); } };
-    document.getElementById('cfFinish').onclick=()=>{ if(!L.pausedAt){ L.pausedAt=Date.now(); L.autoPaused=true; } L.duration=String(Math.max(1,Math.round(cardioElapsed(L)/60))); L.step='finish'; saveCardioLive(); renderCardioForm(); window.scrollTo(0,0); };
+    document.getElementById('cfFinish').onclick=async()=>{
+      const secs=cardioElapsed(L), long=secs>CARDIO_LONG_SEC; let setTime=false;
+      if(long) setTime=await confirmSheet(`This session has been running ${Math.floor(secs/3600)} h ${Math.floor(secs%3600/60)} min. Did you forget to stop it? Set the time you actually trained, or keep it as it is.`,'Set the Time','Keep It');
+      if(!L.pausedAt){ L.pausedAt=Date.now(); L.autoPaused=true; } L.duration=setTime?'':String(Math.max(1,Math.round(cardioElapsed(L)/60))); L.step='finish'; L.focus=setTime?'cfDur':null; saveCardioLive(); renderCardioForm(); window.scrollTo(0,0); };
     document.getElementById('cfDiscard').onclick=async()=>{ if(await confirmSheet("Discard this session? The time and numbers you've logged will be lost.",'Discard',null,true)){ cardioLive=null; cardioDraft=newCardioDraft(); await sset('today:cardio',null); renderTabs(); renderCardioForm(); } };
     cardioLastKey=null; stopCardioTick(); cardioTick(); if(!paused){ cardioTickId=requestAnimationFrame(cardioTickLoop); }
   }
