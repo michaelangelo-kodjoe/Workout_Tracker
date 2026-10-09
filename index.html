@@ -361,7 +361,7 @@
   .edrow .acts span{cursor:pointer;color:var(--light);font-size:15px;margin-left:10px;}
   .edrow .acts span.x{color:var(--danger);}
   .edrow .acts span.off{color:var(--text-dim);opacity:.35;cursor:default;}
-  .cardio-tab{border-style:dashed;}
+  .cardio-tab{border-style:dashed;} .daytab.cardio-tab.live .dsub{color:var(--green);}
   /* cardio log: two steps, pick an activity then its details */
   .cf-flow{padding:4px 0 0;}
   .cf-steps{display:flex;align-items:center;gap:8px;margin:4px 0 16px;font-size:12px;color:var(--text-dim);} .cf-steps i{flex:1;height:3px;border-radius:2px;background:var(--line);} .cf-steps i.on{background:var(--cardio);} .cf-steps b{font-weight:normal;color:var(--text);white-space:nowrap;}
@@ -2235,7 +2235,7 @@ function cardioReasonCopy(){ const {reason,nextDay}=suggestedDay(); const c=CARD
 function renderTabs(){ const w=document.getElementById('dayTabs'); w.innerHTML='';
   const suggested=suggestedDayId();
   PROGRAM.forEach(d=>{ const el=document.createElement('div'); el.className='daytab '+dayType(d)+(d.id===currentDay?' active':'')+(d.id===suggested?' suggested':''); if(d.id===suggested) el.title='Next up in your rotation'; if(d.id===currentDay) el.setAttribute('aria-current','true'); el.innerHTML=`${d.name}<span class="dsub">${d.sub}</span>`; el.onclick=()=>attemptLoadDay(d.id); w.appendChild(el); });
-  const c=document.createElement('div'); c.className='daytab cardio-tab t-cardio'+(currentDay==='cardio'?' active':'')+(suggested==='cardio'?' suggested':''); if(suggested==='cardio') c.title='Next up in your rotation'; if(currentDay==='cardio') c.setAttribute('aria-current','true'); c.innerHTML='Cardio<span class="dsub">Endurance</span>'; c.onclick=()=>loadDay('cardio'); w.appendChild(c);
+  const c=document.createElement('div'); c.className='daytab cardio-tab t-cardio'+(currentDay==='cardio'?' active':'')+(suggested==='cardio'?' suggested':''); if(suggested==='cardio') c.title='Next up in your rotation'; if(currentDay==='cardio') c.setAttribute('aria-current','true'); if(cardioLive){ c.classList.add('live'); c.setAttribute('aria-label','Cardio, session in progress'); } c.innerHTML='Cardio<span class="dsub">'+(cardioLive?'In Progress':'Endurance')+'</span>'; c.onclick=()=>loadDay('cardio'); w.appendChild(c);
 }
 
 // ---------- fatigue disclaimer: warn (don't block) when picking a day whose muscles haven't recovered ----------
@@ -2557,10 +2557,10 @@ function renderHome(){
     panel.innerHTML=`
       <div class="greet-wrap">
         <div class="greet-eyebrow">${new Date().toLocaleDateString(undefined,{weekday:'long'})}</div>
-        <h2 class="greet-h1">${settings.name?'Ready for cardio, '+settings.name+'?':'Ready for cardio?'}</h2>
-        <div class="greet-sub">${cardioReasonCopy().home}</div>
+        <h2 class="greet-h1">${cardioLive?'Your cardio session is running.':settings.name?'Ready for cardio, '+settings.name+'?':'Ready for cardio?'}</h2>
+        <div class="greet-sub">${cardioLive?'Pick it back up where you left off, or save it from there.':cardioReasonCopy().home}</div>
       </div>
-      <button class="start-cta" id="arrivalStart">Go to Cardio Log</button>
+      <button class="start-cta" id="arrivalStart">${cardioLive?'Resume Cardio Session':'Go to Cardio Log'}</button>
       <div class="greet-sub" style="margin-top:14px">Feeling fine? Tap a lift day to train it instead.</div>
       <div class="day-carousel">
         ${PROGRAM.map(d=>`<div class="day-card ${dayType(d)}${d.id===currentDay?' today':''}" data-day="${d.id}">${d.id===currentDay?'<div class="ddot"></div>':''}<div class="dtag">${d.id===currentDay?dayTagText():''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub}</div><div class="dsub">${d.exercises.length} Exercises</div></div>`).join('')}
@@ -3078,7 +3078,7 @@ function cardioStart(k){
   const a=cardioAct(k), base=newCardioDraft(); const iv=a.iv==='default'||a.iv==='only';
   cardioLive={...base,act:k,group:a.g,step:'live',structure:iv?'intervals':'steady',startedAt:Date.now()+CARDIO_COUNTDOWN*1000,pausedAt:null,pausedMs:0,skipMs:0};
   if(a.ivd) [cardioLive.work,cardioLive.rest,cardioLive.rounds]=a.ivd.map(String);
-  cardioLive.focus='cfCancel'; saveCardioLive(); renderCardioForm(); window.scrollTo(0,0);
+  cardioLive.focus='cfCancel'; saveCardioLive(); renderTabs(); renderCardioForm(); window.scrollTo(0,0);
 }
 function cardioTick(){
   const L=cardioLive; const clock=document.getElementById('cfClock');
@@ -3116,7 +3116,7 @@ function renderCardioLive(){
     const num=document.getElementById('cfReady'); let last=null;
     const go=()=>{ const left=Math.ceil((L.startedAt-Date.now())/1000); if(left<=0){ stopCardioTick(); L.focus='cfPause'; renderCardioForm(); return; }
       if(left!==last){ last=left; num.textContent=left; beep(); } };
-    document.getElementById('cfCancel').onclick=async()=>{ stopCardioTick(); cardioLive=null; await sset('today:cardio',null); renderCardioForm(); };
+    document.getElementById('cfCancel').onclick=async()=>{ stopCardioTick(); cardioLive=null; await sset('today:cardio',null); renderTabs(); renderCardioForm(); };
     go(); cardioTickId=requestAnimationFrame(function loop(){ if(cardioTickId===null) return; go(); if(cardioTickId!==null) cardioTickId=requestAnimationFrame(loop); });
   } else if(L.step==='finish'){
     const e=cardioElapsed(L), m=a.main[0], shown=a.main.slice(0,2).filter(k=>(L.vals[k]??'')!=='');
@@ -3154,7 +3154,7 @@ function renderCardioLive(){
     document.getElementById('cfPause').onclick=()=>{ if(L.pausedAt){ L.pausedMs+=Date.now()-L.pausedAt; L.pausedAt=null; } else L.pausedAt=Date.now(); L.focus='cfPause'; saveCardioLive(); renderCardioForm(); };
     const sk=document.getElementById('cfSkip'); if(sk) sk.onclick=()=>{ const p=cardioPhase(L,cardioPhaseAt(L)); if(p&&p.phase!=='done'){ L.skipMs+=Math.ceil(p.left*1000)+50; saveCardioLive(); cardioTick(); } };
     document.getElementById('cfFinish').onclick=()=>{ if(!L.pausedAt){ L.pausedAt=Date.now(); L.autoPaused=true; } L.duration=String(Math.max(1,Math.round(cardioElapsed(L)/60))); L.step='finish'; saveCardioLive(); renderCardioForm(); window.scrollTo(0,0); };
-    document.getElementById('cfDiscard').onclick=async()=>{ if(await confirmSheet("Discard this session? The time and numbers you've logged will be lost.",'Discard',null,true)){ cardioLive=null; cardioDraft=newCardioDraft(); await sset('today:cardio',null); renderCardioForm(); } };
+    document.getElementById('cfDiscard').onclick=async()=>{ if(await confirmSheet("Discard this session? The time and numbers you've logged will be lost.",'Discard',null,true)){ cardioLive=null; cardioDraft=newCardioDraft(); await sset('today:cardio',null); renderTabs(); renderCardioForm(); } };
     cardioLastKey=null; stopCardioTick(); cardioTick(); if(!paused){ cardioTickId=requestAnimationFrame(cardioTickLoop); }
   }
   document.getElementById('finishBtn').style.display='none';
