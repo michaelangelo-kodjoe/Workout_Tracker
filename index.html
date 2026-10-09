@@ -3244,12 +3244,21 @@ const RIR_OPTS=[['','RIR'],['0','0'],['1','1'],['2','2'],['3','3'],['4','4+']];
 function renderSessionEditForm(s, el, onDone){
   const det=el.querySelector('.sdet');
   if(s.isCardio){
+    const act=s.cact&&cardioAct(s.cact), du=s.du||'mi', iv=s.structure==='intervals';
+    const keys=act?act.main.concat(act.more,iv?['warm','cool']:[]).filter(k=>k!=='dist'):[]; // dist is the Distance field below
     det.innerHTML=`<label class="field-label" for="seDur">Duration (minutes)</label><input class="in" id="seDur" type="number" inputmode="numeric" value="${s.duration||''}" style="width:100%">
-      <label class="field-label" for="seDist">Distance (optional)</label><input class="in" id="seDist" type="text" value="${s.distance||''}" style="width:100%">
+      <label class="field-label" for="seDist">Distance (optional)</label><input class="in" id="seDist" type="text" value="${cardioEsc(s.distance||'')}" style="width:100%">
+      ${iv?`<div class="cf-fld cf-3"><div><label class="field-label" for="seWork">Work (sec)</label><input class="in" id="seWork" type="number" inputmode="numeric" value="${s.work||''}" style="width:100%"></div><div><label class="field-label" for="seRest">Rest (sec)</label><input class="in" id="seRest" type="number" inputmode="numeric" value="${s.rest||''}" style="width:100%"></div><div><label class="field-label" for="seRounds">Rounds</label><input class="in" id="seRounds" type="number" inputmode="numeric" value="${s.rounds||''}" style="width:100%"></div></div>`:''}
+      ${keys.length?`<div class="cf-fld">${keys.map(k=>`<div><label class="field-label" for="seF_${k}">${cardioFieldLabel(k,du)}</label><input class="in" id="seF_${k}" data-f="${k}" type="text" inputmode="${CARDIO_FIELDS[k].text?'text':'decimal'}" value="${cardioEsc(s.f&&s.f[k]!=null?s.f[k]:'')}" style="width:100%"></div>`).join('')}</div>`:''}
       <label class="field-label" for="seRpe">Effort (RPE)</label><select class="in" id="seRpe" style="width:100%"><option value="0">—</option>${Array.from({length:10},(_,k)=>k+1).map(n=>`<option value="${n}"${s.rpe===n?' selected':''}>${n}</option>`).join('')}</select>
-      <textarea class="notes" id="seNotes" aria-label="Notes" placeholder="Notes">${s.notes||''}</textarea>
+      <textarea class="notes" id="seNotes" aria-label="Notes" placeholder="Notes">${cardioEsc(s.notes||'')}</textarea>
       <div class="se-foot"><button class="btn" data-act="cancel">Cancel</button><button class="btn primary" data-act="save">Save</button></div>`;
-    det.querySelector('[data-act="save"]').onclick=async e=>{ e.stopPropagation(); const dur=parseInt(det.querySelector('#seDur').value); if(!dur){ showToast('Add a duration'); return; } await saveSessionEdit(s,{duration:dur,distance:det.querySelector('#seDist').value.trim(),rpe:parseInt(det.querySelector('#seRpe').value)||0,notes:det.querySelector('#seNotes').value}); onDone(); };
+    det.querySelector('[data-act="save"]').onclick=async e=>{ e.stopPropagation(); const dur=parseInt(det.querySelector('#seDur').value); if(!dur){ showToast('Add a duration'); return; }
+      let dist=det.querySelector('#seDist').value.trim(); if(s.du&&/^\d*\.?\d+$/.test(dist)) dist=`${dist} ${s.du}`; // a bare number keeps its unit, so the pace trend still reads it
+      const edited={duration:dur,distance:dist,rpe:parseInt(det.querySelector('#seRpe').value)||0,notes:det.querySelector('#seNotes').value};
+      if(act){ const f={}; det.querySelectorAll('[data-f]').forEach(i=>{ const v=i.value.trim(); if(v!=='') f[i.dataset.f]=v; }); edited.f=Object.keys(f).length?f:undefined; }
+      if(iv){ edited.work=parseInt(det.querySelector('#seWork').value)||0; edited.rest=parseInt(det.querySelector('#seRest').value)||0; edited.rounds=parseInt(det.querySelector('#seRounds').value)||0; }
+      await saveSessionEdit(s,edited); onDone(); };
   } else {
     const removed=new Set();
     det.innerHTML=`<div class="se-row" style="margin-top:4px"><span></span><span class="n">${unitLabel()}</span><span class="n">Reps</span><span class="n">RIR</span></div>`+Object.entries(s.ex).map(([n,sets])=>`<div class="se-ex" data-name="${n.replace(/"/g,'&quot;')}"><div class="se-head"><b style="font-weight:normal;color:var(--text)">${n}</b><span class="linkbtn" data-act="rm">Remove</span></div>
