@@ -3311,7 +3311,7 @@ async function saveSessionEdit(s, edited){
   await rederiveAfterSessionChange([...new Set([...before, ...Object.keys(ex)])], s.dayId, s.t);
   showToast('Session updated');
 }
-const RIR_OPTS=[['','RIR'],['0','0'],['1','1'],['2','2'],['3','3'],['4','4+']];
+const RIR_OPTS=[['','Left'],['0','0'],['1','1'],['2','2'],['3','3'],['4','4+']];
 function renderSessionEditForm(s, el, onDone){
   const det=el.querySelector('.sdet');
   if(s.isCardio){
@@ -3332,8 +3332,8 @@ function renderSessionEditForm(s, el, onDone){
       await saveSessionEdit(s,edited); onDone(); };
   } else {
     const removed=new Set();
-    det.innerHTML=`<div class="se-row" style="margin-top:4px"><span></span><span class="n">${unitLabel()}</span><span class="n">Reps</span><span class="n">RIR</span></div>`+Object.entries(s.ex).map(([n,sets])=>`<div class="se-ex" data-name="${esc(n)}"><div class="se-head"><b style="font-weight:normal;color:var(--text)">${esc(n)}</b><span class="linkbtn" data-act="rm">Remove</span></div>
-      ${sets.map((x,k)=>`<div class="se-row"><span class="n">${k+1}</span><input class="in" type="number" inputmode="decimal" placeholder="—" value="${x.w?dispWeight(x.w):''}"><input class="in" type="number" inputmode="numeric" placeholder="—" value="${x.r||''}"><select class="in">${RIR_OPTS.map(([v,l])=>`<option value="${v}"${String(x.rir??'')===v?' selected':''}>${l}</option>`).join('')}</select></div>`).join('')}</div>`).join('')+
+    det.innerHTML=`<div class="se-row" style="margin-top:4px"><span></span><span class="n">${unitLabel()}</span><span class="n">Reps</span><span class="n">Left</span></div>`+Object.entries(s.ex).map(([n,sets])=>`<div class="se-ex" data-name="${esc(n)}"><div class="se-head"><b style="font-weight:normal;color:var(--text)">${esc(n)}</b><span class="linkbtn" data-act="rm">Remove</span></div>
+      ${sets.map((x,k)=>`<div class="se-row"><span class="n">${k+1}</span><input class="in" type="number" inputmode="decimal" placeholder="—" value="${x.w?dispWeight(x.w):''}"><input class="in" type="number" inputmode="numeric" placeholder="—" value="${x.r||''}"><select class="in" aria-label="Set ${k+1} reps left">${RIR_OPTS.map(([v,l])=>`<option value="${v}"${String(x.rir??'')===v?' selected':''}>${l}</option>`).join('')}</select></div>`).join('')}</div>`).join('')+
       `<div class="note-sm" style="margin-top:8px">Blank both fields to drop a set. Weights are in ${unitLabel()}.</div>
       <div class="se-foot"><button class="btn" data-act="cancel">Cancel</button><button class="btn primary" data-act="save">Save</button></div>`;
     det.querySelectorAll('.se-ex [data-act="rm"]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const box=b.closest('.se-ex'); removed.add(box.dataset.name); box.style.display='none'; });
@@ -3347,10 +3347,10 @@ function renderSessionEditForm(s, el, onDone){
   det.querySelector('[data-act="cancel"]').onclick=e=>{ e.stopPropagation(); onDone(); };
   det.querySelectorAll('input,select,textarea').forEach(i=>i.onclick=e=>e.stopPropagation());
 }
-// each exercise in a lifting session with its sets as text ("115×10", "bw×12", "30s hold", "(RIR 2)")
+// each exercise in a lifting session with its sets as text ("115×10", "bw×12", "30s hold", "(2 left)")
 function sessionExLines(s){
   return Object.entries(s.ex||{}).map(([n,sets])=>{ const en=entryFor(n); const bwl=!!(en&&en.start===0); const timed=!!(en&&en.target&&isTimedTarget(en.target));
-    return [n, sets.map(x=>(timed?`${x.r||'-'}s hold`:`${x.w?dispWeight(x.w):(bwl?'bw':'—')}×${x.r||'-'}`)+`${x.rir!=null?' (RIR '+x.rir+')':''}`)]; });
+    return [n, sets.map(x=>(timed?`${x.r||'-'}s hold`:`${x.w?dispWeight(x.w):(bwl?'bw':'—')}×${x.r||'-'}`)+`${x.rir!=null?' ('+(x.rir>=4?'4+':x.rir)+' left)':''}`)]; });
 }
 // one session in the calendar's day sheet, shown in full
 function buildSessionItem(s){
