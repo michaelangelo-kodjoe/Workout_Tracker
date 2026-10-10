@@ -4360,8 +4360,17 @@ if('serviceWorker' in navigator) window.addEventListener('load',()=>{
 // resume, the 5-minute check, the service-worker 'controllerchange' above) only raises the same update banner, which
 // stays up until tapped; the banner tap is the one user-initiated reload. reloadedForUpdate stops a double reload.
 // Tapping it mid-rest-timer or mid-cardio just reloads: sets are saved as they are typed.
+// BUILD_ID is the release this index.html shipped with. RELEASE: bump it together with CACHE_VERSION in sw.js at
+// every release (they must be equal; scripts/check.sh checks it). The service worker serves the cached shell when
+// the network is slower than 3 s, so an old shell can open while the live sw.js is already newer; the text diff
+// below can't see that (it only compares sw.js against itself), but comparing BUILD_ID to the live version can.
+const BUILD_ID='liftlog-v71';
 let initialSwText=null, reloadedForUpdate=false;
-fetch('sw.js',{cache:'reload'}).then(r=>r.text()).then(t=>{ initialSwText=t; }).catch(()=>{});
+fetch('sw.js',{cache:'reload'}).then(r=>r.text()).then(t=>{
+  initialSwText=t;
+  const m=/CACHE_VERSION\s*=\s*['"]([^'"]+)['"]/.exec(t);
+  if(m&&m[1]!==BUILD_ID&&!reloadedForUpdate) document.getElementById('updateBanner').style.display='flex'; // banner only, never auto-reload
+}).catch(()=>{});
 function checkSwDrift(){
   if(initialSwText==null) return;
   fetch('sw.js',{cache:'reload'}).then(r=>r.text()).then(txt=>{

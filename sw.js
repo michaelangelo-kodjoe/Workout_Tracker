@@ -1,4 +1,4 @@
-// App-shell cache for offline support. Network-first with a 4 second limit for the shell and page loads: a device
+// App-shell cache for offline support. Network-first with a 3 second limit for the shell and page loads: a device
 // with a good connection gets the latest deploy; on a weak or dead connection the cached copy opens instead of
 // a blank wait. Trade-off: on a weak connection an older cached shell may open once, while the slow network
 // response still lands in the cache in the background, so the next launch gets the latest.
@@ -29,7 +29,7 @@ self.addEventListener('activate', e=>{
   );
 });
 
-const SHELL_TIMEOUT_MS=4000;
+const SHELL_TIMEOUT_MS=3000;
 const cachedShell=req=>caches.match(req).then(hit=>hit||caches.match('./index.html'));
 
 self.addEventListener('fetch', e=>{
