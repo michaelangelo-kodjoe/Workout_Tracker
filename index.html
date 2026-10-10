@@ -166,6 +166,9 @@
   .howto-demo .cue{margin-top:0;flex:1 1 160px;}
   .exgif{position:relative;flex:0 0 130px;width:130px;aspect-ratio:3/2;border-radius:5px;overflow:hidden;background:var(--panel-raised);}
   .exgif img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  .exgif img[hidden]{display:none;}
+  .exgif .exnote{display:none;position:absolute;inset:0;align-items:center;justify-content:center;text-align:center;padding:6px;font-size:12px;line-height:1.5;color:var(--text-dim);}
+  .exgif.failed .exnote{display:flex;}
   .exgif img:last-child{animation:exgifFlip 1.4s steps(1) infinite;}
   @keyframes exgifFlip{0%,49.9%{opacity:0;}50%,100%{opacity:1;}}
   /* with reduced motion the demo holds still on its start position instead of flipping between frames */
@@ -2403,7 +2406,7 @@ function render(){
     // An <img> tag starts a real network request the moment it exists in the DOM regardless of CSS visibility, so
     // (matching how the cue text itself only becomes true content once "how to" has actually been clicked) this
     // only creates the two image tags once state.howto is true, never just from the card being open.
-    const gifHtml=(exGif&&state.howto)?`<div class="exgif"><img src="${exGif[0]}" loading="lazy" alt=""><img src="${exGif[1]}" loading="lazy" alt=""></div>`:'';
+    const gifHtml=(exGif&&state.howto)?`<div class="exgif"><span class="exnote" role="status">Image unavailable offline</span><img src="${exGif[0]}" loading="lazy" alt="${cardioEsc(ex.name)}, start position" onerror="${GIF_ERR}"><img src="${exGif[1]}" loading="lazy" alt="${cardioEsc(ex.name)}, end position" onerror="${GIF_ERR}"></div>`:'';
     howto.innerHTML=`${toolsBar(!!state.howto, yt, true)}<div class="howto-demo">${gifHtml}<div class="cue">${ex.cue||'No cue written yet.'}</div></div>`;
     howto.querySelector('.tool-howto').onclick=()=>{ state.howto=!state.howto; render(); };
     howto.querySelector('.tool-swap').onclick=()=>openSwap(currentDay, ex); body.appendChild(howto);
@@ -2977,6 +2980,8 @@ const cardioIcon=k=>`<svg class="cf-ico" viewBox="0 0 24 24" aria-hidden="true">
 const CARDIO_CHEV='<svg class="cf-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>', CARDIO_CHEV_UP='<svg class="cf-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>';
 const CARDIO_RPE={1:'Very light. Barely moving.',2:'Light. Easy conversation.',3:'Easy. Full sentences.',4:'Easy to moderate. Full sentences are fine.',5:'Moderate. Short sentences.',6:'Somewhat hard. A few words at a time.',7:'Hard. Only a few words.',8:'Very hard. Talking is a struggle.',9:'Near max. You can\'t talk.',10:'All out.'};
 const cardioAct=k=>CARDIO_ACTS.find(a=>a.k===k);
+// a failed demo image hides itself; once none is left showing, the frame shows its short note instead (no layout change)
+const GIF_ERR="this.hidden=true;var p=this.parentNode;if(!p.querySelector('img:not([hidden])'))p.classList.add('failed')";
 const cardioEsc=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); // an Other Cardio name is typed text and goes into innerHTML
 const cardioLabel=(a,d)=>a.k==='other'&&d.name.trim()?d.name.trim():a.l;
 const cardioDu=()=>settings.unit==='kg'?'km':'mi';
