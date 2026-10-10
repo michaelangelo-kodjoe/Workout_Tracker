@@ -277,7 +277,7 @@
   .stat .l{font-size:12px;color:var(--text-dim);margin-top:2px;}
   .srow{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:10px 14px;margin-bottom:8px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:baseline;}
   .srow .sn{font-size:15px;} .srow .sd{font-size:12px;color:var(--text-dim);margin-top:2px;}
-  .srow .sd .linkbtn{white-space:nowrap;} /* Reset Baseline broke across two lines mid-sentence */
+  .srow .sd .linkbtn{white-space:nowrap;position:relative;z-index:1;} /* Reset Baseline broke across two lines mid-sentence */
   .srow .sp{font-family:'Menlo',monospace;font-size:16px;text-align:right;white-space:nowrap;}
   .sp.up{color:var(--green);} .sp.down{color:var(--amber);} .sp.flat{color:var(--text-dim);}
   .spark{grid-column:1 / -1;height:28px;width:100%;margin-top:4px;}
