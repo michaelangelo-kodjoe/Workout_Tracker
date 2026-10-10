@@ -1695,6 +1695,8 @@ async function applyBlock(proposals){
 let blockProposals=[];
 function openBlockSheet(){
   blockProposals=buildBlockProposals();
+  // nothing to decide: skip the empty sheet, but still advance the block and reset rotation counters so the banner stops firing
+  if(!blockProposals.length){ applyBlock([]); return; }
   const weeks=blockStart?((Date.now()-blockStart)/(7*864e5)).toFixed(1):'0';
   const n=blockProposals.length;
   document.getElementById('blockTitle').textContent=`Block ${blockNum} Complete`;
