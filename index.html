@@ -1042,6 +1042,12 @@ const store = {
     try{ localStorage.setItem('__ll','1'); localStorage.removeItem('__ll'); this.mode='local'; return; }catch(e){}
     try{ this.idb=await this._openIDB(); this.mode='idb'; }catch(e){ this.mode='memory'; }
   },
+  // drops a key entirely (a failed import uses it to put back a key that did not exist before; set(k,null) would store the text "null")
+  async remove(k){ try{
+    if(this.mode==='local') localStorage.removeItem('liftlog:'+k);
+    else if(this.mode==='idb') await new Promise((resolve,reject)=>{ const tx=this.idb.transaction('kv','readwrite'); tx.objectStore('kv').delete(k); tx.oncomplete=resolve; tx.onerror=()=>reject(tx.error); });
+    else delete this.mem[k];
+    return true; }catch(e){ console.error(e); return false; } },
   _openIDB(){
     return new Promise((resolve,reject)=>{
       if(!window.indexedDB){ reject(new Error('no indexeddb')); return; }
@@ -2774,14 +2780,15 @@ function renderOnboardStep(step){
       try{
         const r=await readBackupFile(f);
         if(!r.ok) throw new Error(r.msg);
-        if(!await restoreKeys(r.data)) throw new Error("Couldn't save the backup. Free up storage and try again");
+        if(!await restoreKeys(r.data)) throw new Error("Couldn't save the backup, so free up storage and try again");
         showToast('Restored — reloading');
         setTimeout(()=>location.reload(),900);
       }catch(err){
         const err_=$('onboardImportError');
         err_.style.display='block';
         err_.innerHTML='<div class="plateau-tip"></div>';
-        err_.firstChild.textContent=`${err.message||"Couldn't import that file"}. Try a different file, or start as a new user.`;
+        const em=err.message||"Couldn't import that file";
+        err_.firstChild.textContent=/try again$/.test(em)?`${em}.`:`${em}. Try a different file, or start as a new user.`;
       }
       e.target.value='';
     };
@@ -3749,7 +3756,7 @@ const hasT=e=>isObj(e)&&Number.isFinite(e.t);
 function validateBackup(j){
   if(!isObj(j)||j.app!=='liftlog') return {ok:false,msg:'That file is not a Lift Log backup'};
   if(typeof j.v!=='number'||!Number.isInteger(j.v)||j.v<1) return {ok:false,msg:'That backup has no version number, so it cannot be restored safely'};
-  if(j.v>BACKUP_VERSION) return {ok:false,msg:'That backup is from a newer version of Lift Log. Update the app, then try again'};
+  if(j.v>BACKUP_VERSION) return {ok:false,msg:'That backup is from a newer version of Lift Log, so update the app and try again'};
   if(!isObj(j.data)) return {ok:false,msg:'That backup has no data in it'};
   const bad=k=>({ok:false,msg:`That backup is damaged (${k} is not in the expected format)`});
   for(const k of KEYS){
@@ -3775,8 +3782,9 @@ async function readBackupFile(f){
 async function restoreKeys(data){
   const keys=KEYS.filter(k=>!k.startsWith('today:')&&k!=='dayStart'&&k in data), prev={};
   for(const k of keys) prev[k]=await sget(k);
+  // a write only counts as failed on an explicit false (store.set returns true/false once fix/save-failure-notice is in; undefined is not a failure)
   for(const k of keys){
-    if(!await sset(k,data[k])){ for(const r of keys) await sset(r,prev[r]); return false; }
+    if(await sset(k,data[k])===false){ for(const r of keys) await (prev[r]===null?store.remove(r):sset(r,prev[r])); return false; }
   }
   return true;
 }
@@ -3834,7 +3842,7 @@ document.getElementById('exportBtn').onclick=()=>doExport(false);
 document.getElementById('bannerBtn').onclick=()=>doExport(false);
 document.getElementById('autoBackup').onchange=e=>{ settings.autoBackup=e.target.checked; sset('settings',settings); };
 async function doMergeImport(d){
-  const must=async(k,v)=>{ if(!await sset(k,v)) throw new Error('save failed: '+k); };
+  const must=async(k,v)=>{ if(await sset(k,v)===false) throw new Error('save failed: '+k); };
   const localSessionsBefore=[...sessions];
   const importedSessions=d.sessions||[];
   sessions=dedupeSortByT([...sessions, ...importedSessions]);
