@@ -529,7 +529,8 @@
   .set-group{background:var(--panel);border:1px solid var(--line);border-radius:8px;}
   .set-row{display:flex;align-items:center;gap:12px;width:100%;min-height:52px;margin:0;padding:0 16px;background:none;border:0;border-top:1px solid var(--line);color:var(--text);text-align:left;font:15px 'Georgia',serif;cursor:pointer;}
   .set-group>.set-row:first-child{border-top:0;}
-  .set-row.static{cursor:default;padding-top:10px;padding-bottom:10px;} /* a caption makes it taller than the one-line rows: give it the same breathing room above and below */
+  .set-row.static{cursor:default;}
+  .set-row.static.has-cap{padding-top:10px;padding-bottom:10px;} /* a caption makes the row taller than the one-line rows: give it the same breathing room above and below (Units has no caption and keeps 52 px) */
   .set-val.warn{color:var(--amber);}
   .set-lbl{flex:1;min-width:0;} .set-cap{display:block;font-size:12px;color:var(--text-dim);margin-top:2px;}
   .set-val{font-size:13px;color:var(--text-dim);text-align:right;}
@@ -879,7 +880,7 @@
       <div class="set-group">
         <button class="set-row" data-page="move"><span class="set-lbl">Move History</span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
         <button class="set-row" data-page="data"><span class="set-lbl">Back Up &amp; Restore</span><span class="set-val" id="sv-data"></span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
-        <label class="set-row static" for="autoBackup"><span class="set-lbl">Weekly Auto-Backup<span class="set-cap">Offers a backup download when you finish a session, once it's been 7+ days</span></span><input type="checkbox" class="switch" id="autoBackup"></label>
+        <label class="set-row static has-cap" for="autoBackup"><span class="set-lbl">Weekly Auto-Backup<span class="set-cap">Offers a backup download when you finish a session, once it's been 7+ days</span></span><input type="checkbox" class="switch" id="autoBackup"></label>
       </div>
       <button type="button" class="reset-link" id="wipeBtn">Erase Everything</button>
       <div class="save-warn" id="saveWarn" role="alert" hidden>Not saving to this device. Export a backup now.</div>
