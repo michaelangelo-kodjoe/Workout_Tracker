@@ -3115,11 +3115,11 @@ function renderCardioLive(){
       <div class="cf-clock cf-ready"><div class="s">Get Ready</div><div class="t big" id="cfReady" role="timer" aria-live="polite"></div></div>
       <div class="row"><button type="button" class="btn" id="cfCancel" style="flex:1">Cancel</button></div>`;
     const num=document.getElementById('cfReady'); let last=null;
-    const go=()=>{ if(!num.isConnected){ stopCardioTick(); return; } // another day's log took the screen: stop, don't paint cardio over it
-      const left=Math.ceil((L.startedAt-Date.now())/1000); if(left<=0){ stopCardioTick(); L.focus='cfPause'; renderCardioForm(); return; }
-      if(left!==last){ last=left; num.textContent=left; beep(); } };
+    const go=()=>{ if(!num.isConnected){ stopCardioTick(); return false; } // another day's log took the screen: stop, don't paint cardio over it
+      const left=Math.ceil((L.startedAt-Date.now())/1000); if(left<=0){ stopCardioTick(); L.focus='cfPause'; renderCardioForm(); return false; } // live clock took over: don't touch it again
+      if(left!==last){ last=left; num.textContent=left; beep(); } return true; };
     document.getElementById('cfCancel').onclick=async()=>{ stopCardioTick(); cardioLive=null; await sset('today:cardio',null); renderTabs(); renderCardioForm(); };
-    go(); cardioTickId=requestAnimationFrame(function loop(){ if(cardioTickId===null) return; go(); if(cardioTickId!==null) cardioTickId=requestAnimationFrame(loop); });
+    if(go()) cardioTickId=requestAnimationFrame(function loop(){ if(cardioTickId===null) return; if(go() && cardioTickId!==null) cardioTickId=requestAnimationFrame(loop); });
   } else if(L.step==='finish'){
     const e=cardioElapsed(L), m=a.main[0], shown=a.main.slice(0,2).filter(k=>(L.vals[k]??'')!=='');
     wrap.innerHTML=`<button type="button" class="cf-back" id="cfKeep"><svg class="cf-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>Keep Going</button>
