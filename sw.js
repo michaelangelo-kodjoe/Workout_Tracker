@@ -10,6 +10,7 @@
 // existing installs to notice (which, in practice, means every deploy). Skipping this means installed
 // users can sit on an old cached shell indefinitely with no "update available" banner ever appearing,
 // even though network-first would otherwise have served them the latest index.html on their next visit.
+// RELEASE: bump this together with BUILD_ID in index.html (they must be equal; scripts/check.sh checks it).
 const CACHE_VERSION = 'liftlog-v71';
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './favicon-32.png', './apple-touch-icon.png'];
 
