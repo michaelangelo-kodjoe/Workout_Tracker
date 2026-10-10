@@ -11,3 +11,7 @@ docs/ui-audit.md
 
 # local Claude session notes (kept on disk, not published)
 CLAUDE.md
+
+# local Claude agent team and team docs (kept on disk, not published)
+.claude/agents/
+docs/
