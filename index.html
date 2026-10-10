@@ -2772,15 +2772,16 @@ function renderOnboardStep(step){
     $('onboardImportFile').onchange=async e=>{
       const f=e.target.files[0]; if(!f) return;
       try{
-        const j=JSON.parse(await f.text()); if(j.app!=='liftlog') throw 0;
-        const replaceKeys=KEYS.filter(k=>!k.startsWith('today:')&&k!=='dayStart');
-        for(const k of replaceKeys){ if(k in j.data) await sset(k,j.data[k]); }
+        const r=await readBackupFile(f);
+        if(!r.ok) throw new Error(r.msg);
+        if(!await restoreKeys(r.data)) throw new Error("Couldn't save the backup. Free up storage and try again");
         showToast('Restored — reloading');
         setTimeout(()=>location.reload(),900);
       }catch(err){
         const err_=$('onboardImportError');
         err_.style.display='block';
-        err_.innerHTML=`<div class="plateau-tip">That doesn't look like a Lift Log backup file. Try a different file, or start as a new user.</div>`;
+        err_.innerHTML='<div class="plateau-tip"></div>';
+        err_.firstChild.textContent=`${err.message||"Couldn't import that file"}. Try a different file, or start as a new user.`;
       }
       e.target.value='';
     };
@@ -3734,9 +3735,54 @@ document.getElementById('adBtn').onclick=()=>{
 document.getElementById('edReset').onclick=async()=>{ if(await confirmSheet('Reset all four days to the recommended program for your equipment? Your logged data stays.', 'Reset', null, true)){ PROGRAM=buildProgram(); applyEquipPicks(PROGRAM); await sset('program',PROGRAM); document.getElementById('edDay').innerHTML=''; renderEditor(); showToast('Program reset'); } };
 
 let lastBackup=0;
+// ---------- backup import: one validator and one writer, shared by Replace, Merge and the onboarding import ----------
+const BACKUP_VERSION=1, BACKUP_MAX_BYTES=10*1024*1024;
+// expected top-level type per stored key (null is always allowed: an export writes null for a key that was never set).
+// today:/last: are per-day objects; every other KEYS entry not listed here is checked as an object.
+const BACKUP_TYPES={ lastBackup:'number', 'meta:sessionCount':'number', lastDeload:'number', deloadStart:'number', blockStart:'number', blockNum:'number',
+  'meta:histMigratedV2':'boolean', program:'array', recoveryLog:'array', sessions:'array', bodyweight:'array' };
+// arrays whose entries are read as {t:…} by merge, history and the recovery gate
+const BACKUP_TIMED=['recoveryLog','sessions','bodyweight'];
+const isObj=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
+const hasT=e=>isObj(e)&&Number.isFinite(e.t);
+// returns {ok:true,data,exported} or {ok:false,msg}; nothing is written here
+function validateBackup(j){
+  if(!isObj(j)||j.app!=='liftlog') return {ok:false,msg:'That file is not a Lift Log backup'};
+  if(typeof j.v!=='number'||!Number.isInteger(j.v)||j.v<1) return {ok:false,msg:'That backup has no version number, so it cannot be restored safely'};
+  if(j.v>BACKUP_VERSION) return {ok:false,msg:'That backup is from a newer version of Lift Log. Update the app, then try again'};
+  if(!isObj(j.data)) return {ok:false,msg:'That backup has no data in it'};
+  const bad=k=>({ok:false,msg:`That backup is damaged (${k} is not in the expected format)`});
+  for(const k of KEYS){
+    if(!(k in j.data)) continue;
+    const v=j.data[k]; if(v===null) continue;
+    const want=BACKUP_TYPES[k]||'object';
+    if(want==='array'?!Array.isArray(v):want==='object'?!isObj(v):typeof v!==want) return bad(k);
+    if(BACKUP_TIMED.includes(k)&&!v.every(hasT)) return bad(k);
+    if(k==='hist'&&!Object.values(v).every(a=>Array.isArray(a)&&a.every(hasT))) return bad(k);
+    if(['recovery','familiarity','soreOverride','lastByName'].includes(k)&&!Object.values(v).every(isObj)) return bad(k);
+    if(k==='program'&&!v.every(d=>isObj(d)&&Array.isArray(d.exercises))) return bad(k);
+  }
+  return {ok:true,data:j.data,exported:j.exported};
+}
+// reads a chosen file, enforces the size cap, parses and validates it, all before anything is written
+async function readBackupFile(f){
+  if(f.size>BACKUP_MAX_BYTES) return {ok:false,msg:'That file is too large to be a Lift Log backup'};
+  let j; try{ j=JSON.parse(await f.text()); }catch(e){ return {ok:false,msg:'That file could not be read as a backup'}; }
+  return validateBackup(j);
+}
+// Replace write: every backed-up key except today's drafts and start times. Checks each write; on the first failure puts
+// back what was there before (best effort) and returns false, so a failed restore does not leave a quiet hybrid.
+async function restoreKeys(data){
+  const keys=KEYS.filter(k=>!k.startsWith('today:')&&k!=='dayStart'&&k in data), prev={};
+  for(const k of keys) prev[k]=await sget(k);
+  for(const k of keys){
+    if(!await sset(k,data[k])){ for(const r of keys) await sset(r,prev[r]); return false; }
+  }
+  return true;
+}
 async function doExport(silent){
   const out={}; for(const k of KEYS){ out[k]=await sget(k); }
-  const blob=new Blob([JSON.stringify({app:'liftlog',v:1,exported:new Date().toISOString(),data:out},null,1)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({app:'liftlog',v:BACKUP_VERSION,exported:new Date().toISOString(),data:out},null,1)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`liftlog-backup-${new Date().toISOString().slice(0,10)}.json`; document.body.appendChild(a); a.click(); a.remove();
   lastBackup=Date.now(); await sset('lastBackup',lastBackup); updateBackupUI(); showToast(silent?'Weekly backup downloaded':'Backup downloaded');
 }
@@ -3788,10 +3834,11 @@ document.getElementById('exportBtn').onclick=()=>doExport(false);
 document.getElementById('bannerBtn').onclick=()=>doExport(false);
 document.getElementById('autoBackup').onchange=e=>{ settings.autoBackup=e.target.checked; sset('settings',settings); };
 async function doMergeImport(d){
+  const must=async(k,v)=>{ if(!await sset(k,v)) throw new Error('save failed: '+k); };
   const localSessionsBefore=[...sessions];
   const importedSessions=d.sessions||[];
   sessions=dedupeSortByT([...sessions, ...importedSessions]);
-  await sset('sessions',sessions);
+  await must('sessions',sessions);
 
   // tolerates an old-format incoming backup (day-prefixed "d#|Name" keys) regardless of whether this device's
   // own migration has already run — a name-only key on either side always wins the merge.
@@ -3800,22 +3847,22 @@ async function doMergeImport(d){
     const sep=k.indexOf('|'); const name=sep>=0?k.slice(sep+1):k;
     hist[name]=dedupeSortByT([...(hist[name]||[]), ...importedHist[k]]);
   });
-  await sset('hist',hist);
+  await must('hist',hist);
 
   const importedLastByName=d.lastByName||{};
   Object.keys(importedLastByName).forEach(name=>{ const inc=importedLastByName[name]; if(!lastByName[name]||inc.t>lastByName[name].t) lastByName[name]=inc; });
-  await sset('lastByName',lastByName);
+  await must('lastByName',lastByName);
 
   bodyweight=dedupeSortByT([...bodyweight, ...(d.bodyweight||[])]);
-  await sset('bodyweight',bodyweight);
+  await must('bodyweight',bodyweight);
 
   const importedRecovery=d.recovery||{};
   Object.keys(importedRecovery).forEach(m=>{ const inc=importedRecovery[m]; if(!recovery[m]||inc.start>recovery[m].start) recovery[m]=inc; });
-  await sset('recovery',recovery);
+  await must('recovery',recovery);
 
   const importedFamiliarity=d.familiarity||{};
   Object.keys(importedFamiliarity).forEach(m=>{ const inc=importedFamiliarity[m]; if(!familiarity[m]||inc.last>familiarity[m].last) familiarity[m]=inc; });
-  await sset('familiarity',familiarity);
+  await must('familiarity',familiarity);
 
   // same "later end wins" safety invariant as the live effectiveRecovery() read path — a sore-mark should
   // never lose to an older, sooner-ending one just because it happens to have a later raw start timestamp.
@@ -3825,7 +3872,7 @@ async function doMergeImport(d){
     const cur=soreOverride[m], curEnd=cur?cur.start+cur.hours*3600000:-Infinity;
     if(incEnd>curEnd) soreOverride[m]=inc;
   });
-  await sset('soreOverride',soreOverride);
+  await must('soreOverride',soreOverride);
 
   // recoveryLog can have several entries sharing the same t (one per muscle from a single finished session),
   // so dedupe on t+muscle rather than dedupeSortByT's t-only key, then re-apply the same cap used when logging.
@@ -3833,29 +3880,29 @@ async function doMergeImport(d){
     .sort((a,b)=>a.t-b.t)
     .filter(e=>{ const k=e.t+':'+e.muscle; if(seenLog.has(k)) return false; seenLog.add(k); return true; });
   if(recoveryLog.length>RECOVERY_LOG_CAP) recoveryLog=recoveryLog.slice(recoveryLog.length-RECOVERY_LOG_CAP);
-  await sset('recoveryLog',recoveryLog);
+  await must('recoveryLog',recoveryLog);
 
   Object.keys(d.baselines||{}).forEach(n=>{ if(!baselines[n]||d.baselines[n]>baselines[n]) baselines[n]=d.baselines[n]; });
-  await sset('baselines',baselines);
+  await must('baselines',baselines);
 
   const importedNotes=d.notes||{};
   Object.keys(importedNotes).forEach(k=>{
     const sep=k.indexOf('|'); const name=sep>=0?k.slice(sep+1):k;
     if(importedNotes[k] && !(name in notes)) notes[name]=importedNotes[k];
   });
-  await sset('notes',notes);
+  await must('notes',notes);
 
   const localProgramRaw=await sget('program');
-  if(!localProgramRaw && d.program){ PROGRAM=d.program; await sset('program',PROGRAM); }
+  if(!localProgramRaw && d.program){ PROGRAM=d.program; await must('program',PROGRAM); }
 
   for(const dayId of ['d1','d2','d3','d4']){
     const localLatest=Math.max(0, ...localSessionsBefore.filter(s=>s.dayId===dayId).map(s=>s.t));
     const importedLatest=Math.max(0, ...importedSessions.filter(s=>s.dayId===dayId).map(s=>s.t));
-    if(importedLatest>localLatest && d['last:'+dayId]) await sset('last:'+dayId, d['last:'+dayId]);
+    if(importedLatest>localLatest && d['last:'+dayId]) await must('last:'+dayId, d['last:'+dayId]);
   }
 
   sessionCount=sessions.filter(s=>!s.isCardio).length;
-  await sset('meta:sessionCount',sessionCount);
+  await must('meta:sessionCount',sessionCount);
 }
 let importMode='replace';
 document.getElementById('importBtn').onclick=()=>{ importMode='replace'; document.getElementById('importFile').click(); };
@@ -3863,15 +3910,18 @@ document.getElementById('mergeBtn').onclick=()=>{ importMode='merge'; document.g
 document.getElementById('importFile').onchange=async e=>{
   const f=e.target.files[0]; if(!f) return;
   try{
-    const j=JSON.parse(await f.text()); if(j.app!=='liftlog') throw 0;
-    if(importMode==='merge'){ await doMergeImport(j.data); showToast('Merged — reloading'); }
+    const r=await readBackupFile(f);
+    if(!r.ok){ showToast(r.msg); e.target.value=''; return; }
+    const d=r.data;
+    if(importMode==='merge'){ await doMergeImport(d); showToast('Merged — reloading'); }
     else{
-      // Import overwrites everything here, so it asks first, like Erase Everything does. Merge adds to what's here, so it doesn't.
-      const n=Array.isArray(j.data.sessions)?j.data.sessions.length:0, when=j.exported?` from ${fmtDate(Date.parse(j.exported))}`:'';
-      if(!await confirmSheet(`Replace everything on this device with the backup${when} (${n} session${n===1?'':'s'})? Your ${sessions.length} session${sessions.length===1?'':'s'}, history and settings here are overwritten. This cannot be undone.`, 'Replace', null, true)){ e.target.value=''; return; }
-      const replaceKeys=KEYS.filter(k=>!k.startsWith('today:')&&k!=='dayStart'); for(const k of replaceKeys){ if(k in j.data) await sset(k,j.data[k]); } showToast('Restored — reloading'); }
+      // Replace overwrites everything here and there is no automatic backup first, so the sheet says so and points at Export Backup.
+      const n=Array.isArray(d.sessions)?d.sessions.length:0, when=r.exported?` from ${fmtDate(Date.parse(r.exported))}`:'';
+      if(!await confirmSheet(`Replace overwrites everything currently on this phone with the backup${when} (${n} session${n===1?'':'s'}). Your ${sessions.length} session${sessions.length===1?'':'s'}, history and settings here will be lost and this cannot be undone. Cancel and use Export Backup first if you want a copy of what is here now.`, 'Replace', null, true)){ e.target.value=''; return; }
+      if(!await restoreKeys(d)){ showToast("Couldn't save the backup. Nothing was changed, so free up storage and try again"); e.target.value=''; return; }
+      showToast('Restored — reloading'); }
     setTimeout(()=>location.reload(),900);
-  }catch(err){ showToast('That file is not a Lift Log backup'); }
+  }catch(err){ console.error(err); showToast("Couldn't finish the import. Your data may be partly updated, so try again"); }
   e.target.value='';
 };
 document.getElementById('wipeBtn').onclick=async()=>{ if(await confirmSheet('Erase all workouts, history and settings on this device?', 'Erase', null, true)&&await confirmSheet('Really erase? This cannot be undone.', 'Erase Everything', null, true)){ for(const k of KEYS) await sset(k,null); location.reload(); } };
