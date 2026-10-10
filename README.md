@@ -23,12 +23,27 @@ The app itself is a single file, plain HTML/CSS/JS, no dependencies or build too
 
 ## Running locally
 
-Just open `index.html` in a browser — no server or install step needed:
+Serve the folder locally (the service worker and install features need `http://`, not `file://`):
 
 ```bash
-open index.html
+python3 -m http.server 8934
 ```
+
+Then open http://localhost:8934.
 
 ## Deployment
 
-This repo is hosted on GitHub Pages, served from the `main` branch. Pushing changes to `main` updates the live site directly — there's no separate build or deploy step.
+This repo is hosted on GitHub Pages, served from the `main` branch. Pushing to `main` updates the live site directly; there is no build step.
+
+### Release
+
+1. Work on a branch off `main` (`fix/<area>` or `feat/<name>`), one commit per fix.
+2. Merge with `git merge --no-ff` into `main`.
+3. Bump `CACHE_VERSION` in `sw.js`. Browsers only notice a new version by byte-diffing `sw.js`, so without the bump installed copies stay on a stale shell.
+4. Push `main`.
+
+### Rollback
+
+1. `git revert -m 1 <merge-commit>` on `main`.
+2. Bump `CACHE_VERSION` in `sw.js` again so installed copies notice the change.
+3. Push `main`.
