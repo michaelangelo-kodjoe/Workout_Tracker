@@ -3737,7 +3737,7 @@ let lastBackup=0;
 async function doExport(silent){
   const out={}; for(const k of KEYS){ out[k]=await sget(k); }
   const blob=new Blob([JSON.stringify({app:'liftlog',v:1,exported:new Date().toISOString(),data:out},null,1)],{type:'application/json'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`liftlog-backup-${new Date().toISOString().slice(0,10)}.json`; document.body.appendChild(a); a.click(); a.remove();
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); const d=new Date(), p2=n=>String(n).padStart(2,'0'); a.download=`liftlog-backup-${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}.json`; document.body.appendChild(a); a.click(); a.remove();
   lastBackup=Date.now(); await sset('lastBackup',lastBackup); updateBackupUI(); showToast(silent?'Weekly backup downloaded':'Backup downloaded');
 }
 function backupDue(){ return !lastBackup || (Date.now()-lastBackup) > 7*864e5; }
