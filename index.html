@@ -1965,7 +1965,10 @@ const REST_KEY='restTimer', REST_MAX_AGE=4*60*60*1000;
 function saveTimer(){ sset(REST_KEY,{end:timer.end,total:timer.total}); }
 function clearTimerSave(){ sset(REST_KEY,null); }
 // best effort: iOS may leave the context suspended after the page was backgrounded; sound is never assumed
+// Constraints (platform-claims / claims-ledger P24-P30): iOS Web Audio can stay 'interrupted' or silent after backgrounding even after resume(), so Go is always shown first and sound is never relied on; there is no lock-screen alert and no vibration on iOS.
 function resumeAudio(){ try{ if(timer.ctx&&timer.ctx.state!=='running'&&timer.ctx.resume) timer.ctx.resume().catch(()=>{}); }catch(e){} }
+// on the next tap (a gesture) a context that is still not running is rebuilt; the first Start tap unlocks audio as before
+document.addEventListener('pointerdown',()=>{ try{ if(timer.ctx&&timer.ctx.state!=='running'){ resumeAudio(); if(timer.ctx.state==='interrupted'||timer.ctx.state==='closed'){ try{ timer.ctx.close(); }catch(e){} timer.ctx=new (window.AudioContext||window.webkitAudioContext)(); } } }catch(e){} },{passive:true});
 function beep(onlyIfRunning){ try{ if(!timer.ctx) timer.ctx=new (window.AudioContext||window.webkitAudioContext)(); resumeAudio(); if(onlyIfRunning&&timer.ctx.state!=='running') return; const c=timer.ctx,o=c.createOscillator(),g=c.createGain(); o.frequency.value=880; g.gain.value=.15; o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime+.25); }catch(e){} if(navigator.vibrate) navigator.vibrate([200,100,200]); }
 function startTimer(sec){
   try{ if(!timer.ctx) timer.ctx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
