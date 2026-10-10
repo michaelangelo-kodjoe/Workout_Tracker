@@ -26,7 +26,7 @@
   :root.ios-standalone{--edge:20px;} /* older iOS home-screen apps report navigator.standalone but not the media query */
   /* the app is dark-only: declaring it gives native controls (select menus, checkboxes, number spinners, scrollbars)
      their dark system styling instead of light boxes on a dark page */
-  :root{color-scheme:dark;--upper:#a98bf5;--lower:#38b7a8;--cardio:#5fa8e0;--danger:#f0619a;--bg:#14161a;--panel:#1c1f25;--panel-raised:#22262e;--line:#2c3038;--text:#e8e9ec;--text-dim:#8b8f98;--accent:#ff5d3b;--heavy:#ff5d3b;--light:#4fa3d1;--done-bg:#1f2a20;--done-line:#3d5c3f;--green:#5cbb6f;--amber:#d6a03a;--gold:#e8b23d;}
+  :root{color-scheme:dark;--upper:#a98bf5;--lower:#38b7a8;--cardio:#5fa8e0;--danger:#f0619a;--bg:#14161a;--panel:#1c1f25;--panel-raised:#22262e;--line:#2c3038;--line-strong:#6c727e;--text:#e8e9ec;--text-dim:#8b8f98;--accent:#ff5d3b;--heavy:#ff5d3b;--light:#4fa3d1;--done-bg:#1f2a20;--done-line:#3d5c3f;--green:#5cbb6f;--amber:#d6a03a;--gold:#e8b23d;}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Georgia','Iowan Old Style',serif;min-height:100%;}
   /* every tab at least as tall as the screen with Safari's toolbar tucked away (lvh), plus 1px, so every tab can scroll:
@@ -143,7 +143,7 @@
   .ex-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;cursor:pointer;}
   .ex-name{font-size:17px;line-height:1.25;} .ex-target{font-size:13px;color:var(--text-dim);margin-top:4px;}
   .sug{color:var(--accent);} .e1rm{color:var(--text-dim);}
-  .ex-check{width:24px;height:24px;box-sizing:border-box;border-radius:50%;border:1.5px solid var(--field-line,#646a76);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:transparent;}
+  .ex-check{width:24px;height:24px;box-sizing:border-box;border-radius:50%;border:1.5px solid var(--line-strong);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:transparent;}
   .exercise.complete .ex-check{background:var(--done-line);border-color:var(--done-line);color:#cfe8cf;}
   .ex-body{padding:0 16px 16px;display:none;} .exercise.open .ex-body{display:block;}
   .howto{margin:0 0 12px;}
@@ -196,7 +196,7 @@
   @keyframes popcheck{0%{transform:scale(.7);}55%{transform:scale(1.18);}100%{transform:scale(1);}}
   .delta-up{font-family:'Menlo',monospace;font-size:12px;color:var(--green);white-space:nowrap;}
   .first-log-note{font-size:12px;line-height:1.55;color:var(--light);background:rgba(79,163,209,.08);border-left:2px solid var(--light);padding:9px 11px;border-radius:3px;margin:0 0 10px;}
-  .addset{display:block;width:100%;height:44px;margin:4px 0 0;padding:0;border:1px dashed var(--field-line,#646a76);border-radius:8px;background:none;color:var(--text-dim);font:13px 'Georgia',serif;cursor:pointer;}
+  .addset{display:block;width:100%;height:44px;margin:4px 0 0;padding:0;border:1px dashed var(--line-strong);border-radius:8px;background:none;color:var(--text-dim);font:13px 'Georgia',serif;cursor:pointer;}
   .notes{width:100%;margin-top:12px;background:var(--panel-raised);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:12px;font-size:12px;font-family:'Georgia',serif;resize:vertical;min-height:34px;}
   .last-time{font-size:12px;color:var(--text-dim);margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);}
   /* plate breakdown for bar-loaded lifts: what to put on each side for the weight in play */
@@ -214,7 +214,7 @@
   .side-line{display:flex;align-items:center;gap:4px;}
   .side-step{display:inline-flex;}
   .side-step button{width:44px;height:44px;margin:-6px 0;border:0;background:none;color:var(--text);font-size:20px;padding:0;cursor:pointer;}
-  .bar-chip{position:relative;display:inline-flex;align-items:center;gap:6px;flex-shrink:0;min-height:36px;white-space:nowrap;padding:0 10px 0 12px;border:1px solid var(--field-line,#646a76);border-radius:8px;background:var(--panel-raised);color:var(--text);font:13px 'Menlo',monospace;cursor:pointer;}
+  .bar-chip{position:relative;display:inline-flex;align-items:center;gap:6px;flex-shrink:0;min-height:36px;white-space:nowrap;padding:0 10px 0 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--panel-raised);color:var(--text);font:13px 'Menlo',monospace;cursor:pointer;}
   .bar-chip svg{width:14px;height:14px;fill:none;stroke:var(--text-dim);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
   .bar-chip select{position:absolute;left:0;right:0;top:-5px;bottom:-5px;width:100%;opacity:0;font-size:16px;cursor:pointer;}
   .bar-chip:has(select:focus-visible){outline:2px solid var(--light);outline-offset:2px;}
@@ -232,7 +232,7 @@
   .timer .t{font-family:'Menlo',monospace;font-size:22px;color:var(--accent);} .timer .t.over{color:var(--green);}
   /* +30s / skip are tapped between sets with a sweaty thumb: real bordered buttons, not underlined text links */
   .timer .acts{display:flex;gap:8px;}
-  .timer .acts button{display:inline-flex;align-items:center;min-height:44px;margin:0;padding:0 14px;border:1px solid var(--field-line);border-radius:8px;background:var(--panel);color:var(--text);font-family:'Menlo',monospace;font-size:13px;cursor:pointer;}
+  .timer .acts button{display:inline-flex;align-items:center;min-height:44px;margin:0;padding:0 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--panel);color:var(--text);font-family:'Menlo',monospace;font-size:13px;cursor:pointer;}
   .tbar{height:6px;background:var(--line);border-radius:3px;margin-top:8px;overflow:hidden;}
   .tbar i{display:block;height:100%;background:var(--accent);transition:width 1s linear,background 1s linear;}
   /* destructive, so it's an outlined button in the danger colour — same shape as + Add Set, and it asks first */
@@ -277,7 +277,7 @@
   .stat .l{font-size:12px;color:var(--text-dim);margin-top:2px;}
   .srow{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:10px 14px;margin-bottom:8px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:baseline;}
   .srow .sn{font-size:15px;} .srow .sd{font-size:12px;color:var(--text-dim);margin-top:2px;}
-  .srow .sd .linkbtn{white-space:nowrap;} /* Reset Baseline broke across two lines mid-sentence */
+  .srow .sd .linkbtn{white-space:nowrap;position:relative;z-index:1;} /* Reset Baseline broke across two lines mid-sentence */
   .srow .sp{font-family:'Menlo',monospace;font-size:16px;text-align:right;white-space:nowrap;}
   .sp.up{color:var(--green);} .sp.down{color:var(--amber);} .sp.flat{color:var(--text-dim);}
   .spark{grid-column:1 / -1;height:28px;width:100%;margin-top:4px;}
@@ -466,7 +466,7 @@
   .onb-ex-row i{width:12px;height:12px;border-radius:50%;flex-shrink:0;} .onb-ex-row span{flex:1;} .onb-ex-row b{font-weight:normal;font-size:13px;color:var(--text-dim);text-align:right;}
   .onb-note{font-size:12px;color:var(--text-dim);max-width:320px;line-height:1.5;}
   .onb-foot{position:sticky;bottom:0;z-index:2;display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 0 calc(24px + var(--sa-b));background:var(--bg);box-shadow:0 -16px 16px -4px var(--bg);}
-  .cel-cta.alt{background:none;color:var(--text);border:1px solid var(--field-line,#646a76);}
+  .cel-cta.alt{background:none;color:var(--text);border:1px solid var(--line-strong);}
   .cel-h1{font-size:22px;margin:0 0 6px;position:relative;z-index:2;}
   .cel-sub{font-size:13px;color:var(--text-dim);margin-bottom:26px;position:relative;z-index:2;}
   .cel-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;width:100%;max-width:320px;position:relative;z-index:2;margin-bottom:20px;}
@@ -517,6 +517,10 @@
   #arrivalPanel{margin-bottom:24px;}
   .start-cta{margin-top:24px;display:block;width:100%;background:var(--accent);color:#1a0d08;border:none;border-radius:4px;padding:14px;font-size:13px;font-family:'Menlo',monospace;letter-spacing:.3px;cursor:pointer;}
   /* first-launch builder */
+  .build-hint{font-size:12px;line-height:1.5;color:var(--text-dim);margin:14px 2px 0;} .build-hint+.build-eq{margin-top:8px;}
+  /* while the first-launch builder is on screen the tab bar would let a new user wander off with no program: hide it, and let the pinned button sit on the safe area instead */
+  body.building .toast{bottom:calc(var(--foot-h,80px) + 12px + 56px + 16px);} /* the builder's sticky Use This Program button (about 56 px) sits where the tab bar was: lift the toast clear of it */
+  body.building footer{display:none;} body.building{--foot-h:var(--sa-b);}
   .build-eq{display:flex;flex-wrap:wrap;gap:6px;margin:14px 2px 2px;}
   .chip-set{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
   /* Settings main screen: grouped rows, each showing its current value and opening its own page */
@@ -526,6 +530,8 @@
   .set-row{display:flex;align-items:center;gap:12px;width:100%;min-height:52px;margin:0;padding:0 16px;background:none;border:0;border-top:1px solid var(--line);color:var(--text);text-align:left;font:15px 'Georgia',serif;cursor:pointer;}
   .set-group>.set-row:first-child{border-top:0;}
   .set-row.static{cursor:default;}
+  .set-row.static.has-cap{padding-top:10px;padding-bottom:10px;} /* a caption makes the row taller than the one-line rows: give it the same breathing room above and below (Units has no caption and keeps 52 px) */
+  .set-val.warn{color:var(--amber);}
   .set-lbl{flex:1;min-width:0;} .set-cap{display:block;font-size:12px;color:var(--text-dim);margin-top:2px;}
   .set-val{font-size:13px;color:var(--text-dim);text-align:right;}
   .set-chev{width:16px;height:16px;flex-shrink:0;fill:none;stroke:var(--text-dim);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
@@ -577,8 +583,8 @@
   .rh-stats b{display:block;font:22px 'Menlo',monospace;font-weight:normal;} .rh-stats b.up{color:var(--green);}
   .rh-stats b small{font-size:12px;color:var(--text-dim);} .rh-stats span{font-size:12px;color:var(--text-dim);}
   .rh-chart{position:relative;margin-top:28px;}
-  .rh-goal{position:absolute;left:0;right:0;top:0;border-top:1px dashed var(--field-line,#646a76);}
-  .rh-goal span{position:absolute;right:0;top:-18px;font-size:11px;color:var(--text-dim);}
+  .rh-goal{position:absolute;left:0;right:0;top:0;border-top:1px dashed var(--line-strong);}
+  .rh-goal span{position:absolute;right:0;top:-20px;z-index:1;white-space:nowrap;padding:0 2px 0 4px;font-size:12px;line-height:16px;color:var(--text-dim);text-shadow:0 0 3px var(--panel),0 0 3px var(--panel),0 0 6px var(--panel);pointer-events:none;}
   .rh-bars{display:flex;gap:4px;align-items:flex-end;height:72px;}
   .rh-bars i{flex:1;min-height:2px;border-radius:4px 4px 0 0;background:rgba(92,187,111,.7);}
   .rh-bars i.zero{background:var(--line);} .rh-bars i.met{background:var(--green);}
@@ -593,15 +599,17 @@
   .cal-nav{color:var(--text);cursor:pointer;padding:0 8px;line-height:0;}
   .cal-nav svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
   .cal-nav.dis{visibility:hidden;}
-  .cal-dow{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:12px;color:var(--text-dim);margin-bottom:5px;}
-  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
-  .cal-cell{aspect-ratio:1;border-radius:3px;background:var(--panel-raised);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;color:var(--text-dim);}
+  .cal-dow{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));text-align:center;font-size:12px;color:var(--text-dim);margin-bottom:5px;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;}
+  .cal-cell{min-width:0;overflow:hidden;aspect-ratio:1;border-radius:3px;background:var(--panel-raised);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;color:var(--text-dim);}
   .cal-cell.pad{background:transparent;}
   .cal-cell.today{box-shadow:inset 0 0 0 1px var(--accent);color:var(--text);}
   .cal-cell.has-session{cursor:pointer;}
   /* the plan's initials (UH = Upper Heavy, LV = Lower Volume, C = cardio) on its day colour, so the calendar reads
      without telling colours apart and Heavy and Volume days are told apart too */
-  .cal-dots{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;}
+  .cal-dots{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;max-width:100%;}
+  /* two sessions in one cell would not fit the cell on a 320 px screen: show them as colour dots there (the title, aria-label and day sheet still name them) */
+  @media (max-width:359px){ .cal-dots.multi .cal-tag{font-size:0;line-height:0;width:8px;height:8px;padding:0;border-radius:50%;} }
   .cal-tag{font-style:normal;font-family:'Menlo',monospace;font-size:11px;font-weight:bold;line-height:13px;padding:0 2px;border-radius:3px;background:var(--dc);color:#12141a;}
   .cal-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 14px;margin-top:10px;font-size:12px;color:var(--text-dim);}
   .cal-legend span{display:inline-flex;align-items:center;gap:4px;}
@@ -659,10 +667,10 @@
   .finish-btn,.start-cta,.cel-cta{min-height:50px;font-size:15px;font-weight:bold;border-radius:8px;}
 
   /* ---------- fields & focus ---------- */
-  /* --line is only 1.25:1 against a card, so field outlines all but vanished; --field-line clears 3:1. The suggested
+  /* --line is only 1.25:1 against a card, so field outlines all but vanished; --line-strong (#6c727e) is >= 3:1 (WCAG 1.4.11) on --bg, --panel and --panel-raised. Controls only: cards and dividers keep --line. The suggested
      weight lives in the placeholder, so it gets the readable dim token instead of the browser's 3.3:1 grey. */
-  :root{--field-line:#646a76;}
-  .setgrid input,.in,.notes,.setdone{border-color:var(--field-line);}
+  .setgrid input,.in,.notes,.setdone,.cf-in,.cf-rc,.cf-stp button{border-color:var(--line-strong);}
+  .cf-big input{border-bottom-color:var(--line-strong);}
   ::placeholder{color:var(--text-dim);opacity:1;}
   input[type=checkbox]{accent-color:var(--accent);}
   /* fields keep their accent-border focus from above; everything else gets a ring, but only for keyboard focus */
@@ -872,7 +880,7 @@
       <div class="set-group">
         <button class="set-row" data-page="move"><span class="set-lbl">Move History</span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
         <button class="set-row" data-page="data"><span class="set-lbl">Back Up &amp; Restore</span><span class="set-val" id="sv-data"></span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
-        <label class="set-row static" for="autoBackup"><span class="set-lbl">Weekly Auto-Backup<span class="set-cap">Offers a backup download when you finish a session, once it's been 7+ days</span></span><input type="checkbox" class="switch" id="autoBackup"></label>
+        <label class="set-row static has-cap" for="autoBackup"><span class="set-lbl">Weekly Auto-Backup<span class="set-cap">Offers a backup download when you finish a session, once it's been 7+ days</span></span><input type="checkbox" class="switch" id="autoBackup"></label>
       </div>
       <button type="button" class="reset-link" id="wipeBtn">Erase Everything</button>
       <div class="save-warn" id="saveWarn" role="alert" hidden>Not saving to this device. Export a backup now.</div>
@@ -1695,6 +1703,8 @@ async function applyBlock(proposals){
 let blockProposals=[];
 function openBlockSheet(){
   blockProposals=buildBlockProposals();
+  // nothing to decide: skip the empty sheet, but still advance the block and reset rotation counters so the banner stops firing
+  if(!blockProposals.length){ applyBlock([]); return; }
   const weeks=blockStart?((Date.now()-blockStart)/(7*864e5)).toFixed(1):'0';
   const n=blockProposals.length;
   document.getElementById('blockTitle').textContent=`Block ${blockNum} Complete`;
@@ -2565,14 +2575,15 @@ function render(){
 // shown instead of the arrival hero until a program is accepted. Equipment chips drive applyEquipPicks(); "change" reuses openSwap(),
 // whose doSwap() persists the program — so a reload mid-build keeps the picks made so far and lands on the normal hero.
 function renderBuilder(panel){
-  panel.style.display='block';
+  panel.style.display='block'; document.body.classList.add('building');
   panel.innerHTML=`
     <div class="greet-wrap">
       <div class="greet-eyebrow">First Launch</div>
       <h2 class="greet-h1">Build Your Program</h2>
       <div class="greet-sub">Four days a week — Upper and Lower, one heavy and one volume day each. Tick what your gym has and every slot gets a recommended exercise. Change any pick now, or swap later from the log.</div>
     </div>
-    <div class="build-eq">${EQUIP_TYPES.map(t=>`<span class="eqchip${settings.equipFilter.includes(t)?' on':''}" data-t="${t}" aria-pressed="${settings.equipFilter.includes(t)}">${EQUIP_LABEL[t]}</span>`).join('')}</div>
+    <div class="build-hint" id="buildHint">Tap a chip to switch that equipment on or off.</div>
+    <div class="build-eq" role="group" aria-labelledby="buildHint">${EQUIP_TYPES.map(t=>`<span class="eqchip${settings.equipFilter.includes(t)?' on':''}" data-t="${t}" aria-pressed="${settings.equipFilter.includes(t)}">${EQUIP_LABEL[t]}</span>`).join('')}</div>
     ${PROGRAM.map(d=>`<div class="build-day"><div class="build-dh">${d.name} · ${d.sub}</div>${d.exercises.map((ex,i)=>`<div class="build-row${equipAllowed(ex)?'':' miss'}"><span class="bg">${esc(ex.group)}</span><span class="bn">${esc(ex.name)}<div class="bt">${fmtTarget(ex.target)}${equipAllowed(ex)?(ex.approx?` · <span class="bm">closest library match — trains ${MUSCLE_LABEL[ex.key]||ex.group} only as a secondary muscle</span>`:''):' · <span class="bm">nothing in the library for your equipment — change it, or tick more above</span>'}</div></span><span class="linkbtn bc" data-d="${d.id}" data-i="${i}" aria-label="Change ${esc(ex.name)}">Change</span></div>`).join('')}</div>`).join('')}
     <button class="start-cta" id="buildDone">Use This Program</button>`;
   panel.querySelectorAll('.eqchip').forEach(c=>c.onclick=()=>{
@@ -2583,7 +2594,7 @@ function renderBuilder(panel){
     renderBuilder(panel);
   });
   panel.querySelectorAll('.bc').forEach(b=>b.onclick=()=>{ const day=PROGRAM.find(d=>d.id===b.dataset.d); openSwap(day.id, day.exercises[+b.dataset.i]); });
-  document.getElementById('buildDone').onclick=async()=>{ await sset('program',PROGRAM); needsBuild=false; showToast('Program saved — edit it any time in Settings'); touchDayStart(); setView('log'); };
+  document.getElementById('buildDone').onclick=async()=>{ await sset('program',PROGRAM); needsBuild=false; document.body.classList.remove('building'); showToast('Program saved — edit it any time in Settings'); touchDayStart(); setView('log'); };
 }
 
 // ---------- home: greeting + day carousel (returning user), first-open hero (new user), program builder ----------
@@ -2595,6 +2606,7 @@ function dayTagText(){ const t0=new Date(); t0.setHours(0,0,0,0); return session
 function renderHome(){
   updateBlockUI(); updateCardioLiveBanner();
   const panel=document.getElementById('arrivalPanel');
+  document.body.classList.toggle('building', needsBuild);
   if(needsBuild){ renderBuilder(panel); return; }
   if(currentDay==='cardio'){
     panel.innerHTML=`
@@ -3309,7 +3321,7 @@ async function saveSessionEdit(s, edited){
   await rederiveAfterSessionChange([...new Set([...before, ...Object.keys(ex)])], s.dayId, s.t);
   showToast('Session updated');
 }
-const RIR_OPTS=[['','RIR'],['0','0'],['1','1'],['2','2'],['3','3'],['4','4+']];
+const RIR_OPTS=[['','Left'],['0','0'],['1','1'],['2','2'],['3','3'],['4','4+']];
 function renderSessionEditForm(s, el, onDone){
   const det=el.querySelector('.sdet');
   if(s.isCardio){
@@ -3330,8 +3342,8 @@ function renderSessionEditForm(s, el, onDone){
       await saveSessionEdit(s,edited); onDone(); };
   } else {
     const removed=new Set();
-    det.innerHTML=`<div class="se-row" style="margin-top:4px"><span></span><span class="n">${unitLabel()}</span><span class="n">Reps</span><span class="n">RIR</span></div>`+Object.entries(s.ex).map(([n,sets])=>`<div class="se-ex" data-name="${esc(n)}"><div class="se-head"><b style="font-weight:normal;color:var(--text)">${esc(n)}</b><span class="linkbtn" data-act="rm">Remove</span></div>
-      ${sets.map((x,k)=>`<div class="se-row"><span class="n">${k+1}</span><input class="in" type="number" inputmode="decimal" placeholder="—" value="${x.w?dispWeight(x.w):''}"><input class="in" type="number" inputmode="numeric" placeholder="—" value="${x.r||''}"><select class="in">${RIR_OPTS.map(([v,l])=>`<option value="${v}"${String(x.rir??'')===v?' selected':''}>${l}</option>`).join('')}</select></div>`).join('')}</div>`).join('')+
+    det.innerHTML=`<div class="se-row" style="margin-top:4px"><span></span><span class="n">${unitLabel()}</span><span class="n">Reps</span><span class="n">Left</span></div>`+Object.entries(s.ex).map(([n,sets])=>`<div class="se-ex" data-name="${esc(n)}"><div class="se-head"><b style="font-weight:normal;color:var(--text)">${esc(n)}</b><span class="linkbtn" data-act="rm">Remove</span></div>
+      ${sets.map((x,k)=>`<div class="se-row"><span class="n">${k+1}</span><input class="in" type="number" inputmode="decimal" placeholder="—" value="${x.w?dispWeight(x.w):''}"><input class="in" type="number" inputmode="numeric" placeholder="—" value="${x.r||''}"><select class="in" aria-label="Set ${k+1} reps left">${RIR_OPTS.map(([v,l])=>`<option value="${v}"${String(x.rir??'')===v?' selected':''}>${l}</option>`).join('')}</select></div>`).join('')}</div>`).join('')+
       `<div class="note-sm" style="margin-top:8px">Blank both fields to drop a set. Weights are in ${unitLabel()}.</div>
       <div class="se-foot"><button class="btn" data-act="cancel">Cancel</button><button class="btn primary" data-act="save">Save</button></div>`;
     det.querySelectorAll('.se-ex [data-act="rm"]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const box=b.closest('.se-ex'); removed.add(box.dataset.name); box.style.display='none'; });
@@ -3345,10 +3357,10 @@ function renderSessionEditForm(s, el, onDone){
   det.querySelector('[data-act="cancel"]').onclick=e=>{ e.stopPropagation(); onDone(); };
   det.querySelectorAll('input,select,textarea').forEach(i=>i.onclick=e=>e.stopPropagation());
 }
-// each exercise in a lifting session with its sets as text ("115×10", "bw×12", "30s hold", "(RIR 2)")
+// each exercise in a lifting session with its sets as text ("115×10", "bw×12", "30s hold", "(2 left)")
 function sessionExLines(s){
   return Object.entries(s.ex||{}).map(([n,sets])=>{ const en=entryFor(n); const bwl=!!(en&&en.start===0); const timed=!!(en&&en.target&&isTimedTarget(en.target));
-    return [n, sets.map(x=>(timed?`${x.r||'-'}s hold`:`${x.w?dispWeight(x.w):(bwl?'bw':'—')}×${x.r||'-'}`)+`${x.rir!=null?' (RIR '+x.rir+')':''}`)]; });
+    return [n, sets.map(x=>(timed?`${x.r||'-'}s hold`:`${x.w?dispWeight(x.w):(bwl?'bw':'—')}×${x.r||'-'}`)+`${x.rir!=null?' ('+(x.rir>=4?'4+':x.rir)+' left)':''}`)]; });
 }
 // one session in the calendar's day sheet, shown in full
 function buildSessionItem(s){
@@ -3416,7 +3428,7 @@ function renderCalendar(){
     if(today.getFullYear()===year && today.getMonth()===month && today.getDate()===day) cell.classList.add('today');
     const daySessions=sessionsByDay[day]||[];
     const plans=[]; [...daySessions].sort((a,b)=>a.t-b.t).map(sessionPlan).forEach(p=>{ if(!plans.some(q=>q.key===p.key)) plans.push(p); });
-    cell.innerHTML=`<span>${day}</span>${plans.length?`<div class="cal-dots">${plans.map(p=>`<i class="cal-tag t-${p.type}" title="${p.label}">${p.tag}</i>`).join('')}</div>`:''}`;
+    cell.innerHTML=`<span>${day}</span>${plans.length?`<div class="cal-dots${plans.length>1?' multi':''}">${plans.map(p=>`<i class="cal-tag t-${p.type}" title="${p.label}">${p.tag}</i>`).join('')}</div>`:''}`;
     if(plans.length) cell.setAttribute('aria-label',`${day}: ${plans.map(p=>p.label).join(', ')}`);
     if(daySessions.length){ cell.classList.add('has-session'); cell.onclick=()=>openCalDaySheet(new Date(year,month,day),daySessions); }
     grid.appendChild(cell);
@@ -3519,7 +3531,7 @@ function renderStrength(){
     const sdTxt=isTimedTarget(ex.target)?'Timed hold — counted as sets, not scored for strength':`Best set ${bestTxt} · ${fullH.length?fullH.length+' session'+(fullH.length>1?'s':'')+' logged':'your starting numbers'}`;
     const pastTxt=day.past?` · last done ${fmtDate(fullH[fullH.length-1].t)}`:'';
     const k=histKey(ex);
-    const baseTxt=isTimedTarget(ex.target)?'':baselines[k]?` · <span class="linkbtn" data-act="baseline-undo">Baseline Reset ${fmtDate(baselines[k])} — Undo</span>`:(fullH.length>=2?` · <span class="linkbtn" data-act="baseline">Reset Baseline</span>`:'');
+    const baseTxt=isTimedTarget(ex.target)?'':baselines[k]?` · <span class="linkbtn" data-act="baseline-undo">Baseline Reset ${fmtDate(baselines[k])} — Undo</span>`:(fullH.length>=2?` · <span class="linkbtn danger" data-act="baseline">Reset Baseline</span>`:'');
     row.innerHTML=`<div><div class="sn">${esc(ex.name)}<span class="also"></span>${plat?' <span class="badge plateau">Plateau</span>':''}</div><div class="sd">${sdTxt}${shareTxt}${pastTxt}${baseTxt}</div><div class="sd" data-scrub-readout style="display:none"></div></div><div class="sp ${cls}">${p===null?'Start':firstOnly?'New':fmtPct(p)}</div>${h.length&&!firstOnly?`<div class="scrub" tabindex="0" aria-label="${esc(ex.name)} trend. Drag across it, or use the arrow keys, to see each session.">${sparkline([base,...h.map(x=>x.e1rm)],cls==='down'?'var(--amber)':'var(--green)',milestoneIdx)}</div>`:''}`;
     const rowWrap=row.querySelector('.scrub');
     if(rowWrap){
@@ -3672,6 +3684,7 @@ function renderSetMain(){
   sv('rest', settings.smartRest?`Smart · ${settings.rest}s Fallback`:`${settings.rest}s`);
   const nEx=PROGRAM.reduce((a,d)=>a+d.exercises.length,0); sv('edit', `${PROGRAM.length} Days · ${nEx} Exercises`);
   sv('data', lastBackup?`Last: ${fmtDate(lastBackup)}`:'Never Backed Up');
+  document.getElementById('sv-data').classList.toggle('warn', backupDue() && sessions.length>0); // same condition as the Home backup banner
   document.querySelectorAll('#setMain .set-seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.u===(settings.unit||'lb')));
   // the same size options as onboarding, applied as soon as one is picked
   const opts=document.getElementById('textSizeOpts'), cur=settings.textSize||'standard';
