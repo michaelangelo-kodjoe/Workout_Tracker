@@ -1064,6 +1064,13 @@ const store = {
       req.onerror=()=>reject(req.error);
     });
   },
+  // raw copies kept by set() under corrupt:<key>, as {'corrupt:hist':'<text>'}; Export Backup includes them so the unreadable text is not lost
+  async corruptCopies(){ const out={}; try{
+    if(this.mode==='local'){ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith('liftlog:corrupt:')) out[k.slice(8)]=localStorage.getItem(k); } }
+    else if(this.mode==='idb'){ await new Promise((resolve,reject)=>{ const os=this.idb.transaction('kv','readonly').objectStore('kv'), rq=os.openCursor();
+      rq.onsuccess=()=>{ const c=rq.result; if(!c) return resolve(); if(String(c.key).startsWith('corrupt:')) out[c.key]=c.value; c.continue(); }; rq.onerror=()=>reject(rq.error); }); }
+    else for(const k in this.mem) if(k.startsWith('corrupt:')) out[k]=this.mem[k];
+  }catch(e){ console.error(e); } return out; },
   // missing is null; text that exists but will not parse is also null to the app, but the raw string is remembered
   _parse(k,raw){ if(!raw) return null; try{ return JSON.parse(raw); }catch(e){ this.corrupt[k]=raw; return null; } },
   async get(k){ try{
@@ -3759,6 +3766,7 @@ document.getElementById('edReset').onclick=async()=>{ if(await confirmSheet('Res
 let lastBackup=0;
 async function doExport(silent){
   const out={}; for(const k of KEYS){ out[k]=await sget(k); }
+  Object.assign(out, await store.corruptCopies()); // corrupt:<key> raw text; import only reads KEYS, so it ignores these
   const blob=new Blob([JSON.stringify({app:'liftlog',v:1,exported:new Date().toISOString(),data:out},null,1)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`liftlog-backup-${new Date().toISOString().slice(0,10)}.json`; document.body.appendChild(a); a.click(); a.remove();
   lastBackup=Date.now(); await sset('lastBackup',lastBackup); updateBackupUI(); showToast(silent?'Weekly backup downloaded':'Backup downloaded');
