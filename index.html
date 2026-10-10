@@ -2009,6 +2009,7 @@ async function syncWakeLock(){
 }
 setInterval(syncWakeLock,1500);
 document.addEventListener('visibilitychange',syncWakeLock);
+document.addEventListener('pointerdown',syncWakeLock,{passive:true}); // a refused request (some browsers want a gesture) is retried on the next tap
 
 // ---------- hold counter for timed sets ----------
 // a timed target ("3 x 30-45s") is logged in seconds, not reps. Each undone set gets a stopwatch: start counts up,
