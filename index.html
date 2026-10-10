@@ -3524,7 +3524,7 @@ function renderStrength(){
     const sdTxt=isTimedTarget(ex.target)?'Timed hold — counted as sets, not scored for strength':`Best set ${bestTxt} · ${fullH.length?fullH.length+' session'+(fullH.length>1?'s':'')+' logged':'your starting numbers'}`;
     const pastTxt=day.past?` · last done ${fmtDate(fullH[fullH.length-1].t)}`:'';
     const k=histKey(ex);
-    const baseTxt=isTimedTarget(ex.target)?'':baselines[k]?` · <span class="linkbtn" data-act="baseline-undo">Baseline Reset ${fmtDate(baselines[k])} — Undo</span>`:(fullH.length>=2?` · <span class="linkbtn" data-act="baseline">Reset Baseline</span>`:'');
+    const baseTxt=isTimedTarget(ex.target)?'':baselines[k]?` · <span class="linkbtn" data-act="baseline-undo">Baseline Reset ${fmtDate(baselines[k])} — Undo</span>`:(fullH.length>=2?` · <span class="linkbtn danger" data-act="baseline">Reset Baseline</span>`:'');
     row.innerHTML=`<div><div class="sn">${esc(ex.name)}<span class="also"></span>${plat?' <span class="badge plateau">Plateau</span>':''}</div><div class="sd">${sdTxt}${shareTxt}${pastTxt}${baseTxt}</div><div class="sd" data-scrub-readout style="display:none"></div></div><div class="sp ${cls}">${p===null?'Start':firstOnly?'New':fmtPct(p)}</div>${h.length&&!firstOnly?`<div class="scrub" tabindex="0" aria-label="${esc(ex.name)} trend. Drag across it, or use the arrow keys, to see each session.">${sparkline([base,...h.map(x=>x.e1rm)],cls==='down'?'var(--amber)':'var(--green)',milestoneIdx)}</div>`:''}`;
     const rowWrap=row.querySelector('.scrub');
     if(rowWrap){
