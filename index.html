@@ -26,7 +26,7 @@
   :root.ios-standalone{--edge:20px;} /* older iOS home-screen apps report navigator.standalone but not the media query */
   /* the app is dark-only: declaring it gives native controls (select menus, checkboxes, number spinners, scrollbars)
      their dark system styling instead of light boxes on a dark page */
-  :root{color-scheme:dark;--upper:#a98bf5;--lower:#38b7a8;--cardio:#5fa8e0;--danger:#f0619a;--bg:#14161a;--panel:#1c1f25;--panel-raised:#22262e;--line:#2c3038;--text:#e8e9ec;--text-dim:#8b8f98;--accent:#ff5d3b;--heavy:#ff5d3b;--light:#4fa3d1;--done-bg:#1f2a20;--done-line:#3d5c3f;--green:#5cbb6f;--amber:#d6a03a;--gold:#e8b23d;}
+  :root{color-scheme:dark;--upper:#a98bf5;--lower:#38b7a8;--cardio:#5fa8e0;--danger:#f0619a;--bg:#14161a;--panel:#1c1f25;--panel-raised:#22262e;--line:#2c3038;--line-strong:#6c727e;--text:#e8e9ec;--text-dim:#8b8f98;--accent:#ff5d3b;--heavy:#ff5d3b;--light:#4fa3d1;--done-bg:#1f2a20;--done-line:#3d5c3f;--green:#5cbb6f;--amber:#d6a03a;--gold:#e8b23d;}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Georgia','Iowan Old Style',serif;min-height:100%;}
   /* every tab at least as tall as the screen with Safari's toolbar tucked away (lvh), plus 1px, so every tab can scroll:
@@ -143,7 +143,7 @@
   .ex-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;cursor:pointer;}
   .ex-name{font-size:17px;line-height:1.25;} .ex-target{font-size:13px;color:var(--text-dim);margin-top:4px;}
   .sug{color:var(--accent);} .e1rm{color:var(--text-dim);}
-  .ex-check{width:24px;height:24px;box-sizing:border-box;border-radius:50%;border:1.5px solid var(--field-line,#646a76);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:transparent;}
+  .ex-check{width:24px;height:24px;box-sizing:border-box;border-radius:50%;border:1.5px solid var(--line-strong);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:transparent;}
   .exercise.complete .ex-check{background:var(--done-line);border-color:var(--done-line);color:#cfe8cf;}
   .ex-body{padding:0 16px 16px;display:none;} .exercise.open .ex-body{display:block;}
   .howto{margin:0 0 12px;}
@@ -196,7 +196,7 @@
   @keyframes popcheck{0%{transform:scale(.7);}55%{transform:scale(1.18);}100%{transform:scale(1);}}
   .delta-up{font-family:'Menlo',monospace;font-size:12px;color:var(--green);white-space:nowrap;}
   .first-log-note{font-size:12px;line-height:1.55;color:var(--light);background:rgba(79,163,209,.08);border-left:2px solid var(--light);padding:9px 11px;border-radius:3px;margin:0 0 10px;}
-  .addset{display:block;width:100%;height:44px;margin:4px 0 0;padding:0;border:1px dashed var(--field-line,#646a76);border-radius:8px;background:none;color:var(--text-dim);font:13px 'Georgia',serif;cursor:pointer;}
+  .addset{display:block;width:100%;height:44px;margin:4px 0 0;padding:0;border:1px dashed var(--line-strong);border-radius:8px;background:none;color:var(--text-dim);font:13px 'Georgia',serif;cursor:pointer;}
   .notes{width:100%;margin-top:12px;background:var(--panel-raised);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:12px;font-size:12px;font-family:'Georgia',serif;resize:vertical;min-height:34px;}
   .last-time{font-size:12px;color:var(--text-dim);margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);}
   /* plate breakdown for bar-loaded lifts: what to put on each side for the weight in play */
@@ -214,7 +214,7 @@
   .side-line{display:flex;align-items:center;gap:4px;}
   .side-step{display:inline-flex;}
   .side-step button{width:44px;height:44px;margin:-6px 0;border:0;background:none;color:var(--text);font-size:20px;padding:0;cursor:pointer;}
-  .bar-chip{position:relative;display:inline-flex;align-items:center;gap:6px;flex-shrink:0;min-height:36px;white-space:nowrap;padding:0 10px 0 12px;border:1px solid var(--field-line,#646a76);border-radius:8px;background:var(--panel-raised);color:var(--text);font:13px 'Menlo',monospace;cursor:pointer;}
+  .bar-chip{position:relative;display:inline-flex;align-items:center;gap:6px;flex-shrink:0;min-height:36px;white-space:nowrap;padding:0 10px 0 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--panel-raised);color:var(--text);font:13px 'Menlo',monospace;cursor:pointer;}
   .bar-chip svg{width:14px;height:14px;fill:none;stroke:var(--text-dim);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
   .bar-chip select{position:absolute;left:0;right:0;top:-5px;bottom:-5px;width:100%;opacity:0;font-size:16px;cursor:pointer;}
   .bar-chip:has(select:focus-visible){outline:2px solid var(--light);outline-offset:2px;}
@@ -232,7 +232,7 @@
   .timer .t{font-family:'Menlo',monospace;font-size:22px;color:var(--accent);} .timer .t.over{color:var(--green);}
   /* +30s / skip are tapped between sets with a sweaty thumb: real bordered buttons, not underlined text links */
   .timer .acts{display:flex;gap:8px;}
-  .timer .acts button{display:inline-flex;align-items:center;min-height:44px;margin:0;padding:0 14px;border:1px solid var(--field-line);border-radius:8px;background:var(--panel);color:var(--text);font-family:'Menlo',monospace;font-size:13px;cursor:pointer;}
+  .timer .acts button{display:inline-flex;align-items:center;min-height:44px;margin:0;padding:0 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--panel);color:var(--text);font-family:'Menlo',monospace;font-size:13px;cursor:pointer;}
   .tbar{height:6px;background:var(--line);border-radius:3px;margin-top:8px;overflow:hidden;}
   .tbar i{display:block;height:100%;background:var(--accent);transition:width 1s linear,background 1s linear;}
   /* destructive, so it's an outlined button in the danger colour — same shape as + Add Set, and it asks first */
@@ -466,7 +466,7 @@
   .onb-ex-row i{width:12px;height:12px;border-radius:50%;flex-shrink:0;} .onb-ex-row span{flex:1;} .onb-ex-row b{font-weight:normal;font-size:13px;color:var(--text-dim);text-align:right;}
   .onb-note{font-size:12px;color:var(--text-dim);max-width:320px;line-height:1.5;}
   .onb-foot{position:sticky;bottom:0;z-index:2;display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 0 calc(24px + var(--sa-b));background:var(--bg);box-shadow:0 -16px 16px -4px var(--bg);}
-  .cel-cta.alt{background:none;color:var(--text);border:1px solid var(--field-line,#646a76);}
+  .cel-cta.alt{background:none;color:var(--text);border:1px solid var(--line-strong);}
   .cel-h1{font-size:22px;margin:0 0 6px;position:relative;z-index:2;}
   .cel-sub{font-size:13px;color:var(--text-dim);margin-bottom:26px;position:relative;z-index:2;}
   .cel-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;width:100%;max-width:320px;position:relative;z-index:2;margin-bottom:20px;}
@@ -577,7 +577,7 @@
   .rh-stats b{display:block;font:22px 'Menlo',monospace;font-weight:normal;} .rh-stats b.up{color:var(--green);}
   .rh-stats b small{font-size:12px;color:var(--text-dim);} .rh-stats span{font-size:12px;color:var(--text-dim);}
   .rh-chart{position:relative;margin-top:28px;}
-  .rh-goal{position:absolute;left:0;right:0;top:0;border-top:1px dashed var(--field-line,#646a76);}
+  .rh-goal{position:absolute;left:0;right:0;top:0;border-top:1px dashed var(--line-strong);}
   .rh-goal span{position:absolute;right:0;top:-18px;font-size:11px;color:var(--text-dim);}
   .rh-bars{display:flex;gap:4px;align-items:flex-end;height:72px;}
   .rh-bars i{flex:1;min-height:2px;border-radius:4px 4px 0 0;background:rgba(92,187,111,.7);}
@@ -659,10 +659,10 @@
   .finish-btn,.start-cta,.cel-cta{min-height:50px;font-size:15px;font-weight:bold;border-radius:8px;}
 
   /* ---------- fields & focus ---------- */
-  /* --line is only 1.25:1 against a card, so field outlines all but vanished; --field-line clears 3:1. The suggested
+  /* --line is only 1.25:1 against a card, so field outlines all but vanished; --line-strong (#6c727e) is >= 3:1 (WCAG 1.4.11) on --bg, --panel and --panel-raised. Controls only: cards and dividers keep --line. The suggested
      weight lives in the placeholder, so it gets the readable dim token instead of the browser's 3.3:1 grey. */
-  :root{--field-line:#646a76;}
-  .setgrid input,.in,.notes,.setdone{border-color:var(--field-line);}
+  .setgrid input,.in,.notes,.setdone,.cf-in,.cf-rc,.cf-stp button{border-color:var(--line-strong);}
+  .cf-big input{border-bottom-color:var(--line-strong);}
   ::placeholder{color:var(--text-dim);opacity:1;}
   input[type=checkbox]{accent-color:var(--accent);}
   /* fields keep their accent-border focus from above; everything else gets a ring, but only for keyboard focus */
