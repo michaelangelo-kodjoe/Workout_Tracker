@@ -519,6 +519,7 @@
   /* first-launch builder */
   .build-hint{font-size:12px;line-height:1.5;color:var(--text-dim);margin:14px 2px 0;} .build-hint+.build-eq{margin-top:8px;}
   /* while the first-launch builder is on screen the tab bar would let a new user wander off with no program: hide it, and let the pinned button sit on the safe area instead */
+  body.building .toast{bottom:calc(var(--foot-h,80px) + 12px + 56px + 16px);} /* the builder's sticky Use This Program button (about 56 px) sits where the tab bar was: lift the toast clear of it */
   body.building footer{display:none;} body.building{--foot-h:var(--sa-b);}
   .build-eq{display:flex;flex-wrap:wrap;gap:6px;margin:14px 2px 2px;}
   .chip-set{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
