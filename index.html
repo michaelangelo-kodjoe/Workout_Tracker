@@ -3870,7 +3870,7 @@ function bwWeeklyRate(){
   return ((latest.w-ref.w)/ref.w*100)/(days/7);
 }
 document.getElementById('bwBannerBtn').onclick=()=>{ setView('strength'); document.getElementById('bwInput').focus(); };
-document.getElementById('updateBannerBtn').onclick=()=>location.reload();
+document.getElementById('updateBannerBtn').onclick=()=>{ reloadedForUpdate=true; location.reload(); };
 function openDeloadSheet(){
   const wks=weeksSinceDeload().toFixed(1); const plat=plateauCountAll();
   document.getElementById('deloadStats').textContent=`${wks} weeks since your last deload · ${plat} exercise${plat===1?'':'s'} currently plateaued`;
@@ -4342,12 +4342,27 @@ if('serviceWorker' in navigator) window.addEventListener('load',()=>{
 // launch); mid-session it only raises the same dismissible banner so it never yanks the screen out from under a set.
 let initialSwText=null, reloadedForUpdate=false;
 fetch('sw.js',{cache:'reload'}).then(r=>r.text()).then(t=>{ initialSwText=t; }).catch(()=>{});
+// A reload throws away anything held only in memory, so it waits while the user is mid-action: a rest timer
+// counting down, a hold stopwatch, a live cardio session, or a field being typed into. Sets themselves are saved
+// as they are typed, but these are not. The single reloadForUpdate() is the only place the page reloads for an
+// update (the banner tap and the safe-moment poll both use it), so the two cannot double-reload; the
+// service-worker 'controllerchange' path above only raises the banner and never reloads.
+function updateBusy(){
+  const tm=document.getElementById('timer');
+  if(tm&&tm.classList.contains('on')&&!tm.classList.contains('done')&&timer.end>Date.now()) return true;
+  if(hold.key||cardioLive) return true;
+  const a=document.activeElement; return !!(a&&a.matches&&a.matches(TYPING_SEL));
+}
+let updatePollId=null;
+function reloadForUpdate(){ if(reloadedForUpdate) return; reloadedForUpdate=true; location.reload(); }
 function checkSwDrift(forceReload){
   if(initialSwText==null) return;
   fetch('sw.js',{cache:'reload'}).then(r=>r.text()).then(txt=>{
-    if(txt===initialSwText) return;
-    if(forceReload && !reloadedForUpdate){ reloadedForUpdate=true; location.reload(); }
-    else document.getElementById('updateBanner').style.display='flex';
+    if(txt===initialSwText||reloadedForUpdate) return;
+    if(forceReload&&!updateBusy()){ reloadForUpdate(); return; }
+    document.getElementById('updateBanner').style.display='flex';
+    // the banner stays up; if this was the resume check, reload by itself at the first quiet moment
+    if(forceReload&&!updatePollId) updatePollId=setInterval(()=>{ if(document.visibilityState==='visible'&&!updateBusy()){ clearInterval(updatePollId); reloadForUpdate(); } },4000);
   }).catch(()=>{});
 }
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') checkSwDrift(true); });
