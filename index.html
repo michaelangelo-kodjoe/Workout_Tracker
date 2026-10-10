@@ -2635,8 +2635,24 @@ async function finishSession(){
     if(!await confirmSheet(msg, 'Log It Anyway')) return;
   }
   const now=Date.now();
-  // each write is checked: on the first failure stop, so the rest of the session isn't half-saved, and tell the user once
-  const saveFail=()=>{ showToast("Couldn't save this session. Your sets are still on screen, so free up storage and try Finish Session again."); };
+  // each write is checked: on the first failure stop and tell the user once. The bookkeeping below changes the live
+  // state before it is written, so snapshot it first; on failure put it back (in place) and best-effort write the old
+  // values over any key that did save, so a retry starts clean and yields one session, one history entry, recovery once.
+  const snapKeys={recovery,familiarity,recoveryLog,hist,sessions,lastByName};
+  const snap={}; Object.keys(snapKeys).forEach(k=>{ snap[k]=JSON.stringify(snapKeys[k]); });
+  const snapCount=sessionCount;
+  const saveFail=async()=>{
+    Object.keys(snapKeys).forEach(k=>{
+      const live=snapKeys[k], old=JSON.parse(snap[k]);
+      if(Array.isArray(live)){ live.length=0; live.push(...old); }
+      else{ Object.keys(live).forEach(x=>delete live[x]); Object.assign(live,old); }
+    });
+    sessionCount=snapCount;
+    for(const k of Object.keys(snapKeys)) await sset(k,snapKeys[k]);
+    await sset('meta:sessionCount',sessionCount);
+    await sset('today:'+currentDay,todayData);
+    showToast("Couldn't save this session. Your sets are still on screen, so free up storage and try Finish Session again.");
+  };
 
   // recovery, scaled by how much of the planned work each muscle actually got
   const tally={};
