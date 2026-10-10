@@ -266,7 +266,7 @@
   .alt .ac{font-size:12px;line-height:1.5;color:var(--text);margin-top:6px;opacity:.85;}
   .alt .ab{margin-top:8px;display:flex;gap:8px;}
   .alt-sec{font-size:12px;color:var(--text-dim);margin:12px 0 6px;}
-  .toast{position:fixed;bottom:calc(var(--foot-h,80px) + 16px);left:50%;transform:translateX(-50%);background:var(--panel-raised);border:1px solid var(--done-line);color:#cfe8cf;padding:10px 18px;border-radius:4px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:20;max-width:88%;text-align:center;}
+  .toast{position:fixed;bottom:calc(var(--foot-h,80px) + 16px);left:50%;transform:translateX(-50%);background:var(--panel-raised);border:1px solid var(--done-line);color:#cfe8cf;padding:10px 18px;border-radius:4px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:48;max-width:88%;text-align:center;}
   .toast.show{opacity:1;}
   .stats2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
   .stat{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;}
@@ -1928,7 +1928,7 @@ function sparklineHero(points,isDown){
   const color=isDown?'var(--amber)':'var(--green)';
   return `<polyline fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${line}"/><polygon points="${area}" fill="${color}" opacity=".15"/>`;
 }
-function showToast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); const dur=Math.max(1800,Math.min(5000,m.length*45)); clearTimeout(t._hideTimer); t._hideTimer=setTimeout(()=>t.classList.remove('show'),dur); }
+function showToast(m,ms){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); const dur=ms||Math.max(1800,Math.min(5000,m.length*45)); clearTimeout(t._hideTimer); t._hideTimer=setTimeout(()=>t.classList.remove('show'),dur); }
 // in-app stand-in for window.confirm(): iOS Safari silently no-ops the native confirm()/alert()/prompt() dialogs
 // for a web app added to the home screen (standalone display mode) — the call returns immediately with no dialog
 // ever shown, which looks exactly like a dead button. Every yes/no confirmation in the app goes through this sheet
@@ -3850,7 +3850,7 @@ async function doExport(silent){
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); const d=new Date(), p2=n=>String(n).padStart(2,'0'); a.download=`liftlog-backup-${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}.json`; document.body.appendChild(a); a.click(); a.remove();
   // A timer-fired download can be blocked or left waiting on a prompt, so it proves nothing: only the user's own tap
   // records the backup (and resets the 7-day reminder).
-  if(silent){ showToast('Backup Ready: Tap Download To Save It'); return; }
+  if(silent){ showToast('Backup Ready: Tap Download To Save It',4000); return; }
   lastBackup=Date.now(); await sset('lastBackup',lastBackup); updateBackupUI(); showToast('Backup downloaded');
 }
 function backupDue(){ return !lastBackup || (Date.now()-lastBackup) > 7*864e5; }
