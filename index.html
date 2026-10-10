@@ -4373,7 +4373,7 @@ if('serviceWorker' in navigator) window.addEventListener('load',()=>{
 // every release (they must be equal; scripts/check.sh checks it). The service worker serves the cached shell when
 // the network is slower than 3 s, so an old shell can open while the live sw.js is already newer; the text diff
 // below can't see that (it only compares sw.js against itself), but comparing BUILD_ID to the live version can.
-const BUILD_ID='liftlog-v72';
+const BUILD_ID='liftlog-v73';
 let initialSwText=null, reloadedForUpdate=false;
 fetch('sw.js',{cache:'reload'}).then(r=>r.text()).then(t=>{
   initialSwText=t;

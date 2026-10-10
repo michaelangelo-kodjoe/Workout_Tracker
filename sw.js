@@ -11,7 +11,7 @@
 // users can sit on an old cached shell indefinitely with no "update available" banner ever appearing,
 // even though network-first would otherwise have served them the latest index.html on their next visit.
 // RELEASE: bump this together with BUILD_ID in index.html (they must be equal; scripts/check.sh checks it).
-const CACHE_VERSION = 'liftlog-v72';
+const CACHE_VERSION = 'liftlog-v73';
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './favicon-32.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e=>{
