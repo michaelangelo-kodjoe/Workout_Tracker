@@ -395,7 +395,6 @@
   .cf-ctrl{display:flex;gap:8px;margin:12px 0;} .cf-ctrl .btn{flex:1;min-height:52px;font-size:15px;}
   .cf-now{font:11px 'Menlo',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin:20px 0 8px;}
   .cf-dots{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px;} .cf-dots i{width:10px;height:10px;border-radius:50%;background:var(--line);} .cf-dots i.d{background:var(--cardio);} .cf-dots i.c{background:var(--accent);}
-  .cf-sum{display:flex;gap:8px;margin:12px 0;} .cf-sum div{flex:1;min-width:0;padding:12px 8px;text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:8px;} .cf-sum b{display:block;font:22px 'Menlo',monospace;font-weight:normal;overflow:hidden;text-overflow:ellipsis;} .cf-sum span{font-size:12px;color:var(--text-dim);}
   .cf-clock .ms{font-size:28px;color:var(--text-dim);} .cf-clock .t.big{font-size:96px;line-height:1.1;margin-top:8px;}
   .cf-past{text-align:center;margin-top:16px;}
   .cf-rpe-note{font-size:13px;color:var(--text);margin-top:12px;padding:10px 12px;border-left:2px solid var(--light);background:var(--panel-raised);border-radius:3px;}
@@ -3251,11 +3250,11 @@ function renderCardioLive(){
     document.getElementById('cfCancel').onclick=async()=>{ stopCardioTick(); cardioLive=null; await sset('today:cardio',null); renderTabs(); renderCardioForm(); };
     if(go()) cardioTickId=requestAnimationFrame(function loop(){ if(cardioTickId===null) return; if(go() && cardioTickId!==null) cardioTickId=requestAnimationFrame(loop); });
   } else if(L.step==='finish'){
-    const e=cardioElapsed(L), m=a.main[0], shown=a.main.slice(0,2).filter(k=>(L.vals[k]??'')!=='');
+    const e=cardioElapsed(L), iv=L.structure==='intervals', more=a.more.concat(iv?['warm','cool']:[]);
     wrap.innerHTML=`<button type="button" class="cf-back" id="cfKeep"><svg class="cf-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>Keep Going</button>
-      <h3 class="cf-h">Nice Work</h3><p class="cf-lede">${cardioEsc(cardioLabel(a,L))} · fix anything that's off, then save.</p>
-      <div class="cf-sum"><div><b>${cardioClock(e)}</b><span>Time</span></div>${shown.map(k=>`<div><b>${(L.vals[k]+'').slice(0,7)}</b><span>${CARDIO_FIELDS[k].u==='du'?du:(CARDIO_FIELDS[k].u==='spd'?(du==='km'?'km/h':'mph'):CARDIO_FIELDS[k].u==='%'?'% '+CARDIO_FIELDS[k].l.toLowerCase():CARDIO_FIELDS[k].l)}</span></div>`).join('')}</div>
-      <div class="cf-fld"><div><label class="field-label" for="cfDur">Duration (min)</label><input class="cf-in" id="cfDur" type="text" inputmode="numeric" value="${L.duration}"></div>${m?fld(m,'cfs'):''}</div>
+      <h3 class="cf-h">Nice Work</h3><p class="cf-lede">${cardioEsc(cardioLabel(a,L))} · ${cardioClock(e)} on the clock. Fix anything that's off, then save.</p>
+      <div class="cf-fld"><div><label class="field-label" for="cfDur">Duration (min)</label><input class="cf-in" id="cfDur" type="text" inputmode="numeric" value="${L.duration}"></div>${a.main.map(k=>fld(k,'cfs')).join('')}</div>
+      ${more.length?`<button type="button" class="cf-disc" id="cfMoreBtn" aria-expanded="${!!L.more}"><span>Add Details: ${more.map(k=>CARDIO_FIELDS[k].l).join(', ')}</span>${L.more?CARDIO_CHEV_UP:CARDIO_CHEV}</button>${L.more?`<div class="cf-fld">${more.map(k=>fld(k,'cfs')).join('')}</div>`:''}`:''}
       <div class="field-label" id="rpeLbl" style="margin-top:4px">Effort (RPE, 1 easy – 10 max)</div><div class="cf-rpe" id="rpeRow" role="group" aria-labelledby="rpeLbl">${Array.from({length:10},(_,i)=>i+1).map(n=>`<button type="button" class="${L.rpe===n?'on':''}" data-n="${n}" aria-pressed="${L.rpe===n}" aria-label="Effort ${n}">${n}</button>`).join('')}</div>
       ${L.rpe?`<div class="cf-rpe-note">${L.rpe}: ${CARDIO_RPE[L.rpe]}</div>`:''}
       <textarea class="notes" id="cNotes" aria-label="Notes" placeholder="Notes — route, how it felt">${esc(L.notes)}</textarea>
@@ -3264,6 +3263,7 @@ function renderCardioLive(){
     document.getElementById('cfDur').oninput=ev=>{ L.duration=ev.target.value.replace(/[^\d]/g,''); saveCardioLive(); };
     document.getElementById('cNotes').oninput=ev=>{ L.notes=ev.target.value; saveCardioLive(); };
     wrap.querySelectorAll('#rpeRow button').forEach(b=>b.onclick=()=>{ L.rpe=L.rpe===+b.dataset.n?0:+b.dataset.n; L.focus='r:'+b.dataset.n; saveCardioLive(); renderCardioForm(); });
+    const mb2=document.getElementById('cfMoreBtn'); if(mb2) mb2.onclick=()=>{ L.more=!L.more; L.focus='cfMoreBtn'; saveCardioLive(); renderCardioForm(); };
     document.getElementById('cfKeep').onclick=()=>{ if(L.autoPaused){ L.pausedMs+=Date.now()-L.pausedAt; L.pausedAt=null; L.autoPaused=false; } L.step='live'; L.focus='cfPause'; saveCardioLive(); renderCardioForm(); };
     document.getElementById('cfSave').onclick=saveLiveCardio;
   } else {
@@ -3288,7 +3288,7 @@ function renderCardioLive(){
     document.getElementById('cfFinish').onclick=async()=>{
       const secs=cardioElapsed(L), long=secs>CARDIO_LONG_SEC; let setTime=false;
       if(long) setTime=await confirmSheet(`This session has been running ${Math.floor(secs/3600)} h ${Math.floor(secs%3600/60)} min. Did you forget to stop it? Set the time you actually trained, or keep it as it is.`,'Set the Time','Keep It');
-      if(!L.pausedAt){ L.pausedAt=Date.now(); L.autoPaused=true; } L.duration=setTime?'':String(Math.max(1,Math.round(cardioElapsed(L)/60))); L.step='finish'; L.focus=setTime?'cfDur':null; saveCardioLive(); renderCardioForm(); window.scrollTo(0,0); };
+      if(!L.pausedAt){ L.pausedAt=Date.now(); L.autoPaused=true; } L.duration=setTime?'':String(Math.max(1,Math.round(cardioElapsed(L)/60))); L.step='finish'; L.focus='cfDur'; saveCardioLive(); renderCardioForm(); window.scrollTo(0,0); };
     document.getElementById('cfDiscard').onclick=async()=>{ if(await confirmSheet("Discard this session? The time and numbers you've logged will be lost.",'Discard',null,true)){ cardioLive=null; cardioDraft=newCardioDraft(); await sset('today:cardio',null); renderTabs(); renderCardioForm(); } };
     cardioLastKey=null; stopCardioTick(); cardioTick(); if(!paused){ cardioTickId=requestAnimationFrame(cardioTickLoop); }
   }
