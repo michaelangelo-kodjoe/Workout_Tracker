@@ -74,6 +74,17 @@
   .banner .linkbtn{color:var(--amber);white-space:nowrap;}
   .banner.info{background:rgba(79,163,209,.1);border-color:rgba(79,163,209,.4);color:var(--light);}
   .banner.info .linkbtn{color:var(--light);}
+  /* Home shows one reminder at a time (see bannerQueue); the rest open under an "N More" button */
+  #bannerSlot[hidden]{display:none;}
+  #bannerSlot .banner{flex-wrap:wrap;margin-bottom:12px;}
+  #bannerSlot .banner>span:first-child{flex:1 1 110px;min-width:0;}
+  #bannerSlot .banner .linkbtn{margin-left:auto;}
+  .banner button.linkbtn{background:none;border:0;font:inherit;font-size:13px;}
+  .bmore-row{flex:0 0 100%;display:flex;}
+  .bmore{display:inline-flex;align-items:center;gap:6px;background:none;border:0;font:inherit;font-size:13px;color:inherit;cursor:pointer;padding:12px 16px 12px 0;margin:-8px 0 -14px;min-height:44px;min-width:44px;white-space:nowrap;}
+  .bmore svg{width:12px;height:12px;flex:none;transition:transform .2s ease;}
+  .bmore[aria-expanded="true"] svg{transform:rotate(180deg);}
+  @media (prefers-reduced-motion: reduce){ .bmore svg{transition:none;} }
   .bodymap{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:24px;}
   /* the readiness score heads its card rather than sitting in a second box inside it; the ring and number carry
      the red/amber/green, and a rule separates it from the body diagram */
@@ -768,12 +779,16 @@
 
 <main>
   <section id="homeView">
-    <div class="banner info" id="cardioLiveBanner" style="display:none"><span id="cardioLiveTxt"></span><span class="linkbtn" id="cardioLiveBtn">Resume</span></div>
-    <div class="banner" id="backupBanner" style="display:none"><span>It's been a week since your last backup.</span><span class="linkbtn" id="bannerBtn">Back Up Now</span></div>
-    <div class="banner" id="deloadBanner" style="display:none"><span>It's been a while since your last deload — a lighter week can help you keep progressing.</span><span class="linkbtn" id="deloadBannerBtn">Plan a Deload Week</span></div>
+    <div id="bannerSlot" role="region" aria-label="Reminders" hidden>
+      <div class="banner info" id="cardioLiveBanner" style="display:none"><span id="cardioLiveTxt"></span><button type="button" class="linkbtn" id="cardioLiveBtn">Resume</button></div>
+      <div class="banner" id="backupBanner" style="display:none"><span>It's been a week since your last backup.</span><button type="button" class="linkbtn" id="bannerBtn">Back Up Now</button></div>
+      <div class="banner" id="blockBanner" style="display:none"><span id="blockBannerTxt">Your training block is complete.</span><button type="button" class="linkbtn" id="blockBannerBtn">Review What's Changing</button></div>
+      <div class="banner" id="deloadBanner" style="display:none"><span id="deloadBannerTxt"></span><button type="button" class="linkbtn" id="deloadBannerBtn">Plan a Deload Week</button></div>
+      <div class="banner" id="bwBanner" style="display:none"><span>It's been a week since you last logged your weight.</span><button type="button" class="linkbtn" id="bwBannerBtn">Log It Now</button></div>
+      <div class="bmore-row" id="bannerMoreRow" hidden><button type="button" class="bmore" id="bannerMoreBtn" aria-expanded="false"><span id="bannerMoreTxt"></span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4.5l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+    </div>
     <div class="banner info" id="deloadActiveBanner" style="display:none"></div>
-    <div class="banner" id="blockBanner" style="display:none"><span id="blockBannerTxt">Your training block is complete.</span><span class="linkbtn" id="blockBannerBtn">Review What's Changing</span></div>
-    <div class="banner" id="bwBanner" style="display:none"><span>It's been a week since you last logged your weight.</span><span class="linkbtn" id="bwBannerBtn">Log It Now</span></div>
+    <span class="sr-only" id="bannerStatus" role="status" aria-live="polite" aria-atomic="true"></span>
     <div id="arrivalPanel"></div>
     <div class="bodymap" id="bodymapCard">
       <h2 class="sr-only">Recovery</h2>
@@ -1772,10 +1787,44 @@ document.getElementById('blockClose').onclick=closeBlockSheet; document.getEleme
 document.getElementById('blockApply').onclick=async()=>{ closeBlockSheet(); await applyBlock(blockProposals); };
 document.getElementById('blockBannerBtn').onclick=openBlockSheet;
 function updateBlockUI(){
-  const due=blockDue();
-  document.getElementById('blockBanner').style.display=due?'flex':'none';
-  if(due) document.getElementById('blockBannerTxt').textContent=`Block ${blockNum} is complete — ${blockWeeks()} weeks in.`;
+  if(blockDue()) document.getElementById('blockBannerTxt').textContent=`Block ${blockNum} is complete — ${blockWeeks()} weeks in.`;
+  applyBanners();
 }
+// ---------- Home reminders: one at a time ----------
+// bannerQueue is the only place that decides order: the due ids, highest priority first. The update banner is outside it.
+const BANNER_ORDER=['cardioLiveBanner','backupBanner','blockBanner','deloadBanner','bwBanner'];
+function bannerQueue(due){ return BANNER_ORDER.filter(id=>due[id]); }
+let bannerOpen=false, backupFading=false, bannerFocusPending=false;
+function bannerDueMap(){
+  return { cardioLiveBanner:!!cardioLive, backupBanner:!!((backupNag() && sessions.length) || backupFading), blockBanner:blockDue(),
+           deloadBanner:!!(deloadDue() && sessions.length), bwBanner:!!bwDue() };
+}
+function applyBanners(announce){
+  const slot=document.getElementById('bannerSlot'); if(!slot) return;
+  const q=bannerQueue(bannerDueMap()), n=q.length-1;
+  if(n<1) bannerOpen=false;
+  BANNER_ORDER.forEach(id=>{ const b=document.getElementById(id), i=q.indexOf(id); b.style.display=(i===0||(i>0&&bannerOpen))?'flex':'none'; });
+  slot.hidden=!q.length;
+  const row=document.getElementById('bannerMoreRow'), btn=document.getElementById('bannerMoreBtn');
+  if(n>=1){
+    const top=document.getElementById(q[0]);
+    if(row.parentNode!==top) top.appendChild(row);
+    row.hidden=false;
+    document.getElementById('bannerMoreTxt').textContent=`${n} More`;
+    btn.setAttribute('aria-label',`${n} more reminder${n===1?'':'s'}`);
+    btn.setAttribute('aria-expanded',String(bannerOpen));
+    btn.setAttribute('aria-controls',q.slice(1).join(' '));
+  } else { row.hidden=true; if(row.parentNode!==slot) slot.appendChild(row); }
+  if(announce!==undefined){
+    const next=q.length?(q[0]==='cardioLiveBanner'?'A cardio session is in progress.':document.getElementById(q[0]).firstElementChild.textContent):'';
+    document.getElementById('bannerStatus').textContent=`${announce}. ${q.length?'Next reminder: '+next:'No more reminders.'}`;
+  }
+  if(bannerFocusPending && !backupFading){
+    bannerFocusPending=false;
+    if(view==='home'){ const t=q.length?document.querySelector('#'+q[0]+' .linkbtn'):document.getElementById('arrivalStart'); if(t) t.focus({preventScroll:true}); }
+  }
+}
+document.getElementById('bannerMoreBtn').onclick=()=>{ bannerOpen=!bannerOpen; document.getElementById('bannerMoreBtn').focus({preventScroll:true}); applyBanners(); };
 // "never suggest this again": the name goes on a settings list every picker honours, and the slot is refilled
 // with the next pick right away (falling back to a plain undo when nothing else fits). The pre-block exercise is
 // kept as rotPrev so an undo still returns to what was there before the block, not to the rejected pick.
@@ -1809,7 +1858,14 @@ function weeksSinceDeload(){
   const base=lastDeload || (sessions.length?Math.min(...sessions.map(s=>s.t)):Date.now());
   return (Date.now()-base)/(7*864e5);
 }
-function deloadDue(){ return !isDeloadActive() && (weeksSinceDeload()>=5 || plateauCountAll()>=3); }
+const DELOAD_WEEKS=5, DELOAD_PLATEAUS=3; // the rule; the Home copy never quotes the numbers
+function deloadDue(){ return !isDeloadActive() && (weeksSinceDeload()>=DELOAD_WEEKS || plateauCountAll()>=DELOAD_PLATEAUS); }
+// one sentence per cause, stalled wins when both apply
+function deloadCauseCopy(){
+  if(plateauCountAll()>=DELOAD_PLATEAUS) return 'Some of your lifts have stalled. A lighter deload week can help you recover so you can start progressing again.';
+  return lastDeload ? "It's been a while since your last deload. A lighter week can help you recover so you keep progressing."
+                    : "It's been a while since you started logging. A lighter week can help you recover so you keep progressing.";
+}
 function plateauBreakIdx(h){
   // indices into h where a session broke a preceding 3-session plateau
   const idx=[];
@@ -3352,12 +3408,12 @@ function cardioTickLoop(){ if(cardioTickId===null) return; cardioTick(); if(card
 let cardioBannerId=null;
 function updateCardioLiveBanner(){
   const b=document.getElementById('cardioLiveBanner'); clearInterval(cardioBannerId); cardioBannerId=null;
-  if(!cardioLive){ b.style.display='none'; return; }
+  if(!cardioLive){ applyBanners(); return; }
   const a=cardioAct(cardioLive.act), name=a.k==='other'&&cardioLive.name.trim()?cardioLive.name.trim():a.l;
-  const paint=()=>{ const L=cardioLive; if(!L||view!=='home'){ clearInterval(cardioBannerId); cardioBannerId=null; if(!L) b.style.display='none'; return; }
+  const paint=()=>{ const L=cardioLive; if(!L||view!=='home'){ clearInterval(cardioBannerId); cardioBannerId=null; if(!L) applyBanners(); return; }
     const e=cardioElapsed(L), pre=Date.now()<L.startedAt;
     document.getElementById('cardioLiveTxt').textContent=`${name} ${L.step==='finish'?'is ready to save':L.pausedAt?'is paused':'is in progress'} · ${pre?'starting':cardioClock(e)}`; };
-  b.style.display=''; paint(); cardioBannerId=setInterval(paint,1000);
+  applyBanners(); paint(); cardioBannerId=setInterval(paint,1000);
   document.getElementById('cardioLiveBtn').onclick=async()=>{ await loadDay('cardio'); setView('log'); };
 }
 function cardioStart(k){
@@ -4086,14 +4142,17 @@ function backupDue(){ return !lastBackup || (Date.now()-lastBackup) > 7*864e5; }
 function backupNag(){ return settings.autoBackup!==false && backupDue(); }
 function updateBackupUI(fade){ // fade: a backup was just taken, so Home's banner fades out once instead of vanishing
   const b=document.getElementById('backupBanner'), show=backupNag() && sessions.length;
-  if(show){ b.classList.remove('fade-out'); b.style.display='flex'; }
+  if(show){ backupFading=false; b.classList.remove('fade-out'); applyBanners(); }
   else if(fade && b.style.display!=='none' && !matchMedia('(prefers-reduced-motion: reduce)').matches){
-    b.classList.add('fade-out'); setTimeout(()=>{ if(!(backupNag() && sessions.length)){ b.style.display='none'; } b.classList.remove('fade-out'); },650); }
-  else b.style.display='none';
+    // keep it in the queue while it fades so the next reminder appears after it, not over it
+    backupFading=true; applyBanners(); b.classList.add('fade-out');
+    setTimeout(()=>{ backupFading=false; b.classList.remove('fade-out'); applyBanners('Backup done'); },650); }
+  else { backupFading=false; applyBanners(fade?'Backup done':undefined); }
   const l=document.getElementById('lastBackup'); l.textContent = lastBackup ? `Last backup: ${fmtDate(lastBackup)}${backupDue()?' — a new one is due':''}` : 'No backup yet.';
 }
 function updateDeloadUI(){
-  document.getElementById('deloadBanner').style.display = (deloadDue() && sessions.length) ? 'flex':'none';
+  document.getElementById('deloadBannerTxt').textContent = deloadCauseCopy();
+  applyBanners();
   const active=document.getElementById('deloadActiveBanner');
   if(isDeloadActive()){
     active.innerHTML=`<span>Deload week — suggested weights are about 10% lighter through ${fmtDate(deloadStart+7*864e5)}.</span><span class="linkbtn" id="endDeloadBtn">End Early</span>`;
@@ -4103,7 +4162,7 @@ function updateDeloadUI(){
 }
 // ---------- body weight: staleness reminder + rate-of-change note ----------
 function bwDue(){ return bodyweight.length && (Date.now()-bodyweight[bodyweight.length-1].t > 7*864e5); }
-function updateBwUI(){ document.getElementById('bwBanner').style.display = bwDue() ? 'flex':'none'; }
+function updateBwUI(){ applyBanners(); }
 function bwWeeklyRate(){
   if(bodyweight.length<2) return null;
   const latest=bodyweight[bodyweight.length-1];
@@ -4132,7 +4191,7 @@ document.getElementById('startDeloadBtn').onclick=async()=>{
   closeDeloadSheet(); updateDeloadUI(); render(); showToast('Deload week started — suggestions are ~10% lighter');
 };
 document.getElementById('exportBtn').onclick=()=>doExport();
-document.getElementById('bannerBtn').onclick=()=>doExport();
+document.getElementById('bannerBtn').onclick=()=>{ bannerFocusPending=true; doExport(); };
 document.getElementById('keepOn').onchange=e=>{ settings.keepOn=e.target.checked; e.target.setAttribute('aria-checked',String(e.target.checked)); sset('settings',settings); syncWakeLock(); };
 document.getElementById('autoBackup').onchange=e=>{ settings.autoBackup=e.target.checked; sset('settings',settings); updateBackupUI(); document.getElementById('sv-data').classList.toggle('warn', backupNag() && sessions.length>0); };
 async function doMergeImport(d){
