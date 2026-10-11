@@ -80,6 +80,9 @@
   #bannerSlot .banner>span:first-child{flex:1 1 110px;min-width:0;}
   #bannerSlot .banner .linkbtn{margin-left:auto;}
   .banner button.linkbtn{background:none;border:0;font:inherit;font-size:13px;}
+  .deload-line{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:0 10px;margin:2px 0 16px;font-size:13px;line-height:1.5;color:var(--text-dim);}
+  .deload-line>span{flex:1 1 110px;min-width:0;} .deload-line b{font-weight:normal;color:var(--text);}
+  .deload-line .linkbtn{background:none;border:0;font:inherit;font-size:13px;white-space:nowrap;margin-left:auto;}
   .bmore-row{flex:0 0 100%;display:flex;}
   .bmore{display:inline-flex;align-items:center;gap:6px;background:none;border:0;font:inherit;font-size:13px;color:inherit;cursor:pointer;padding:12px 16px 12px 0;margin:-8px 0 -14px;min-height:44px;min-width:44px;white-space:nowrap;}
   .bmore svg{width:12px;height:12px;flex:none;transition:transform .2s ease;}
@@ -787,7 +790,6 @@
       <div class="banner" id="bwBanner" style="display:none"><span>It's been a week since you last logged your weight.</span><button type="button" class="linkbtn" id="bwBannerBtn">Log It Now</button></div>
       <div class="bmore-row" id="bannerMoreRow" hidden><button type="button" class="bmore" id="bannerMoreBtn" aria-expanded="false"><span id="bannerMoreTxt"></span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4.5l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
     </div>
-    <div class="banner info" id="deloadActiveBanner" style="display:none"></div>
     <span class="sr-only" id="bannerStatus" role="status" aria-live="polite" aria-atomic="true"></span>
     <div id="arrivalPanel"></div>
     <div class="bodymap" id="bodymapCard">
@@ -1787,7 +1789,7 @@ document.getElementById('blockClose').onclick=closeBlockSheet; document.getEleme
 document.getElementById('blockApply').onclick=async()=>{ closeBlockSheet(); await applyBlock(blockProposals); };
 document.getElementById('blockBannerBtn').onclick=openBlockSheet;
 function updateBlockUI(){
-  if(blockDue()) document.getElementById('blockBannerTxt').textContent=`Block ${blockNum} is complete — ${blockWeeks()} weeks in.`;
+  if(blockDue()) document.getElementById('blockBannerTxt').textContent=`Your training block is complete, ${blockWeeks()} weeks in.`;
   applyBanners();
 }
 // ---------- Home reminders: one at a time ----------
@@ -2785,7 +2787,8 @@ function renderBuilder(panel){
 let homePreviewOpen=false;
 // the loaded day is "Today" until a lift has been logged today; after that it's the next one in the rotation
 function dayTagText(){ const t0=new Date(); t0.setHours(0,0,0,0); return sessions.some(x=>!x.isCardio&&x.t>=t0.getTime())?'Next':'Today'; }
-function renderHome(){
+function renderHome(){ renderHomeBody(); placeDeloadLine(); }
+function renderHomeBody(){
   updateBlockUI(); updateCardioLiveBanner();
   const panel=document.getElementById('arrivalPanel');
   document.body.classList.toggle('building', needsBuild);
@@ -4153,12 +4156,17 @@ function updateBackupUI(fade){ // fade: a backup was just taken, so Home's banne
 function updateDeloadUI(){
   document.getElementById('deloadBannerTxt').textContent = deloadCauseCopy();
   applyBanners();
-  const active=document.getElementById('deloadActiveBanner');
-  if(isDeloadActive()){
-    active.innerHTML=`<span>Deload week — suggested weights are about 10% lighter through ${fmtDate(deloadStart+7*864e5)}.</span><span class="linkbtn" id="endDeloadBtn">End Early</span>`;
-    active.style.display='flex';
-    document.getElementById('endDeloadBtn').onclick=async()=>{ deloadStart=0; await sset('deloadStart',0); updateDeloadUI(); render(); showToast('Deload week ended'); };
-  } else active.style.display='none';
+  placeDeloadLine();
+}
+// the only deload line on Home: while a deload is active (due is explained once, by the banner). Sits under the greeting.
+function placeDeloadLine(){
+  const panel=document.getElementById('arrivalPanel'); if(!panel) return;
+  const old=document.getElementById('deloadLine'); if(old) old.remove();
+  if(!isDeloadActive() || needsBuild) return;
+  const el=document.createElement('div'); el.className='deload-line'; el.id='deloadLine';
+  el.innerHTML=`<span><b>Deload week:</b> suggested weights are lighter through ${fmtDate(deloadStart+7*864e5)}, then go back to normal.</span><button type="button" class="linkbtn" id="endDeloadBtn">End Early</button>`;
+  const g=panel.querySelector('.greet-wrap'); if(g) g.after(el); else panel.prepend(el);
+  document.getElementById('endDeloadBtn').onclick=async()=>{ deloadStart=0; await sset('deloadStart',0); updateDeloadUI(); render(); const st=document.getElementById('arrivalStart'); if(st&&view==='home') st.focus({preventScroll:true}); showToast('Deload week ended'); };
 }
 // ---------- body weight: staleness reminder + rate-of-change note ----------
 function bwDue(){ return bodyweight.length && (Date.now()-bodyweight[bodyweight.length-1].t > 7*864e5); }
