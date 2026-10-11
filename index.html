@@ -887,7 +887,7 @@
       <div class="set-group">
         <button class="set-row" data-page="move"><span class="set-lbl">Move History</span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
         <button class="set-row" data-page="data"><span class="set-lbl">Back Up &amp; Restore</span><span class="set-val" id="sv-data"></span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
-        <label class="set-row static has-cap" for="autoBackup"><span class="set-lbl">Weekly Backup Reminder<span class="set-cap">Shows a Back Up Now card when you finish a session, once it's been 7+ days</span></span><input type="checkbox" class="switch" id="autoBackup"></label>
+        <label class="set-row static has-cap" for="autoBackup"><span class="set-lbl">Weekly Backup Reminder<span class="set-cap">Highlights Back Up Now after a session once it's been 7+ days. Nothing downloads by itself.</span></span><input type="checkbox" class="switch" id="autoBackup"></label>
       </div>
       <button type="button" class="reset-link" id="wipeBtn">Erase Everything</button>
       <div class="save-warn" id="saveWarn" role="alert" hidden>Not saving to this device. Export a backup now.</div>
@@ -2841,8 +2841,8 @@ async function finishSession(){
 
 // ---------- celebration screen ----------
 function celBackupMsg(){
+  if(!backupNag()) return lastBackup?`Last backup: ${fmtDate(lastBackup)}.`:"You haven't backed up yet."; // reminder off or not due: plain facts, no nudge
   if(!lastBackup) return "You haven't backed up yet. Back up now to keep your history safe.";
-  if(!backupDue()) return `Last backup: ${fmtDate(lastBackup)}.`;
   const n=Math.floor((Date.now()-lastBackup)/864e5);
   return `It's been ${n} days since your last backup. Back up now to keep your history safe.`;
 }
@@ -2869,11 +2869,11 @@ function showCelebration({day,worked,nsets,vol,durationMin,pr,rhythmCount}){
     <div class="rhythm-msg"><b>${ord(rhythmCount)} session this week</b> — ${rhythmRest}
       <div class="rhythm-dots">${Array.from({length:dotsTotal},(_,i)=>`<i class="${i<dotsOn?'on':''}"></i>`).join('')}</div>
     </div>
-    <section class="cel-backup ${backupDue()?'due':''}" id="celBackup" aria-label="Backup"><div class="cel-bmsg" id="celBackupMsg" role="status" aria-live="polite">${celBackupMsg()}</div><button class="btn" id="celBackupBtn">Back Up Now</button></section>
+    <section class="cel-backup ${backupNag()?'due':''}" id="celBackup" aria-label="Backup"><div class="cel-bmsg" id="celBackupMsg" role="status" aria-live="polite">${celBackupMsg()}</div><button class="btn" id="celBackupBtn">Back Up Now</button></section>
     <button class="cel-cta" id="celBackBtn">Return to Home</button>`;
   document.getElementById('celBackupBtn').onclick=async()=>{
     const card=document.getElementById('celBackup'), msg=document.getElementById('celBackupMsg'), btn=document.getElementById('celBackupBtn');
-    try{ await doExport(false); }catch(e){ msg.className='cel-bmsg err'; msg.textContent='Could not create the file. Try again.'; return; }
+    try{ await doExport(); }catch(e){ msg.className='cel-bmsg err'; msg.textContent='Could not create the file. Try again.'; return; }
     card.classList.remove('due'); card.classList.add('done'); msg.className='cel-bmsg'; msg.textContent='Backup downloaded. Last backup: today.'; btn.textContent='Back Up Again';
   };
   bg.classList.add('on');
@@ -3756,7 +3756,7 @@ function renderSetMain(){
   sv('rest', settings.smartRest?`Smart · ${settings.rest}s Fallback`:`${settings.rest}s`);
   const nEx=PROGRAM.reduce((a,d)=>a+d.exercises.length,0); sv('edit', `${PROGRAM.length} Days · ${nEx} Exercises`);
   sv('data', lastBackup?`Last: ${fmtDate(lastBackup)}`:'Never Backed Up');
-  document.getElementById('sv-data').classList.toggle('warn', backupDue() && sessions.length>0); // same condition as the Home backup banner
+  document.getElementById('sv-data').classList.toggle('warn', backupNag() && sessions.length>0); // same condition as the Home backup banner
   document.querySelectorAll('#setMain .set-seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.u===(settings.unit||'lb')));
   // the same size options as onboarding, applied as soon as one is picked
   const opts=document.getElementById('textSizeOpts'), cur=settings.textSize||'standard';
@@ -3928,21 +3928,19 @@ async function restoreKeys(data){
   }
   return true;
 }
-let autoBackupOffered=false; // the unprompted download is offered once per app launch, so an unanswered prompt is not repeated at every Finish
-async function doExport(silent){
-  if(silent){ if(autoBackupOffered) return; autoBackupOffered=true; }
+async function doExport(){
   const out={}; for(const k of KEYS){ out[k]=await sget(k); }
   Object.assign(out, await store.corruptCopies()); // corrupt:<key> raw text; import only reads KEYS, so it ignores these
   const blob=new Blob([JSON.stringify({app:'liftlog',v:BACKUP_VERSION,exported:new Date().toISOString(),data:out},null,1)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); const d=new Date(), p2=n=>String(n).padStart(2,'0'); a.download=`liftlog-backup-${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}.json`; document.body.appendChild(a); a.click(); a.remove();
-  // A timer-fired download can be blocked or left waiting on a prompt, so it proves nothing: only the user's own tap
-  // records the backup (and resets the 7-day reminder).
-  if(silent){ showToast('Backup Ready: Tap Download To Save It',4000); return; }
+  // only a tap on a Back Up Now / Export button runs this, so it records the backup (and resets the 7-day reminder)
   lastBackup=Date.now(); await sset('lastBackup',lastBackup); updateBackupUI(); showToast('Backup downloaded');
 }
 function backupDue(){ return !lastBackup || (Date.now()-lastBackup) > 7*864e5; }
+// due AND the Weekly Backup Reminder is on: the only thing that may colour the celebration card, light the Settings row or show Home's banner
+function backupNag(){ return settings.autoBackup!==false && backupDue(); }
 function updateBackupUI(){
-  const b=document.getElementById('backupBanner'); b.style.display = backupDue() && sessions.length ? 'flex':'none';
+  const b=document.getElementById('backupBanner'); b.style.display = backupNag() && sessions.length ? 'flex':'none';
   const l=document.getElementById('lastBackup'); l.textContent = lastBackup ? `Last backup: ${fmtDate(lastBackup)}${backupDue()?' — a new one is due':''}` : 'No backup yet.';
 }
 function updateDeloadUI(){
@@ -3984,10 +3982,10 @@ document.getElementById('startDeloadBtn').onclick=async()=>{
   await sset('deloadStart',deloadStart); await sset('lastDeload',lastDeload);
   closeDeloadSheet(); updateDeloadUI(); render(); showToast('Deload week started — suggestions are ~10% lighter');
 };
-document.getElementById('exportBtn').onclick=()=>doExport(false);
-document.getElementById('bannerBtn').onclick=()=>doExport(false);
+document.getElementById('exportBtn').onclick=()=>doExport();
+document.getElementById('bannerBtn').onclick=()=>doExport();
 document.getElementById('keepOn').onchange=e=>{ settings.keepOn=e.target.checked; e.target.setAttribute('aria-checked',String(e.target.checked)); sset('settings',settings); syncWakeLock(); };
-document.getElementById('autoBackup').onchange=e=>{ settings.autoBackup=e.target.checked; sset('settings',settings); };
+document.getElementById('autoBackup').onchange=e=>{ settings.autoBackup=e.target.checked; sset('settings',settings); updateBackupUI(); document.getElementById('sv-data').classList.toggle('warn', backupNag() && sessions.length>0); };
 async function doMergeImport(d){
   const must=async(k,v)=>{ if(await sset(k,v)===false) throw new Error('save failed: '+k); };
   const localSessionsBefore=[...sessions];
