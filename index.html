@@ -484,6 +484,12 @@
   .rhythm-dots{display:flex;gap:5px;margin-top:8px;}
   .rhythm-dots i{width:16px;height:6px;border-radius:3px;background:var(--line);display:block;}
   .rhythm-dots i.on{background:var(--green);}
+  .cel-backup{width:100%;max-width:320px;box-sizing:border-box;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:12px 0;text-align:left;font-size:13px;color:var(--text-dim);line-height:1.5;position:relative;}
+  .cel-backup.due{background:rgba(214,160,58,.1);border-color:rgba(214,160,58,.4);}
+  .cel-backup.done{background:var(--done-bg);border-color:var(--done-line);}
+  .cel-backup .btn{display:block;width:100%;min-height:44px;margin-top:12px;font-size:15px;}
+  .cel-backup.due .btn{border-color:var(--amber);color:var(--amber);}
+  .cel-backup .cel-bmsg.err{color:var(--danger);}
   .cel-cta{width:100%;max-width:320px;background:var(--accent);color:#1a0d08;border:none;border-radius:4px;padding:14px;font-size:13px;font-family:'Menlo',monospace;letter-spacing:.3px;cursor:pointer;position:relative;z-index:2;}
   /* a short (landscape) screen: tighter spacing so Return to Home fits without scrolling */
   @media (max-height:500px){
@@ -2834,6 +2840,12 @@ async function finishSession(){
 }
 
 // ---------- celebration screen ----------
+function celBackupMsg(){
+  if(!lastBackup) return "You haven't backed up yet. Back up now to keep your history safe.";
+  if(!backupDue()) return `Last backup: ${fmtDate(lastBackup)}.`;
+  const n=Math.floor((Date.now()-lastBackup)/864e5);
+  return `It's been ${n} days since your last backup. Back up now to keep your history safe.`;
+}
 function showCelebration({day,worked,nsets,vol,durationMin,pr,rhythmCount}){
   const bg=document.getElementById('celebrateBg'), inner=document.getElementById('celebrateInner');
   const colors=['#ff5d3b','#e8b23d','#4fa3d1','#5cbb6f'];
@@ -2857,7 +2869,13 @@ function showCelebration({day,worked,nsets,vol,durationMin,pr,rhythmCount}){
     <div class="rhythm-msg"><b>${ord(rhythmCount)} session this week</b> — ${rhythmRest}
       <div class="rhythm-dots">${Array.from({length:dotsTotal},(_,i)=>`<i class="${i<dotsOn?'on':''}"></i>`).join('')}</div>
     </div>
+    <section class="cel-backup ${backupDue()?'due':''}" id="celBackup" aria-label="Backup"><div class="cel-bmsg" id="celBackupMsg" role="status" aria-live="polite">${celBackupMsg()}</div><button class="btn" id="celBackupBtn">Back Up Now</button></section>
     <button class="cel-cta" id="celBackBtn">Return to Home</button>`;
+  document.getElementById('celBackupBtn').onclick=async()=>{
+    const card=document.getElementById('celBackup'), msg=document.getElementById('celBackupMsg'), btn=document.getElementById('celBackupBtn');
+    try{ await doExport(false); }catch(e){ msg.className='cel-bmsg err'; msg.textContent='Could not create the file. Try again.'; return; }
+    card.classList.remove('due'); card.classList.add('done'); msg.className='cel-bmsg'; msg.textContent='Backup downloaded. Last backup: today.'; btn.textContent='Back Up Again';
+  };
   bg.classList.add('on');
   document.getElementById('celBackBtn').onclick=()=>{ bg.classList.remove('on'); setView('home'); if(pendingBlockReview){ pendingBlockReview=false; openBlockSheet(); } };
 }
