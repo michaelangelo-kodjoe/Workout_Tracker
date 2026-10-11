@@ -2614,12 +2614,12 @@ function render(){
       sal.innerHTML=`<button type="button" class="sal-chip" aria-describedby="${hid}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 8v4l3 2"/></svg>Same as Last</button><span class="sal-hint" id="${hid}">Set ${j+1}${addTxt} · ${esc(String(ls.r))} reps${leftTxt}</span>`;
       sal.querySelector('button').onclick=e=>{
         e.currentTarget.focus({preventScroll:true}); // Safari doesn't focus a tapped button; the redraw would hand focus back to whatever had it last
-        const fk=listFocusKey(), t=state.sets[j]; if(!t||t.done||t.r!=='') { render(); return; }
+        const fk=listFocusKey(), cardIdx=[...document.querySelectorAll('#exerciseList .exercise')].indexOf(e.currentTarget.closest('.exercise')), t=state.sets[j]; if(!t||t.done||t.r!=='') { render(); return; }
         t.r=String(ls.r); t.rir=(ls.rir!=null&&ls.rir>=0&&ls.rir<=4)?ls.rir:null;
         if(bwLoaded){ if(!t.add&&parseFloat(ls.add)>0) t.add=ls.add; }
         else if((t.w===''||t.w==null)&&typeof sug==='number'&&sug>0) t.w=storeWeight(dispWeight(sug));
         touchDayStart(); sset('today:'+currentDay,todayData); render();
-        { const c0=fk&&document.querySelectorAll('#exerciseList .exercise')[fk.card], h=c0&&c0.querySelector('.sal-row:not(.idle) .sal-hint'); salAnnounce(h?'Next: '+h.textContent:'Every set is filled'); }
+        { const c0=document.querySelectorAll('#exerciseList .exercise')[cardIdx], h=c0&&c0.querySelector('.sal-row:not(.idle) .sal-hint'); salAnnounce(h?'Next: '+h.textContent:'Every set is filled'); }
         if(fk){ const c=document.querySelectorAll('#exerciseList .exercise')[fk.card]; const nxt=c&&(c.querySelector('.sal-row:not(.idle) .sal-chip')||c.querySelector('.setdone:not(.on)')); if(nxt){ tagClickables(c); nxt.focus({preventScroll:true}); } }
       };
       body.insertBefore(sal,hr);
