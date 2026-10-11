@@ -486,10 +486,10 @@
   .rhythm-dots i.on{background:var(--green);}
   .cel-backup{width:100%;max-width:320px;box-sizing:border-box;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:12px 0;text-align:left;font-size:13px;color:var(--text-dim);line-height:1.5;position:relative;}
   .cel-backup.due{background:rgba(214,160,58,.1);border-color:rgba(214,160,58,.4);}
-  .cel-backup{transition:background-color .6s ease,border-color .6s ease;} /* the confirmation fades back to the neutral card */
+  .cel-backup.leaving{opacity:0;transition:opacity .5s ease;} /* once backed up the card says so, fades, then is removed from that celebration */
   .cel-backup.done{background:var(--done-bg);border-color:var(--done-line);}
   #backupBanner.fade-out{opacity:0;transition:opacity .6s ease;}
-  @media (prefers-reduced-motion: reduce){ .cel-backup,#backupBanner.fade-out{transition:none;} }
+  @media (prefers-reduced-motion: reduce){ .cel-backup.leaving,#backupBanner.fade-out{transition:none;} }
   .cel-backup .btn{display:block;width:100%;min-height:44px;margin-top:12px;font-size:15px;}
   .cel-backup.due .btn{border-color:var(--amber);color:var(--amber);}
   .cel-backup .cel-bmsg.err{color:var(--danger);}
@@ -2877,8 +2877,10 @@ function showCelebration({day,worked,nsets,vol,durationMin,pr,rhythmCount}){
   document.getElementById('celBackupBtn').onclick=async()=>{
     const card=document.getElementById('celBackup'), msg=document.getElementById('celBackupMsg'), btn=document.getElementById('celBackupBtn');
     try{ await doExport(); }catch(e){ msg.className='cel-bmsg err'; msg.textContent='Could not create the file. Try again.'; return; }
-    card.classList.remove('due'); card.classList.add('done'); msg.className='cel-bmsg'; msg.textContent='Backup downloaded. Last backup: today.'; btn.textContent='Back Up Again';
-    clearTimeout(card._rest); card._rest=setTimeout(()=>{ card.classList.remove('done'); msg.textContent='Last backup: today.'; },3500); // then rest in the neutral style; the button stays
+    card.style.minHeight=card.offsetHeight+'px'; card.classList.remove('due'); card.classList.add('done'); msg.className='cel-bmsg'; msg.textContent='Backup downloaded. Last backup: today.'; btn.style.visibility='hidden'; document.getElementById('celBackBtn').focus({preventScroll:true}); // keeps its space until the card is gone
+    // the confirmation shows for a moment, then the whole card fades and is removed (display none after the fade, so Return to Home does not move under a finger mid-fade)
+    const still=matchMedia('(prefers-reduced-motion: reduce)').matches; clearTimeout(card._rest);
+    card._rest=setTimeout(()=>{ if(still){ card.style.display='none'; return; } card.classList.add('leaving'); setTimeout(()=>{ card.style.display='none'; },520); },2500);
   };
   bg.classList.add('on');
   document.getElementById('celBackBtn').onclick=()=>{ bg.classList.remove('on'); setView('home'); if(pendingBlockReview){ pendingBlockReview=false; openBlockSheet(); } };
