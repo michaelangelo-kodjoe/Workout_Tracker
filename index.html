@@ -1805,7 +1805,7 @@ function openBlockSheet(){
   document.getElementById('blockBg').classList.add('on'); document.getElementById('blockSheet').classList.add('on');
 }
 function closeBlockSheet(){ document.getElementById('blockBg').classList.remove('on'); document.getElementById('blockSheet').classList.remove('on'); }
-document.getElementById('blockClose').onclick=closeBlockSheet; document.getElementById('blockBg').onclick=closeBlockSheet; document.getElementById('blockNotNow').onclick=closeBlockSheet;
+document.getElementById('blockClose').onclick=closeBlockSheet; document.getElementById('blockBg').onclick=closeBlockSheet; document.getElementById('blockNotNow').onclick=()=>{ closeBlockSheet(); notNowDismiss('blockBanner'); };
 document.getElementById('blockApply').onclick=async()=>{ closeBlockSheet(); await applyBlock(blockProposals); };
 document.getElementById('blockBannerBtn').onclick=openBlockSheet;
 function updateBlockUI(){
@@ -1842,6 +1842,8 @@ async function undoDismiss(){
   if(u.id==='backupBanner'){ backupSnoozeUntil=u.prev; bannerFocusPending=true; bannerFocusId=u.id; applyBanners('Reminder restored'); if(u.prev) await sset('backupSnoozeUntil',u.prev); else await store.remove('backupSnoozeUntil'); }
   else { bannerDismissed.delete(u.id); bannerFocusPending=true; bannerFocusId=u.id; applyBanners('Reminder restored'); }
 }
+// Not Now on the block and deload sheets hides that banner like the X does (only when it is actually showing in the queue); Close, Escape and an outside tap stay a plain close
+function notNowDismiss(id){ if(bannerDueMap()[id] && !bannerDismissed.has(id)) dismissBanner(id); }
 document.getElementById('undoBtn').onclick=undoDismiss;
 document.querySelectorAll('#bannerSlot .bx').forEach(x=>{ x.onclick=()=>{ x.focus({preventScroll:true}); dismissBanner(x.closest('.banner').id); }; });
 function bannerDueMap(){
@@ -4240,7 +4242,7 @@ function openDeloadSheet(){
 function closeDeloadSheet(){ document.getElementById('deloadBg').classList.remove('on'); document.getElementById('deloadSheet').classList.remove('on'); }
 document.getElementById('deloadClose').onclick=closeDeloadSheet;
 document.getElementById('deloadBg').onclick=closeDeloadSheet;
-document.getElementById('deloadNotNow').onclick=closeDeloadSheet;
+document.getElementById('deloadNotNow').onclick=()=>{ closeDeloadSheet(); notNowDismiss('deloadBanner'); };
 document.getElementById('deloadBannerBtn').onclick=openDeloadSheet;
 document.getElementById('startDeloadBtn').onclick=async()=>{
   deloadStart=Date.now(); lastDeload=deloadStart;
