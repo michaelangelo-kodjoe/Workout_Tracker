@@ -378,7 +378,7 @@
   .cf-stack{display:flex;flex-direction:column;gap:10px;}
   .cel-list{width:100%;max-width:320px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:4px 16px;margin-bottom:16px;position:relative;z-index:2;}
   .cel-list div{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line);font-size:15px;text-align:left;} .cel-list div:first-child{border-top:0;}
-  .cel-list span{font-size:13px;color:var(--text-dim);text-align:right;flex:none;}
+  .cel-list span{font-size:13px;color:var(--text-dim);text-align:right;}
   .cf-steps{display:flex;align-items:center;gap:8px;margin:4px 0 16px;font-size:12px;color:var(--text-dim);} .cf-steps i{flex:1;height:3px;border-radius:2px;background:var(--line);} .cf-steps i.on{background:var(--cardio);} .cf-steps b{font-weight:normal;color:var(--text);white-space:nowrap;}
   .cf-ico{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;}
   .cf-back{display:inline-flex;align-items:center;gap:2px;min-height:44px;margin:-8px 0 0 -4px;padding:0 10px 0 0;background:none;border:0;color:var(--light);font:15px 'Georgia',serif;cursor:pointer;}
@@ -3083,12 +3083,12 @@ function cardioFieldText(k,v,du){ // one logged value as History reads it
     case 'split':return `${v} /500 m`; case 'laps':return `${v} laps`; case 'reps':return `${v} reps`; case 'lanes':return `${v} lanes`; case 'steps':return `${v} steps`;
     case 'watts':return `${v} W`; case 'jumps':return `${v} jumps`; case 'warm':return `${v} min warm-up`; case 'cool':return `${v} min cooldown`; } return String(v); }
 // History's one-line summary of a cardio session; older logs only have duration, distance and effort
-function cardioMeta(s){
+function cardioMeta(s,noRpe){
   const a=s.cact&&cardioAct(s.cact), du=s.du||'mi';
   const parts=[`${s.duration} min`, s.distance];
   if(s.structure==='intervals'&&s.rounds) parts.push(`${s.rounds} × ${s.work}s / ${s.rest}s`);
   if(a&&s.f) a.main.concat(a.more).filter(k=>k!=='dist'&&s.f[k]!=null&&s.f[k]!=='').slice(0,2).forEach(k=>parts.push(cardioFieldText(k,s.f[k],du)));
-  if(s.rpe) parts.push(`RPE ${s.rpe}`);
+  if(s.rpe&&!noRpe) parts.push(`RPE ${s.rpe}`);
   return parts.filter(Boolean).join(' · ');
 }
 function cardioRecent(){ // the last four distinct activities, newest first
@@ -3192,7 +3192,7 @@ function cardioDayRecs(){ // records of the open day, oldest first; [] once the 
   if(cardioDay&&(cardioDay.date!==cardioDateKey(Date.now())||!Array.isArray(cardioDay.ids))){ cardioDay=null; sset(CARDIO_DAY_KEY,null); }
   return cardioDay?sessions.filter(s=>s.isCardio&&cardioDay.ids.includes(s.t)).sort((a,b)=>a.t-b.t):[];
 }
-const cardioSummary=s=>`${s.duration} min${s.distance?' · '+s.distance:''}`;
+const cardioSummary=s=>cardioMeta(s,true); // the same line History shows, without the effort
 async function saveCardioRec(rec,live){
   sessions.push(rec);
   if(!await sset('sessions',sessions)){ sessions.pop(); showToast('Could not save. Try again.'); return false; }
