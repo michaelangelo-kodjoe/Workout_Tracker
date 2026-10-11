@@ -3296,7 +3296,7 @@ function renderCardioLive(){
   document.getElementById('resetLink').style.display='none';
   tagClickables(wrap);
   const f=L.focus; L.focus=null; // a redraw drops focus on the tapped control, so hand it back
-  if(f){ const el=f.startsWith('s:')?wrap.querySelector(`#cfStruct [data-s="${f.slice(2)}"]`):f.startsWith('r:')?wrap.querySelector(`#rpeRow [data-n="${f.slice(2)}"]`):document.getElementById(f); if(el) el.focus({preventScroll:true}); }
+  if(f){ const el=f.startsWith('s:')?wrap.querySelector(`#cfStruct [data-s="${f.slice(2)}"]`):f.startsWith('r:')?wrap.querySelector(`#rpeRow [data-n="${f.slice(2)}"]`):document.getElementById(f); if(el){ el.focus({preventScroll:true}); if(f==='cfDur'&&el.select) el.select(); } }
 }
 async function saveLiveCardio(){
   const L=cardioLive, dur=parseInt(L.duration);
