@@ -33,6 +33,7 @@
      a tab too short to scroll (Strength, cards closed) made Safari bring its full toolbar back, resizing the whole page */
   body{min-height:calc(100lvh + 1px);}
   button,input,textarea,select{font-family:'Menlo','SF Mono',monospace;}
+  button,.btn,[role=button]{touch-action:manipulation;} /* no double-tap zoom on controls (two quick taps used to zoom and drop one); pinch zoom still works */
   /* iOS Safari zooms the page in on focus of any field under 16px. Pinch-zoom is allowed (the viewport no longer
      locks scale), so on touch screens every field is held at 16px to keep tapping a set input from jumping the page. */
   @media (pointer:coarse){ input,textarea,select{font-size:16px!important;} }
