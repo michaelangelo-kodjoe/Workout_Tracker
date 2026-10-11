@@ -460,7 +460,6 @@
   .sal-chip:focus-visible{outline:2px solid var(--light);outline-offset:2px;}
   .sal-lbl{flex:none;}
   .sal-det{font:12px 'Menlo','SF Mono',monospace;color:var(--text-dim);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;} /* only the detail truncates; the label stays whole */
-  .rir-row.idle{visibility:hidden;pointer-events:none;} /* only a row opened by typing and then cleared lands here: it stays until the next redraw so a corrected digit does not flicker */
   .rir-lbl{font-size:12px;color:var(--text-dim);margin-right:2px;white-space:nowrap;}
   .rir-pill{font-size:12px;color:var(--text-dim);background:var(--panel-raised);border:1px solid var(--line);border-radius:10px;padding:3px 9px;cursor:pointer;}
   .rir-pill.on{background:var(--light);border-color:var(--light);color:#0d1a22;}
@@ -2567,8 +2566,8 @@ function restoreListFocus(k){
   const same=card.querySelectorAll(k.sig); const el=same[Math.min(k.i,same.length-1)]||card.querySelector('.ex-head');
   if(el) el.focus({preventScroll:true});
 }
-// an idle Reps Left row (no reps yet, not done) keeps its height but is invisible, inert and hidden from assistive tech
-function setRirIdle(r,idle,i){ r.classList.toggle('idle',idle); if(idle){ r.setAttribute('aria-hidden','true'); r.removeAttribute('role'); r.removeAttribute('aria-label'); } else { r.removeAttribute('aria-hidden'); r.setAttribute('role','group'); r.setAttribute('aria-label',`Set ${i+1} reps left in tank`); } }
+// the Reps Left row is hidden (no space) until reps are typed or the set is done
+function setRirA11y(r,i){ r.setAttribute('role','group'); r.setAttribute('aria-label',`Set ${i+1} reps left in tank`); }
 let popSet=null, salSeq=0;
 // the Same as Last hint is rebuilt on every render, so a live region inside it is not reliably announced; this one persists
 function salAnnounce(msg){ let el=document.getElementById('salLive'); if(!el){ el=document.createElement('div'); el.id='salLive'; el.className='sr-only'; el.setAttribute('role','status'); el.setAttribute('aria-live','polite'); document.body.appendChild(el); } el.textContent=''; setTimeout(()=>{ el.textContent=msg; },60); } // the set whose check was just ticked, so only its check plays the pop
@@ -2743,7 +2742,7 @@ function render(){
       const [wI,rI]=row.querySelectorAll('input');
       if(bwLoaded) wI.oninput=e=>{s.add=e.target.value===''?'':storeWeight(e.target.value); s.w=bwTotal(s); touchDayStart(); sset('today:'+currentDay,todayData);};
       else wI.oninput=e=>{s.w=storeWeight(e.target.value); touchDayStart(); sset('today:'+currentDay,todayData); if(updatePlates) updatePlates(s.w);};
-      rI.oninput=e=>{s.r=e.target.value; touchDayStart(); sset('today:'+currentDay,todayData); const rr=row.nextElementSibling; if(rr&&rr.classList.contains('rir-row')){ setRirIdle(rr,!(s.done||s.r!==''),i); if(s.r!=='') rr.hidden=false; }};
+      rI.oninput=e=>{s.r=e.target.value; touchDayStart(); sset('today:'+currentDay,todayData); const rr=row.nextElementSibling; if(rr&&rr.classList.contains('rir-row')){ rr.hidden=!(s.done||s.r!==''); }};
       row.querySelector('.setdone').onclick=()=>{
         if(hold.key===holdKey(ex,i)) stopHold(false); // fills s.r with the elapsed seconds before the check below
         if(!s.done && s.r===''){ showToast(timed?'Add the seconds first':'Add reps first'); return; }
@@ -2776,7 +2775,7 @@ function render(){
       }
       if(!timed){
         // hidden until reps are in, then picked before the set can be checked; stays after Done so it can still be changed
-        const rir=document.createElement('div'); rir.className='rir-row'; setRirIdle(rir,!(s.done||s.r!==''),i); rir.hidden=!(s.done||s.r!=='');
+        const rir=document.createElement('div'); rir.className='rir-row'; setRirA11y(rir,i); rir.hidden=!(s.done||s.r!=='');
         rir.innerHTML=`<span class="rir-lbl" aria-hidden="true">Reps Left</span>`+[0,1,2,3,4].map(v=>`<span class="rir-pill${s.rir===v?' on':''}" data-v="${v}" aria-pressed="${s.rir===v}" aria-label="${v===4?'4 or more reps':v===1?'1 rep':v+' reps'} left">${v===4?'4+':v}</span>`).join('');
         rir.querySelectorAll('.rir-pill').forEach(p=>p.onclick=()=>{ const v=parseInt(p.dataset.v); s.rir=(s.rir===v)?null:v; touchDayStart(); sset('today:'+currentDay,todayData); render(); });
         body.appendChild(rir);
