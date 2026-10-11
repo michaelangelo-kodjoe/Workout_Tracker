@@ -420,12 +420,13 @@
   .rpe-dot.on{background:var(--light);border-color:var(--light);color:#0d1a22;}
   .rir-row{display:flex;align-items:center;gap:5px;margin:-2px 0 8px;flex-wrap:wrap;}
   .rir-row[hidden]{display:none;}
-  .sal-row{display:flex;align-items:center;gap:12px;margin:0 0 10px;}
-  .sal-chip{display:inline-flex;align-items:center;gap:6px;flex:none;min-height:44px;padding:0 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--panel-raised);color:var(--text);font:13px 'Georgia',serif;cursor:pointer;white-space:nowrap;}
+  .sal-row{display:flex;align-items:center;margin:0 0 8px;}
+  .sal-chip{display:inline-flex;align-items:center;gap:6px;min-width:0;max-width:100%;min-height:44px;padding:0 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--panel-raised);color:var(--text);font:13px 'Georgia',serif;cursor:pointer;white-space:nowrap;}
   .sal-row.idle{visibility:hidden;pointer-events:none;} /* nothing left to fill: the row keeps its height so the sets below stay put */
   .sal-chip svg{width:16px;height:16px;fill:none;stroke:var(--light);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;}
   .sal-chip:focus-visible{outline:2px solid var(--light);outline-offset:2px;}
-  .sal-hint{font-size:12px;line-height:1.35;color:var(--text-dim);min-width:0;}
+  .sal-lbl{flex:none;}
+  .sal-det{font:12px 'Menlo','SF Mono',monospace;color:var(--text-dim);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;} /* only the detail truncates; the label stays whole */
   .rir-row.idle{visibility:hidden;pointer-events:none;} /* the row always owns its height, so entering reps never shifts the sets below */
   .rir-lbl{font-size:12px;color:var(--text-dim);margin-right:2px;white-space:nowrap;}
   .rir-pill{font-size:12px;color:var(--text-dim);background:var(--panel-raised);border:1px solid var(--line);border-radius:10px;padding:3px 9px;cursor:pointer;}
@@ -2604,14 +2605,15 @@ function render(){
     const salTargets=lastSets.length?state.sets.map((x,j)=>j).filter(j=>!state.sets[j].done&&state.sets[j].r===''):[];
     if(lastSets.length&&!salTargets.length){
       const sal=document.createElement('div'); sal.className='sal-row idle'; sal.setAttribute('aria-hidden','true');
-      sal.innerHTML=`<button type="button" class="sal-chip" tabindex="-1">Same as Last</button><span class="sal-hint">&nbsp;</span>`; body.insertBefore(sal,hr);
+      sal.innerHTML=`<button type="button" class="sal-chip" tabindex="-1">Same as Last</button>`; body.insertBefore(sal,hr);
     }
     if(salTargets.length){
       const j=salTargets[0], ls=lastSets[Math.min(j,lastSets.length-1)], leftTxt=ls.rir!=null?` · ${ls.rir>=4?'4+':ls.rir} left`:'';
       const tw=state.sets[j].w, addTxt=bwLoaded?((!state.sets[j].add&&parseFloat(ls.add)>0)?` · +${dispWeight(parseFloat(ls.add))} ${unitLabel()}`:''):((tw===''||tw==null)&&typeof sug==='number'&&sug>0?` · ${dispWeight(sug)} ${unitLabel()}`:''); // exactly what the next tap will fill
-      const hid='salh'+(++salSeq);
+      const full=`Set ${j+1}${addTxt} · ${ls.r} reps${leftTxt}`, wTxt=addTxt.replace(/^ · /,'');
+      const det=`Set ${j+1} · ${wTxt?wTxt+' × '+esc(String(ls.r)):esc(String(ls.r))+' reps'}`; // short form on the chip; the full text (with reps left) is the label
       const sal=document.createElement('div'); sal.className='sal-row';
-      sal.innerHTML=`<button type="button" class="sal-chip" aria-describedby="${hid}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 8v4l3 2"/></svg>Same as Last</button><span class="sal-hint" id="${hid}">Set ${j+1}${addTxt} · ${esc(String(ls.r))} reps${leftTxt}</span>`;
+      sal.innerHTML=`<button type="button" class="sal-chip" aria-label="Same as Last: ${esc(full)}" data-det="${esc(full)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 8v4l3 2"/></svg><span class="sal-lbl">Same as Last:</span><span class="sal-det">${det}</span></button>`;
       sal.querySelector('button').onclick=e=>{
         e.currentTarget.focus({preventScroll:true}); // Safari doesn't focus a tapped button; the redraw would hand focus back to whatever had it last
         const fk=listFocusKey(), cardIdx=[...document.querySelectorAll('#exerciseList .exercise')].indexOf(e.currentTarget.closest('.exercise')), t=state.sets[j]; if(!t||t.done||t.r!=='') { render(); return; }
@@ -2619,7 +2621,7 @@ function render(){
         if(bwLoaded){ if(!t.add&&parseFloat(ls.add)>0) t.add=ls.add; }
         else if((t.w===''||t.w==null)&&typeof sug==='number'&&sug>0) t.w=storeWeight(dispWeight(sug));
         touchDayStart(); sset('today:'+currentDay,todayData); render();
-        { const c0=document.querySelectorAll('#exerciseList .exercise')[cardIdx], h=c0&&c0.querySelector('.sal-row:not(.idle) .sal-hint'); salAnnounce(h?'Next: '+h.textContent:'Every set is filled'); }
+        { const c0=document.querySelectorAll('#exerciseList .exercise')[cardIdx], h=c0&&c0.querySelector('.sal-row:not(.idle) .sal-chip'); salAnnounce(h?'Next: '+h.dataset.det:'Every set is filled'); }
         if(fk){ const c=document.querySelectorAll('#exerciseList .exercise')[fk.card]; const nxt=c&&(c.querySelector('.sal-row:not(.idle) .sal-chip')||c.querySelector('.setdone:not(.on)')); if(nxt){ tagClickables(c); nxt.focus({preventScroll:true}); } }
       };
       body.insertBefore(sal,hr);
