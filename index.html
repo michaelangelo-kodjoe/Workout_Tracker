@@ -198,7 +198,10 @@
   .first-log-note{font-size:12px;line-height:1.55;color:var(--light);background:rgba(79,163,209,.08);border-left:2px solid var(--light);padding:9px 11px;border-radius:3px;margin:0 0 10px;}
   .addset{display:block;width:100%;height:44px;margin:4px 0 0;padding:0;border:1px dashed var(--line-strong);border-radius:8px;background:none;color:var(--text-dim);font:13px 'Georgia',serif;cursor:pointer;}
   .notes{width:100%;margin-top:12px;background:var(--panel-raised);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:12px;font-size:12px;font-family:'Georgia',serif;resize:vertical;min-height:34px;}
-  .last-time{font-size:12px;color:var(--text-dim);margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);}
+  .ex-head>div:first-child{min-width:0;}
+  .last-time{font-size:12px;line-height:1.4;color:var(--text-dim);margin:4px 0 0;padding:0;border:0;}
+  .last-time .lt-v{color:var(--text);}
+  .exercise:not(.open) .last-time{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
   /* plate breakdown for bar-loaded lifts: what to put on each side for the weight in play */
   .plates{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--text-dim);margin:0 0 10px;}
   .plates b{color:var(--text);font-weight:normal;font-family:'Menlo',monospace;}
@@ -416,6 +419,7 @@
   .rpe-dot.on{background:var(--light);border-color:var(--light);color:#0d1a22;}
   .rir-row{display:flex;align-items:center;gap:5px;margin:-2px 0 8px;flex-wrap:wrap;}
   .rir-row[hidden]{display:none;}
+  .rir-row.idle{visibility:hidden;pointer-events:none;} /* the row always owns its height, so entering reps never shifts the sets below */
   .rir-lbl{font-size:12px;color:var(--text-dim);margin-right:2px;white-space:nowrap;}
   .rir-pill{font-size:12px;color:var(--text-dim);background:var(--panel-raised);border:1px solid var(--line);border-radius:10px;padding:3px 9px;cursor:pointer;}
   .rir-pill.on{background:var(--light);border-color:var(--light);color:#0d1a22;}
@@ -665,8 +669,8 @@
   .edrow .acts span{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;margin-left:0;}
   /* reps-left pills share the row's width and stay compact to look at; an invisible ::after takes the tappable area
      to 44 px tall, into spacing the row keeps clear above and below */
-  .rir-row{margin:8px 0 8px;flex-wrap:nowrap;}
-  .rir-pill{position:relative;flex:1 1 0;text-align:center;padding:10px 0;border-radius:17px;}
+  .rir-row{margin:2px 0 6px;flex-wrap:nowrap;}
+  .rir-pill{position:relative;flex:1 1 0;text-align:center;padding:8px 0;border-radius:17px;}
   .rir-pill::after{content:'';position:absolute;inset:-6px -2px;}
   /* 44 px day cells: a slimmer card inset and gap leave the 7 columns room at phone width */
   .cal-wrap{padding:16px 10px;} .cal-grid,.cal-dow{gap:2px;}
@@ -2446,6 +2450,8 @@ function restoreListFocus(k){
   const same=card.querySelectorAll(k.sig); const el=same[Math.min(k.i,same.length-1)]||card.querySelector('.ex-head');
   if(el) el.focus({preventScroll:true});
 }
+// an idle Reps Left row (no reps yet, not done) keeps its height but is invisible, inert and hidden from assistive tech
+function setRirIdle(r,idle,i){ r.classList.toggle('idle',idle); if(idle){ r.setAttribute('aria-hidden','true'); r.removeAttribute('role'); r.removeAttribute('aria-label'); } else { r.removeAttribute('aria-hidden'); r.setAttribute('role','group'); r.setAttribute('aria-label',`Set ${i+1} reps left in tank`); } }
 let popSet=null; // the set whose check was just ticked, so only its check plays the pop
 function render(){
   const focusKey=listFocusKey();
@@ -2591,7 +2597,7 @@ function render(){
       const [wI,rI]=row.querySelectorAll('input');
       if(bwLoaded) wI.oninput=e=>{s.add=e.target.value===''?'':storeWeight(e.target.value); s.w=bwTotal(s); touchDayStart(); sset('today:'+currentDay,todayData);};
       else wI.oninput=e=>{s.w=storeWeight(e.target.value); touchDayStart(); sset('today:'+currentDay,todayData); if(updatePlates) updatePlates(s.w);};
-      rI.oninput=e=>{s.r=e.target.value; touchDayStart(); sset('today:'+currentDay,todayData); const rr=row.nextElementSibling; if(rr&&rr.classList.contains('rir-row')) rr.hidden=!(s.done||s.r!=='');};
+      rI.oninput=e=>{s.r=e.target.value; touchDayStart(); sset('today:'+currentDay,todayData); const rr=row.nextElementSibling; if(rr&&rr.classList.contains('rir-row')) setRirIdle(rr,!(s.done||s.r!==''),i);};
       row.querySelector('.setdone').onclick=()=>{
         if(hold.key===holdKey(ex,i)) stopHold(false); // fills s.r with the elapsed seconds before the check below
         if(!s.done && s.r===''){ showToast(timed?'Add the seconds first':'Add reps first'); return; }
@@ -2624,7 +2630,7 @@ function render(){
       }
       if(!timed){
         // hidden until reps are in, then picked before the set can be checked; stays after Done so it can still be changed
-        const rir=document.createElement('div'); rir.className='rir-row'; rir.hidden=!(s.done||s.r!==''); rir.setAttribute('role','group'); rir.setAttribute('aria-label',`Set ${i+1} reps left in tank`);
+        const rir=document.createElement('div'); rir.className='rir-row'; setRirIdle(rir,!(s.done||s.r!==''),i);
         rir.innerHTML=`<span class="rir-lbl" aria-hidden="true">Reps Left</span>`+[0,1,2,3,4].map(v=>`<span class="rir-pill${s.rir===v?' on':''}" data-v="${v}" aria-pressed="${s.rir===v}" aria-label="${v===4?'4 or more reps':v===1?'1 rep':v+' reps'} left">${v===4?'4+':v}</span>`).join('');
         rir.querySelectorAll('.rir-pill').forEach(p=>p.onclick=()=>{ const v=parseInt(p.dataset.v); s.rir=(s.rir===v)?null:v; touchDayStart(); sset('today:'+currentDay,todayData); render(); });
         body.appendChild(rir);
@@ -2640,7 +2646,7 @@ function render(){
     if(lastToShow){ // bodyweight lifts show what was added ("BW + 20 × 10"), not a bodyweight total with float noise ("170.02x10");
     // the reps-left figure uses the pills' own words rather than "RIR"
     const lastSetW=s=>bwLoaded?(parseFloat(s.add)?`BW + ${dispWeight(s.add)}`:'BW'):(s.w?Math.round(dispWeight(s.w)*10)/10:'–');
-    const parts=lastToShow.filter(s=>s.w||s.r).map(s=>(timed?`${s.r||'–'}s`:`${lastSetW(s)} × ${s.r||'–'}`)+`${s.rir!=null?` (${s.rir>=4?'4+':s.rir} left)`:''}`).join(', '); if(parts){ const d=document.createElement('div'); d.className='last-time'; d.textContent='Last time'+(crossDaySub?` (${crossDaySub} day)`:'')+': '+parts; body.appendChild(d); } }
+    const parts=lastToShow.filter(s=>s.w||s.r).map(s=>(timed?`${s.r||'–'}s`:`${lastSetW(s)} × ${s.r||'–'}`)+`${s.rir!=null?` (${s.rir>=4?'4+':s.rir} left)`:''}`).join(', '); if(parts){ const d=document.createElement('div'); d.className='last-time'; d.innerHTML=`<span>Last Time${crossDaySub?` (${esc(crossDaySub)} day)`:''}:</span> <span class="lt-v">${esc(parts)}</span>`; head.firstElementChild.appendChild(d); } }
     card.appendChild(body); list.appendChild(card);
   });
   document.getElementById('finishBtn').textContent=allComplete?'All Sets Done — Finish Session':'Finish Session';
