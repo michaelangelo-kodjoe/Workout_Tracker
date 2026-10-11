@@ -33,6 +33,7 @@
      a tab too short to scroll (Strength, cards closed) made Safari bring its full toolbar back, resizing the whole page */
   body{min-height:calc(100lvh + 1px);}
   button,input,textarea,select{font-family:'Menlo','SF Mono',monospace;}
+  html,body,button,.btn,[role=button]{touch-action:manipulation;} /* no double-tap zoom on controls (two quick taps used to zoom and drop one); pinch zoom still works */
   /* iOS Safari zooms the page in on focus of any field under 16px. Pinch-zoom is allowed (the viewport no longer
      locks scale), so on touch screens every field is held at 16px to keep tapping a set input from jumping the page. */
   @media (pointer:coarse){ input,textarea,select{font-size:16px!important;} }
@@ -198,7 +199,10 @@
   .first-log-note{font-size:12px;line-height:1.55;color:var(--light);background:rgba(79,163,209,.08);border-left:2px solid var(--light);padding:9px 11px;border-radius:3px;margin:0 0 10px;}
   .addset{display:block;width:100%;height:44px;margin:4px 0 0;padding:0;border:1px dashed var(--line-strong);border-radius:8px;background:none;color:var(--text-dim);font:13px 'Georgia',serif;cursor:pointer;}
   .notes{width:100%;margin-top:12px;background:var(--panel-raised);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:12px;font-size:12px;font-family:'Georgia',serif;resize:vertical;min-height:34px;}
-  .last-time{font-size:12px;color:var(--text-dim);margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);}
+  .ex-head>div:first-child{min-width:0;}
+  .last-time{font-size:12px;line-height:1.4;color:var(--text-dim);margin:4px 0 0;padding:0;border:0;}
+  .last-time .lt-v{color:var(--text);}
+  .exercise:not(.open) .last-time{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
   /* plate breakdown for bar-loaded lifts: what to put on each side for the weight in play */
   .plates{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--text-dim);margin:0 0 10px;}
   .plates b{color:var(--text);font-weight:normal;font-family:'Menlo',monospace;}
@@ -416,6 +420,14 @@
   .rpe-dot.on{background:var(--light);border-color:var(--light);color:#0d1a22;}
   .rir-row{display:flex;align-items:center;gap:5px;margin:-2px 0 8px;flex-wrap:wrap;}
   .rir-row[hidden]{display:none;}
+  .sal-row{display:flex;align-items:center;margin:0 0 8px;}
+  .sal-chip{display:inline-flex;align-items:center;gap:6px;min-width:0;max-width:100%;min-height:44px;padding:0 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--panel-raised);color:var(--text);font:13px 'Georgia',serif;cursor:pointer;white-space:nowrap;}
+  .sal-row.idle{visibility:hidden;pointer-events:none;} /* nothing left to fill: the row keeps its height so the sets below stay put */
+  .sal-chip svg{width:16px;height:16px;fill:none;stroke:var(--light);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;}
+  .sal-chip:focus-visible{outline:2px solid var(--light);outline-offset:2px;}
+  .sal-lbl{flex:none;}
+  .sal-det{font:12px 'Menlo','SF Mono',monospace;color:var(--text-dim);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;} /* only the detail truncates; the label stays whole */
+  .rir-row.idle{visibility:hidden;pointer-events:none;} /* the row always owns its height, so entering reps never shifts the sets below */
   .rir-lbl{font-size:12px;color:var(--text-dim);margin-right:2px;white-space:nowrap;}
   .rir-pill{font-size:12px;color:var(--text-dim);background:var(--panel-raised);border:1px solid var(--line);border-radius:10px;padding:3px 9px;cursor:pointer;}
   .rir-pill.on{background:var(--light);border-color:var(--light);color:#0d1a22;}
@@ -665,8 +677,8 @@
   .edrow .acts span{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;margin-left:0;}
   /* reps-left pills share the row's width and stay compact to look at; an invisible ::after takes the tappable area
      to 44 px tall, into spacing the row keeps clear above and below */
-  .rir-row{margin:8px 0 8px;flex-wrap:nowrap;}
-  .rir-pill{position:relative;flex:1 1 0;text-align:center;padding:10px 0;border-radius:17px;}
+  .rir-row{margin:2px 0 6px;flex-wrap:nowrap;}
+  .rir-pill{position:relative;flex:1 1 0;text-align:center;padding:8px 0;border-radius:17px;}
   .rir-pill::after{content:'';position:absolute;inset:-6px -2px;}
   /* 44 px day cells: a slimmer card inset and gap leave the 7 columns room at phone width */
   .cal-wrap{padding:16px 10px;} .cal-grid,.cal-dow{gap:2px;}
@@ -2446,7 +2458,11 @@ function restoreListFocus(k){
   const same=card.querySelectorAll(k.sig); const el=same[Math.min(k.i,same.length-1)]||card.querySelector('.ex-head');
   if(el) el.focus({preventScroll:true});
 }
-let popSet=null; // the set whose check was just ticked, so only its check plays the pop
+// an idle Reps Left row (no reps yet, not done) keeps its height but is invisible, inert and hidden from assistive tech
+function setRirIdle(r,idle,i){ r.classList.toggle('idle',idle); if(idle){ r.setAttribute('aria-hidden','true'); r.removeAttribute('role'); r.removeAttribute('aria-label'); } else { r.removeAttribute('aria-hidden'); r.setAttribute('role','group'); r.setAttribute('aria-label',`Set ${i+1} reps left in tank`); } }
+let popSet=null, salSeq=0;
+// the Same as Last hint is rebuilt on every render, so a live region inside it is not reliably announced; this one persists
+function salAnnounce(msg){ let el=document.getElementById('salLive'); if(!el){ el=document.createElement('div'); el.id='salLive'; el.className='sr-only'; el.setAttribute('role','status'); el.setAttribute('aria-live','polite'); document.body.appendChild(el); } el.textContent=''; setTimeout(()=>{ el.textContent=msg; },60); } // the set whose check was just ticked, so only its check plays the pop
 function render(){
   const focusKey=listFocusKey();
   // several settings handlers (unit, auto-rotate, rotate-every, deload start/end) re-render the log after a change
@@ -2583,6 +2599,33 @@ function render(){
     if(bwLoaded&&bwNow!=null){ const bl=document.createElement('div'); bl.className='bw-line'; bl.textContent=`Body weight ${dispBW(bwNow)} ${unitLabel()} — log only what you add on top`; body.appendChild(bl); }
     const hr=document.createElement('div'); hr.className='setgrid head'; hr.innerHTML=`<div>Set</div><div>${bwLoaded?`+ Added · ${unitLabel()}`:`Weight · ${unitLabel()}`}</div><div>${timed?'Seconds':'Reps'}</div><div>Done</div><div></div>`; body.appendChild(hr);
     const bwTotal=s=>bwNow==null?'':Math.round((bwNow+(parseFloat(s.add)||0))*10)/10;
+    // "Same as Last": copies what the previous session did for the next empty set (reps, reps left, and the weight only
+    // if that box is empty). It never ticks Done and never starts the rest timer. Not for timed holds, a first-ever use or a seed.
+    const lastSets=(!timed&&saved&&saved.sets)?saved.sets.filter(x=>x&&x.r!==''&&x.r!=null):[];
+    const salTargets=lastSets.length?state.sets.map((x,j)=>j).filter(j=>!state.sets[j].done&&state.sets[j].r===''):[];
+    if(lastSets.length&&!salTargets.length){
+      const sal=document.createElement('div'); sal.className='sal-row idle'; sal.setAttribute('aria-hidden','true');
+      sal.innerHTML=`<button type="button" class="sal-chip" tabindex="-1">Same as Last</button>`; body.insertBefore(sal,hr);
+    }
+    if(salTargets.length){
+      const j=salTargets[0], ls=lastSets[Math.min(j,lastSets.length-1)], leftTxt=ls.rir!=null?` · ${ls.rir>=4?'4+':ls.rir} left`:'';
+      const tw=state.sets[j].w, addTxt=bwLoaded?((!state.sets[j].add&&parseFloat(ls.add)>0)?` · +${dispWeight(parseFloat(ls.add))} ${unitLabel()}`:''):((tw===''||tw==null)&&typeof sug==='number'&&sug>0?` · ${dispWeight(sug)} ${unitLabel()}`:''); // exactly what the next tap will fill
+      const full=`Set ${j+1}${addTxt} · ${ls.r} reps${leftTxt}`, wTxt=addTxt.replace(/^ · /,'');
+      const det=`Set ${j+1} · ${wTxt?wTxt+' × '+esc(String(ls.r)):esc(String(ls.r))+' reps'}`; // short form on the chip; the full text (with reps left) is the label
+      const sal=document.createElement('div'); sal.className='sal-row';
+      sal.innerHTML=`<button type="button" class="sal-chip" aria-label="Same as Last: ${esc(full)}" data-det="${esc(full)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 8v4l3 2"/></svg><span class="sal-lbl">Same as Last:</span><span class="sal-det">${det}</span></button>`;
+      sal.querySelector('button').onclick=e=>{
+        e.currentTarget.focus({preventScroll:true}); // Safari doesn't focus a tapped button; the redraw would hand focus back to whatever had it last
+        const fk=listFocusKey(), cardIdx=[...document.querySelectorAll('#exerciseList .exercise')].indexOf(e.currentTarget.closest('.exercise')), t=state.sets[j]; if(!t||t.done||t.r!=='') { render(); return; }
+        t.r=String(ls.r); t.rir=(ls.rir!=null&&ls.rir>=0&&ls.rir<=4)?ls.rir:null;
+        if(bwLoaded){ if(!t.add&&parseFloat(ls.add)>0) t.add=ls.add; }
+        else if((t.w===''||t.w==null)&&typeof sug==='number'&&sug>0) t.w=storeWeight(dispWeight(sug));
+        touchDayStart(); sset('today:'+currentDay,todayData); render();
+        { const c0=document.querySelectorAll('#exerciseList .exercise')[cardIdx], h=c0&&c0.querySelector('.sal-row:not(.idle) .sal-chip'); salAnnounce(h?'Next: '+h.dataset.det:'Every set is filled'); }
+        if(fk){ const c=document.querySelectorAll('#exerciseList .exercise')[fk.card]; const nxt=c&&(c.querySelector('.sal-row:not(.idle) .sal-chip')||c.querySelector('.setdone:not(.on)')); if(nxt){ tagClickables(c); nxt.focus({preventScroll:true}); } }
+      };
+      body.insertBefore(sal,hr);
+    }
     state.sets.forEach((s,i)=>{
       if(bwLoaded) s.w=bwTotal(s);
       const addHint=bwLoaded?(state.sets.slice(0,i).map(x=>parseFloat(x.add)||0).filter(Boolean).pop()||lastAdd):0;
@@ -2591,7 +2634,7 @@ function render(){
       const [wI,rI]=row.querySelectorAll('input');
       if(bwLoaded) wI.oninput=e=>{s.add=e.target.value===''?'':storeWeight(e.target.value); s.w=bwTotal(s); touchDayStart(); sset('today:'+currentDay,todayData);};
       else wI.oninput=e=>{s.w=storeWeight(e.target.value); touchDayStart(); sset('today:'+currentDay,todayData); if(updatePlates) updatePlates(s.w);};
-      rI.oninput=e=>{s.r=e.target.value; touchDayStart(); sset('today:'+currentDay,todayData); const rr=row.nextElementSibling; if(rr&&rr.classList.contains('rir-row')) rr.hidden=!(s.done||s.r!=='');};
+      rI.oninput=e=>{s.r=e.target.value; touchDayStart(); sset('today:'+currentDay,todayData); const rr=row.nextElementSibling; if(rr&&rr.classList.contains('rir-row')) setRirIdle(rr,!(s.done||s.r!==''),i);};
       row.querySelector('.setdone').onclick=()=>{
         if(hold.key===holdKey(ex,i)) stopHold(false); // fills s.r with the elapsed seconds before the check below
         if(!s.done && s.r===''){ showToast(timed?'Add the seconds first':'Add reps first'); return; }
@@ -2624,7 +2667,7 @@ function render(){
       }
       if(!timed){
         // hidden until reps are in, then picked before the set can be checked; stays after Done so it can still be changed
-        const rir=document.createElement('div'); rir.className='rir-row'; rir.hidden=!(s.done||s.r!==''); rir.setAttribute('role','group'); rir.setAttribute('aria-label',`Set ${i+1} reps left in tank`);
+        const rir=document.createElement('div'); rir.className='rir-row'; setRirIdle(rir,!(s.done||s.r!==''),i);
         rir.innerHTML=`<span class="rir-lbl" aria-hidden="true">Reps Left</span>`+[0,1,2,3,4].map(v=>`<span class="rir-pill${s.rir===v?' on':''}" data-v="${v}" aria-pressed="${s.rir===v}" aria-label="${v===4?'4 or more reps':v===1?'1 rep':v+' reps'} left">${v===4?'4+':v}</span>`).join('');
         rir.querySelectorAll('.rir-pill').forEach(p=>p.onclick=()=>{ const v=parseInt(p.dataset.v); s.rir=(s.rir===v)?null:v; touchDayStart(); sset('today:'+currentDay,todayData); render(); });
         body.appendChild(rir);
@@ -2640,7 +2683,7 @@ function render(){
     if(lastToShow){ // bodyweight lifts show what was added ("BW + 20 × 10"), not a bodyweight total with float noise ("170.02x10");
     // the reps-left figure uses the pills' own words rather than "RIR"
     const lastSetW=s=>bwLoaded?(parseFloat(s.add)?`BW + ${dispWeight(s.add)}`:'BW'):(s.w?Math.round(dispWeight(s.w)*10)/10:'–');
-    const parts=lastToShow.filter(s=>s.w||s.r).map(s=>(timed?`${s.r||'–'}s`:`${lastSetW(s)} × ${s.r||'–'}`)+`${s.rir!=null?` (${s.rir>=4?'4+':s.rir} left)`:''}`).join(', '); if(parts){ const d=document.createElement('div'); d.className='last-time'; d.textContent='Last time'+(crossDaySub?` (${crossDaySub} day)`:'')+': '+parts; body.appendChild(d); } }
+    const parts=lastToShow.filter(s=>s.w||s.r).map(s=>(timed?`${s.r||'–'}s`:`${lastSetW(s)} × ${s.r||'–'}`)+`${s.rir!=null?` (${s.rir>=4?'4+':s.rir} left)`:''}`).join(', '); if(parts){ const d=document.createElement('div'); d.className='last-time'; d.innerHTML=`<span>Last Time${crossDaySub?` (${esc(crossDaySub)} day)`:''}:</span> <span class="lt-v">${esc(parts)}</span>`; head.firstElementChild.appendChild(d); } }
     card.appendChild(body); list.appendChild(card);
   });
   document.getElementById('finishBtn').textContent=allComplete?'All Sets Done — Finish Session':'Finish Session';
