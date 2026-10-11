@@ -484,6 +484,15 @@
   .rhythm-dots{display:flex;gap:5px;margin-top:8px;}
   .rhythm-dots i{width:16px;height:6px;border-radius:3px;background:var(--line);display:block;}
   .rhythm-dots i.on{background:var(--green);}
+  .cel-backup{width:100%;max-width:320px;box-sizing:border-box;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:12px 0;text-align:left;font-size:13px;color:var(--text-dim);line-height:1.5;position:relative;}
+  .cel-backup.due{background:rgba(214,160,58,.1);border-color:rgba(214,160,58,.4);}
+  .cel-backup.leaving{opacity:0;transition:opacity .5s ease;} /* once backed up the card says so, fades, then is removed from that celebration */
+  .cel-backup.done{background:var(--done-bg);border-color:var(--done-line);}
+  #backupBanner.fade-out{opacity:0;transition:opacity .6s ease;}
+  @media (prefers-reduced-motion: reduce){ .cel-backup.leaving,#backupBanner.fade-out{transition:none;} }
+  .cel-backup .btn{display:block;width:100%;min-height:44px;margin-top:12px;font-size:15px;}
+  .cel-backup.due .btn{border-color:var(--amber);color:var(--amber);}
+  .cel-backup .cel-bmsg.err{color:var(--danger);}
   .cel-cta{width:100%;max-width:320px;background:var(--accent);color:#1a0d08;border:none;border-radius:4px;padding:14px;font-size:13px;font-family:'Menlo',monospace;letter-spacing:.3px;cursor:pointer;position:relative;z-index:2;}
   /* a short (landscape) screen: tighter spacing so Return to Home fits without scrolling */
   @media (max-height:500px){
@@ -881,7 +890,7 @@
       <div class="set-group">
         <button class="set-row" data-page="move"><span class="set-lbl">Move History</span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
         <button class="set-row" data-page="data"><span class="set-lbl">Back Up &amp; Restore</span><span class="set-val" id="sv-data"></span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
-        <label class="set-row static has-cap" for="autoBackup"><span class="set-lbl">Weekly Auto-Backup<span class="set-cap">Offers a backup download when you finish a session, once it's been 7+ days</span></span><input type="checkbox" class="switch" id="autoBackup"></label>
+        <label class="set-row static has-cap" for="autoBackup"><span class="set-lbl">Weekly Backup Reminder<span class="set-cap">Highlights Back Up Now after a session once it's been 7+ days. Nothing downloads by itself.</span></span><input type="checkbox" class="switch" id="autoBackup"></label>
       </div>
       <button type="button" class="reset-link" id="wipeBtn">Erase Everything</button>
       <div class="save-warn" id="saveWarn" role="alert" hidden>Not saving to this device. Export a backup now.</div>
@@ -2830,10 +2839,16 @@ async function finishSession(){
   showCelebration({day,worked:worked.length,nsets,vol:Math.round(vol),durationMin,pr:topPR,rhythmCount});
   await loadDay(suggestedDayId());
   updateDeloadUI();
-  if(settings.autoBackup && backupDue()) setTimeout(()=>doExport(true), 1200); else updateBackupUI();
+  updateBackupUI();
 }
 
 // ---------- celebration screen ----------
+function celBackupMsg(){
+  if(!backupNag()) return lastBackup?`Last backup: ${fmtDate(lastBackup)}.`:"You haven't backed up yet."; // reminder off or not due: plain facts, no nudge
+  if(!lastBackup) return "You haven't backed up yet. Back up now to keep your history safe.";
+  const n=Math.floor((Date.now()-lastBackup)/864e5);
+  return `It's been ${n} days since your last backup. Back up now to keep your history safe.`;
+}
 function showCelebration({day,worked,nsets,vol,durationMin,pr,rhythmCount}){
   const bg=document.getElementById('celebrateBg'), inner=document.getElementById('celebrateInner');
   const colors=['#ff5d3b','#e8b23d','#4fa3d1','#5cbb6f'];
@@ -2857,7 +2872,17 @@ function showCelebration({day,worked,nsets,vol,durationMin,pr,rhythmCount}){
     <div class="rhythm-msg"><b>${ord(rhythmCount)} session this week</b> — ${rhythmRest}
       <div class="rhythm-dots">${Array.from({length:dotsTotal},(_,i)=>`<i class="${i<dotsOn?'on':''}"></i>`).join('')}</div>
     </div>
+    <section class="cel-backup ${backupNag()?'due':''}" id="celBackup" aria-label="Backup"><div class="cel-bmsg" id="celBackupMsg" role="status" aria-live="polite">${celBackupMsg()}</div><button class="btn" id="celBackupBtn">Back Up Now</button></section>
     <button class="cel-cta" id="celBackBtn">Return to Home</button>`;
+  document.getElementById('celBackupBtn').onclick=async()=>{
+    const card=document.getElementById('celBackup'), msg=document.getElementById('celBackupMsg'), btn=document.getElementById('celBackupBtn');
+    if(btn.disabled) return; btn.disabled=true; // one tap, one download
+    try{ await doExport(); }catch(e){ btn.disabled=false; msg.className='cel-bmsg err'; msg.textContent='Could not create the file. Try again.'; return; }
+    card.style.minHeight=card.offsetHeight+'px'; card.classList.remove('due'); card.classList.add('done'); msg.className='cel-bmsg'; msg.textContent='Backup downloaded. Last backup: today.'; btn.style.visibility='hidden'; document.getElementById('celBackBtn').focus({preventScroll:true}); // keeps its space until the card is gone
+    // the confirmation shows for a moment, then the whole card fades and is removed (display none after the fade, so Return to Home does not move under a finger mid-fade)
+    const still=matchMedia('(prefers-reduced-motion: reduce)').matches; clearTimeout(card._rest);
+    card._rest=setTimeout(()=>{ if(still){ card.style.display='none'; return; } card.classList.add('leaving'); setTimeout(()=>{ card.style.display='none'; },520); },2500);
+  };
   bg.classList.add('on');
   document.getElementById('celBackBtn').onclick=()=>{ bg.classList.remove('on'); setView('home'); if(pendingBlockReview){ pendingBlockReview=false; openBlockSheet(); } };
 }
@@ -3164,7 +3189,7 @@ async function saveCardioRec(rec){
   // day-tab marker stop pointing at a cardio day that has just been done (this used to persist until a reload)
   await loadDay(suggestedDayId()); setView('home');
   showToast('Conditioning logged');
-  if(settings.autoBackup && backupDue()) setTimeout(()=>doExport(true),1200); else updateBackupUI();
+  updateBackupUI();
 }
 async function logCardio(){
   const d=cardioDraft, iv=d.structure==='intervals';
@@ -3738,7 +3763,7 @@ function renderSetMain(){
   sv('rest', settings.smartRest?`Smart · ${settings.rest}s Fallback`:`${settings.rest}s`);
   const nEx=PROGRAM.reduce((a,d)=>a+d.exercises.length,0); sv('edit', `${PROGRAM.length} Days · ${nEx} Exercises`);
   sv('data', lastBackup?`Last: ${fmtDate(lastBackup)}`:'Never Backed Up');
-  document.getElementById('sv-data').classList.toggle('warn', backupDue() && sessions.length>0); // same condition as the Home backup banner
+  document.getElementById('sv-data').classList.toggle('warn', backupNag() && sessions.length>0); // same condition as the Home backup banner
   document.querySelectorAll('#setMain .set-seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.u===(settings.unit||'lb')));
   // the same size options as onboarding, applied as soon as one is picked
   const opts=document.getElementById('textSizeOpts'), cur=settings.textSize||'standard';
@@ -3910,21 +3935,23 @@ async function restoreKeys(data){
   }
   return true;
 }
-let autoBackupOffered=false; // the unprompted download is offered once per app launch, so an unanswered prompt is not repeated at every Finish
-async function doExport(silent){
-  if(silent){ if(autoBackupOffered) return; autoBackupOffered=true; }
+async function doExport(){
   const out={}; for(const k of KEYS){ out[k]=await sget(k); }
   Object.assign(out, await store.corruptCopies()); // corrupt:<key> raw text; import only reads KEYS, so it ignores these
   const blob=new Blob([JSON.stringify({app:'liftlog',v:BACKUP_VERSION,exported:new Date().toISOString(),data:out},null,1)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); const d=new Date(), p2=n=>String(n).padStart(2,'0'); a.download=`liftlog-backup-${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}.json`; document.body.appendChild(a); a.click(); a.remove();
-  // A timer-fired download can be blocked or left waiting on a prompt, so it proves nothing: only the user's own tap
-  // records the backup (and resets the 7-day reminder).
-  if(silent){ showToast('Backup Ready: Tap Download To Save It',4000); return; }
-  lastBackup=Date.now(); await sset('lastBackup',lastBackup); updateBackupUI(); showToast('Backup downloaded');
+  // only a tap on a Back Up Now / Export button runs this, so it records the backup (and resets the 7-day reminder)
+  lastBackup=Date.now(); await sset('lastBackup',lastBackup); updateBackupUI(true); showToast('Backup downloaded');
 }
 function backupDue(){ return !lastBackup || (Date.now()-lastBackup) > 7*864e5; }
-function updateBackupUI(){
-  const b=document.getElementById('backupBanner'); b.style.display = backupDue() && sessions.length ? 'flex':'none';
+// due AND the Weekly Backup Reminder is on: the only thing that may colour the celebration card, light the Settings row or show Home's banner
+function backupNag(){ return settings.autoBackup!==false && backupDue(); }
+function updateBackupUI(fade){ // fade: a backup was just taken, so Home's banner fades out once instead of vanishing
+  const b=document.getElementById('backupBanner'), show=backupNag() && sessions.length;
+  if(show){ b.classList.remove('fade-out'); b.style.display='flex'; }
+  else if(fade && b.style.display!=='none' && !matchMedia('(prefers-reduced-motion: reduce)').matches){
+    b.classList.add('fade-out'); setTimeout(()=>{ if(!(backupNag() && sessions.length)){ b.style.display='none'; } b.classList.remove('fade-out'); },650); }
+  else b.style.display='none';
   const l=document.getElementById('lastBackup'); l.textContent = lastBackup ? `Last backup: ${fmtDate(lastBackup)}${backupDue()?' — a new one is due':''}` : 'No backup yet.';
 }
 function updateDeloadUI(){
@@ -3966,10 +3993,10 @@ document.getElementById('startDeloadBtn').onclick=async()=>{
   await sset('deloadStart',deloadStart); await sset('lastDeload',lastDeload);
   closeDeloadSheet(); updateDeloadUI(); render(); showToast('Deload week started — suggestions are ~10% lighter');
 };
-document.getElementById('exportBtn').onclick=()=>doExport(false);
-document.getElementById('bannerBtn').onclick=()=>doExport(false);
+document.getElementById('exportBtn').onclick=()=>doExport();
+document.getElementById('bannerBtn').onclick=()=>doExport();
 document.getElementById('keepOn').onchange=e=>{ settings.keepOn=e.target.checked; e.target.setAttribute('aria-checked',String(e.target.checked)); sset('settings',settings); syncWakeLock(); };
-document.getElementById('autoBackup').onchange=e=>{ settings.autoBackup=e.target.checked; sset('settings',settings); };
+document.getElementById('autoBackup').onchange=e=>{ settings.autoBackup=e.target.checked; sset('settings',settings); updateBackupUI(); document.getElementById('sv-data').classList.toggle('warn', backupNag() && sessions.length>0); };
 async function doMergeImport(d){
   const must=async(k,v)=>{ if(await sset(k,v)===false) throw new Error('save failed: '+k); };
   const localSessionsBefore=[...sessions];
