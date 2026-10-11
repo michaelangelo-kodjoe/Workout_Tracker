@@ -3286,9 +3286,10 @@ function renderCardioLive(){
     document.getElementById('cfPause').onclick=()=>{ if(L.pausedAt){ L.pausedMs+=Date.now()-L.pausedAt; L.pausedAt=null; } else L.pausedAt=Date.now(); L.focus='cfPause'; saveCardioLive(); renderCardioForm(); };
     const sk=document.getElementById('cfSkip'); if(sk) sk.onclick=()=>{ const p=cardioPhase(L,cardioPhaseAt(L)); if(p&&p.phase!=='done'){ L.skipMs+=Math.ceil(p.left*1000)+50; saveCardioLive(); cardioTick(); } };
     document.getElementById('cfFinish').onclick=async()=>{
-      const secs=cardioElapsed(L), long=secs>CARDIO_LONG_SEC; let setTime=false;
-      if(long) setTime=await confirmSheet(`This session has been running ${Math.floor(secs/3600)} h ${Math.floor(secs%3600/60)} min. Did you forget to stop it? Set the time you actually trained, or keep it as it is.`,'Set the Time','Keep It');
-      if(!L.pausedAt){ L.pausedAt=Date.now(); L.autoPaused=true; } L.duration=setTime?'':String(Math.max(1,Math.round(cardioElapsed(L)/60))); L.step='finish'; L.focus='cfDur'; saveCardioLive(); renderCardioForm(); window.scrollTo(0,0); };
+      const secs=cardioElapsed(L);
+      if(!L.pausedAt){ L.pausedAt=Date.now(); L.autoPaused=true; } L.duration=String(Math.max(1,Math.round(cardioElapsed(L)/60))); // always the clock's time, selected on the next screen so typing replaces it
+      if(secs>CARDIO_LONG_SEC) showToast(`The clock ran ${Math.floor(secs/3600)} h ${Math.floor(secs%3600/60)} min. Fix the duration if you forgot to stop it.`,5000);
+      L.step='finish'; L.focus='cfDur'; saveCardioLive(); renderCardioForm(); window.scrollTo(0,0); };
     document.getElementById('cfDiscard').onclick=async()=>{ if(await confirmSheet("Discard this session? The time and numbers you've logged will be lost.",'Discard',null,true)){ cardioLive=null; cardioDraft=newCardioDraft(); await sset('today:cardio',null); renderTabs(); renderCardioForm(); } };
     cardioLastKey=null; stopCardioTick(); cardioTick(); if(!paused){ cardioTickId=requestAnimationFrame(cardioTickLoop); }
   }
