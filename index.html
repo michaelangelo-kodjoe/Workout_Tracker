@@ -3274,7 +3274,11 @@ function renderCardioLive(){
       <textarea class="notes" id="cNotes" aria-label="Notes" placeholder="Notes — route, how it felt">${esc(L.notes)}</textarea>
       <div class="row" style="margin-top:16px"><button class="btn primary" id="cfSave" style="flex:1">Save Session</button></div>`;
     bind();
-    document.getElementById('cfDur').oninput=ev=>{ L.duration=ev.target.value.replace(/[^\d:.]/g,''); saveCardioLive(); };
+    const dEl=document.getElementById('cfDur'); dEl.oninput=ev=>{ L.duration=ev.target.value.replace(/[^\d:.]/g,''); saveCardioLive(); };
+    // every focus or tap selects the whole value so typing replaces it (Safari places the caret after the tap, so select again on the next tick)
+    const selAll=()=>setTimeout(()=>{ if(document.activeElement===dEl) dEl.setSelectionRange(0,dEl.value.length); },0);
+    dEl.addEventListener('focus',selAll); dEl.addEventListener('pointerup',selAll); dEl.addEventListener('click',selAll);
+    dEl.addEventListener('mouseup',ev=>ev.preventDefault());
     document.getElementById('cNotes').oninput=ev=>{ L.notes=ev.target.value; saveCardioLive(); };
     wrap.querySelectorAll('#rpeRow button').forEach(b=>b.onclick=()=>{ L.rpe=L.rpe===+b.dataset.n?0:+b.dataset.n; L.focus='r:'+b.dataset.n; saveCardioLive(); renderCardioForm(); });
     const mb2=document.getElementById('cfMoreBtn'); if(mb2) mb2.onclick=()=>{ L.more=!L.more; L.focus='cfMoreBtn'; saveCardioLive(); renderCardioForm(); };
@@ -3310,6 +3314,7 @@ function renderCardioLive(){
   document.getElementById('finishBtn').style.display='none';
   document.getElementById('resetLink').style.display='none';
   tagClickables(wrap);
+  if(L.step==='finish'&&!L.focus&&!wrap.contains(document.activeElement)) L.focus='cfDur'; // coming back to the finish step lands on Duration
   const f=L.focus; L.focus=null; // a redraw drops focus on the tapped control, so hand it back
   if(f){ const el=f.startsWith('s:')?wrap.querySelector(`#cfStruct [data-s="${f.slice(2)}"]`):f.startsWith('r:')?wrap.querySelector(`#rpeRow [data-n="${f.slice(2)}"]`):document.getElementById(f); if(el){ el.focus({preventScroll:true}); if(f==='cfDur'&&el.select) el.select(); } }
 }
@@ -4226,6 +4231,7 @@ function setView(v){
   document.getElementById('dayTabs').style.display=v==='log'?'':'none'; document.getElementById('logFooter').style.display=v==='log'?'':'none';
   if(v==='home') renderHome();
   if(v==='log' && currentDay!=='cardio') render();
+  if(v==='log' && currentDay==='cardio' && cardioLive && cardioLive.step==='finish') renderCardioForm(); // the form drawn while the Log was hidden could not take focus: draw it again so Duration is focused and selected
   if(v==='history') renderHistory(); if(v==='strength') renderStrength(); if(v==='more'){ if(setPage) closeSetPage(); else renderSettings(); }
 }
 document.querySelectorAll('.viewtab').forEach(t=>t.onclick=()=>setView(t.dataset.v));
