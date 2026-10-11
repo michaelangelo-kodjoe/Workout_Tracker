@@ -2876,7 +2876,8 @@ function showCelebration({day,worked,nsets,vol,durationMin,pr,rhythmCount}){
     <button class="cel-cta" id="celBackBtn">Return to Home</button>`;
   document.getElementById('celBackupBtn').onclick=async()=>{
     const card=document.getElementById('celBackup'), msg=document.getElementById('celBackupMsg'), btn=document.getElementById('celBackupBtn');
-    try{ await doExport(); }catch(e){ msg.className='cel-bmsg err'; msg.textContent='Could not create the file. Try again.'; return; }
+    if(btn.disabled) return; btn.disabled=true; // one tap, one download
+    try{ await doExport(); }catch(e){ btn.disabled=false; msg.className='cel-bmsg err'; msg.textContent='Could not create the file. Try again.'; return; }
     card.style.minHeight=card.offsetHeight+'px'; card.classList.remove('due'); card.classList.add('done'); msg.className='cel-bmsg'; msg.textContent='Backup downloaded. Last backup: today.'; btn.style.visibility='hidden'; document.getElementById('celBackBtn').focus({preventScroll:true}); // keeps its space until the card is gone
     // the confirmation shows for a moment, then the whole card fades and is removed (display none after the fade, so Return to Home does not move under a finger mid-fade)
     const still=matchMedia('(prefers-reduced-motion: reduce)').matches; clearTimeout(card._rest);
