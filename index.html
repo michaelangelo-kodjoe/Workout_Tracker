@@ -887,7 +887,7 @@
       <div class="set-group">
         <button class="set-row" data-page="move"><span class="set-lbl">Move History</span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
         <button class="set-row" data-page="data"><span class="set-lbl">Back Up &amp; Restore</span><span class="set-val" id="sv-data"></span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
-        <label class="set-row static has-cap" for="autoBackup"><span class="set-lbl">Weekly Auto-Backup<span class="set-cap">Offers a backup download when you finish a session, once it's been 7+ days</span></span><input type="checkbox" class="switch" id="autoBackup"></label>
+        <label class="set-row static has-cap" for="autoBackup"><span class="set-lbl">Weekly Backup Reminder<span class="set-cap">Shows a Back Up Now card when you finish a session, once it's been 7+ days</span></span><input type="checkbox" class="switch" id="autoBackup"></label>
       </div>
       <button type="button" class="reset-link" id="wipeBtn">Erase Everything</button>
       <div class="save-warn" id="saveWarn" role="alert" hidden>Not saving to this device. Export a backup now.</div>
@@ -2836,7 +2836,7 @@ async function finishSession(){
   showCelebration({day,worked:worked.length,nsets,vol:Math.round(vol),durationMin,pr:topPR,rhythmCount});
   await loadDay(suggestedDayId());
   updateDeloadUI();
-  if(settings.autoBackup && backupDue()) setTimeout(()=>doExport(true), 1200); else updateBackupUI();
+  updateBackupUI();
 }
 
 // ---------- celebration screen ----------
@@ -3182,7 +3182,7 @@ async function saveCardioRec(rec){
   // day-tab marker stop pointing at a cardio day that has just been done (this used to persist until a reload)
   await loadDay(suggestedDayId()); setView('home');
   showToast('Conditioning logged');
-  if(settings.autoBackup && backupDue()) setTimeout(()=>doExport(true),1200); else updateBackupUI();
+  updateBackupUI();
 }
 async function logCardio(){
   const d=cardioDraft, iv=d.structure==='intervals';
