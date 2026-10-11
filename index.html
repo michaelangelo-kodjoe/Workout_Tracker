@@ -871,6 +871,7 @@
         <button class="set-row" data-page="equip"><span class="set-lbl">Equipment</span><span class="set-val" id="sv-equip"></span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
         <button class="set-row" data-page="rotate"><span class="set-lbl">Exercise Rotation</span><span class="set-val" id="sv-rotate"></span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
         <button class="set-row" data-page="rest"><span class="set-lbl">Rest Timer</span><span class="set-val" id="sv-rest"></span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+        <label class="set-row static has-cap" for="keepOn"><span class="set-lbl">Keep Screen On<span class="set-cap">While a rest timer or cardio session runs.</span></span><input type="checkbox" class="switch" id="keepOn" role="switch" aria-checked="true"></label>
       </div>
       <div class="set-group-h">Program</div>
       <div class="set-group">
@@ -2001,6 +2002,37 @@ function syncTimer(saved){
 }
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'){ resumeAudio(); syncTimer(); } });
 window.addEventListener('pageshow',()=>{ resumeAudio(); syncTimer(); });
+// ---------- screen wake lock ----------
+// Keeps the screen on while a rest timer counts down or a cardio session is live, so the Go state and the clock stay in view.
+// Derived from state (not hooked into start/stop calls) so it never touches render(): a light check every 1.5 s plus on return.
+// The browser releases the lock whenever the page is hidden, so it is asked for again when the page is visible. Every call is
+// feature-detected and wrapped; an unsupported or refused request is silent. Installed iOS apps only honour it from 18.4.
+let wakeSentinel=null, wakeBusy=false;
+function wakeNeeded(){
+  if(settings.keepOn===false||document.visibilityState!=='visible') return false;
+  const t=document.getElementById('timer');
+  if(t&&t.classList.contains('on')&&!t.classList.contains('done')) return true;
+  return !!(cardioLive&&cardioLive.step==='live');
+}
+async function syncWakeLock(){
+  try{
+    if(!('wakeLock' in navigator)||wakeBusy) return;
+    const need=wakeNeeded();
+    if(need&&!wakeSentinel){
+      wakeBusy=true;
+      try{
+        const s=await navigator.wakeLock.request('screen');
+        wakeSentinel=s; s.addEventListener('release',()=>{ if(wakeSentinel===s) wakeSentinel=null; });
+      }catch(e){} finally{ wakeBusy=false; }
+    } else if(!need&&wakeSentinel){
+      const s=wakeSentinel; wakeSentinel=null; try{ await s.release(); }catch(e){}
+    }
+  }catch(e){}
+}
+setInterval(syncWakeLock,1500);
+document.addEventListener('visibilitychange',syncWakeLock);
+document.addEventListener('pointerdown',syncWakeLock,{passive:true}); // a refused request (some browsers want a gesture) is retried on the next tap
+
 // ---------- hold counter for timed sets ----------
 // a timed target ("3 x 30-45s") is logged in seconds, not reps. Each undone set gets a stopwatch: start counts up,
 // writes the running seconds into the set's field, beeps once at the target's top, and stop marks the set done
@@ -3676,7 +3708,7 @@ document.getElementById('lowerStrCard').onclick=e=>{ if(e.target.closest('.str-c
 document.getElementById('bwLog').onclick=async()=>{ const raw=parseNum(document.getElementById('bwInput').value); if(!raw||raw<=0){ showToast('Enter a weight like 168.5'); return; } bodyweight.push({t:Date.now(),w:storeBW(raw)}); await sset('bodyweight',bodyweight); document.getElementById('bwInput').value=''; showToast('Body weight logged'); renderStrength(); updateBwUI(); };
 
 // ---------- more: settings, editor, data ----------
-function renderSettings(){ document.getElementById('nameInput').value=settings.name||''; document.getElementById('nameInput').oninput=e=>{ settings.name=e.target.value; sset('settings',settings); }; document.getElementById('restSel').value=String(settings.rest); document.getElementById('autoTimer').checked=!!settings.auto; document.getElementById('autoBackup').checked=!!settings.autoBackup; document.getElementById('smartRestChk').checked=!!settings.smartRest; document.getElementById('restSelLbl').textContent=settings.smartRest?'Fallback Rest':'Default Rest'; updateBackupUI(); renderSetMain();
+function renderSettings(){ document.getElementById('nameInput').value=settings.name||''; document.getElementById('nameInput').oninput=e=>{ settings.name=e.target.value; sset('settings',settings); }; document.getElementById('restSel').value=String(settings.rest); document.getElementById('autoTimer').checked=!!settings.auto; document.getElementById('autoBackup').checked=!!settings.autoBackup; { const k=document.getElementById('keepOn'); k.checked=settings.keepOn!==false; k.setAttribute('aria-checked',String(k.checked)); } document.getElementById('smartRestChk').checked=!!settings.smartRest; document.getElementById('restSelLbl').textContent=settings.smartRest?'Fallback Rest':'Default Rest'; updateBackupUI(); renderSetMain();
   document.getElementById('saveWarn').hidden=!(store.mode==='memory'||store.saveFailed);
   const eqBox=document.getElementById('equipChks');
   // the same pill chips as the first-launch program builder, for the same setting
@@ -3936,6 +3968,7 @@ document.getElementById('startDeloadBtn').onclick=async()=>{
 };
 document.getElementById('exportBtn').onclick=()=>doExport(false);
 document.getElementById('bannerBtn').onclick=()=>doExport(false);
+document.getElementById('keepOn').onchange=e=>{ settings.keepOn=e.target.checked; e.target.setAttribute('aria-checked',String(e.target.checked)); sset('settings',settings); syncWakeLock(); };
 document.getElementById('autoBackup').onchange=e=>{ settings.autoBackup=e.target.checked; sset('settings',settings); };
 async function doMergeImport(d){
   const must=async(k,v)=>{ if(await sset(k,v)===false) throw new Error('save failed: '+k); };
@@ -4265,7 +4298,7 @@ async function init(){
   if(backfillOrphanedMuscleKeys(recovery,validMuscleKeys)) await sset('recovery',recovery);
   if(backfillOrphanedMuscleKeys(familiarity,validMuscleKeys)) await sset('familiarity',familiarity);
 
-  settings=Object.assign({rest:90,auto:true,autoBackup:true,smartRest:true,unit:'lb',autoRotate:true,blockWeeks:4,neverSuggest:[],equipFilter:EQUIP_TYPES.slice(),name:'',onboarded:false,textSize:'standard'},(await sget('settings'))||{});
+  settings=Object.assign({rest:90,auto:true,autoBackup:true,smartRest:true,unit:'lb',autoRotate:true,blockWeeks:4,neverSuggest:[],equipFilter:EQUIP_TYPES.slice(),name:'',onboarded:false,textSize:'standard',keepOn:true},(await sget('settings'))||{});
   applyTextSize();
   blockStart=(await sget('blockStart'))||0; blockNum=(await sget('blockNum'))||1;
   lastBackup=(await sget('lastBackup'))||0; updateBackupUI();
