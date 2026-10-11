@@ -2606,7 +2606,7 @@ function render(){
     }
     if(salTargets.length){
       const j=salTargets[0], ls=lastSets[Math.min(j,lastSets.length-1)], leftTxt=ls.rir!=null?` · ${ls.rir>=4?'4+':ls.rir} left`:'';
-      const addTxt=(bwLoaded&&!state.sets[j].add&&parseFloat(ls.add)>0)?` · +${dispWeight(parseFloat(ls.add))} ${unitLabel()}`:'';
+      const tw=state.sets[j].w, addTxt=bwLoaded?((!state.sets[j].add&&parseFloat(ls.add)>0)?` · +${dispWeight(parseFloat(ls.add))} ${unitLabel()}`:''):((tw===''||tw==null)&&typeof sug==='number'&&sug>0?` · ${dispWeight(sug)} ${unitLabel()}`:''); // exactly what the next tap will fill
       const hid='salh'+(++salSeq);
       const sal=document.createElement('div'); sal.className='sal-row';
       sal.innerHTML=`<button type="button" class="sal-chip" aria-describedby="${hid}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 8v4l3 2"/></svg>Same as Last</button><span class="sal-hint" id="${hid}" role="status" aria-live="polite">Set ${j+1}${addTxt} · ${esc(String(ls.r))} reps${leftTxt}</span>`;
