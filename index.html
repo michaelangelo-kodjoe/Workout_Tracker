@@ -367,6 +367,18 @@
   .cardio-tab{border-style:dashed;} .daytab.cardio-tab.live .dsub{color:var(--green);}
   /* cardio log: two steps, pick an activity then its details */
   .cf-flow{padding:4px 0 0;}
+  /* several cardio sessions in one day: the Logged Today card, the Complete button, the Session Saved sheet's stacked buttons and the celebration's list */
+  .cf-logged{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin-bottom:16px;}
+  .cf-logged .lb{font:11px 'Menlo',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;}
+  .cf-logged ul{list-style:none;margin:0;padding:0;}
+  .cf-logged li{display:flex;align-items:baseline;justify-content:space-between;gap:12px;min-height:32px;padding:6px 0;font-size:15px;border-top:1px solid var(--line);} .cf-logged li:first-of-type{border-top:0;}
+  .cf-logged li span{font-size:13px;color:var(--text-dim);text-align:right;} .cf-logged li b{font-weight:normal;display:flex;align-items:center;gap:8px;}
+  .cf-logged li i{width:8px;height:8px;border-radius:50%;background:var(--green);flex:none;}
+  .cf-complete{margin-top:20px;} .cf-complete .btn,.cf-stack .btn{width:100%;min-height:48px;font-size:15px;}
+  .cf-stack{display:flex;flex-direction:column;gap:10px;}
+  .cel-list{width:100%;max-width:320px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:4px 16px;margin-bottom:16px;position:relative;z-index:2;}
+  .cel-list div{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line);font-size:15px;text-align:left;} .cel-list div:first-child{border-top:0;}
+  .cel-list span{font-size:13px;color:var(--text-dim);text-align:right;flex:none;}
   .cf-steps{display:flex;align-items:center;gap:8px;margin:4px 0 16px;font-size:12px;color:var(--text-dim);} .cf-steps i{flex:1;height:3px;border-radius:2px;background:var(--line);} .cf-steps i.on{background:var(--cardio);} .cf-steps b{font-weight:normal;color:var(--text);white-space:nowrap;}
   .cf-ico{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;}
   .cf-back{display:inline-flex;align-items:center;gap:2px;min-height:44px;margin:-8px 0 0 -4px;padding:0 10px 0 0;background:none;border:0;color:var(--light);font:15px 'Georgia',serif;cursor:pointer;}
@@ -1032,6 +1044,15 @@
     <button class="btn primary" id="blockApply" style="flex:1">Start Next Block</button>
   </div>
 </div>
+<div class="sheet-bg" id="cardioSavedBg"></div>
+<div class="sheet" id="cardioSavedSheet">
+  <div class="sheet-head"><div><div style="font-size:15px" id="cardioSavedTitle">Session Saved</div><div style="font-size:12px;color:var(--text-dim);margin-top:2px" id="cardioSavedSub"></div></div></div>
+  <div class="plateau-tip" style="margin-bottom:14px">Will you do another cardio session today?</div>
+  <div class="cf-stack">
+    <button class="btn" id="cardioSavedAdd">Add Another</button>
+    <button class="btn primary" id="cardioSavedDone">Complete Cardio Session</button>
+  </div>
+</div>
 <div class="sheet-bg" id="cardioSuggestBg"></div>
 <div class="sheet" id="cardioSuggestSheet">
   <div class="sheet-head"><div><div style="font-size:15px" id="cardioSuggestTitle">Cardio's Up Next</div><div style="font-size:12px;color:var(--text-dim);margin-top:2px" id="cardioSuggestSub">Two lifting sessions in a row</div></div><span class="linkbtn" id="cardioSuggestClose">Close</span></div>
@@ -1119,7 +1140,7 @@ const store = {
     else this.mem[k]=v;
     return true; }catch(e){ console.error(e); this.saveFailed=true; return false; } }
 };
-const KEYS = ['lastBackup','program','recovery','familiarity','soreOverride','recoveryLog','hist','sessions','notes','lastByName','bodyweight','settings','meta:sessionCount','meta:histMigratedV2','today:d1','today:d2','today:d3','today:d4','today:cardio','last:d1','last:d2','last:d3','last:d4','lastDeload','deloadStart','dayStart','blockStart','blockNum','baselines'];
+const KEYS = ['lastBackup','program','recovery','familiarity','soreOverride','recoveryLog','hist','sessions','notes','lastByName','bodyweight','settings','meta:sessionCount','meta:histMigratedV2','today:d1','today:d2','today:d3','today:d4','today:cardio','today:cardioDay','last:d1','last:d2','last:d3','last:d4','lastDeload','deloadStart','dayStart','blockStart','blockNum','baselines'];
 const RECOVERY_LOG_CAP=2000;
 const RECOVERY_HOURS = { 'chest-upper':72, 'chest-mid':72, 'chest-lower':72, 'back-lats':72, 'back-traps':72, quads:72, hamstrings:72, glutes:72, lowerback:72, 'delt-front':48, 'delt-lateral':48, 'delt-rear':48, biceps:48, brachialis:48, 'triceps-lateral':48, 'triceps-long':48, 'forearm-flexor':48, 'forearm-extensor':48, 'calves-gastroc':48, 'calves-soleus':48, 'abs-upper':36, 'abs-lower':36, 'abs-obliques':36 };
 const MUSCLE_LABEL = { chest:'Chest', back:'Back', quads:'Quads', hamstrings:'Hamstrings', glutes:'Glutes', lowerback:'Lower back', shoulders:'Shoulders', biceps:'Biceps', triceps:'Triceps', forearms:'Forearms', calves:'Calves', abs:'Core' };
@@ -3095,13 +3116,17 @@ function renderCardioForm(){
   if(d.step===1){
     const rec=cardioRecent(), accts=CARDIO_ACTS.filter(a=>a.g===d.group);
     const sub=a=>{ const m=a.main.map(k=>CARDIO_FIELDS[k].l); if(a.iv==='default'||a.iv==='only') m.unshift('Rounds'); return m.length?m.slice(0,2).join(', '):'Duration'; };
-    wrap.innerHTML=`${d.manual?steps(1):''}<h3 class="cf-h">Pick an Activity</h3><p class="cf-lede">${d.manual?'Then add what you did.':'Tap one to start the clock.'}</p>
+    const today=cardioDayRecs();
+    const logged=today.length?`<div class="cf-logged" role="group" aria-label="Logged Today"><div class="lb">Logged Today</div><ul>${today.map(r=>`<li><b><i aria-hidden="true"></i>${esc(r.ctypeLabel)}</b><span>${esc(cardioSummary(r))}</span></li>`).join('')}</ul></div>`:'';
+    wrap.innerHTML=`${logged}${d.manual?steps(1):''}<h3 class="cf-h">${today.length?'Add Another':'Pick an Activity'}</h3><p class="cf-lede">${d.manual?'Then add what you did.':'Tap one to start the clock.'}</p>
       ${rec.length?`<div class="cf-sub" style="margin-top:0">Recent</div><div class="cf-scroll">${rec.map(r=>{ const a=cardioAct(r.k); return `<button type="button" class="cf-rc" data-k="${a.k}">${a.l}<small>${r.s.duration} min · ${cardioWhen(r.s.t)}</small></button>`; }).join('')}</div>`:''}
       <div class="cf-seg" id="cfGroups" role="group" aria-label="Activity Group" style="margin-top:${rec.length?20:0}px">${CARDIO_GROUPS.map(g=>`<button type="button" data-g="${g}" class="${g===d.group?'on':''}" aria-pressed="${g===d.group}">${g}</button>`).join('')}</div>
       <div class="cf-grid">${accts.map(a=>`<button type="button" class="cf-tile" data-k="${a.k}">${cardioIcon(a.ic)}<span>${a.l}</span><small>${sub(a)}</small></button>`).join('')}</div>
-      <div class="cf-past"><span class="linkbtn" id="cfMode">${d.manual?'Start a Live Session Instead':'Log a Past Session'}</span></div>`;
+      <div class="cf-past"><span class="linkbtn" id="cfMode">${d.manual?'Start a Live Session Instead':'Log a Past Session'}</span></div>
+      ${today.length?'<div class="cf-complete"><button type="button" class="btn" id="cfComplete">Complete Cardio Session</button></div>':''}`;
     list.appendChild(wrap);
     wrap.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>d.manual?cardioPick(b.dataset.k):cardioStart(b.dataset.k));
+    const cc=document.getElementById('cfComplete'); if(cc) cc.onclick=completeCardioDay;
     document.getElementById('cfMode').onclick=()=>{ d.manual=!d.manual; d.focus='cfMode'; renderCardioForm(); };
     wrap.querySelectorAll('#cfGroups button').forEach(b=>b.onclick=()=>{ d.group=b.dataset.g; d.focus='g:'+b.dataset.g; renderCardioForm(); });
   } else {
@@ -3157,20 +3182,70 @@ function buildCardioRec(d,duration,t){
   if(iv){ rec.work=parseInt(d.work)||0; rec.rest=parseInt(d.rest)||0; rec.rounds=parseInt(d.rounds)||0; }
   return rec;
 }
-async function saveCardioRec(rec){
-  sessions.push(rec); await sset('sessions',sessions);
+// The open cardio day: ids (record times) of the sessions saved since the day opened, under today:cardioDay as {date, ids}.
+// It lives in KEYS beside today:cardio (so Erase clears it; Import skips today: keys) and ends at midnight: a marker from an
+// earlier date is dropped, and the records it listed stay in History.
+const CARDIO_DAY_KEY='today:cardioDay';
+let cardioDay=null;
+const cardioDateKey=t=>{ const d=new Date(t); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); };
+function cardioDayRecs(){ // records of the open day, oldest first; [] once the day has ended
+  if(cardioDay&&(cardioDay.date!==cardioDateKey(Date.now())||!Array.isArray(cardioDay.ids))){ cardioDay=null; sset(CARDIO_DAY_KEY,null); }
+  return cardioDay?sessions.filter(s=>s.isCardio&&cardioDay.ids.includes(s.t)).sort((a,b)=>a.t-b.t):[];
+}
+const cardioSummary=s=>`${s.duration} min${s.distance?' · '+s.distance:''}`;
+async function saveCardioRec(rec,live){
+  sessions.push(rec);
+  if(!await sset('sessions',sessions)){ sessions.pop(); showToast('Could not save. Try again.'); return false; }
+  cardioDayRecs(); if(!cardioDay) cardioDay={date:cardioDateKey(Date.now()),ids:[]};
+  cardioDay.ids.push(rec.t); await sset(CARDIO_DAY_KEY,cardioDay);
+  if(live){ cardioLive=null; await sset('today:cardio',null); }
   cardioDraft=newCardioDraft();
-  // the suggestion usually moves on to the next lift day now — reload it so Home's greeting, its CTA and the
-  // day-tab marker stop pointing at a cardio day that has just been done (this used to persist until a reload)
-  await loadDay(suggestedDayId()); setView('home');
-  showToast('Conditioning logged');
+  renderTabs(); renderCardioForm(); window.scrollTo(0,0); // back to the pick screen, now with Logged Today
+  showCardioSaved(rec);
   if(settings.autoBackup && backupDue()) setTimeout(()=>doExport(true),1200); else updateBackupUI();
+  return true;
+}
+// Session Saved: only its two buttons close it (Escape and the backdrop do nothing), so the choice is always made
+function showCardioSaved(rec){
+  const bg=document.getElementById('cardioSavedBg'), sh=document.getElementById('cardioSavedSheet');
+  document.getElementById('cardioSavedSub').textContent=`${rec.ctypeLabel} · ${cardioSummary(rec)}`;
+  const close=()=>{ bg.classList.remove('on'); sh.classList.remove('on'); };
+  bg.onclick=e=>e.stopPropagation();
+  document.getElementById('cardioSavedAdd').onclick=()=>{ close(); const t=document.querySelector('#exerciseList .cf-rc, #exerciseList .cf-tile'); if(t) t.focus({preventScroll:true}); };
+  document.getElementById('cardioSavedDone').onclick=()=>{ close(); completeCardioDay(); };
+  bg.classList.add('on'); sh.classList.add('on');
+  setTimeout(()=>document.getElementById('cardioSavedDone').focus({preventScroll:true}),60); // after the dialog helper focuses the sheet
+}
+async function completeCardioDay(){
+  const recs=cardioDayRecs(); cardioDay=null; await sset(CARDIO_DAY_KEY,null);
+  if(!recs.length){ await loadDay(suggestedDayId()); setView('home'); return; }
+  showCardioCelebration(recs);
+}
+function showCardioCelebration(recs){
+  const bg=document.getElementById('celebrateBg'), inner=document.getElementById('celebrateInner');
+  const colors=['#ff5d3b','#e8b23d','#4fa3d1','#5cbb6f'];
+  const confetti=Array.from({length:12},(_,i)=>`<div class="confetti" style="left:${Math.round(5+Math.random()*90)}%;background:${colors[i%colors.length]};animation-delay:${(Math.random()*2).toFixed(1)}s"></div>`).join('');
+  const n=recs.length, mins=recs.reduce((a,r)=>a+(r.duration||0),0), a0=cardioAct(recs[0].cact);
+  const wk=sessions.filter(s=>s.isCardio&&s.t>=weekStart()).length; // per week, like Home's Conditioning This Week
+  const ord=k=>k===1?'1st':k===2?'2nd':k===3?'3rd':k+'th';
+  const rest=wk>3?'ahead of your plan of 2–3 a week.':wk>=2?'right on your plan of 2–3 a week.':'your plan is 2–3 a week.';
+  inner.innerHTML=`${confetti}
+    <div class="cel-badge"><svg viewBox="0 0 24 24" aria-hidden="true">${CARDIO_ICONS[a0&&a0.ic]||CARDIO_ICONS.more}</svg></div>
+    <div class="cel-h1" id="celCardioT">Cardio, Logged</div>
+    <div class="cel-sub">${n} session${n===1?'':'s'} · ${mins} min</div>
+    <div class="cel-list">${recs.map(r=>`<div>${esc(r.ctypeLabel)}<span>${esc(cardioSummary(r))}</span></div>`).join('')}</div>
+    <div class="rhythm-msg"><b>${ord(wk)} conditioning session this week</b> — ${rest}</div>
+    <button class="cel-cta" id="celBackBtn">Return to Home</button>`;
+  bg.setAttribute('role','dialog'); bg.setAttribute('aria-modal','true'); bg.setAttribute('aria-labelledby','celCardioT');
+  bg.classList.add('on');
+  const back=document.getElementById('celBackBtn'); back.focus({preventScroll:true});
+  back.onclick=async()=>{ bg.classList.remove('on'); ['role','aria-modal','aria-labelledby'].forEach(k=>bg.removeAttribute(k)); await loadDay(suggestedDayId()); setView('home'); };
 }
 async function logCardio(){
   const d=cardioDraft, iv=d.structure==='intervals';
   const duration=iv?cardioIntervalTotal(d):parseInt(d.duration);
   if(!duration){ showToast(iv?'Add work, rest and rounds first':'Add a duration first'); return; }
-  await saveCardioRec(buildCardioRec(d,duration,Date.now()));
+  await saveCardioRec(buildCardioRec(d,duration,Date.now()),false);
 }
 // ---------- live cardio session ----------
 // Tapping an activity starts a clock. The session lives in 'today:cardio' so it survives a reload, and the clock is
@@ -3301,8 +3376,7 @@ function renderCardioLive(){
 async function saveLiveCardio(){
   const L=cardioLive, dur=parseInt(L.duration);
   if(!dur){ showToast('Add a duration first'); return; }
-  cardioLive=null; await sset('today:cardio',null); // cleared first so Home's banner is gone when it opens
-  await saveCardioRec(buildCardioRec(L,dur,L.startedAt));
+  await saveCardioRec(buildCardioRec(L,dur,L.startedAt),true); // the live session is cleared once the record is stored
 }
 
 // ---------- history view ----------
@@ -4230,6 +4304,7 @@ async function init(){
   dayStartTimes=(await sget('dayStart'))||{};
   baselines=(await sget('baselines'))||{};
   cardioLive=(await sget('today:cardio'))||null;
+  cardioDay=(await sget(CARDIO_DAY_KEY))||null; if(cardioDay&&!Array.isArray(cardioDay.ids)) cardioDay=null;
   { const rt=await sget(REST_KEY); delete store.corrupt[REST_KEY]; syncTimer(rt||0); } // unreadable text is just dropped: it is ephemeral, no corrupt: copy needed
   recovery=(await sget('recovery'))||{}; familiarity=(await sget('familiarity'))||{}; soreOverride=(await sget('soreOverride'))||{}; recoveryLog=(await sget('recoveryLog'))||[]; hist=(await sget('hist'))||{}; sessions=(await sget('sessions'))||[]; notes=(await sget('notes'))||{}; lastByName=(await sget('lastByName'))||{}; bodyweight=(await sget('bodyweight'))||[];
 
@@ -4364,6 +4439,7 @@ async function init(){
   updateBlockUI();
 
   await loadDay(suggestedDayId());
+  if(currentDay!=='cardio'&&cardioDayRecs().length) await loadDay('cardio'); // a cardio day left open: back to its pick screen
   if(currentDay==='cardio') setView('log'); // cardio is a decisive rotation call, not a day to choose from Home — go straight to logging it
   if(needsBuild && !settings.onboarded){ setAppInert(true); document.getElementById('onboardBg').classList.add('on'); renderOnboardStep(0); }
   setInterval(renderBody,60000);
