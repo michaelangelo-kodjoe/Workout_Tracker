@@ -3060,10 +3060,23 @@ function cardioFieldText(k,v,du){ // one logged value as History reads it
     case 'floors':return `${v} floors`; case 'feet':return `${v} ft`; case 'rpm':return `${v} rpm`; case 'cal':return `${v} cal`; case 'hr':return `${v} bpm`; case 'spm':return `${v} spm`;
     case 'split':return `${v} /500 m`; case 'laps':return `${v} laps`; case 'reps':return `${v} reps`; case 'lanes':return `${v} lanes`; case 'steps':return `${v} steps`;
     case 'watts':return `${v} W`; case 'jumps':return `${v} jumps`; case 'warm':return `${v} min warm-up`; case 'cool':return `${v} min cooldown`; } return String(v); }
+// Duration is stored as whole minutes in `duration` (what every older reader, total and trend uses). A session timed
+// to the second also carries an optional `sec` (exact seconds, only when not a whole minute); it is ignored if it no
+// longer agrees with `duration` (e.g. an older copy of the app edited the minutes).
+const cardioSecOf=s=>Number.isFinite(s.sec)&&s.sec>0&&s.sec%60!==0&&Math.max(1,Math.round(s.sec/60))===s.duration?s.sec:0;
+function cardioDurText(s){ const sec=cardioSecOf(s); if(!sec) return `${s.duration} min`;
+  const h=Math.floor(sec/3600), m=Math.floor(sec%3600/60), r=sec%60; return h?`${h} h ${m} min ${r} s`:`${m} min ${r} s`; }
+// what the Duration fields accept: plain minutes (45), decimal minutes (12.5), m:ss and h:mm:ss. Returns seconds, 0 if unreadable
+function parseDurSec(v){ v=String(v==null?'':v).trim(); let m;
+  if(/^\d+$/.test(v)) return parseInt(v)*60;
+  if(/^\d*\.\d+$/.test(v)) return Math.round(parseFloat(v)*60);
+  if((m=v.match(/^(\d+):([0-5]?\d)$/))) return +m[1]*60+ +m[2];
+  if((m=v.match(/^(\d+):([0-5]?\d):([0-5]?\d)$/))) return +m[1]*3600+ +m[2]*60+ +m[3];
+  return 0; }
 // History's one-line summary of a cardio session; older logs only have duration, distance and effort
 function cardioMeta(s){
   const a=s.cact&&cardioAct(s.cact), du=s.du||'mi';
-  const parts=[`${s.duration} min`, s.distance];
+  const parts=[cardioDurText(s), s.distance];
   if(s.structure==='intervals'&&s.rounds) parts.push(`${s.rounds} × ${s.work}s / ${s.rest}s`);
   if(a&&s.f) a.main.concat(a.more).filter(k=>k!=='dist'&&s.f[k]!=null&&s.f[k]!=='').slice(0,2).forEach(k=>parts.push(cardioFieldText(k,s.f[k],du)));
   if(s.rpe) parts.push(`RPE ${s.rpe}`);
@@ -3095,7 +3108,7 @@ function renderCardioForm(){
     const rec=cardioRecent(), accts=CARDIO_ACTS.filter(a=>a.g===d.group);
     const sub=a=>{ const m=a.main.map(k=>CARDIO_FIELDS[k].l); if(a.iv==='default'||a.iv==='only') m.unshift('Rounds'); return m.length?m.slice(0,2).join(', '):'Duration'; };
     wrap.innerHTML=`${d.manual?steps(1):''}<h3 class="cf-h">Pick an Activity</h3><p class="cf-lede">${d.manual?'Then add what you did.':'Tap one to start the clock.'}</p>
-      ${rec.length?`<div class="cf-sub" style="margin-top:0">Recent</div><div class="cf-scroll">${rec.map(r=>{ const a=cardioAct(r.k); return `<button type="button" class="cf-rc" data-k="${a.k}">${a.l}<small>${r.s.duration} min · ${cardioWhen(r.s.t)}</small></button>`; }).join('')}</div>`:''}
+      ${rec.length?`<div class="cf-sub" style="margin-top:0">Recent</div><div class="cf-scroll">${rec.map(r=>{ const a=cardioAct(r.k); return `<button type="button" class="cf-rc" data-k="${a.k}">${a.l}<small>${cardioDurText(r.s)} · ${cardioWhen(r.s.t)}</small></button>`; }).join('')}</div>`:''}
       <div class="cf-seg" id="cfGroups" role="group" aria-label="Activity Group" style="margin-top:${rec.length?20:0}px">${CARDIO_GROUPS.map(g=>`<button type="button" data-g="${g}" class="${g===d.group?'on':''}" aria-pressed="${g===d.group}">${g}</button>`).join('')}</div>
       <div class="cf-grid">${accts.map(a=>`<button type="button" class="cf-tile" data-k="${a.k}">${cardioIcon(a.ic)}<span>${a.l}</span><small>${sub(a)}</small></button>`).join('')}</div>
       <div class="cf-past"><span class="linkbtn" id="cfMode">${d.manual?'Start a Live Session Instead':'Log a Past Session'}</span></div>`;
@@ -3127,8 +3140,8 @@ function renderCardioForm(){
       mathEl.innerHTML=`(${d.work||0} + ${d.rest||0}) × ${d.rounds||0}`+((parseFloat(d.vals.warm)||0)+(parseFloat(d.vals.cool)||0)?'<br>plus warm-up and cooldown':''); }; upd();
     document.getElementById('cfBack').onclick=()=>{ d.step=1; d.focus=null; renderCardioForm(); window.scrollTo(0,0); };
     const st=document.getElementById('cfStruct'); if(st) st.querySelectorAll('button').forEach(b=>b.onclick=()=>{ d.structure=b.dataset.s; d.focus='s:'+b.dataset.s; renderCardioForm(); });
-    if(!iv){ const du2=document.getElementById('cfDur'); du2.oninput=e=>d.duration=e.target.value.replace(/[^\d]/g,'');
-      const bump=n=>{ d.duration=String(Math.max(0,(parseInt(d.duration)||0)+n)); du2.value=d.duration==='0'?'':d.duration; };
+    if(!iv){ const du2=document.getElementById('cfDur'); du2.oninput=e=>d.duration=e.target.value.replace(/[^\d:.]/g,'');
+      const bump=n=>{ d.duration=String(Math.max(0,Math.round(parseDurSec(d.duration)/60)+n)); du2.value=d.duration==='0'?'':d.duration; };
       document.getElementById('cfLess').onclick=()=>bump(-5); document.getElementById('cfMore').onclick=()=>bump(5); }
     else { [['cfWork','work'],['cfRest','rest'],['cfRounds','rounds']].forEach(([id,key])=>document.getElementById(id).oninput=e=>{ d[key]=e.target.value.replace(/[^\d]/g,''); upd(); }); }
     wrap.querySelectorAll('[data-f]').forEach(i=>i.oninput=e=>{ d.vals[i.dataset.f]=e.target.value; if(iv&&(i.dataset.f==='warm'||i.dataset.f==='cool')) upd(); });
@@ -3146,11 +3159,12 @@ function renderCardioForm(){
   if(f){ const el=f.startsWith('g:')?wrap.querySelector(`#cfGroups [data-g="${f.slice(2)}"]`):f.startsWith('s:')?wrap.querySelector(`#cfStruct [data-s="${f.slice(2)}"]`):f.startsWith('r:')?wrap.querySelector(`#rpeRow [data-n="${f.slice(2)}"]`):document.getElementById(f); if(el) el.focus({preventScroll:true}); }
 }
 // one cardio record from a draft or live session: its fields, in the unit the Settings page uses
-function buildCardioRec(d,duration,t){
+function buildCardioRec(d,duration,t,sec){
   const a=cardioAct(d.act), du=cardioDu(), iv=d.structure==='intervals';
   const f={}; a.main.concat(a.more,iv?['warm','cool']:[]).forEach(k=>{ const v=(d.vals[k]??'').toString().trim(); if(v!=='' && k!=='dist') f[k]=v; });
   const dist=(d.vals.dist||'').toString().trim();
   const rec={t, isCardio:true, cact:a.k, structure:d.structure, ctype:d.structure, ctypeLabel:cardioLabel(a,d), duration, du, rpe:d.rpe, notes:d.notes};
+  if(sec&&sec%60) rec.sec=sec;
   if(dist) rec.distance=`${dist} ${du}`;
   if(Object.keys(f).length) rec.f=f;
   if(iv){ rec.work=parseInt(d.work)||0; rec.rest=parseInt(d.rest)||0; rec.rounds=parseInt(d.rounds)||0; }
@@ -3167,9 +3181,9 @@ async function saveCardioRec(rec){
 }
 async function logCardio(){
   const d=cardioDraft, iv=d.structure==='intervals';
-  const duration=iv?cardioIntervalTotal(d):parseInt(d.duration);
+  const dsec=iv?0:parseDurSec(d.duration), duration=iv?cardioIntervalTotal(d):Math.max(dsec?1:0,Math.round(dsec/60));
   if(!duration){ showToast(iv?'Add work, rest and rounds first':'Add a duration first'); return; }
-  await saveCardioRec(buildCardioRec(d,duration,Date.now()));
+  await saveCardioRec(buildCardioRec(d,duration,Date.now(),dsec));
 }
 // ---------- live cardio session ----------
 // Tapping an activity starts a clock. The session lives in 'today:cardio' so it survives a reload, and the clock is
@@ -3253,14 +3267,14 @@ function renderCardioLive(){
     const e=cardioElapsed(L), iv=L.structure==='intervals', more=a.more.concat(iv?['warm','cool']:[]);
     wrap.innerHTML=`<button type="button" class="cf-back" id="cfKeep"><svg class="cf-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>Keep Going</button>
       <h3 class="cf-h">Nice Work</h3><p class="cf-lede">${cardioEsc(cardioLabel(a,L))} · ${cardioClock(e)} on the clock. Fix anything that's off, then save.</p>
-      <div class="cf-fld"><div><label class="field-label" for="cfDur">Duration (min)</label><input class="cf-in" id="cfDur" type="text" inputmode="numeric" value="${L.duration}"></div>${a.main.map(k=>fld(k,'cfs')).join('')}</div>
+      <div class="cf-fld"><div><label class="field-label" for="cfDur">Duration (min)</label><input class="cf-in" id="cfDur" type="text" inputmode="text" autocapitalize="off" autocomplete="off" spellcheck="false" aria-describedby="cfDurHint" value="${L.duration}"><div class="sr-only" id="cfDurHint">Minutes, or minutes and seconds like 12:34</div></div>${a.main.map(k=>fld(k,'cfs')).join('')}</div>
       ${more.length?`<button type="button" class="cf-disc" id="cfMoreBtn" aria-expanded="${!!L.more}"><span>Add Details: ${more.map(k=>CARDIO_FIELDS[k].l).join(', ')}</span>${L.more?CARDIO_CHEV_UP:CARDIO_CHEV}</button>${L.more?`<div class="cf-fld">${more.map(k=>fld(k,'cfs')).join('')}</div>`:''}`:''}
       <div class="field-label" id="rpeLbl" style="margin-top:4px">Effort (RPE, 1 easy – 10 max)</div><div class="cf-rpe" id="rpeRow" role="group" aria-labelledby="rpeLbl">${Array.from({length:10},(_,i)=>i+1).map(n=>`<button type="button" class="${L.rpe===n?'on':''}" data-n="${n}" aria-pressed="${L.rpe===n}" aria-label="Effort ${n}">${n}</button>`).join('')}</div>
       ${L.rpe?`<div class="cf-rpe-note">${L.rpe}: ${CARDIO_RPE[L.rpe]}</div>`:''}
       <textarea class="notes" id="cNotes" aria-label="Notes" placeholder="Notes — route, how it felt">${esc(L.notes)}</textarea>
       <div class="row" style="margin-top:16px"><button class="btn primary" id="cfSave" style="flex:1">Save Session</button></div>`;
     bind();
-    document.getElementById('cfDur').oninput=ev=>{ L.duration=ev.target.value.replace(/[^\d]/g,''); saveCardioLive(); };
+    document.getElementById('cfDur').oninput=ev=>{ L.duration=ev.target.value.replace(/[^\d:.]/g,''); saveCardioLive(); };
     document.getElementById('cNotes').oninput=ev=>{ L.notes=ev.target.value; saveCardioLive(); };
     wrap.querySelectorAll('#rpeRow button').forEach(b=>b.onclick=()=>{ L.rpe=L.rpe===+b.dataset.n?0:+b.dataset.n; L.focus='r:'+b.dataset.n; saveCardioLive(); renderCardioForm(); });
     const mb2=document.getElementById('cfMoreBtn'); if(mb2) mb2.onclick=()=>{ L.more=!L.more; L.focus='cfMoreBtn'; saveCardioLive(); renderCardioForm(); };
@@ -3287,7 +3301,7 @@ function renderCardioLive(){
     const sk=document.getElementById('cfSkip'); if(sk) sk.onclick=()=>{ const p=cardioPhase(L,cardioPhaseAt(L)); if(p&&p.phase!=='done'){ L.skipMs+=Math.ceil(p.left*1000)+50; saveCardioLive(); cardioTick(); } };
     document.getElementById('cfFinish').onclick=async()=>{
       const secs=cardioElapsed(L);
-      if(!L.pausedAt){ L.pausedAt=Date.now(); L.autoPaused=true; } L.duration=String(Math.max(1,Math.round(cardioElapsed(L)/60))); // always the clock's time, selected on the next screen so typing replaces it
+      if(!L.pausedAt){ L.pausedAt=Date.now(); L.autoPaused=true; } L.duration=cardioClock(Math.max(1,Math.round(cardioElapsed(L)))); // always the exact clock time (m:ss, h:mm:ss over an hour), selected on the next screen so typing replaces it
       if(secs>CARDIO_LONG_SEC) showToast(`The clock ran ${Math.floor(secs/3600)} h ${Math.floor(secs%3600/60)} min. Fix the duration if you forgot to stop it.`,5000);
       L.step='finish'; L.focus='cfDur'; saveCardioLive(); renderCardioForm(); window.scrollTo(0,0); };
     document.getElementById('cfDiscard').onclick=async()=>{ if(await confirmSheet("Discard this session? The time and numbers you've logged will be lost.",'Discard',null,true)){ cardioLive=null; cardioDraft=newCardioDraft(); await sset('today:cardio',null); renderTabs(); renderCardioForm(); } };
@@ -3300,10 +3314,10 @@ function renderCardioLive(){
   if(f){ const el=f.startsWith('s:')?wrap.querySelector(`#cfStruct [data-s="${f.slice(2)}"]`):f.startsWith('r:')?wrap.querySelector(`#rpeRow [data-n="${f.slice(2)}"]`):document.getElementById(f); if(el){ el.focus({preventScroll:true}); if(f==='cfDur'&&el.select) el.select(); } }
 }
 async function saveLiveCardio(){
-  const L=cardioLive, dur=parseInt(L.duration);
-  if(!dur){ showToast('Add a duration first'); return; }
+  const L=cardioLive, sec=parseDurSec(L.duration), dur=Math.max(1,Math.round(sec/60));
+  if(!sec){ showToast('Add a duration first, like 45 or 12:34'); return; }
   cardioLive=null; await sset('today:cardio',null); // cleared first so Home's banner is gone when it opens
-  await saveCardioRec(buildCardioRec(L,dur,L.startedAt));
+  await saveCardioRec(buildCardioRec(L,dur,L.startedAt,sec));
 }
 
 // ---------- history view ----------
@@ -3382,16 +3396,16 @@ function renderSessionEditForm(s, el, onDone){
   if(s.isCardio){
     const act=s.cact&&cardioAct(s.cact), du=s.du||'mi', iv=s.structure==='intervals';
     const keys=act?act.main.concat(act.more,iv?['warm','cool']:[]).filter(k=>k!=='dist'):[]; // dist is the Distance field below
-    det.innerHTML=`<label class="field-label" for="seDur">Duration (minutes)</label><input class="in" id="seDur" type="number" inputmode="numeric" value="${s.duration||''}" style="width:100%">
+    det.innerHTML=`<label class="field-label" for="seDur">${cardioSecOf(s)?'Duration (m:ss)':'Duration (minutes)'}</label>${cardioSecOf(s)?`<input class="in" id="seDur" type="text" inputmode="text" autocapitalize="off" value="${cardioClock(cardioSecOf(s))}" style="width:100%">`:`<input class="in" id="seDur" type="number" inputmode="numeric" value="${s.duration||''}" style="width:100%">`}
       <label class="field-label" for="seDist">Distance (optional)</label><input class="in" id="seDist" type="text" value="${cardioEsc(s.distance||'')}" style="width:100%">
       ${iv?`<div class="cf-fld cf-3"><div><label class="field-label" for="seWork">Work (sec)</label><input class="in" id="seWork" type="number" inputmode="numeric" value="${s.work||''}" style="width:100%"></div><div><label class="field-label" for="seRest">Rest (sec)</label><input class="in" id="seRest" type="number" inputmode="numeric" value="${s.rest||''}" style="width:100%"></div><div><label class="field-label" for="seRounds">Rounds</label><input class="in" id="seRounds" type="number" inputmode="numeric" value="${s.rounds||''}" style="width:100%"></div></div>`:''}
       ${keys.length?`<div class="cf-fld">${keys.map(k=>`<div><label class="field-label" for="seF_${k}">${cardioFieldLabel(k,du)}</label><input class="in" id="seF_${k}" data-f="${k}" type="text" inputmode="${CARDIO_FIELDS[k].text?'text':'decimal'}" value="${cardioEsc(s.f&&s.f[k]!=null?s.f[k]:'')}" style="width:100%"></div>`).join('')}</div>`:''}
       <label class="field-label" for="seRpe">Effort (RPE)</label><select class="in" id="seRpe" style="width:100%"><option value="0">—</option>${Array.from({length:10},(_,k)=>k+1).map(n=>`<option value="${n}"${s.rpe===n?' selected':''}>${n}</option>`).join('')}</select>
       <textarea class="notes" id="seNotes" aria-label="Notes" placeholder="Notes">${cardioEsc(s.notes||'')}</textarea>
       <div class="se-foot"><button class="btn" data-act="cancel">Cancel</button><button class="btn primary" data-act="save">Save</button></div>`;
-    det.querySelector('[data-act="save"]').onclick=async e=>{ e.stopPropagation(); const dur=parseInt(det.querySelector('#seDur').value); if(!dur){ showToast('Add a duration'); return; }
+    det.querySelector('[data-act="save"]').onclick=async e=>{ e.stopPropagation(); const hadSec=!!cardioSecOf(s), dsec=hadSec?parseDurSec(det.querySelector('#seDur').value):0, dur=hadSec?Math.max(1,Math.round(dsec/60)):parseInt(det.querySelector('#seDur').value); if(!dur||(hadSec&&!dsec)){ showToast('Add a duration'); return; }
       let dist=det.querySelector('#seDist').value.trim(); if(s.du&&/^\d*\.?\d+$/.test(dist)) dist=`${dist} ${s.du}`; // a bare number keeps its unit, so the pace trend still reads it
-      const edited={duration:dur,distance:dist,rpe:parseInt(det.querySelector('#seRpe').value)||0,notes:det.querySelector('#seNotes').value};
+      const edited={duration:dur,sec:hadSec&&dsec%60?dsec:undefined,distance:dist,rpe:parseInt(det.querySelector('#seRpe').value)||0,notes:det.querySelector('#seNotes').value};
       if(act){ const f={}; det.querySelectorAll('[data-f]').forEach(i=>{ const v=i.value.trim(); if(v!=='') f[i.dataset.f]=v; }); edited.f=Object.keys(f).length?f:undefined; }
       if(iv){ edited.work=parseInt(det.querySelector('#seWork').value)||0; edited.rest=parseInt(det.querySelector('#seRest').value)||0; edited.rounds=parseInt(det.querySelector('#seRounds').value)||0; }
       await saveSessionEdit(s,edited); onDone(); };
