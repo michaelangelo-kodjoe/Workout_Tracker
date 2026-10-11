@@ -422,6 +422,7 @@
   .rir-row[hidden]{display:none;}
   .sal-row{display:flex;align-items:center;gap:12px;margin:0 0 10px;}
   .sal-chip{display:inline-flex;align-items:center;gap:6px;flex:none;min-height:44px;padding:0 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--panel-raised);color:var(--text);font:13px 'Georgia',serif;cursor:pointer;white-space:nowrap;}
+  .sal-row.idle{visibility:hidden;pointer-events:none;} /* nothing left to fill: the row keeps its height so the sets below stay put */
   .sal-chip svg{width:16px;height:16px;fill:none;stroke:var(--light);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;}
   .sal-chip:focus-visible{outline:2px solid var(--light);outline-offset:2px;}
   .sal-hint{font-size:12px;line-height:1.35;color:var(--text-dim);min-width:0;}
@@ -2599,6 +2600,10 @@ function render(){
     // if that box is empty). It never ticks Done and never starts the rest timer. Not for timed holds, a first-ever use or a seed.
     const lastSets=(!timed&&saved&&saved.sets)?saved.sets.filter(x=>x&&x.r!==''&&x.r!=null):[];
     const salTargets=lastSets.length?state.sets.map((x,j)=>j).filter(j=>!state.sets[j].done&&state.sets[j].r===''):[];
+    if(lastSets.length&&!salTargets.length){
+      const sal=document.createElement('div'); sal.className='sal-row idle'; sal.setAttribute('aria-hidden','true');
+      sal.innerHTML=`<button type="button" class="sal-chip" tabindex="-1">Same as Last</button><span class="sal-hint">&nbsp;</span>`; body.insertBefore(sal,hr);
+    }
     if(salTargets.length){
       const j=salTargets[0], ls=lastSets[Math.min(j,lastSets.length-1)], leftTxt=ls.rir!=null?` · ${ls.rir>=4?'4+':ls.rir} left`:'';
       const addTxt=(bwLoaded&&!state.sets[j].add&&parseFloat(ls.add)>0)?` · +${dispWeight(parseFloat(ls.add))} ${unitLabel()}`:'';
@@ -2612,7 +2617,7 @@ function render(){
         if(bwLoaded){ if(!t.add&&parseFloat(ls.add)>0) t.add=ls.add; }
         else if((t.w===''||t.w==null)&&typeof sug==='number'&&sug>0) t.w=storeWeight(dispWeight(sug));
         touchDayStart(); sset('today:'+currentDay,todayData); render();
-        if(fk){ const c=document.querySelectorAll('#exerciseList .exercise')[fk.card]; const nxt=c&&(c.querySelector('.sal-chip')||c.querySelector('.setdone:not(.on)')); if(nxt){ tagClickables(c); nxt.focus({preventScroll:true}); } }
+        if(fk){ const c=document.querySelectorAll('#exerciseList .exercise')[fk.card]; const nxt=c&&(c.querySelector('.sal-row:not(.idle) .sal-chip')||c.querySelector('.setdone:not(.on)')); if(nxt){ tagClickables(c); nxt.focus({preventScroll:true}); } }
       };
       body.insertBefore(sal,hr);
     }
