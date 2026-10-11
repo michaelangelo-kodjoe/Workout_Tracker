@@ -1958,27 +1958,49 @@ function confirmSheet(message, okLabel, cancelLabel, danger){
 }
 
 // ---------- rest timer ----------
-let timer={end:0,total:0,iv:null,ctx:null};
-function beep(){ try{ if(!timer.ctx) timer.ctx=new (window.AudioContext||window.webkitAudioContext)(); const c=timer.ctx,o=c.createOscillator(),g=c.createGain(); o.frequency.value=880; g.gain.value=.15; o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime+.25); }catch(e){} if(navigator.vibrate) navigator.vibrate([200,100,200]); }
+let timer={end:0,total:0,iv:null,ctx:null,hide:null};
+// The running timer's end time and length are kept under REST_KEY so a lock, app switch or reload can pick the countdown back up.
+// It is deliberately NOT in KEYS: ephemeral, so it never reaches Export Backup, validateBackup or Import.
+const REST_KEY='restTimer', REST_MAX_AGE=4*60*60*1000;
+function saveTimer(){ sset(REST_KEY,{end:timer.end,total:timer.total}); }
+function clearTimerSave(){ sset(REST_KEY,null); }
+// best effort: iOS may leave the context suspended after the page was backgrounded; sound is never assumed
+// Constraints (platform-claims / claims-ledger P24-P30): iOS Web Audio can stay 'interrupted' or silent after backgrounding even after resume(), so Go is always shown first and sound is never relied on; there is no lock-screen alert and no vibration on iOS.
+function resumeAudio(){ try{ if(timer.ctx&&timer.ctx.state!=='running'&&timer.ctx.resume) timer.ctx.resume().catch(()=>{}); }catch(e){} }
+// on the next tap (a gesture) a context that is still not running is rebuilt; the first Start tap unlocks audio as before
+document.addEventListener('pointerdown',()=>{ try{ if(timer.ctx&&timer.ctx.state!=='running'){ resumeAudio(); if(timer.ctx.state==='interrupted'||timer.ctx.state==='closed'){ try{ timer.ctx.close(); }catch(e){} timer.ctx=new (window.AudioContext||window.webkitAudioContext)(); } } }catch(e){} },{passive:true});
+function beep(onlyIfRunning){ try{ if(!timer.ctx) timer.ctx=new (window.AudioContext||window.webkitAudioContext)(); resumeAudio(); if(onlyIfRunning&&timer.ctx.state!=='running') return; const c=timer.ctx,o=c.createOscillator(),g=c.createGain(); o.frequency.value=880; g.gain.value=.15; o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime+.25); }catch(e){} if(navigator.vibrate) navigator.vibrate([200,100,200]); }
 function startTimer(sec){
   try{ if(!timer.ctx) timer.ctx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
-  timer.total=sec; timer.end=Date.now()+sec*1000; clearInterval(timer.iv);
+  timer.total=sec; timer.end=Date.now()+sec*1000; clearInterval(timer.iv); clearTimeout(timer.hide); saveTimer();
   const el=document.getElementById('timer'); el.classList.add('on'); el.classList.remove('done'); document.getElementById('timerLive').textContent='';
   tick(); timer.iv=setInterval(tick,1000);
 }
 // timer runs cool blue while there's plenty of rest left, then fades to the accent color over the final quarter of the rest as a "time's almost up" cue
 const TIMER_BLUE=[79,163,209], TIMER_ACCENT=[255,93,59], TIMER_FADE_WINDOW=0.25;
 function lerpColor(a,b,t){ return `rgb(${Math.round(a[0]+(b[0]-a[0])*t)},${Math.round(a[1]+(b[1]-a[1])*t)},${Math.round(a[2]+(b[2]-a[2])*t)})`; }
-function tick(){
+function tick(late){ // late: the countdown finished while the page was away, so the beep only plays if the audio context is already running
   const left=Math.ceil((timer.end-Date.now())/1000);
   const t=document.getElementById('timerT'), bar=document.getElementById('timerBar'), el=document.getElementById('timer');
-  if(left<=0){ t.textContent='Go'; t.classList.add('over'); t.style.color=''; bar.style.width='0%'; bar.style.background=''; el.classList.add('done'); clearInterval(timer.iv); beep(); document.getElementById('timerLive').textContent='Rest over — next set'; setTimeout(stopTimer,4000); return; }
+  if(left<=0){ t.textContent='Go'; t.classList.add('over'); t.style.color=''; bar.style.width='0%'; bar.style.background=''; el.classList.add('done'); clearInterval(timer.iv); clearTimerSave(); beep(late||Date.now()-timer.end>2500); document.getElementById('timerLive').textContent='Rest over — next set'; clearTimeout(timer.hide); timer.hide=setTimeout(stopTimer,4000); return; }
   t.classList.remove('over'); t.textContent=`${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}`;
   const pct=left/timer.total; bar.style.width=(pct*100)+'%';
   const fadeT=Math.min(1,pct/TIMER_FADE_WINDOW); const col=lerpColor(TIMER_ACCENT,TIMER_BLUE,fadeT);
   t.style.color=col; bar.style.background=col;
 }
-function stopTimer(){ clearInterval(timer.iv); document.getElementById('timer').classList.remove('on'); }
+function stopTimer(){ clearInterval(timer.iv); clearTimeout(timer.hide); document.getElementById('timer').classList.remove('on'); clearTimerSave(); }
+// Recompute from the clock on return (visible, pageshow) and at boot. Past end: show Go at once; still running: carry on with the real time left.
+// Nothing is replayed: the .on/.done classes are set directly and the 1 s interval is only restarted if the countdown is still live.
+function syncTimer(saved){
+  if(saved===undefined){ if(!timer.end||!document.getElementById('timer').classList.contains('on')||document.getElementById('timer').classList.contains('done')) return; }
+  else if(saved&&saved.end>0&&saved.total>0&&Date.now()-saved.end<REST_MAX_AGE){ timer.end=saved.end; timer.total=saved.total; document.getElementById('timer').classList.add('on'); }
+  else { if(saved) clearTimerSave(); return; }
+  clearInterval(timer.iv);
+  if(timer.end<=Date.now()){ tick(true); return; }
+  tick(); timer.iv=setInterval(tick,1000);
+}
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'){ resumeAudio(); syncTimer(); } });
+window.addEventListener('pageshow',()=>{ resumeAudio(); syncTimer(); });
 // ---------- hold counter for timed sets ----------
 // a timed target ("3 x 30-45s") is logged in seconds, not reps. Each undone set gets a stopwatch: start counts up,
 // writes the running seconds into the set's field, beeps once at the target's top, and stop marks the set done
@@ -2010,7 +2032,7 @@ function stopHold(markDone){
   sset('today:'+currentDay,todayData); render();
 }
 document.getElementById('tSkip').onclick=stopTimer;
-document.getElementById('tPlus').onclick=()=>{ timer.end+=30000; timer.total+=30; tick(); };
+document.getElementById('tPlus').onclick=()=>{ timer.end+=30000; timer.total+=30; saveTimer(); tick(); };
 
 // ---------- recovery map ----------
 // a manual sore-mark (soreOverride) can only extend how long a muscle looks not-recovered, never shorten it
@@ -4006,7 +4028,7 @@ document.getElementById('importFile').onchange=async e=>{
   }catch(err){ console.error(err); showToast("Couldn't finish the import. Your data may be partly updated, so try again"); }
   e.target.value='';
 };
-document.getElementById('wipeBtn').onclick=async()=>{ if(await confirmSheet('Erase all workouts, history and settings on this device?', 'Erase', null, true)&&await confirmSheet('Really erase? This cannot be undone.', 'Erase Everything', null, true)){ for(const k of KEYS) await sset(k,null); location.reload(); } };
+document.getElementById('wipeBtn').onclick=async()=>{ if(await confirmSheet('Erase all workouts, history and settings on this device?', 'Erase', null, true)&&await confirmSheet('Really erase? This cannot be undone.', 'Erase Everything', null, true)){ for(const k of KEYS) await sset(k,null); stopTimer(); await sset(REST_KEY,null); location.reload(); } };
 
 // ---------- swap ----------
 function closeSheet(){ document.getElementById('sheet').classList.remove('on'); document.getElementById('sheetBg').classList.remove('on'); }
@@ -4175,6 +4197,7 @@ async function init(){
   dayStartTimes=(await sget('dayStart'))||{};
   baselines=(await sget('baselines'))||{};
   cardioLive=(await sget('today:cardio'))||null;
+  { const rt=await sget(REST_KEY); delete store.corrupt[REST_KEY]; syncTimer(rt||0); } // unreadable text is just dropped: it is ephemeral, no corrupt: copy needed
   recovery=(await sget('recovery'))||{}; familiarity=(await sget('familiarity'))||{}; soreOverride=(await sget('soreOverride'))||{}; recoveryLog=(await sget('recoveryLog'))||[]; hist=(await sget('hist'))||{}; sessions=(await sget('sessions'))||[]; notes=(await sget('notes'))||{}; lastByName=(await sget('lastByName'))||{}; bodyweight=(await sget('bodyweight'))||[];
 
   // one-time: hist/notes used to be keyed per (day,exercise) — "d1|Hammer Curl" and "d3|Hammer Curl" were
