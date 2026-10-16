@@ -419,6 +419,13 @@
   .cf-steps{display:flex;align-items:center;gap:8px;margin:4px 0 16px;font-size:12px;color:var(--text-dim);} .cf-steps i{flex:1;height:3px;border-radius:2px;background:var(--line);} .cf-steps i.on{background:var(--cardio);} .cf-steps b{font-weight:normal;color:var(--text);white-space:nowrap;}
   .cf-ico{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;}
   .cf-back{display:inline-flex;align-items:center;gap:2px;min-height:44px;margin:-8px 0 0 -4px;padding:0 10px 0 0;background:none;border:0;color:var(--light);font:15px 'Georgia',serif;cursor:pointer;}
+  .cf-h:focus{outline:none;}
+  .cf-info{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:0 0 16px;}
+  .cf-info .lb{font:11px 'Menlo',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;}
+  .cf-info dl{margin:0;} .cf-info .r{display:flex;justify-content:space-between;align-items:baseline;gap:16px;min-height:32px;padding:7px 0;border-top:1px solid var(--line);font-size:15px;} .cf-info .r:first-of-type{border-top:0;}
+  .cf-info dt{color:var(--text);flex:none;} .cf-info dd{margin:0;font-size:13px;color:var(--text-dim);text-align:right;min-width:0;}
+  .cf-start{margin-top:20px;} .cf-start .btn{width:100%;min-height:52px;font-size:15px;font-weight:bold;}
+  .cf-startnote{font-size:12px;color:var(--text-dim);text-align:center;margin-top:8px;line-height:1.5;}
   .cf-h{font-size:22px;font-weight:normal;margin:0 0 4px;} .cf-lede{font-size:13px;color:var(--text-dim);margin:0 0 16px;line-height:1.5;} .cf-lede .linkbtn{white-space:nowrap;}
   .cf-sub{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin:20px 0 8px;font-family:'Menlo',monospace;}
   .cf-scroll{display:flex;gap:8px;overflow-x:auto;margin:0 -16px;padding:0 16px 4px;scrollbar-width:none;} .cf-scroll::-webkit-scrollbar{display:none;}
@@ -3294,6 +3301,10 @@ function cardioPick(k){ const a=cardioAct(k), prev=cardioDraft;
   cardioDraft={...newCardioDraft(),manual:true,act:k,group:a.g,step:2,structure:a.iv==='default'||a.iv==='only'?'intervals':'steady',rpe:prev.rpe,notes:prev.notes};
   if(a.ivd){ [cardioDraft.work,cardioDraft.rest,cardioDraft.rounds]=a.ivd.map(String); }
   cardioDraft.focus='cfBack'; renderCardioForm(); window.scrollTo(0,0); }
+function cardioIntro(k){ const a=cardioAct(k); // in memory only: nothing is saved or started until Start Session
+  cardioDraft={...newCardioDraft(),group:a.g,act:k,step:'intro',structure:a.iv==='default'||a.iv==='only'?'intervals':'steady'};
+  if(a.ivd){ [cardioDraft.work,cardioDraft.rest,cardioDraft.rounds]=a.ivd.map(String); }
+  cardioDraft.focus='cfIntroH'; renderCardioForm(); window.scrollTo(0,0); }
 function renderCardioForm(){
   stopCardioTick();
   if(cardioLive){ renderCardioLive(); return; }
@@ -3308,17 +3319,37 @@ function renderCardioForm(){
     const sub=a=>{ const m=a.main.map(k=>CARDIO_FIELDS[k].l); if(a.iv==='default'||a.iv==='only') m.unshift('Rounds'); return m.length?m.slice(0,2).join(', '):'Duration'; };
     const today=cardioDayRecs();
     const logged=today.length?`<div class="cf-logged" role="group" aria-label="Logged Today"><div class="lb">Logged Today</div><ul>${today.map(r=>`<li><b><i aria-hidden="true"></i>${esc(r.ctypeLabel)}</b><span>${esc(cardioSummary(r))}</span></li>`).join('')}</ul></div>`:'';
-    wrap.innerHTML=`${logged}${d.manual?steps(1):''}<h3 class="cf-h">${today.length?'Add Another':'Pick an Activity'}</h3><p class="cf-lede">${d.manual?'Then add what you did.':'Tap one to start the clock.'}</p>
+    wrap.innerHTML=`${logged}${d.manual?steps(1):''}<h3 class="cf-h">${today.length?'Add Another':'Pick an Activity'}</h3><p class="cf-lede">${d.manual?'Then add what you did.':'Tap one to see how it works.'}</p>
       ${rec.length?`<div class="cf-sub" style="margin-top:0">Recent</div><div class="cf-scroll">${rec.map(r=>{ const a=cardioAct(r.k); return `<button type="button" class="cf-rc" data-k="${a.k}">${a.l}<small>${cardioDurText(r.s)} · ${cardioWhen(r.s.t)}</small></button>`; }).join('')}</div>`:''}
       <div class="cf-seg" id="cfGroups" role="group" aria-label="Activity Group" style="margin-top:${rec.length?20:0}px">${CARDIO_GROUPS.map(g=>`<button type="button" data-g="${g}" class="${g===d.group?'on':''}" aria-pressed="${g===d.group}">${g}</button>`).join('')}</div>
       <div class="cf-grid">${accts.map(a=>`<button type="button" class="cf-tile" data-k="${a.k}">${cardioIcon(a.ic)}<span>${a.l}</span><small>${sub(a)}</small></button>`).join('')}</div>
       <div class="cf-past"><span class="linkbtn" id="cfMode">${d.manual?'Start a Live Session Instead':'Log a Past Session'}</span></div>
       ${today.length?'<div class="cf-complete"><button type="button" class="btn" id="cfComplete">Complete Cardio Session</button></div>':''}`;
     list.appendChild(wrap);
-    wrap.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>d.manual?cardioPick(b.dataset.k):cardioStart(b.dataset.k));
+    wrap.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>d.manual?cardioPick(b.dataset.k):cardioIntro(b.dataset.k));
     const cc=document.getElementById('cfComplete'); if(cc) cc.onclick=completeCardioDay;
     document.getElementById('cfMode').onclick=()=>{ d.manual=!d.manual; d.focus='cfMode'; renderCardioForm(); };
     wrap.querySelectorAll('#cfGroups button').forEach(b=>b.onclick=()=>{ d.group=b.dataset.g; d.focus='g:'+b.dataset.g; renderCardioForm(); });
+  } else if(d.step==='intro'){
+    const a=cardioAct(d.act), iv=d.structure==='intervals';
+    const yt='https://www.youtube.com/results?search_query='+encodeURIComponent((a.l+' form how to').replace(/\s*\/\s*/g,' '));
+    const ivOn=a.iv==='default'||a.iv==='only';
+    const track=a.main.length?a.main.map(k=>CARDIO_FIELDS[k].l):[];
+    if(ivOn) track.unshift('Rounds');
+    const trackTxt=a.main.length?track.join(', '):(ivOn?'Rounds only':'Duration only');
+    const row=(t,v)=>`<div class="r"><dt>${t}</dt><dd>${v}</dd></div>`;
+    wrap.innerHTML=`<button type="button" class="cf-back" id="cfBack"><svg class="cf-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>Back</button>
+      <h3 class="cf-h" id="cfIntroH" tabindex="-1">${a.l}</h3><p class="cf-lede">${a.hint} <a class="linkbtn" href="${yt}" target="_blank" rel="noopener" aria-label="Demo videos (opens YouTube)">Demo Videos ↗</a></p>
+      ${a.iv==='yes'||a.iv==='default'?`<div class="cf-seg" id="cfStruct" role="group" aria-label="Structure">${[['steady','Steady State'],['intervals','Intervals']].map(([v,t])=>`<button type="button" data-s="${v}" class="${d.structure===v?'on':''}" aria-pressed="${d.structure===v}">${t}</button>`).join('')}</div>`:''}
+      <div class="cf-info"><div class="lb">About This Activity</div><dl>
+        ${row('Group',a.g)}${row('You Track',trackTxt)}${a.more.length?row('Optional',a.more.map(k=>CARDIO_FIELDS[k].l).join(', ')):''}
+        ${a.iv==='no'?row('Format','Steady State'):''}${iv?row('Intervals',`${d.work} sec work · ${d.rest} sec rest · ${d.rounds} rounds · About ${cardioIntervalTotal(d)} min`):''}
+      </dl></div>
+      <div class="cf-start"><button type="button" class="btn primary" id="cfStart">Start Session</button><div class="cf-startnote">A ${CARDIO_COUNTDOWN}-second countdown, then the clock starts at zero.</div></div>`;
+    list.appendChild(wrap);
+    document.getElementById('cfBack').onclick=()=>{ d.step=1; d.focus='k:'+d.act; renderCardioForm(); window.scrollTo(0,0); };
+    const st=document.getElementById('cfStruct'); if(st) st.querySelectorAll('button').forEach(b=>b.onclick=()=>{ d.structure=b.dataset.s; d.focus='s:'+b.dataset.s; renderCardioForm(); });
+    document.getElementById('cfStart').onclick=()=>cardioStart(d.act,d.structure); // the audio unlock inside cardioStart must run in this tap
   } else {
     const a=cardioAct(d.act), du=cardioDu(), iv=d.structure==='intervals', canIv=a.iv!=='no';
     const fld=(k,extra='')=>{ const f=CARDIO_FIELDS[k]; return `<div><label class="field-label" for="cf_${k}">${cardioFieldLabel(k,du)}</label><input class="cf-in" id="cf_${k}" data-f="${k}" ${f.text?`type="text" placeholder="${f.ph||''}"`:'type="text" inputmode="decimal"'} value="${(d.vals[k]??'').toString().replace(/"/g,'&quot;')}" ${extra}></div>`; };
@@ -3359,7 +3390,7 @@ function renderCardioForm(){
   document.getElementById('resetLink').style.display='none';
   tagClickables(wrap);
   const f=d.focus; d.focus=null; // a redraw drops focus on the tapped control, so hand it back
-  if(f){ const el=f.startsWith('g:')?wrap.querySelector(`#cfGroups [data-g="${f.slice(2)}"]`):f.startsWith('s:')?wrap.querySelector(`#cfStruct [data-s="${f.slice(2)}"]`):f.startsWith('r:')?wrap.querySelector(`#rpeRow [data-n="${f.slice(2)}"]`):document.getElementById(f); if(el) el.focus({preventScroll:true}); }
+  if(f){ const el=f.startsWith('g:')?wrap.querySelector(`#cfGroups [data-g="${f.slice(2)}"]`):f.startsWith('k:')?wrap.querySelector(`.cf-tile[data-k="${f.slice(2)}"]`):f.startsWith('s:')?wrap.querySelector(`#cfStruct [data-s="${f.slice(2)}"]`):f.startsWith('r:')?wrap.querySelector(`#rpeRow [data-n="${f.slice(2)}"]`):document.getElementById(f); if(el) el.focus({preventScroll:true}); }
 }
 // one cardio record from a draft or live session: its fields, in the unit the Settings page uses
 function buildCardioRec(d,duration,t,sec){
@@ -3470,11 +3501,13 @@ function updateCardioLiveBanner(){
   applyBanners(); paint(); cardioBannerId=setInterval(paint,1000);
   document.getElementById('cardioLiveBtn').onclick=async()=>{ await loadDay('cardio'); setView('log'); };
 }
-function cardioStart(k){
+function cardioStart(k,structure){
+  if(cardioLive) return; // a double tap on Start Session must not make a second session
   try{ if(!timer.ctx) timer.ctx=new (window.AudioContext||window.webkitAudioContext)(); if(timer.ctx.resume) timer.ctx.resume(); }catch(e){} // sound needs a tap to unlock
-  const a=cardioAct(k), base=newCardioDraft(); const iv=a.iv==='default'||a.iv==='only';
+  const a=cardioAct(k), base=newCardioDraft(); const iv=structure?(structure==='intervals'&&a.iv!=='no'):(a.iv==='default'||a.iv==='only');
   cardioLive={...base,act:k,group:a.g,step:'live',structure:iv?'intervals':'steady',startedAt:Date.now()+CARDIO_COUNTDOWN*1000,pausedAt:null,pausedMs:0,skipMs:0};
   if(a.ivd) [cardioLive.work,cardioLive.rest,cardioLive.rounds]=a.ivd.map(String);
+  cardioDraft=newCardioDraft(); // the intro is done: Cancel on the get-ready screen returns to the picker
   cardioLive.focus='cfCancel'; saveCardioLive(); renderTabs(); renderCardioForm(); window.scrollTo(0,0);
 }
 function cardioTick(){
