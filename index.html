@@ -306,6 +306,21 @@
   .alt .ac{font-size:12px;line-height:1.5;color:var(--text);margin-top:6px;opacity:.85;}
   .alt .ab{margin-top:8px;display:flex;gap:8px;}
   .alt-sec{font-size:12px;color:var(--text-dim);margin:12px 0 6px;}
+  /* Add an Exercise picker sheet */
+  .ad-chips{display:flex;gap:8px;overflow-x:auto;margin:0 -16px 12px;padding:0 16px 4px;scrollbar-width:none;} .ad-chips::-webkit-scrollbar{display:none;}
+  .ad-chips .eqchip{flex:none;}
+  .alt .ac.clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .alt.dim .an{color:var(--text-dim);} .alt .tag-on{font-size:12px;color:var(--text-dim);display:inline-flex;align-items:center;min-height:44px;}
+  .alt .ab .btn{min-width:96px;}
+  .ad-note{font-size:13px;color:var(--text-dim);line-height:1.5;margin:0 0 12px;} .ad-note b{color:var(--text);font-weight:normal;}
+  .ad-eqnote{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;color:var(--text-dim);line-height:1.5;padding:8px 0;} .ad-eqnote .btn{flex:none;}
+  .ad-eqnote.boxed{border:1px solid var(--line);border-radius:8px;padding:12px 16px;}
+  .ad-sel{border:1px solid var(--line);border-radius:8px;background:var(--panel-raised);padding:12px 16px;margin-bottom:12px;}
+  .ad-sel .an{font-size:15px;} .ad-sel .am{font-size:12px;color:var(--text-dim);margin-top:2px;} .ad-sel .ac{font-size:12px;line-height:1.5;color:var(--text);opacity:.85;margin-top:6px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+  .ad-static{font-size:13px;color:var(--text-dim);line-height:1.5;padding:12px 0;border-top:1px solid var(--line);margin-top:12px;}
+  .ad-foot{display:flex;gap:8px;margin-top:16px;} .ad-foot .btn{flex:1;min-height:48px;font-size:15px;} .ad-foot .btn.primary{flex:2;}
+  .ad-nf .btn{width:100%;min-height:48px;font-size:15px;margin-top:12px;}
+  #adSheetTitle:focus{outline:none;}
   .toast{position:fixed;bottom:calc(var(--foot-h,80px) + 16px);left:50%;transform:translateX(-50%);background:var(--panel-raised);border:1px solid var(--done-line);color:#cfe8cf;padding:10px 18px;border-radius:4px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:48;max-width:88%;text-align:center;}
   .toast.show{opacity:1;}
   .stats2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
@@ -1002,7 +1017,8 @@
       <div id="edList"></div>
       <button type="button" class="addset" id="adOpen"></button>
       <div id="adForm" hidden>
-      <h4 class="ad-h">Add an Exercise</h4>
+      <h4 class="ad-h" id="adFormH" tabindex="-1">Add a Custom Exercise</h4>
+      <div class="note-sm" id="adFormNote" style="margin-top:8px"></div>
       <div class="ad-grid">
         <label class="ad-f ad-wide">Name<input class="in" id="adName" placeholder="e.g. Cable Crunch"></label>
         <label class="ad-f">Muscle Group<input class="in" id="adGroup" placeholder="e.g. Chest"></label>
@@ -1055,6 +1071,8 @@
 </div></footer>
 <div class="sheet-bg" id="sheetBg"></div>
 <div class="sheet" id="sheet"><div class="sheet-head"><div><div id="sheetTitle" style="font-size:15px">Swap Exercise</div><div id="sheetSub" style="font-size:12px;color:var(--text-dim);margin-top:2px"></div></div><span class="linkbtn" id="sheetClose">Close</span></div><input class="in" id="sheetSearch" placeholder="Search alternatives…" style="width:100%;margin-bottom:12px"><div id="sheetList"></div></div>
+<div class="sheet-bg" id="adSheetBg"></div>
+<div class="sheet" id="adSheet"><div class="sheet-head"><div><div id="adSheetTitle" tabindex="-1" style="font-size:15px">Add an Exercise</div><div id="adSheetSub" style="font-size:12px;color:var(--text-dim);margin-top:2px"></div></div><span class="linkbtn" id="adSheetClose">Close</span></div><div id="adSheetBody"></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite">Saved</div>
 <div class="utoast" id="undoToast" role="status" hidden><span id="undoMsg"></span><button type="button" id="undoBtn">Undo</button></div>
 <div class="sr-only" id="timerLive" aria-live="polite"></div>
@@ -4121,8 +4139,118 @@ function renderEditor(){
     mus.querySelectorAll('.eqchip').forEach(c=>c.onclick=()=>{ const on=c.classList.toggle('on'); c.setAttribute('aria-pressed',on); }); }
 }
 async function saveProgram(){ await sset('program',PROGRAM); renderEditor(); if(view==='log') render(); if(view==='home') renderHome(); }
-const showAdForm=on=>{ document.getElementById('adForm').hidden=!on; document.getElementById('adOpen').hidden=on; if(on) document.getElementById('adName').focus(); };
-document.getElementById('adOpen').onclick=()=>showAdForm(true);
+const showAdForm=on=>{ document.getElementById('adForm').hidden=!on; document.getElementById('adOpen').hidden=on; if(on){ const n=document.getElementById('adName'); n.focus(); document.getElementById('adForm').scrollIntoView({block:'nearest'}); } };
+// ---------- Add an Exercise: search the built-in library first, a custom entry only when the lift is not in it ----------
+const AD_CHIPS=[['all','All'],['chest','Chest'],['back','Back'],['shoulders','Shoulders'],['biceps','Biceps'],['triceps','Triceps'],['forearms','Forearms'],['quads','Quads'],['hamstrings','Hamstrings'],['glutes','Glutes'],['calves','Calves'],['abs','Core'],['lowerback','Lower Back']];
+const AD_CAP=30;
+let _adPool=null;
+function adPool(){ if(_adPool) return _adPool; const seen=new Set(FULL_CATALOG.map(a=>a.name)); _adPool=FULL_CATALOG.map(a=>({...a,_l:a.name.toLowerCase()}));
+  Object.keys(ALTS).forEach(k=>ALTS[k].forEach(a=>{ if(!seen.has(a.name)){ seen.add(a.name); _adPool.push({...a,key:a.key||k,_l:a.name.toLowerCase()}); } })); return _adPool; }
+const adMuscles=a=>[a.key,...(a.m||[]).filter(x=>x!==a.key)];
+const adEquipLabel=e=>e?e[0].toUpperCase()+e.slice(1):'';
+let ad={dayId:null,q:'',muscle:'all',showHidden:false};
+const adDay=()=>PROGRAM.find(d=>d.id===ad.dayId);
+function adMatches(){ // every typed word, any order; muscle chip narrows to that primary muscle
+  const words=ad.q.toLowerCase().split(/\s+/).filter(Boolean);
+  return adPool().filter(a=>(ad.muscle==='all'||a.key===ad.muscle)&&words.every(w=>a._l.includes(w)))
+    .sort((x,y)=>{ const p=(words.length&&x._l.startsWith(words[0])?0:1)-(words.length&&y._l.startsWith(words[0])?0:1); return p||(x.name<y.name?-1:x.name>y.name?1:0); });
+}
+function openAddSheet(dayId, q){
+  ad={dayId,q:q||'',muscle:'all',showHidden:false};
+  const day=adDay();
+  document.getElementById('adSheetSub').textContent=`${day.name} · ${day.sub}`;
+  adRenderSearch();
+  document.getElementById('adSheet').classList.add('on'); document.getElementById('adSheetBg').classList.add('on');
+}
+function closeAddSheet(){ document.getElementById('adSheet').classList.remove('on'); document.getElementById('adSheetBg').classList.remove('on'); }
+document.getElementById('adSheetClose').onclick=closeAddSheet; document.getElementById('adSheetBg').onclick=closeAddSheet;
+function adRenderSearch(focusSel){
+  const day=adDay(); document.getElementById('adSheetSub').textContent=`${day.name} · ${day.sub}`;
+  const body=document.getElementById('adSheetBody');
+  body.innerHTML=`<input class="in" id="adQ" type="search" autocomplete="off" autocapitalize="off" aria-label="Search the exercise library" placeholder="Search ${FULL_CATALOG.length.toLocaleString()} Exercises" value="${esc(ad.q)}" style="width:100%;margin-bottom:12px">
+    <div class="ad-chips" role="group" aria-label="Filter by muscle">${AD_CHIPS.map(([k,l])=>`<button type="button" class="eqchip${ad.muscle===k?' on':''}" data-k="${k}" aria-pressed="${ad.muscle===k}">${l}</button>`).join('')}</div>
+    <div id="adRes" tabindex="-1" style="outline:none"></div>`;
+  const q=body.querySelector('#adQ');
+  q.oninput=()=>{ ad.q=q.value; ad.showHidden=false; adRenderResults(); };
+  body.querySelectorAll('.eqchip').forEach(c=>c.onclick=()=>{ c.focus(); ad.muscle=c.dataset.k; ad.showHidden=false;
+    body.querySelectorAll('.eqchip').forEach(x=>{ const on=x===c; x.classList.toggle('on',on); x.setAttribute('aria-pressed',on); });
+    c.scrollIntoView({inline:'nearest',block:'nearest'}); adRenderResults(); });
+  const on=body.querySelector('.eqchip.on'); if(on&&ad.muscle!=='all') on.scrollIntoView({inline:'center',block:'nearest'});
+  adRenderResults();
+  if(focusSel){ const f=body.querySelector(focusSel); if(f) f.focus({preventScroll:true}); }
+}
+function adRenderResults(){
+  const res=document.getElementById('adRes'); const day=adDay(); const inUse=new Set(day.exercises.map(e=>e.name));
+  const active=ad.q.trim().length>=2||ad.muscle!=='all';
+  if(!active){ res.innerHTML=`<div class="ad-note">Type 2 or more letters, or pick a muscle. Equipment you turned off in Settings is left out.</div>`; return; }
+  const all=adMatches(); const vis=all.filter(equipAllowed); const hid=all.length-vis.length;
+  const list=ad.showHidden?all:vis;
+  if(!all.length){
+    if(ad.muscle!=='all'){ res.innerHTML=`<div class="ad-note">No matches in ${esc((AD_CHIPS.find(c=>c[0]===ad.muscle)||[])[1])}. <span class="linkbtn" id="adAllM" style="text-decoration:underline">Search All Muscles</span></div>`;
+      res.querySelector('#adAllM').onclick=()=>{ ad.muscle='all'; adRenderSearch('#adQ'); }; return; }
+    res.innerHTML=`<div class="ad-nf alt"><div class="an">No exercises match "${esc(ad.q.trim())}"</div><div class="am">Not in the ${FULL_CATALOG.length.toLocaleString()}-exercise library. You can add it yourself.</div><button type="button" class="btn primary" id="adCustom">Add It as a Custom Exercise</button></div>`;
+    res.querySelector('#adCustom').onclick=()=>{ const q=ad.q.trim(); closeAddSheet(); adOpenCustom(q); }; return; }
+  const hiddenEq=[...new Set(all.filter(a=>!equipAllowed(a)).map(a=>adEquipLabel(a.equip)))];
+  const eqTxt=hiddenEq.length>1?hiddenEq.slice(0,-1).join(', ')+' and '+hiddenEq.slice(-1):hiddenEq[0];
+  let html='';
+  if(!list.length){ html+=`<div class="ad-note" role="status">No matches with your equipment.</div>`; }
+  else html+=`<div class="alt-sec" role="status">${list.length} Match${list.length===1?'':'es'}</div>`;
+  if(!ad.showHidden&&hid) html+=`<div class="ad-eqnote${list.length?'':' boxed'}"><span>${list.length?`Showing ${vis.length} of ${all.length}. `:''}${hid} ${list.length?'more ':'match '}${hid===1?'is':'are'} hidden because ${esc(eqTxt)} ${hiddenEq.length>1?'are':'is'} turned off in Settings.</span><button type="button" class="btn" id="adShow">Show It</button></div>`;
+  else if(ad.showHidden&&hid) html+=`<div class="ad-note" role="status">Showing all ${all.length}.</div>`;
+  res.innerHTML=html;
+  const show=res.querySelector('#adShow'); if(show) show.onclick=()=>{ ad.showHidden=true; adRenderResults(); res.focus({preventScroll:true}); };
+  list.slice(0,AD_CAP).forEach(a=>{
+    const dup=inUse.has(a.name);
+    const el=document.createElement('div'); el.className='alt'+(dup?' dim':'');
+    el.innerHTML=`<div class="an">${esc(a.name)}</div><div class="am">${esc(adEquipLabel(a.equip))}${a.equip?' · ':''}${adMuscles(a).map(k=>MUSCLE_LABEL[k]||k).join(', ')}</div><div class="ac clamp">${esc(a.cue||'')}</div><div class="ab">${dup?'<span class="tag-on">Already on This Day</span>':`<button type="button" class="btn primary" aria-label="Use ${esc(a.name)}">Use This</button>`}</div>`;
+    if(!dup) el.querySelector('button').onclick=()=>adRenderConfirm(a);
+    res.appendChild(el);
+  });
+  if(list.length>AD_CAP){ const m=document.createElement('div'); m.className='ad-note'; m.textContent=`Keep typing to narrow ${list.length} matches.`; res.appendChild(m); }
+}
+function adRenderConfirm(a){
+  const day=adDay();
+  const refEx=[...day.exercises].reverse().find(e=>!isTimedTarget(anchorOf(e).target));
+  const target=slotTargetFor(refEx?anchorOf(refEx).target:'3 x 8-12', a);
+  const bw=a.equip==='bodyweight'&&!/^weighted\b/i.test(a.name);
+  const defStep=settings.unit==='kg'?'2.5':'5';
+  document.getElementById('adSheetSub').textContent=`${day.name} · ${day.sub} · Step 2 of 2`;
+  const body=document.getElementById('adSheetBody');
+  body.innerHTML=`<button type="button" class="cf-back" id="adBack"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Back to Results</button>
+    <div class="ad-sel"><div class="an">${esc(a.name)}</div><div class="am">${esc(adEquipLabel(a.equip))}${a.equip?' · ':''}${adMuscles(a).map(k=>MUSCLE_LABEL[k]||k).join(', ')}</div><div class="ac">${esc(a.cue||'')}</div></div>
+    <label class="ad-f">Target (sets x reps)<input class="in" id="adcTarget" value="${esc(target)}" autocomplete="off"></label>
+    <div class="note-sm" style="margin-top:6px">For a hold, use seconds, like 3 x 30-45s.</div>
+    ${bw?`<div class="ad-static">Body weight exercise: no starting weight or increase step needed. To add load later, swap in the weighted version.</div>`
+    :`<div class="ad-grid"><label class="ad-f"><span>Starting Weight · <span data-unit>${unitLabel()}</span></span><input class="in" id="adcStart" type="number" inputmode="decimal" placeholder="e.g. ${dispWeight(50)}"></label>
+      <label class="ad-f"><span>Increase Step · <span data-unit>${unitLabel()}</span></span><input class="in" id="adcStep" type="number" inputmode="decimal" value="${defStep}"></label></div>
+      <div class="note-sm" style="margin-top:8px">Not sure of a weight? Leave Starting Weight blank and Lift Log helps you find one on your first set.</div>`}
+    <div class="ad-foot"><button type="button" class="btn" id="adcCancel">Cancel</button><button type="button" class="btn primary" id="adcAdd">Add Exercise</button></div>`;
+  body.querySelector('#adBack').onclick=()=>adRenderSearch();
+  body.querySelector('#adcCancel').onclick=closeAddSheet;
+  body.querySelector('#adcAdd').onclick=async()=>{
+    const tgt=body.querySelector('#adcTarget').value.trim()||target;
+    let start=0, step=0;
+    if(!bw){
+      const sr=body.querySelector('#adcStart').value.trim(), pr=body.querySelector('#adcStep').value.trim();
+      if(sr!==''&&!(parseFloat(sr)>=0)){ showToast('Enter a valid starting weight'); return; }
+      if(pr!==''&&!(parseFloat(pr)>0)){ showToast('Enter a valid increase step'); return; }
+      start=sr===''?-1:storeWeight(sr); step=(pr===''||pr===defStep)?5:storeWeight(pr);
+    }
+    if(adDay().exercises.some(e=>e.name===a.name)){ showToast('Already on this day'); return; }
+    const nu={group:MUSCLE_LABEL[a.key]||'Other',key:a.key,name:a.name,equip:a.equip,target:tgt,m:adMuscles(a),seed:null,start,step,cue:a.cue||'',region:a.region,rotCount:0,rotBlocks:0};
+    nu.rotAnchor=anchorOf(nu);
+    adDay().exercises.push(nu);
+    closeAddSheet(); await saveProgram(); showToast(`Added ${a.name}`);
+  };
+  const t=document.getElementById('adSheetTitle'); t.focus({preventScroll:true});
+}
+function adOpenCustom(q){
+  showAdForm(true);
+  document.getElementById('adName').value=q||'';
+  document.getElementById('adFormNote').innerHTML=`Lift Log has ${FULL_CATALOG.length.toLocaleString()} exercises${q?`, and none matched "${esc(q)}"`:''}. Fill in the details below. <span class="linkbtn" id="adAgain" style="text-decoration:underline">Search Again</span>`;
+  document.getElementById('adAgain').onclick=()=>{ const n=document.getElementById('adName').value.trim(); showAdForm(false); openAddSheet(document.getElementById('edDay').value, n); };
+}
+document.getElementById('adOpen').onclick=()=>{ document.getElementById('adOpen').focus(); openAddSheet(document.getElementById('edDay').value); }; // focus first: Safari does not focus a tapped button, and the sheet hands focus back to it on close
 document.getElementById('adCancel').onclick=()=>showAdForm(false);
 document.getElementById('adBtn').onclick=()=>{
   const name=document.getElementById('adName').value.trim(), group=document.getElementById('adGroup').value.trim()||'Other', target=document.getElementById('adTarget').value.trim()||'3 x 8-12';
@@ -4131,8 +4259,11 @@ document.getElementById('adBtn').onclick=()=>{
   const m=[...document.querySelectorAll('#adMuscles .eqchip.on')].map(c=>c.dataset.k);
   if(!name){ showToast('Give it a name'); return; } if(!m.length){ showToast('Pick at least one muscle'); return; }
   const day=PROGRAM.find(d=>d.id===document.getElementById('edDay').value);
+  const lc=name.toLowerCase();
+  if(adPool().some(a=>a._l===lc)){ showToast('That one is in the library. Pick it from the list.'); return; }
+  if(day.exercises.some(e=>e.name.toLowerCase()===lc)){ showToast('Already on this day'); return; }
   day.exercises.push({group,name,target,m,seed:null,start,step,cue}); saveProgram();
-  ['adName','adGroup','adTarget','adStart','adStep','adCue'].forEach(id=>document.getElementById(id).value=''); document.querySelectorAll('#adMuscles .eqchip').forEach(c=>{ c.classList.remove('on'); c.setAttribute('aria-pressed','false'); }); showToast('Added'); showAdForm(false);
+  ['adName','adGroup','adTarget','adStart','adStep','adCue'].forEach(id=>document.getElementById(id).value=''); document.querySelectorAll('#adMuscles .eqchip').forEach(c=>{ c.classList.remove('on'); c.setAttribute('aria-pressed','false'); }); showToast('Added'); showAdForm(false); document.getElementById('adOpen').focus();
 };
 document.getElementById('edReset').onclick=async()=>{ if(await confirmSheet('Reset all four days to the recommended program for your equipment? Your logged data stays.', 'Reset', null, true)){ PROGRAM=buildProgram(); applyEquipPicks(PROGRAM); await sset('program',PROGRAM); document.getElementById('edDay').innerHTML=''; renderEditor(); showToast('Program reset'); } };
 
