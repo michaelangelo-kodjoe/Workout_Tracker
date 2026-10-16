@@ -317,7 +317,7 @@
   .srow .sd .linkbtn{white-space:nowrap;position:relative;z-index:1;} /* Reset Baseline broke across two lines mid-sentence */
   .srow .sp{font-family:'Menlo',monospace;font-size:16px;text-align:right;white-space:nowrap;}
   .sp.up{color:var(--green);} .sp.down{color:var(--amber);} .sp.flat{color:var(--text-dim);}
-  .spark{grid-column:1 / -1;height:28px;width:100%;margin-top:4px;}
+  .spark{grid-column:1 / -1;height:28px;width:100%;margin-top:4px;overflow:visible;}
   .milestone{fill:var(--gold);filter:drop-shadow(0 0 4px rgba(232,178,61,.8));}
   .str-hero{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:12px;}
   .str-hero-num{font-family:'Menlo',monospace;font-size:32px;color:var(--green);line-height:1;}
@@ -1542,7 +1542,7 @@ function daySavedFor(dayId,name){
   const mine=sessions.filter(x=>!x.isCardio&&x.dayId===dayId).sort((a,b)=>b.t-a.t);
   if(!mine.length||!mine[0].deload) return cur;
   const n=mine.find(x=>!x.deload&&x.ex&&x.ex[name]&&x.ex[name].some(y=>y.w&&y.r));
-  return n?{open:false,sets:n.ex[name].map(x=>({w:x.w,r:x.r,done:true,rir:x.rir??null}))}:cur;
+  return n?{open:false,sets:n.ex[name].map(x=>({w:x.w,r:x.r,done:true,rir:x.rir??null}))}:undefined; // lift has no normal session on this day: let the caller fall to lastByName's pre-deload sets
 }
 function isDeloadActive(){ return !!deloadStart && (Date.now()-deloadStart < 7*864e5); }
 // lastByName[name] is what progression starts from: the newest NORMAL session's sets. A deload session never replaces it
