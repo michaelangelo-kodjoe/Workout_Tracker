@@ -1535,6 +1535,15 @@ function suggestedRest(ex){
   if(!primary) return base;
   return Math.round(base*familiarityMultiplier(decayedFamiliarityCount(primary,Date.now())));
 }
+// last:<dayId> is the day's newest session, deload or not. Progression and the Last Time line must start from the
+// pre-deload sets, so when that newest session was a deload, read the newest normal one for this lift from sessions[].
+function daySavedFor(dayId,name){
+  const cur=lastSessionData[dayId]&&lastSessionData[dayId][name];
+  const mine=sessions.filter(x=>!x.isCardio&&x.dayId===dayId).sort((a,b)=>b.t-a.t);
+  if(!mine.length||!mine[0].deload) return cur;
+  const n=mine.find(x=>!x.deload&&x.ex&&x.ex[name]&&x.ex[name].some(y=>y.w&&y.r));
+  return n?{open:false,sets:n.ex[name].map(x=>({w:x.w,r:x.r,done:true,rir:x.rir??null}))}:cur;
+}
 function isDeloadActive(){ return !!deloadStart && (Date.now()-deloadStart < 7*864e5); }
 // lastByName[name] is what progression starts from: the newest NORMAL session's sets. A deload session never replaces it
 // (that restarted lifters ~10% low after a deload); its sets ride along as the optional dlSets {sets,t}. An entry with
@@ -2024,13 +2033,16 @@ function plateText(totalLb, ex, baseLbOverride){
 }
 function dedupeSortByT(arr){ const seen=new Set(); const out=[]; [...arr].sort((a,b)=>a.t-b.t).forEach(x=>{ if(!seen.has(x.t)){ seen.add(x.t); out.push(x); } }); return out; }
 function latestBW(){ return bodyweight.length?bodyweight[bodyweight.length-1].w:null; }
-function sparkline(points,color,milestoneIdx,minSpan){
+function sparkline(points,color,milestoneIdx,minSpan,dlIdx){
   if(!points||points.length<2) return '';
   const w=300,h=26,pad=2;
   const coords=sparkCoords(points,w,h,pad,minSpan);
-  const pts=coords.map(c=>c.join(',')).join(' ');
+  // deload sessions (dlIdx) are drawn as hollow amber dots at the level they interrupt; the line skips them
+  const dls=dlIdx||[];
+  const pts=coords.filter((c,i)=>!dls.includes(i)).map(c=>c.join(',')).join(' ');
+  const dlDots=dls.map(i=>coords[i]?`<circle class="dl-dot" cx="${coords[i][0]}" cy="${coords[i][1]}" r="2.8" fill="var(--panel)" stroke="var(--amber)" stroke-width="1.5"/>`:'').join('');
   const dot=(milestoneIdx!=null&&coords[milestoneIdx])?`<circle class="milestone" cx="${coords[milestoneIdx][0]}" cy="${coords[milestoneIdx][1]}" r="2.6"/>`:'';
-  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline fill="none" stroke="${color||'var(--light)'}" stroke-width="1.6" points="${pts}"/>${dot}</svg>`;
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline fill="none" stroke="${color||'var(--light)'}" stroke-width="1.6" points="${pts}"/>${dot}${dlDots}</svg>`;
 }
 // isDown comes from the caller's already-computed aggregate percentage (the same one the number beside this
 // chart uses), not from comparing this series' own first/last points — those points interleave every exercise's
@@ -2621,7 +2633,7 @@ function render(){
   ordered.forEach(ex=>{
     if(ex.group!==lastGroup){ const gh=document.createElement('h3'); gh.className='groupheader'; gh.textContent=ex.group; list.appendChild(gh); lastGroup=ex.group; }
     const state=ensureState(ex); const complete=state.sets.every(s=>s.done); if(!complete) allComplete=false;
-    const daySaved=lastSessionData[currentDay]&&lastSessionData[currentDay][ex.name];
+    const daySaved=daySavedFor(currentDay,ex.name);
     let sug=suggestWeight(ex,daySaved);
     let saved=daySaved, crossDaySub=null, estFrom=null;
     if(sug===-1){
@@ -3902,26 +3914,31 @@ function renderStrength(){
     const others=(nameSlots[ex.name]||[]).filter(o=>o.name!==day.name); // same-half days show as "also …" instead
     const shareTxt=others.length?` · shares history with ${others.map(o=>`${o.name} ${o.sub}`).join(', ')}`:'';
     const row=document.createElement('div'); row.className='srow';
+    // sparkline/scrub series: the baseline, then every session in range; deload sessions sit at the level before them
+    const rowSeries=(()=>{ const bT=baselines[histKey(ex)]; const seq=[{v:base,t:null}]; let lv=base, mil=milestoneIdx, dl=[];
+      fullH.filter(x=>!bT||x.t>=bT).forEach(x=>{ if(x.dl){ seq.push({v:lv,t:x.t,dl:1,p:pct(base,lv)}); dl.push(seq.length-1); } else { lv=x.e1rm; seq.push({v:x.e1rm,t:x.t,w:x.w,r:x.r,p:pct(base,x.e1rm)}); } });
+      if(mil!=null){ const hi=mil-1; let c=-1; const at=seq.findIndex(q=>q.t!==null&&!q.dl&&++c===hi); mil=at<0?null:at; }
+      return {seq,vals:seq.map(q=>q.v),dl,mil}; })();
     const dlTxt=dlN?(fullN?` · <span class="dlnote">${dlN} deload${dlN>1?'s':''} not counted</span>`:` · <span class="dlnote">${dlN} deload${dlN>1?'s':''}, not counted yet</span>`):'';
     const sdTxt=isTimedTarget(ex.target)?'Timed hold — counted as sets, not scored for strength':`Best set ${bestTxt} · ${fullN?fullN+' session'+(fullN>1?'s':'')+' logged':(dlN?'no counted sessions':'your starting numbers')}${dlTxt}`;
     const pastTxt=day.past?` · last done ${fmtDate(fullH[fullH.length-1].t)}`:'';
     const k=histKey(ex);
     const baseTxt=isTimedTarget(ex.target)?'':baselines[k]?` · <span class="linkbtn" data-act="baseline-undo">Baseline Reset ${fmtDate(baselines[k])} — Undo</span>`:(fullN>=2?` · <span class="linkbtn danger" data-act="baseline">Reset Baseline</span>`:'');
-    row.innerHTML=`<div><div class="sn">${esc(ex.name)}<span class="also"></span>${plat?' <span class="badge plateau">Plateau</span>':''}</div><div class="sd">${sdTxt}${shareTxt}${pastTxt}${baseTxt}</div><div class="sd" data-scrub-readout style="display:none"></div></div><div class="sp ${cls}">${p===null?'Start':firstOnly?'New':fmtPct(p)}</div>${h.length&&!firstOnly?`<div class="scrub" tabindex="0" aria-label="${esc(ex.name)} trend. Drag across it, or use the arrow keys, to see each session.">${sparkline([base,...h.map(x=>x.e1rm)],cls==='down'?'var(--amber)':'var(--green)',milestoneIdx)}</div>`:''}`;
+    row.innerHTML=`<div><div class="sn">${esc(ex.name)}<span class="also"></span>${plat?' <span class="badge plateau">Plateau</span>':''}</div><div class="sd">${sdTxt}${shareTxt}${pastTxt}${baseTxt}</div><div class="sd" data-scrub-readout style="display:none"></div></div><div class="sp ${cls}">${p===null?'Start':firstOnly?'New':fmtPct(p)}</div>${h.length&&!firstOnly?`<div class="scrub" tabindex="0" aria-label="${esc(ex.name)} trend. Drag across it, or use the arrow keys, to see each session.">${sparkline(rowSeries.vals,cls==='down'?'var(--amber)':'var(--green)',rowSeries.mil,undefined,rowSeries.dl)}</div>`:''}`;
     const rowWrap=row.querySelector('.scrub');
     if(rowWrap){
       // point 0 is the baseline itself (from pre-app seed numbers or the first session), so it has no set to show.
       // The readout is its own element rather than a rewrite of .sd, which holds live baseline-reset links.
       const sdEl=row.querySelector('.sd'), readout=row.querySelector('[data-scrub-readout]'), spEl=row.querySelector('.sp');
       const rest={txt:spEl.textContent,cls:spEl.className};
-      const pts=[{t:null,p:0},...h.map(x=>({t:x.t,p:pct(base,x.e1rm),w:x.w,r:x.r}))];
-      const vals=[base,...h.map(x=>x.e1rm)];
+      const pts=rowSeries.seq.map((q,i)=>i===0?{t:null,p:0}:q.dl?{t:q.t,dl:1,p:q.p}:{t:q.t,p:q.p,w:q.w,r:q.r});
+      const vals=rowSeries.vals;
       bindScrub(rowWrap);
       rowWrap._scrub={pts,coords:sparkCoords(vals,300,26,2),w:300,h:26,pad:2,color:cls==='down'?'var(--amber)':'var(--green)',
         onShow:pt=>{
           spEl.textContent=pt.t===null?'Start':fmtPct(pt.p);
           spEl.className='sp '+(pt.p===null||Math.abs(pt.p)<0.05?'flat':pt.p>0?'up':'down');
-          readout.textContent=pt.t===null?'Your Starting Numbers':`${fmtDate(pt.t)} · best set ${dispWeight(pt.w)} ${unitLabel()} × ${pt.r}`;
+          readout.textContent=pt.t===null?'Your Starting Numbers':pt.dl?`${fmtDate(pt.t)} · Deload week · not counted`:`${fmtDate(pt.t)} · best set ${dispWeight(pt.w)} ${unitLabel()} × ${pt.r}`;
           sdEl.style.display='none'; readout.style.display='';
         },
         onReset:()=>{ spEl.textContent=rest.txt; spEl.className=rest.cls; readout.style.display='none'; sdEl.style.display=''; }};
@@ -4225,6 +4242,7 @@ async function readBackupFile(f){
 // Replace write: every backed-up key except today's drafts and start times. Checks each write; on the first failure puts
 // back what was there before (best effort) and returns false, so a failed restore does not leave a quiet hybrid.
 async function restoreKeys(data){
+  if(!('deloadEnd' in data)) data={...data,deloadEnd:0}; // an older backup has none; this phone's stale End Early time must not survive a Replace
   const keys=KEYS.filter(k=>!k.startsWith('today:')&&k!=='dayStart'&&k in data), prev={};
   for(const k of keys) prev[k]=await sget(k);
   // a write only counts as failed on an explicit false (store.set returns true/false once fix/save-failure-notice is in; undefined is not a failure)
