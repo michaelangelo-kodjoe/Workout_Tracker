@@ -369,6 +369,7 @@
   .str-grp{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:16px 0 4px;font-size:12px;color:var(--text-dim);}
   .str-grp span:first-child{font-size:11px;letter-spacing:.08em;text-transform:uppercase;}
   .str-past{margin-top:16px;}
+  .str-past.out{margin:12px 0;} .str-one{flex-basis:100%;}
   .str-past-btn{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:52px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel-raised);color:var(--text);text-align:left;font-family:'Georgia',serif;cursor:pointer;}
   .str-past-btn b{display:block;font-weight:normal;font-size:15px;} .str-past-btn b+span{display:block;font-size:12px;color:var(--text-dim);}
   .str-past-act{font-size:13px;color:var(--light);}
@@ -4093,6 +4094,10 @@ function renderStrength(){
   renderConditioning();
   const upperList=document.getElementById('upperStrList'), lowerList=document.getElementById('lowerStrList');
   upperList.innerHTML=''; lowerList.innerHTML='';
+  document.querySelectorAll('.str-past.out').forEach(e=>e.remove());
+  // a routine with no Upper/Lower days (Push/Pull/Legs) gets one full-width card named for it; R-C will group by focus instead
+  const single=activeProgram()!==UL4_PROGRAM, oneName=routineName(ROUTINE_ID)+' Strength';
+  if(single) strCardOpen.lower=false;
   let changes=[], upperTotal=0, upperBase=0, lowerTotal=0, lowerBase=0;
   let heroEvents=[], upperEvents=[], lowerEvents=[], heroBaseByName={}, upperBaseByName={}, lowerBaseByName={};
   const nameSlots={};
@@ -4101,7 +4106,7 @@ function renderStrength(){
   // the open list groups rows under each program day; a lift on two days of the same half shows once, under the first,
   // marked "also Volume"; retired lifts fold into a No Longer in Program group of their own
   const shownRows={}, pastBox={};
-  const listFor=day=>day.name==='Upper'?upperList:day.name==='Lower'?lowerList:null;
+  const listFor=day=>single?upperList:day.name==='Upper'?upperList:day.name==='Lower'?lowerList:null;
   const renderRow=(ex, day)=>{
     const half=listFor(day), targetList=day.past&&half?pastBox[half.id].list:half;
     const base=baselineFor(ex), cur=currentFor(ex), h=histFrom(ex), fullH=hist[histKey(ex)]||[];
@@ -4111,12 +4116,12 @@ function renderStrength(){
     // retired ("Past") lifts keep their rows, but the summary numbers only measure what you're training now
     if(firstOccurrence&&!day.past){
       if(p!==null) changes.push(p);
-      if(day.name==='Upper'){ upperTotal+=cur; upperBase+=base; }
+      if(single||day.name==='Upper'){ upperTotal+=cur; upperBase+=base; }
       else if(day.name==='Lower'){ lowerTotal+=cur; lowerBase+=base; }
       heroBaseByName[ex.name]=base;
       const events=h.map(x=>({t:x.t,name:ex.name,e1rm:x.e1rm}));
       heroEvents.push(...events);
-      if(day.name==='Upper'){ upperBaseByName[ex.name]=base; upperEvents.push(...events); }
+      if(single||day.name==='Upper'){ upperBaseByName[ex.name]=base; upperEvents.push(...events); }
       else if(day.name==='Lower'){ lowerBaseByName[ex.name]=base; lowerEvents.push(...events); }
     }
     const seenKey=half&&!day.past?half.id+'|'+ex.name:null;
@@ -4176,7 +4181,7 @@ function renderStrength(){
   });
   [upperList,lowerList].forEach(l=>{
     const key=l===upperList?'upper':'lower', box=document.createElement('div'); box.className='str-past';
-    box.innerHTML=`<button class="str-past-btn" aria-expanded="${!!strPastOpen[key]}"><span><b>No Longer in Program · <span data-n>0</span></b><span>Not counted in the totals above</span></span><span class="str-past-act">${strPastOpen[key]?'Hide':'Show'}</span></button><div class="str-past-list" style="${strPastOpen[key]?'':'display:none'}"></div>`;
+    box.innerHTML=`<button class="str-past-btn" aria-expanded="${!!strPastOpen[key]}"><span><b>No Longer in Program · <span data-n>0</span></b><span>${single?'Earlier lifts. Not counted in the total above':'Not counted in the totals above'}</span></span><span class="str-past-act">${strPastOpen[key]?'Hide':'Show'}</span></button><div class="str-past-list" style="${strPastOpen[key]?'':'display:none'}"></div>`;
     // stopPropagation: the re-render detaches the button, so the card's own "tap inside the list" check can't see it
     box.querySelector('.str-past-btn').onclick=e=>{ e.stopPropagation(); strPastOpen[key]=!strPastOpen[key]; renderStrength(); };
     l.appendChild(box); pastBox[l.id]={box,list:box.querySelector('.str-past-list')};
@@ -4196,6 +4201,7 @@ function renderStrength(){
   [upperList,lowerList].forEach(l=>{
     const {box,list}=pastBox[l.id], n=list.children.length;
     box.querySelector('[data-n]').textContent=n; box.style.display=n?'':'none';
+    if(single&&l===upperList){ box.classList.add('out','str-card-exlist'); document.querySelector('.str-split').after(box); } // the retired lifts sit in their own row below the card
     const hide=document.createElement('button'); hide.className='str-hide btn'; hide.textContent='Hide Exercises';
     if(hasDl){ const n=document.createElement('div'); n.className='str-dlnote'; n.textContent='Deload sessions are shown but not counted in progress, current strength, plateaus or PRs. Lifting lighter on purpose would look like losing strength.'; l.insertBefore(n,l.firstChild); }
     hide.onclick=e=>{ e.stopPropagation(); const key=l===upperList?'upper':'lower'; strCardOpen[key]=false; renderStrength(); document.getElementById(key+'StrCard').scrollIntoView({block:'nearest'}); };
@@ -4208,7 +4214,10 @@ function renderStrength(){
   document.getElementById('upperStrCard').setAttribute('aria-expanded',!!strCardOpen.upper);
   document.getElementById('lowerStrCard').setAttribute('aria-expanded',!!strCardOpen.lower);
   document.getElementById('upperStrCard').style.display=strCardOpen.lower?'none':'';
-  document.getElementById('lowerStrCard').style.display=strCardOpen.upper?'none':'';
+  document.getElementById('lowerStrCard').style.display=(strCardOpen.upper||single)?'none':'';
+  document.querySelector('#upperStrCard h3').textContent=single?oneName:'Upper Strength';
+  document.getElementById('upperStrCard').classList.toggle('str-one',single);
+  document.getElementById('upperStrScrub').setAttribute('aria-label',`${single?oneName.replace(' Strength',''):'Upper'} strength trend. Drag across it, or use the arrow keys, to see each session.`);
   document.getElementById('upperStrHint').textContent=strCardOpen.upper?'Hide Exercises':'See Exercises';
   document.getElementById('lowerStrHint').textContent=strCardOpen.lower?'Hide Exercises':'See Exercises';
   const avg=changes.length?changes.reduce((a,b)=>a+b,0)/changes.length:null;
