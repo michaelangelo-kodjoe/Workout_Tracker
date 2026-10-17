@@ -1596,20 +1596,24 @@ const ROUTINES = {
     suits:'Best if you can train three days a week. Every muscle group gets one full session.',
     note:"Each muscle is trained once a week. ACSM's 2026 guidance suggests at least twice, so this is the lower-frequency option; with equal weekly sets, research has not found it weaker." },
 };
-// a routine's day list for the current equipment: any lift the filter rules out is replaced by the best pick for its slot; a slot
-// with no pick at all is left out (and counted), never swapped silently for something unrelated
+// a routine's day list for the current equipment. A lift the filter rules out is replaced only by the best pick for its slot that
+// trains the SAME sub-muscle (a rear-delt slot never becomes a press, a calf slot never a skipping rope) and is not already used
+// anywhere in the routine. A slot with no such lift is left out and listed (AC-22), never swapped for an unrelated movement.
+// If a whole day would be empty it keeps its standard lifts and is reported in `bare` so the confirm can say so.
 function newRoutineProgram(rid){
-  const r=ROUTINES[rid]; const days=buildFromTemplate(r.template); let missing=0;
+  const r=ROUTINES[rid]; const days=buildFromTemplate(r.template); let missing=0; const gaps=[], bare=[];
+  const used=new Set(days.flatMap(d=>d.exercises.filter(equipAllowed).map(e=>e.name)));
   days.forEach((day,di)=>{
-    const tpl=r.template[di], exclude=new Set(day.exercises.map(e=>e.name)), keep=[], before=missing;
+    const tpl=r.template[di], keep=[], dayGaps=[];
     day.exercises.forEach((ex,i)=>{
       if(equipAllowed(ex)){ keep.push(ex); return; }
-      const pick=bestPickFor(tpl.slots[i],exclude);
-      if(pick){ exclude.add(pick.name); keep.push(slotExercise(tpl.slots[i],pick)); } else missing++;
+      const slot=tpl.slots[i], want=recoveryKeysFor(CURATED_BY_NAME[slot.pick]||{name:slot.pick})[0];
+      const pick=bestPickFor(slot,used);
+      if(pick&&!pick.approx&&(!want||recoveryKeysFor(pick)[0]===want)){ used.add(pick.name); keep.push(slotExercise(slot,pick)); } else dayGaps.push(day.name+' '+slot.group);
     });
-    if(keep.length) day.exercises=keep; else missing=before; // a day with nothing at all keeps its default lifts rather than being empty
+    if(keep.length){ day.exercises=keep; missing+=dayGaps.length; gaps.push(...dayGaps); } else bare.push(day.name); // an empty day keeps its standard lifts
   });
-  return {days,missing};
+  return {days,missing,gaps,bare};
 }
 const DEFAULT_PROGRAM = buildProgram();
 let PROGRAM = JSON.parse(JSON.stringify(DEFAULT_PROGRAM));
@@ -4405,7 +4409,9 @@ function rtConfirm(){
   const preview=(!PROGRAMS[to]||!PROGRAMS[to].length)&&to!=='ul4'?newRoutineProgram(to):null;
   const shown=to==='ul4'?'Upper Heavy, Lower Heavy, Upper Volume and Lower Volume':rtJoin(r.days.map(x=>x[0]));
   const lift=rtSharedLift(to);
-  const eq=preview&&preview.missing?`${preview.missing} exercise${preview.missing===1?' has':'s have'} no match for your equipment, so ${preview.missing===1?'it is':'they are'} left out. You can add ${preview.missing===1?'one':'some'} in Edit Workouts.`:'';
+  const eqNote=preview&&preview.missing?`${preview.missing} exercise${preview.missing===1?' has':'s have'} no match for your equipment, so ${preview.missing===1?'it is':'they are'} left out (${esc(rtJoin([...new Set(preview.gaps)].map(g=>{ const n=preview.gaps.filter(x=>x===g).length; return n>1?`${g} x${n}`:g; })))}). You can add ${preview.missing===1?'one':'some'} in Edit Workouts.`:'';
+  const eqBare=preview&&preview.bare.length?`Nothing in ${esc(rtJoin(preview.bare))} matches your equipment, so ${preview.bare.length===1?'it starts':'they start'} with the standard lifts. You can swap them in Edit Workouts.`:'';
+  const eq=[eqNote,eqBare].filter(Boolean);
   const noHist=!sessions.length;
   const backup=noHist?`<div class="rt-backup">No history yet, so there is nothing to back up.</div>`:
     `<div class="rt-backup">Want a copy of your data first? It takes a few seconds.<button class="btn" id="rtBk" type="button">${rt.backedUp?'Back Up Again':'Back Up First'}</button>${rt.backedUp?`<div class="rt-ok" role="status">${RT_CHK}<span>Backup saved. You can switch now.</span></div>`:''}</div>`;
@@ -4415,7 +4421,7 @@ function rtConfirm(){
     <div class="rt-sec">What Changes</div>
     <ul class="rt-list"><li class="chg">${RT_ARROW}<span>Your week goal becomes ${r.perWeek} sessions.</span></li>
       <li class="chg">${RT_ARROW}<span>Home, Log and Edit Workouts show ${shown}.</span></li>
-      ${eq?`<li class="chg">${RT_ARROW}<span>${eq}</span></li>`:''}</ul>
+      ${eq.map(t=>`<li class="chg">${RT_ARROW}<span>${t}</span></li>`).join('')}</ul>
     <div class="rt-sec">What Stays the Same</div>
     <ul class="rt-list"><li class="keep">${RT_CHK}<span>Your history, records and notes.</span></li>
       <li class="keep">${RT_CHK}<span>Your progress. Lifts carry over by name${lift?`, so ${esc(lift)} picks up where you left off`:''}.</span></li>
