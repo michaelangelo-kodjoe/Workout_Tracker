@@ -4930,7 +4930,7 @@ document.getElementById('importFile').onchange=async e=>{
     else{
       // Replace overwrites everything here and there is no automatic backup first, so the sheet says so and points at Export Backup.
       const n=Array.isArray(d.sessions)?d.sessions.length:0, when=r.exported?` from ${fmtDate(Date.parse(r.exported))}`:'';
-      if(!await confirmSheet(`Replace overwrites everything currently on this phone with the backup${when} (${n} session${n===1?'':'s'}). Your ${sessions.length} session${sessions.length===1?'':'s'}, history and settings here will be lost and this cannot be undone. Cancel and use Export Backup first if you want a copy of what is here now.`, 'Replace', null, true)){ e.target.value=''; return; }
+      if(!await confirmSheet(`Replace overwrites everything currently on this phone with the backup${when} (${n} session${n===1?'':'s'}). Your ${sessions.length} session${sessions.length===1?'':'s'}, history and settings here will be lost and this cannot be undone. A backup from before routines keeps your current routine. Cancel and use Export Backup first if you want a copy of what is here now.`, 'Replace', null, true)){ e.target.value=''; return; }
       if(!await restoreKeys(d)){ showToast("Couldn't save the backup. Nothing was changed, so free up storage and try again"); e.target.value=''; return; }
       { const prog=await sget('program'); applyRoutineState({ul4:Array.isArray(prog)&&prog.length===4?prog:PROGRAM, routineId:await sget('routineId'), programs:await sget('programs')}); }
       showToast('Restored — reloading'); }
