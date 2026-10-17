@@ -1601,13 +1601,13 @@ const ROUTINES = {
 function newRoutineProgram(rid){
   const r=ROUTINES[rid]; const days=buildFromTemplate(r.template); let missing=0;
   days.forEach((day,di)=>{
-    const tpl=r.template[di], exclude=new Set(day.exercises.map(e=>e.name)), keep=[];
+    const tpl=r.template[di], exclude=new Set(day.exercises.map(e=>e.name)), keep=[], before=missing;
     day.exercises.forEach((ex,i)=>{
       if(equipAllowed(ex)){ keep.push(ex); return; }
       const pick=bestPickFor(tpl.slots[i],exclude);
       if(pick){ exclude.add(pick.name); keep.push(slotExercise(tpl.slots[i],pick)); } else missing++;
     });
-    if(keep.length) day.exercises=keep;
+    if(keep.length) day.exercises=keep; else missing=before; // a day with nothing at all keeps its default lifts rather than being empty
   });
   return {days,missing};
 }
