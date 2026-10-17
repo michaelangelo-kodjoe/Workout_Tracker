@@ -4522,6 +4522,7 @@ async function doSwap(day, idx, alt){
 
 // ---------- views ----------
 function setView(v){
+  if(view==='log'&&v!=='log'&&cardioDraft&&cardioDraft.step==='intro'&&!cardioLive){ cardioDraft=newCardioDraft(); renderCardioForm(); } // leaving the Log abandons the cardio intro (nothing was saved): it returns to the picker
   view=v; document.body.dataset.view=v; document.querySelectorAll('.viewtab').forEach(t=>{ t.classList.toggle('active',t.dataset.v===v); if(t.dataset.v===v) t.setAttribute('aria-current','page'); else t.removeAttribute('aria-current'); });
   ['home','log','history','strength','more'].forEach(n=>document.getElementById(n+'View').style.display=(v===n?'':'none'));
   document.getElementById('dayTabs').style.display=v==='log'?'':'none'; document.getElementById('logFooter').style.display=v==='log'?'':'none';
