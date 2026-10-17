@@ -332,6 +332,7 @@
   .srow .sn{font-size:15px;} .srow .sd{font-size:12px;color:var(--text-dim);margin-top:2px;}
   .srow .sd .linkbtn{white-space:nowrap;position:relative;z-index:1;} /* Reset Baseline broke across two lines mid-sentence */
   .srow .sp{font-family:'Menlo',monospace;font-size:16px;text-align:right;white-space:nowrap;}
+  .srow.pace{display:flex;flex-wrap:wrap;gap:6px 10px;} .srow.pace>:first-child{flex:1 1 9em;min-width:0;overflow-wrap:anywhere;} .srow.pace .spark{flex:1 1 100%;min-width:0;} .srow.pace .sp{white-space:normal;} /* large text wraps the Pace row instead of overflowing it, as .stat does */
   .sp.up{color:var(--green);} .sp.down{color:var(--amber);} .sp.flat{color:var(--text-dim);}
   .spark{grid-column:1 / -1;height:28px;width:100%;margin-top:4px;overflow:visible;}
   .milestone{fill:var(--gold);filter:drop-shadow(0 0 4px rgba(232,178,61,.8));}
@@ -3911,7 +3912,7 @@ function renderConditioning(){
     const paceVals = paced.map(s=>s.duration/parsePace(s.distance)); // min per mile/km
     const p0=paceVals[0], p1=paceVals[paceVals.length-1];
     const paceChange = ((p0-p1)/p0*100); // positive = faster pace now
-    paceHtml = `<div class="srow" style="grid-template-columns:1fr 70px 64px"><div><div class="sn">Pace (min per ${unit})</div><div class="sd">${actName} · ${paced.length} sessions with distance logged</div></div><div class="se">${p1.toFixed(1)}</div><div class="sp ${paceChange>0.5?'up':paceChange<-0.5?'down':'flat'}">${paceChange>0.5?'Faster':paceChange<-0.5?'Slower':'Steady'}</div>${sparkline(paceVals,'var(--light)')}</div>`;
+    paceHtml = `<div class="srow pace"><div><div class="sn">Pace (min per ${unit})</div><div class="sd">${actName} · ${paced.length} sessions with distance logged</div></div><div class="se">${p1.toFixed(1)}</div><div class="sp ${paceChange>0.5?'up':paceChange<-0.5?'down':'flat'}">${paceChange>0.5?'Faster':paceChange<-0.5?'Slower':'Steady'}</div>${sparkline(paceVals,'var(--light)')}</div>`;
   }
   out.innerHTML = `
     <div class="stats2" style="margin-bottom:10px">
