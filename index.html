@@ -66,6 +66,7 @@
   .daytab.suggested.active{background:var(--panel-raised);}
   .daytab.active{border-color:var(--accent);color:var(--text);background:var(--panel-raised);}
   .daytab .dsub{display:block;font-size:12px;margin-top:2px;}
+  .daytab{max-width:220px;overflow:hidden;text-overflow:ellipsis;} /* one long renamed day cannot push the others off the strip */
   /* the subtitle is its tab's label at 75%, but only where that label is bright: on the plain tabs the label is already
      --text-dim, and 75% of that fell to 3.5:1 */
   .daytab.active .dsub,.daytab.suggested .dsub{opacity:.75;}
@@ -591,6 +592,7 @@
   .day-carousel{scroll-snap-type:x mandatory;scrollbar-width:none;padding-bottom:8px;}
   .day-carousel::-webkit-scrollbar{display:none;}
   .day-card{scroll-snap-align:start;}
+  .day-carousel.three .day-card{flex:1 0 100px;} /* exactly three days (Push/Pull/Legs) share the row, so the whole week shows without scrolling at 375 px */
   .day-card{flex:0 0 124px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;position:relative;cursor:pointer;}
   .day-card.today{border-color:var(--accent);background:linear-gradient(160deg,var(--panel-raised),rgba(255,93,59,.1));}
   .day-card .dtag{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);min-height:14px;}
@@ -729,7 +731,7 @@
   .rh-bars i.now{background:rgba(92,187,111,.3);box-shadow:inset 0 0 0 1px var(--green);}
   .rh-axis{display:flex;gap:4px;margin-top:6px;padding-top:4px;border-top:1px solid var(--line);font-size:11px;color:var(--text-dim);}
   .rh-axis span{flex:1;white-space:nowrap;overflow:visible;}
-  .rh-cap{font-size:12px;color:var(--text-dim);margin-top:8px;}
+  .rh-cap{font-size:12px;color:var(--text-dim);margin-top:8px;} .rh-cap[hidden]{display:none;}
 
   /* ---------- history calendar ---------- */
   .cal-wrap{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:12px;}
@@ -962,6 +964,7 @@
       <div class="rh-stats" id="rhStats"></div>
       <div class="rh-chart" id="rhChart" role="img"></div>
       <div class="rh-cap">Sessions per week, last 12 weeks</div>
+      <div class="rh-cap" id="rhGoalNote" hidden></div>
     </div>
     <div class="cal-wrap">
       <div class="cal-head"><span class="cal-nav" id="calPrev" aria-label="Previous Month"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></span><h3 class="cal-title" id="calTitle" aria-live="polite">—</h3><span class="cal-nav" id="calNext" aria-label="Next Month"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></div>
@@ -3075,7 +3078,7 @@ function renderHomeBody(){
       </div>
       <button class="start-cta" id="arrivalStart">${cardioLive?'Resume Cardio Session':'Go to Cardio Log'}</button>
       <div class="greet-sub" style="margin-top:14px">Feeling fine? Tap a lift day to train it instead.</div>
-      <div class="day-carousel">
+      <div class="day-carousel${PROGRAM.length===3?' three':''}">
         ${PROGRAM.map(d=>`<div class="day-card ${dayType(d)}${d.id===currentDay?' today':''}" data-day="${d.id}">${d.id===currentDay?'<div class="ddot"></div>':''}<div class="dtag">${d.id===currentDay?dayTagText():''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub}</div><div class="dsub">${d.exercises.length} Exercises</div></div>`).join('')}
       </div>`;
     document.getElementById('arrivalStart').onclick=()=>setView('log');
@@ -3118,7 +3121,7 @@ function renderHomeBody(){
         <h2 class="greet-h1">${h1}</h2>
         <div class="greet-sub">${dayLine}${lastTxt}</div>
       </div>
-      <div class="day-carousel">
+      <div class="day-carousel${PROGRAM.length===3?' three':''}">
         ${PROGRAM.map(d=>`<div class="day-card ${dayType(d)}${d.id===currentDay?' today':''}" data-day="${d.id}">${d.id===currentDay?'<div class="ddot"></div>':''}<div class="dtag">${d.id===currentDay?dayTagText():''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub}</div><div class="dsub">${d.exercises.length} Exercises</div></div>`).join('')}
       </div>
       <div class="preview-list">${previewRows}${moreRow}</div>
@@ -3848,6 +3851,10 @@ function renderRhythm(){
     return `<span>${!prev||prev.getMonth()!==d.getMonth()?d.toLocaleDateString(undefined,{month:'short'}):''}</span>`; }).join('');
   const chart=document.getElementById('rhChart');
   chart.innerHTML=`<div class="rh-goal" style="top:${(1-RHYTHM_GOAL/top)*72}px"><span>Goal ${RHYTHM_GOAL}</span></div><div class="rh-bars">${bars}</div><div class="rh-axis">${axis}</div>`;
+  // while the 12 weeks hold sessions from another routine, say which goal the whole chart is drawn against
+  { const note=document.getElementById('rhGoalNote'), r=ROUTINES[ROUTINE_ID]||ROUTINES.ul4;
+    const mixed=lifts.some(s=>s.t>=ranges[0][0]&&(s.routineId||'ul4')!==(ROUTINES[ROUTINE_ID]?ROUTINE_ID:'ul4'));
+    note.hidden=!mixed; note.textContent=mixed?`Goal ${RHYTHM_GOAL} since you switched to ${r.name}. Earlier weeks are shown against it.`:''; }
   chart.setAttribute('aria-label',`Lifting sessions per week, last 12 weeks, oldest first: ${counts.join(', ')}. This week so far: ${counts[counts.length-1]}. Goal ${RHYTHM_GOAL} a week.`);
 }
 let calMonthOffset=0;
@@ -4681,7 +4688,7 @@ document.getElementById('adBtn').onclick=()=>{
   day.exercises.push({group,name,target,m,seed:null,start,step,cue}); saveProgram();
   ['adName','adGroup','adTarget','adStart','adStep','adCue'].forEach(id=>document.getElementById(id).value=''); document.querySelectorAll('#adMuscles .eqchip').forEach(c=>{ c.classList.remove('on'); c.setAttribute('aria-pressed','false'); }); showToast('Added'); showAdForm(false); document.getElementById('adOpen').focus();
 };
-document.getElementById('edReset').onclick=async()=>{ if(await confirmSheet('Reset all four days to the recommended program for your equipment? Your logged data stays.', 'Reset', null, true)){ { const fresh=buildProgram(); applyEquipPicks(fresh); if(ROUTINE_ID==='ul4') applyRoutineState({ul4:fresh}); else { PROGRAMS[ROUTINE_ID]=ROUTINES[ROUTINE_ID]?newRoutineProgram(ROUTINE_ID).days:fresh; applyRoutineState({programs:PROGRAMS}); } } await persistProgram(); document.getElementById('edDay').innerHTML=''; renderEditor(); showToast('Program reset'); } };
+document.getElementById('edReset').onclick=async()=>{ if(await confirmSheet(`Reset all ${routineWord(PROGRAM.length)} days to the recommended program for your equipment? Your logged data stays.`, 'Reset', null, true)){ { const fresh=buildProgram(); applyEquipPicks(fresh); if(ROUTINE_ID==='ul4') applyRoutineState({ul4:fresh}); else { PROGRAMS[ROUTINE_ID]=ROUTINES[ROUTINE_ID]?newRoutineProgram(ROUTINE_ID).days:fresh; applyRoutineState({programs:PROGRAMS}); } } await persistProgram(); document.getElementById('edDay').innerHTML=''; renderEditor(); showToast('Program reset'); } };
 
 let lastBackup=0;
 // ---------- backup import: one validator and one writer, shared by Replace, Merge and the onboarding import ----------
