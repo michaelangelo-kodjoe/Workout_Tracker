@@ -818,7 +818,7 @@
   <div class="banner info" id="updateBanner" style="display:none"><span>A new version of Lift Log is ready.</span><span class="linkbtn" id="updateBannerBtn">Refresh Now</span></div>
   <div class="title-row"><h1>Lift Log</h1>
     <div class="rhythm">
-      <div class="rhythm-label">This Week <b id="weekCount">0</b>/4<br><span class="rhythm-total"><span id="sessionCount">0</span> Sessions Total</span></div>
+      <div class="rhythm-label">This Week <b id="weekCount">0</b>/<span id="weekGoal">4</span><br><span class="rhythm-total"><span id="sessionCount">0</span> Sessions Total</span></div>
       <div class="rhythm-ring">
         <svg width="28" height="28" viewBox="0 0 30 30">
           <circle cx="15" cy="15" r="12" fill="none" stroke="var(--line)" stroke-width="3.5"/>
@@ -1491,7 +1491,7 @@ function slotExercise(slot, entry){
   return ex;
 }
 // colour class for a day: its name says whether it's an Upper or Lower day (see the "day types" styles)
-function dayType(d){ const n=(d&&d.name||'').toLowerCase(); return n.startsWith('upper')?'t-upper':n.startsWith('lower')?'t-lower':''; }
+function dayType(d){ const f=dayFocus(d); return f==='upper'?'t-upper':f==='lower'?'t-lower':''; }
 function buildProgram(){ return TEMPLATE.map(d=>({id:d.id,name:d.name,sub:d.sub,badge:d.badge,factor:d.factor,exercises:d.slots.map(s=>slotExercise(s, CURATED_BY_NAME[s.pick]))})); }
 const DEFAULT_PROGRAM = buildProgram();
 let PROGRAM = JSON.parse(JSON.stringify(DEFAULT_PROGRAM));
@@ -2492,8 +2492,8 @@ function renderHeaderStats(){
   const week=weekStart();
   const thisWeek=sessions.filter(s=>!s.isCardio && s.t>=week).length;
   const c=75.4;
-  document.getElementById('weekRingArc').style.strokeDashoffset=(c*(1-Math.min(1,thisWeek/4))).toFixed(1);
-  document.getElementById('weekCount').textContent=thisWeek;
+  document.getElementById('weekRingArc').style.strokeDashoffset=(c*(1-Math.min(1,thisWeek/weeklyGoal()))).toFixed(1);
+  document.getElementById('weekCount').textContent=thisWeek; document.getElementById('weekGoal').textContent=weeklyGoal();
   document.getElementById('sessionCount').textContent=sessionCount;
 }
 async function loadDay(d){
@@ -2925,7 +2925,7 @@ function renderBuilder(panel){
     renderBuilder(panel);
   });
   panel.querySelectorAll('.bc').forEach(b=>b.onclick=()=>{ const day=PROGRAM.find(d=>d.id===b.dataset.d); openSwap(day.id, day.exercises[+b.dataset.i]); });
-  document.getElementById('buildDone').onclick=async()=>{ await sset('program',PROGRAM); needsBuild=false; document.body.classList.remove('building'); showToast('Program saved — edit it any time in Settings'); touchDayStart(); setView('log'); };
+  document.getElementById('buildDone').onclick=async()=>{ await persistProgram(); needsBuild=false; document.body.classList.remove('building'); showToast('Program saved — edit it any time in Settings'); touchDayStart(); setView('log'); };
 }
 
 // ---------- home: greeting + day carousel (returning user), first-open hero (new user), program builder ----------
@@ -3706,8 +3706,8 @@ async function saveLiveCardio(){
 // ---------- history view ----------
 // Training Rhythm: sessions in the last 30 days and conditioning this week, over lifting sessions per week for 12 weeks.
 // The goal line is the header's 4 a week; the current week is outlined, since it's still in progress.
-const RHYTHM_GOAL=4;
 function renderRhythm(){
+  const RHYTHM_GOAL=weeklyGoal();
   const week=weekStart(), month=Date.now()-30*864e5;
   const lifts=sessions.filter(s=>!s.isCardio), cardioWeek=sessions.filter(s=>s.isCardio&&s.t>=week);
   const cardioMin=cardioWeek.reduce((a,b)=>a+(b.duration||0),0);
@@ -3725,7 +3725,10 @@ function renderRhythm(){
   chart.setAttribute('aria-label',`Lifting sessions per week, last 12 weeks, oldest first: ${counts.join(', ')}. This week so far: ${counts[counts.length-1]}. Goal ${RHYTHM_GOAL} a week.`);
 }
 let calMonthOffset=0;
-function sessionType(s){ return s.isCardio?'cardio':(s.dayName==='Upper'?'upper':s.dayName==='Lower'?'lower':null); }
+// a session logged on a day outside the built-in four (another routine) is a neutral 'other', not skipped; the built-in
+// four keep the exact Upper/Lower name test, so existing sessions read as before
+function sessionType(s){ if(s.isCardio) return 'cardio'; const f=s.focus?dayFocus({focus:s.focus}):(s.dayName==='Upper'?'upper':s.dayName==='Lower'?'lower':'');
+  return f==='upper'||f==='lower'?f:(s.dayId&&!UL4_IDS.includes(s.dayId)?'other':null); }
 // ---------- editing and deleting logged sessions ----------
 // sessions[] is the source of truth; hist, lastByName, last:d# and the session counter are derived from it, so
 // every edit or delete re-derives those for the exercises and day involved. Recovery timers are left alone: they
@@ -4266,7 +4269,7 @@ function renderEditor(){
   if(!mus.children.length){ mus.innerHTML=Object.keys(MUSCLE_LABEL).map(k=>`<span class="eqchip" data-k="${k}" aria-pressed="false">${MUSCLE_LABEL[k]}</span>`).join('');
     mus.querySelectorAll('.eqchip').forEach(c=>c.onclick=()=>{ const on=c.classList.toggle('on'); c.setAttribute('aria-pressed',on); }); }
 }
-async function saveProgram(){ await sset('program',PROGRAM); renderEditor(); if(view==='log') render(); if(view==='home') renderHome(); }
+async function saveProgram(){ await persistProgram(); renderEditor(); if(view==='log') render(); if(view==='home') renderHome(); }
 const showAdForm=on=>{ document.getElementById('adForm').hidden=!on; document.getElementById('adOpen').hidden=on; if(on){ const n=document.getElementById('adName'); n.focus(); document.getElementById('adForm').scrollIntoView({block:'nearest'}); } };
 // ---------- Add an Exercise: search the built-in library first, a custom entry only when the lift is not in it ----------
 const AD_CHIPS=[['all','All'],['chest','Chest'],['back','Back'],['shoulders','Shoulders'],['biceps','Biceps'],['triceps','Triceps'],['forearms','Forearms'],['quads','Quads'],['hamstrings','Hamstrings'],['glutes','Glutes'],['calves','Calves'],['abs','Core'],['lowerback','Lower Back']];
@@ -4393,7 +4396,7 @@ document.getElementById('adBtn').onclick=()=>{
   day.exercises.push({group,name,target,m,seed:null,start,step,cue}); saveProgram();
   ['adName','adGroup','adTarget','adStart','adStep','adCue'].forEach(id=>document.getElementById(id).value=''); document.querySelectorAll('#adMuscles .eqchip').forEach(c=>{ c.classList.remove('on'); c.setAttribute('aria-pressed','false'); }); showToast('Added'); showAdForm(false); document.getElementById('adOpen').focus();
 };
-document.getElementById('edReset').onclick=async()=>{ if(await confirmSheet('Reset all four days to the recommended program for your equipment? Your logged data stays.', 'Reset', null, true)){ PROGRAM=buildProgram(); applyEquipPicks(PROGRAM); await sset('program',PROGRAM); document.getElementById('edDay').innerHTML=''; renderEditor(); showToast('Program reset'); } };
+document.getElementById('edReset').onclick=async()=>{ if(await confirmSheet('Reset all four days to the recommended program for your equipment? Your logged data stays.', 'Reset', null, true)){ PROGRAM=buildProgram(); applyEquipPicks(PROGRAM); if(ROUTINE_ID==='ul4') UL4_PROGRAM=PROGRAM; await persistProgram(); document.getElementById('edDay').innerHTML=''; renderEditor(); showToast('Program reset'); } };
 
 let lastBackup=0;
 // ---------- backup import: one validator and one writer, shared by Replace, Merge and the onboarding import ----------
@@ -4683,7 +4686,7 @@ function openSwap(dayId, ex){
   const key=groupKeyFor(ex); const inUse=new Set(day.exercises.map(e=>e.name));
   document.getElementById('sheetSub').textContent=`Replacing ${ex.name} · ${day.name} ${day.sub}`;
   const list=document.getElementById('sheetList'); list.innerHTML='';
-  const original=(DEFAULT_PROGRAM.find(d=>d.id===dayId).exercises[idx]);
+  const dflt=DEFAULT_PROGRAM.find(d=>d.id===dayId), original=dflt&&dflt.exercises[idx];
   const slotTarget=anchorOf(ex).target;
   const render1=(alt,tag,searchable)=>{
     const el=document.createElement('div'); el.className='alt'+(searchable?' alt-searchable':'');
@@ -4750,7 +4753,7 @@ function openSwap(dayId, ex){
 }
 async function doSwap(day, idx, alt){
   const old=day.exercises[idx];
-  const isOriginal = DEFAULT_PROGRAM.find(d=>d.id===day.id).exercises.some(e=>e.name===alt.name && e.group===alt.group);
+  const dflt = DEFAULT_PROGRAM.find(d=>d.id===day.id), isOriginal = !!dflt && dflt.exercises.some(e=>e.name===alt.name && e.group===alt.group);
   // a manual swap keeps the slot's own rep range too (kind-aware), and carries the slot's anchor so block reviews
   // still know its intended range and region
   const nu = isOriginal ? JSON.parse(JSON.stringify(alt)) : {group:old.group,key:groupKeyFor(old),name:alt.name,equip:alt.equip,target:slotTargetFor(anchorOf(old).target,alt),m:alt.m.slice(),seed:null,start:(alt.step===0||alt.start===0)?0:-1,step:alt.step||5,cue:alt.cue||'',region:alt.region,rotAnchor:anchorOf(old),rotCount:0,rotBlocks:0};
@@ -4870,7 +4873,7 @@ async function init(){
   UL4_PROGRAM=PROGRAM;
   { const rid=await sget('routineId'), progs=await sget('programs');
     ROUTINE_ID=typeof rid==='string'&&rid.trim()?rid:'ul4'; PROGRAMS=progs&&typeof progs==='object'&&!Array.isArray(progs)?progs:{};
-    PROGRAM=activeProgram(); if(PROGRAM===UL4_PROGRAM) ROUTINE_ID='ul4'; }
+    PROGRAM=activeProgram(); if(PROGRAM===UL4_PROGRAM) ROUTINE_ID='ul4'; if(!PROGRAM.some(d=>d.id===currentDay)) currentDay=PROGRAM[0].id; }
 
   // renamed exercises: every store that keys on the name moves to the new one, so history, notes, last-used
   // weights and the program slot carry over. Idempotent: a no-op once nothing is stored under an old name.
@@ -4895,7 +4898,7 @@ async function init(){
   for(const k of dayKeys().flatMap(id=>['today:'+id,'last:'+id])){
     const v=await sget(k); if(v&&typeof v==='object'&&renameKeys(v,keepNew)) await sset(k,v);
   }
-  if(renamed) await sset('program',PROGRAM);
+  if(renamed) await persistProgram();
 
   // self-heal exercises swapped in from the Log before doSwap copied equip: without it a swapped-in machine lift
   // loses its plate-loaded option and implement-aware scoring/estimates treat it as unknown. Idempotent.
@@ -4905,7 +4908,7 @@ async function init(){
     const src=CURATED_BY_NAME[ex.name]||CATALOG_BY_NAME[ex.name];
     if(src&&src.equip){ ex.equip=src.equip; equipHealed=true; }
   }));
-  if(equipHealed) await sset('program',PROGRAM);
+  if(equipHealed) await persistProgram();
 
   // self-heal a slot's rep target against a past rotation-target bug: the old per-session rotation used to take the
   // newly-rotated-in exercise's own catalog target instead of keeping the slot's — rotAnchor.target (snapshotted
@@ -4923,7 +4926,7 @@ async function init(){
       ex.rotCount=onDay.filter(s=>s.t>since&&s.ex[ex.name]).length; programFixed=true;
     }
   }));
-  if(programFixed) await sset('program',PROGRAM);
+  if(programFixed) await persistProgram();
   // existing users start block 1 the moment this version loads; new users start it with their first session
   if(!blockStart && sessions.some(x=>!x.isCardio)){ blockStart=Date.now(); await sset('blockStart',blockStart); }
   updateBlockUI();
