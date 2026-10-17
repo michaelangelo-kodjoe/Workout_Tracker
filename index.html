@@ -1492,7 +1492,61 @@ function slotExercise(slot, entry){
 }
 // colour class for a day: its name says whether it's an Upper or Lower day (see the "day types" styles)
 function dayType(d){ const f=dayFocus(d); return f==='upper'?'t-upper':f==='lower'?'t-lower':''; }
-function buildProgram(){ return TEMPLATE.map(d=>({id:d.id,name:d.name,sub:d.sub,badge:d.badge,factor:d.factor,exercises:d.slots.map(s=>slotExercise(s, CURATED_BY_NAME[s.pick]))})); }
+// a template becomes a day list; a day's `focus` (push, pull, legs) is stored only when the template names one, so the built-in
+// Upper/Lower list keeps exactly the shape it has always had
+function buildFromTemplate(tpl){ return tpl.map(d=>({id:d.id,name:d.name,sub:d.sub,badge:d.badge,factor:d.factor,...(d.focus?{focus:d.focus}:{}),exercises:d.slots.map(s=>slotExercise(s, CURATED_BY_NAME[s.pick]))})); }
+function buildProgram(){ return buildFromTemplate(TEMPLATE); }
+// Push/Pull/Legs, three days (R-B). Seven lifts a day, three sets each, every name an exact curated-pool name so history carries over by name.
+// Day ids are namespaced (ppl-1..3) so they never collide with d1..d4; sub "Day 1..3" is template order, not a schedule.
+const PPL_TEMPLATE = [
+  { id:'ppl-1', name:'Push', sub:'Day 1', badge:'heavy', factor:1.0, focus:'push', slots:[
+    { group:'Chest', key:'chest', target:'3 x 6-10', pick:'Machine Chest Press' },
+    { group:'Chest', key:'chest', target:'3 x 10-12', pick:'Incline Smith Machine Press' },
+    { group:'Chest', key:'chest', target:'3 x 12-15', pick:'Machine Pec Fly' },
+    { group:'Shoulders', key:'shoulders', target:'3 x 6-10', pick:'Converging Shoulder Press' },
+    { group:'Shoulders', key:'shoulders', target:'3 x 12-15', pick:'Lateral Raise Machine' },
+    { group:'Arms', key:'triceps', target:'3 x 8-10', pick:'Seated Tricep Press' },
+    { group:'Arms', key:'triceps', target:'3 x 12-15', pick:'Dumbbell Overhead Tricep Extension' },
+  ]},
+  { id:'ppl-2', name:'Pull', sub:'Day 2', badge:'heavy', factor:1.0, focus:'pull', slots:[
+    { group:'Back', key:'back', target:'3 x 8-10', pick:'Lat Pulldown' },
+    { group:'Back', key:'back', target:'3 x 6-10', pick:'Machine Mid Row' },
+    { group:'Back', key:'back', target:'3 x 10-12', pick:'Diverging Seated Row' },
+    { group:'Shoulders', key:'shoulders', target:'3 x 12-15', pick:'Reverse Pec Deck' },
+    { group:'Shoulders', key:'shoulders', target:'3 x 12-15', pick:'Face Pulls' },
+    { group:'Arms', key:'biceps', target:'3 x 8-10', pick:'Machine Preacher Curl' },
+    { group:'Arms', key:'biceps', target:'3 x 12', pick:'Hammer Curl' },
+  ]},
+  { id:'ppl-3', name:'Legs', sub:'Day 3', badge:'heavy', factor:1.0, focus:'legs', slots:[
+    { group:'Quads', key:'quads', target:'3 x 8-12', pick:'Machine Leg Press' },
+    { group:'Quads', key:'quads', target:'3 x 10-12', pick:'Leg Extension' },
+    { group:'Hamstrings', key:'hamstrings', target:'3 x 10-12', pick:'Dumbbell Romanian Deadlift' },
+    { group:'Hamstrings', key:'hamstrings', target:'3 x 10-12', pick:'Seated Leg Curl' },
+    { group:'Calves', key:'calves', target:'3 x 12-15', pick:'Standing Calf Raise' },
+    { group:'Calves', key:'calves', target:'3 x 15-20', pick:'Seated Calf Raise' },
+    { group:'Core', key:'abs', target:'3 x 12-15', pick:'Hanging Leg Raise' },
+  ]},
+];
+// routines the app can switch to. `perWeek` is the weekly session goal. Day lists other than ul4 live in `programs` by id.
+const ROUTINES = {
+  ul4: { id:'ul4', name:'Upper/Lower', perWeek:4 },
+  ppl3: { id:'ppl3', name:'Push/Pull/Legs', perWeek:3, template:PPL_TEMPLATE },
+};
+// a routine's day list for the current equipment: any lift the filter rules out is replaced by the best pick for its slot; a slot
+// with no pick at all is left out (and counted), never swapped silently for something unrelated
+function newRoutineProgram(rid){
+  const r=ROUTINES[rid]; const days=buildFromTemplate(r.template); let missing=0;
+  days.forEach((day,di)=>{
+    const tpl=r.template[di], exclude=new Set(day.exercises.map(e=>e.name)), keep=[];
+    day.exercises.forEach((ex,i)=>{
+      if(equipAllowed(ex)){ keep.push(ex); return; }
+      const pick=bestPickFor(tpl.slots[i],exclude);
+      if(pick){ exclude.add(pick.name); keep.push(slotExercise(tpl.slots[i],pick)); } else missing++;
+    });
+    if(keep.length) day.exercises=keep;
+  });
+  return {days,missing};
+}
 const DEFAULT_PROGRAM = buildProgram();
 let PROGRAM = JSON.parse(JSON.stringify(DEFAULT_PROGRAM));
 // Routines groundwork (R-A): the active routine id ('ul4' = the built-in Upper/Lower 4-day program, kept in `program`) and
@@ -1531,7 +1585,7 @@ function dayFocus(d){
   const n=(d&&d.name||'').toLowerCase(); return n.startsWith('upper')?'upper':n.startsWith('lower')?'lower':'';
 }
 // lifting days per week: 4 for the built-in program, otherwise the active program's own day count
-function weeklyGoal(){ return activeProgram()===UL4_PROGRAM?4:PROGRAM.length; }
+function weeklyGoal(){ return activeProgram()===UL4_PROGRAM?4:((ROUTINES[ROUTINE_ID]&&ROUTINES[ROUTINE_ID].perWeek)||PROGRAM.length); }
 // where edits to the active program are saved: `program` for the built-in one, never over it for another routine
 function persistProgram(){ return activeProgram()===UL4_PROGRAM?sset('program',PROGRAM):sset('programs',PROGRAMS); }
 let needsBuild=false; // true on first launch until the user accepts a program in the builder
@@ -4408,7 +4462,7 @@ document.getElementById('adBtn').onclick=()=>{
   day.exercises.push({group,name,target,m,seed:null,start,step,cue}); saveProgram();
   ['adName','adGroup','adTarget','adStart','adStep','adCue'].forEach(id=>document.getElementById(id).value=''); document.querySelectorAll('#adMuscles .eqchip').forEach(c=>{ c.classList.remove('on'); c.setAttribute('aria-pressed','false'); }); showToast('Added'); showAdForm(false); document.getElementById('adOpen').focus();
 };
-document.getElementById('edReset').onclick=async()=>{ if(await confirmSheet('Reset all four days to the recommended program for your equipment? Your logged data stays.', 'Reset', null, true)){ { const fresh=buildProgram(); applyEquipPicks(fresh); if(ROUTINE_ID==='ul4') applyRoutineState({ul4:fresh}); else { PROGRAMS[ROUTINE_ID]=fresh; applyRoutineState({programs:PROGRAMS}); } } await persistProgram(); document.getElementById('edDay').innerHTML=''; renderEditor(); showToast('Program reset'); } };
+document.getElementById('edReset').onclick=async()=>{ if(await confirmSheet('Reset all four days to the recommended program for your equipment? Your logged data stays.', 'Reset', null, true)){ { const fresh=buildProgram(); applyEquipPicks(fresh); if(ROUTINE_ID==='ul4') applyRoutineState({ul4:fresh}); else { PROGRAMS[ROUTINE_ID]=ROUTINES[ROUTINE_ID]?newRoutineProgram(ROUTINE_ID).days:fresh; applyRoutineState({programs:PROGRAMS}); } } await persistProgram(); document.getElementById('edDay').innerHTML=''; renderEditor(); showToast('Program reset'); } };
 
 let lastBackup=0;
 // ---------- backup import: one validator and one writer, shared by Replace, Merge and the onboarding import ----------
@@ -4694,7 +4748,7 @@ function bestPickFor(slot, exclude){
 function applyEquipPicks(program){
   let changed=0;
   program.forEach(day=>{
-    const tpl=TEMPLATE.find(t=>t.id===day.id);
+    const tpl=[...TEMPLATE,...PPL_TEMPLATE].find(t=>t.id===day.id);
     day.exercises.forEach((ex,i)=>{
       if(equipAllowed(ex)) return;
       const slot=(tpl&&tpl.slots.length===day.exercises.length)?tpl.slots[i]:{group:ex.group,key:groupKeyFor(ex),target:ex.target,pick:ex.name};
