@@ -4441,13 +4441,16 @@ async function readBackupFile(f){
   let j; try{ j=JSON.parse(await f.text()); }catch(e){ return {ok:false,msg:'That file could not be read as a backup'}; }
   return validateBackup(j);
 }
+// routine keys are restored only when the file actually has a value: a backup without them (older, or exported while no routine
+// was set, which writes null) leaves this phone's routine alone, and never creates the keys
+const ROUTINE_KEYS=['routineId','programs'];
 // Replace write: every backed-up key except today's drafts and start times. Checks each write; on the first failure puts
 // back what was there before (best effort) and returns false, so a failed restore does not leave a quiet hybrid.
 async function restoreKeys(data){
   if(!('deloadEnd' in data)) data={...data,deloadEnd:0}; // an older backup has none; this phone's stale End Early time must not survive a Replace
   // last:<id> of days that exist only in a routine from the file (the built-in four are already in KEYS); never today:
   const extraLast=dayKeys(data.programs).map(id=>'last:'+id).filter(k=>!KEYS.includes(k)&&k in data);
-  const keys=[...KEYS.filter(k=>!k.startsWith('today:')&&k!=='dayStart'&&k in data), ...extraLast], prev={};
+  const keys=[...KEYS.filter(k=>!k.startsWith('today:')&&k!=='dayStart'&&k in data&&!(ROUTINE_KEYS.includes(k)&&data[k]==null)), ...extraLast], prev={};
   for(const k of keys) prev[k]=await sget(k);
   // a write only counts as failed on an explicit false (store.set returns true/false once fix/save-failure-notice is in; undefined is not a failure)
   for(const k of keys){
@@ -4587,6 +4590,15 @@ async function doMergeImport(d){
 
   const localProgramRaw=await sget('program');
   if(!localProgramRaw && d.program){ PROGRAM=d.program; await must('program',PROGRAM); }
+
+  // routines: add a routine id only if this phone lacks it (a local entry is never overwritten); the active routine id is
+  // taken from the file only when this phone has none, and after the programs, so it never points at a missing entry
+  if(isObj(d.programs)){
+    const localPrograms=await sget('programs'), merged=isObj(localPrograms)?{...localPrograms}:{}; let added=false;
+    Object.keys(d.programs).forEach(id=>{ if(id!=='ul4'&&/^[\w-]{1,24}$/.test(id)&&id!=='__proto__'&&!Object.prototype.hasOwnProperty.call(merged,id)){ merged[id]=d.programs[id]; added=true; } });
+    if(added){ await must('programs',merged); PROGRAMS=merged; }
+  }
+  if(typeof d.routineId==='string'&&d.routineId.trim()&&(await sget('routineId'))==null) await must('routineId',d.routineId);
 
   for(const dayId of dayKeys(d.programs)){
     const localLatest=Math.max(0, ...localSessionsBefore.filter(s=>s.dayId===dayId).map(s=>s.t));
