@@ -1497,7 +1497,7 @@ const DEFAULT_PROGRAM = buildProgram();
 let PROGRAM = JSON.parse(JSON.stringify(DEFAULT_PROGRAM));
 // Routines groundwork (R-A): the active routine id ('ul4' = the built-in Upper/Lower 4-day program, kept in `program`) and
 // other routines' day lists by id. Nothing writes these yet; they are only read, and absent means ul4.
-let ROUTINE_ID='ul4', PROGRAMS={};
+let ROUTINE_ID='ul4', PROGRAMS={}, UL4_PROGRAM=PROGRAM;
 const UL4_IDS=['d1','d2','d3','d4'];
 // every day id that can own a today:/last: key: the built-in four, every day in the loaded `programs`, and (for a backup
 // being read) every day in the file's own `programs`. Ids are kept to plain word characters so a file cannot name a key oddly.
@@ -1506,6 +1506,22 @@ function dayKeys(extra){
   [PROGRAMS,extra].forEach(ps=>{ if(ps&&typeof ps==='object'&&!Array.isArray(ps)) Object.values(ps).forEach(a=>{ if(Array.isArray(a)) a.forEach(d=>{ if(d&&typeof d.id==='string'&&/^[\w-]{1,24}$/.test(d.id)) ids.add(d.id); }); }); });
   return [...ids];
 }
+// the days the app works on: the built-in program unless a stored routine id points at a usable day list in `programs`
+// (an unknown id, a missing entry or a malformed list all fall back to the built-in program, silently)
+function activeProgram(){
+  const list=ROUTINE_ID!=='ul4'&&PROGRAMS?PROGRAMS[ROUTINE_ID]:null;
+  return Array.isArray(list)&&list.length&&list.every(d=>d&&typeof d.id==='string'&&Array.isArray(d.exercises))?list:UL4_PROGRAM;
+}
+const programIds=p=>(p||PROGRAM).map(d=>d.id);
+// a day's focus for colour and totals: its own `focus` when it has one, else its name (Upper/Lower); anything else is ''
+function dayFocus(d){
+  if(d&&typeof d.focus==='string'&&d.focus) return d.focus;
+  const n=(d&&d.name||'').toLowerCase(); return n.startsWith('upper')?'upper':n.startsWith('lower')?'lower':'';
+}
+// lifting days per week: 4 for the built-in program, otherwise the active program's own day count
+function weeklyGoal(){ return activeProgram()===UL4_PROGRAM?4:PROGRAM.length; }
+// where edits to the active program are saved: `program` for the built-in one, never over it for another routine
+function persistProgram(){ return activeProgram()===UL4_PROGRAM?sset('program',PROGRAM):sset('programs',PROGRAMS); }
 let needsBuild=false; // true on first launch until the user accepts a program in the builder
 const EQUIP_TYPES=['barbell','dumbbell','kettlebell','cable','machine','bodyweight','band','accessory'];
 const EQUIP_LABEL={barbell:'Barbell',dumbbell:'Dumbbell',kettlebell:'Kettlebell',cable:'Cable',machine:'Machine',bodyweight:'Bodyweight',band:'Resistance Band',accessory:'Other (ball, roller, etc.)'};
@@ -4850,6 +4866,11 @@ async function init(){
   if(custom&&Array.isArray(custom)&&custom.length===4) PROGRAM=custom;
   else if(sessionCount>0 || sessions.length>0){ await sset('program',PROGRAM); } // logged before a program was ever saved (the old fixed defaults): keep those exercises name-for-name so history keys still match, skip the builder
   else { needsBuild=true; applyEquipPicks(PROGRAM); }
+  // routines groundwork: read-only here. No stored routine id (every install today) leaves the program above untouched.
+  UL4_PROGRAM=PROGRAM;
+  { const rid=await sget('routineId'), progs=await sget('programs');
+    ROUTINE_ID=typeof rid==='string'&&rid.trim()?rid:'ul4'; PROGRAMS=progs&&typeof progs==='object'&&!Array.isArray(progs)?progs:{};
+    PROGRAM=activeProgram(); if(PROGRAM===UL4_PROGRAM) ROUTINE_ID='ul4'; }
 
   // renamed exercises: every store that keys on the name moves to the new one, so history, notes, last-used
   // weights and the program slot carry over. Idempotent: a no-op once nothing is stored under an old name.
