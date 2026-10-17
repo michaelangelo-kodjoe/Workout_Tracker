@@ -1512,6 +1512,18 @@ function activeProgram(){
   const list=ROUTINE_ID!=='ul4'&&PROGRAMS?PROGRAMS[ROUTINE_ID]:null;
   return Array.isArray(list)&&list.length&&list.every(d=>d&&typeof d.id==='string'&&Array.isArray(d.exercises))?list:UL4_PROGRAM;
 }
+// QA-RA-1: the one place that decides which day list is live. UL4_PROGRAM (the Upper/Lower list kept in `program`) is assigned
+// ONLY here; boot, both imports, Reset Program and the routine switch all go through it, so a replaced list can never leave a
+// stale copy behind. Pass only what changed: {ul4:list}, {routineId}, {programs}. Nothing is stored or reloaded here.
+function applyRoutineState(o){
+  o=o||{};
+  if(o.ul4) UL4_PROGRAM=o.ul4;
+  if('routineId' in o) ROUTINE_ID=typeof o.routineId==='string'&&o.routineId.trim()?o.routineId:'ul4';
+  if('programs' in o) PROGRAMS=o.programs&&typeof o.programs==='object'&&!Array.isArray(o.programs)?o.programs:{};
+  PROGRAM=activeProgram(); if(PROGRAM===UL4_PROGRAM) ROUTINE_ID='ul4';
+  if(currentDay!=='cardio'&&!PROGRAM.some(d=>d.id===currentDay)) currentDay=PROGRAM[0].id;
+  return PROGRAM;
+}
 const programIds=p=>(p||PROGRAM).map(d=>d.id);
 // a day's focus for colour and totals: its own `focus` when it has one, else its name (Upper/Lower); anything else is ''
 function dayFocus(d){
@@ -4396,7 +4408,7 @@ document.getElementById('adBtn').onclick=()=>{
   day.exercises.push({group,name,target,m,seed:null,start,step,cue}); saveProgram();
   ['adName','adGroup','adTarget','adStart','adStep','adCue'].forEach(id=>document.getElementById(id).value=''); document.querySelectorAll('#adMuscles .eqchip').forEach(c=>{ c.classList.remove('on'); c.setAttribute('aria-pressed','false'); }); showToast('Added'); showAdForm(false); document.getElementById('adOpen').focus();
 };
-document.getElementById('edReset').onclick=async()=>{ if(await confirmSheet('Reset all four days to the recommended program for your equipment? Your logged data stays.', 'Reset', null, true)){ PROGRAM=buildProgram(); applyEquipPicks(PROGRAM); if(ROUTINE_ID==='ul4') UL4_PROGRAM=PROGRAM; await persistProgram(); document.getElementById('edDay').innerHTML=''; renderEditor(); showToast('Program reset'); } };
+document.getElementById('edReset').onclick=async()=>{ if(await confirmSheet('Reset all four days to the recommended program for your equipment? Your logged data stays.', 'Reset', null, true)){ { const fresh=buildProgram(); applyEquipPicks(fresh); if(ROUTINE_ID==='ul4') applyRoutineState({ul4:fresh}); else { PROGRAMS[ROUTINE_ID]=fresh; applyRoutineState({programs:PROGRAMS}); } } await persistProgram(); document.getElementById('edDay').innerHTML=''; renderEditor(); showToast('Program reset'); } };
 
 let lastBackup=0;
 // ---------- backup import: one validator and one writer, shared by Replace, Merge and the onboarding import ----------
@@ -4460,7 +4472,7 @@ async function restoreKeys(data){
 }
 async function doExport(){
   const out={}; for(const k of KEYS){ out[k]=await sget(k); }
-  for(const id of dayKeys()) for(const k of ['today:'+id,'last:'+id]) if(!(k in out)) out[k]=await sget(k); // other routines' days (none until routines can be switched on)
+  for(const id of dayKeys()) for(const k of ['today:'+id,'last:'+id]) if(!(k in out)) out[k]=await sget(k); // other routines' days
   Object.assign(out, await store.corruptCopies()); // corrupt:<key> raw text; import only reads KEYS, so it ignores these
   const blob=new Blob([JSON.stringify({app:'liftlog',v:BACKUP_VERSION,exported:new Date().toISOString(),data:out},null,1)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); const d=new Date(), p2=n=>String(n).padStart(2,'0'); a.download=`liftlog-backup-${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}.json`; document.body.appendChild(a); a.click(); a.remove();
@@ -4589,16 +4601,16 @@ async function doMergeImport(d){
   await must('notes',notes);
 
   const localProgramRaw=await sget('program');
-  if(!localProgramRaw && d.program){ PROGRAM=d.program; await must('program',PROGRAM); }
+  if(!localProgramRaw && d.program){ await must('program',d.program); applyRoutineState({ul4:d.program}); }
 
   // routines: add a routine id only if this phone lacks it (a local entry is never overwritten); the active routine id is
   // taken from the file only when this phone has none, and after the programs, so it never points at a missing entry
   if(isObj(d.programs)){
     const localPrograms=await sget('programs'), merged=isObj(localPrograms)?{...localPrograms}:{}; let added=false;
     Object.keys(d.programs).forEach(id=>{ if(id!=='ul4'&&/^[\w-]{1,24}$/.test(id)&&id!=='__proto__'&&!Object.prototype.hasOwnProperty.call(merged,id)){ merged[id]=d.programs[id]; added=true; } });
-    if(added){ await must('programs',merged); PROGRAMS=merged; }
+    if(added){ await must('programs',merged); applyRoutineState({programs:merged}); }
   }
-  if(typeof d.routineId==='string'&&d.routineId.trim()&&(await sget('routineId'))==null) await must('routineId',d.routineId);
+  if(typeof d.routineId==='string'&&d.routineId.trim()&&(await sget('routineId'))==null){ await must('routineId',d.routineId); applyRoutineState({routineId:d.routineId}); }
 
   for(const dayId of dayKeys(d.programs)){
     const localLatest=Math.max(0, ...localSessionsBefore.filter(s=>s.dayId===dayId).map(s=>s.t));
@@ -4624,6 +4636,7 @@ document.getElementById('importFile').onchange=async e=>{
       const n=Array.isArray(d.sessions)?d.sessions.length:0, when=r.exported?` from ${fmtDate(Date.parse(r.exported))}`:'';
       if(!await confirmSheet(`Replace overwrites everything currently on this phone with the backup${when} (${n} session${n===1?'':'s'}). Your ${sessions.length} session${sessions.length===1?'':'s'}, history and settings here will be lost and this cannot be undone. Cancel and use Export Backup first if you want a copy of what is here now.`, 'Replace', null, true)){ e.target.value=''; return; }
       if(!await restoreKeys(d)){ showToast("Couldn't save the backup. Nothing was changed, so free up storage and try again"); e.target.value=''; return; }
+      { const prog=await sget('program'); applyRoutineState({ul4:Array.isArray(prog)&&prog.length===4?prog:PROGRAM, routineId:await sget('routineId'), programs:await sget('programs')}); }
       showToast('Restored — reloading'); }
     setTimeout(()=>location.reload(),900);
   }catch(err){ console.error(err); showToast("Couldn't finish the import. Your data may be partly updated, so try again"); }
@@ -4882,10 +4895,7 @@ async function init(){
   else if(sessionCount>0 || sessions.length>0){ await sset('program',PROGRAM); } // logged before a program was ever saved (the old fixed defaults): keep those exercises name-for-name so history keys still match, skip the builder
   else { needsBuild=true; applyEquipPicks(PROGRAM); }
   // routines groundwork: read-only here. No stored routine id (every install today) leaves the program above untouched.
-  UL4_PROGRAM=PROGRAM;
-  { const rid=await sget('routineId'), progs=await sget('programs');
-    ROUTINE_ID=typeof rid==='string'&&rid.trim()?rid:'ul4'; PROGRAMS=progs&&typeof progs==='object'&&!Array.isArray(progs)?progs:{};
-    PROGRAM=activeProgram(); if(PROGRAM===UL4_PROGRAM) ROUTINE_ID='ul4'; if(!PROGRAM.some(d=>d.id===currentDay)) currentDay=PROGRAM[0].id; }
+  applyRoutineState({ul4:PROGRAM, routineId:await sget('routineId'), programs:await sget('programs')});
 
   // renamed exercises: every store that keys on the name moves to the new one, so history, notes, last-used
   // weights and the program slot carry over. Idempotent: a no-op once nothing is stored under an old name.
