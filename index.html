@@ -4233,6 +4233,50 @@ function renderSetMain(){
   opts.innerHTML=[['standard','Standard',15],['large','Large',17],['larger','Larger',20]].map(([k,l,px])=>`<button class="onb-opt" data-k="${k}" aria-pressed="${cur===k}">${l}<b style="font-size:${px}px" aria-hidden="true">Aa</b></button>`).join('');
   opts.querySelectorAll('.onb-opt').forEach(b=>b.onclick=()=>{ settings.textSize=b.dataset.k; sset('settings',settings); applyTextSize(); renderSetMain(); });
 }
+// ---------- switching routines (R-B) ----------
+// A switch never writes `program` (the Upper/Lower list stays byte-for-byte as it is). Order: `programs` first (only when the
+// target routine has no day list yet), `routineId` last, so a failed write leaves the old routine live. Progress, history, the
+// block clock, recovery and settings are keyed by exercise name or by nothing at all and are not touched.
+const routineName=id=>(ROUTINES[id]&&ROUTINES[id].name)||'Upper/Lower';
+const routineWord=n=>['zero','one','two','three','four','five','six','seven'][n]||String(n);
+// the first day of the live routine with sets logged but not finished (a stored draft), as {day, n}; null when nothing is open
+async function openDraft(){
+  for(const day of PROGRAM){
+    const v=day.id===currentDay?todayData:await sget('today:'+day.id);
+    const n=Object.values(v||{}).reduce((a,x)=>a+((x&&x.sets)||[]).filter(q=>q&&(q.done||(q.w&&q.r))).length,0);
+    if(n) return {day,n};
+  }
+  return null;
+}
+async function discardDraft(day){
+  await sset('today:'+day.id,{}); if(day.id===currentDay) todayData={};
+  delete dayStartTimes[day.id]; await sset('dayStart',dayStartTimes);
+}
+// -> {ok:true} | {blocked:{day,n}} | {failed:true}
+let routineBusy=false;
+async function switchRoutine(to){
+  if(routineBusy||!ROUTINES[to]||to===ROUTINE_ID) return {failed:true};
+  routineBusy=true;
+  try{
+    const draft=await openDraft(); if(draft) return {blocked:draft};
+    const hadPrograms=await sget('programs'), programs={...PROGRAMS}; let wrote=false;
+    const usable=l=>Array.isArray(l)&&l.length&&l.every(d=>d&&typeof d.id==='string'&&Array.isArray(d.exercises));
+    if(to!=='ul4'&&!usable(programs[to])){
+      programs[to]=newRoutineProgram(to).days;
+      if(await sset('programs',programs)===false) return {failed:true};
+      wrote=true;
+    }
+    if(await sset('routineId',to)===false){
+      if(wrote) await (hadPrograms==null?store.remove('programs'):sset('programs',hadPrograms)); // put back what was there
+      return {failed:true};
+    }
+    applyRoutineState({routineId:to,programs});
+    document.getElementById('edDay').innerHTML=''; // the editor's day list is built once; rebuild it for the new days
+    const sd=suggestedDay(); await loadDay(sd.id==='cardio'?sd.nextDay.id:sd.id);
+    return {ok:true};
+  }catch(e){ console.error(e); return {failed:true}; }
+  finally{ routineBusy=false; }
+}
 let setPage=null;
 function openSetPage(k){
   setPage=k; document.getElementById('setMain').hidden=true;
