@@ -4434,7 +4434,7 @@ function rtConfirm(){
 function rtBlocked(){
   const d=rt.draft; document.getElementById('routineTitle').textContent='Session in Progress';
   document.getElementById('routineSub').textContent='You can switch as soon as it is closed.';
-  return `<div class="rt-blocked"><p class="plateau-tip" style="margin-bottom:14px">You have a ${esc(d.day.name+' '+d.day.sub)} session open with ${d.n} set${d.n===1?'':'s'} logged. Finish it, or discard it, before you change routines.</p>
+  return `<div class="rt-blocked"><p class="plateau-tip" style="margin-bottom:14px">You have ${/^[AEIOU]/i.test(d.day.name)?'an':'a'} ${esc(d.day.name+' '+d.day.sub)} session open with ${d.n} set${d.n===1?'':'s'} logged. Finish it, or discard it, before you change routines.</p>
     <div class="rt-btns"><button class="btn primary" id="rtGoLog" type="button">Go to Today's Session</button><button class="btn" id="rtCancel" type="button">Cancel</button></div>
     <button class="linkbtn danger" id="rtDiscard" type="button">Discard Today's Session</button></div>`;
 }
