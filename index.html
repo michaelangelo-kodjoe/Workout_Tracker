@@ -4638,6 +4638,8 @@ function applyEquipPicks(program){
   });
   return changed;
 }
+// every typed word must appear in the name, in any order (same rule as the Add an Exercise picker)
+const allWordsIn=(term,lname)=>term.split(/\s+/).filter(Boolean).every(w=>lname.includes(w));
 function openSwap(dayId, ex){
   const day=PROGRAM.find(d=>d.id===dayId); const idx=day.exercises.indexOf(ex); if(idx<0) return;
   const key=groupKeyFor(ex); const inUse=new Set(day.exercises.map(e=>e.name));
@@ -4686,7 +4688,7 @@ function openSwap(dayId, ex){
   search.oninput=()=>{
     const term=search.value.trim().toLowerCase();
     let anyVisible=false;
-    list.querySelectorAll('.alt-searchable').forEach(el=>{ const match=!term||el.dataset.name.includes(term); el.style.display=match?'':'none'; if(match) anyVisible=true; });
+    list.querySelectorAll('.alt-searchable').forEach(el=>{ const match=!term||allWordsIn(term,el.dataset.name); el.style.display=match?'':'none'; if(match) anyVisible=true; });
     h1.style.display=(term&&!anyVisible)?'none':'';
     let noMsg=document.getElementById('altNoMatch');
     if(term&&!anyVisible){ if(!noMsg){ noMsg=document.createElement('div'); noMsg.id='altNoMatch'; noMsg.className='empty'; h1.insertAdjacentElement('afterend',noMsg); } noMsg.textContent=`No curated alternatives match "${search.value.trim()}".`; noMsg.style.display=''; }
@@ -4694,7 +4696,7 @@ function openSwap(dayId, ex){
 
     libResults.innerHTML='';
     if(term.length<2){ libHint.textContent=`Keep typing (2+ letters) to search ${libPoolSize} more in the full library.`; return; }
-    const matches=FULL_CATALOG.filter(a=>a.key===key && !seen.has(a.name) && !inUse.has(a.name) && a.name.toLowerCase().includes(term) && equipOk(a)).slice(0,30);
+    const matches=FULL_CATALOG.filter(a=>a.key===key && !seen.has(a.name) && !inUse.has(a.name) && allWordsIn(term,a.name.toLowerCase()) && equipOk(a)).slice(0,30);
     if(!matches.length){ libHint.textContent=`No full-library matches for "${search.value.trim()}" with your current equipment settings.`; return; }
     libHint.textContent=`From the full library:`;
     matches.forEach(a=>{
