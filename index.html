@@ -318,7 +318,7 @@
   .ad-sel{border:1px solid var(--line);border-radius:8px;background:var(--panel-raised);padding:12px 16px;margin-bottom:12px;}
   .ad-sel .an{font-size:15px;} .ad-sel .am{font-size:12px;color:var(--text-dim);margin-top:2px;} .ad-sel .ac{font-size:12px;line-height:1.5;color:var(--text);opacity:.85;margin-top:6px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
   .ad-static{font-size:13px;color:var(--text-dim);line-height:1.5;padding:12px 0;border-top:1px solid var(--line);margin-top:12px;}
-  .ad-foot{display:flex;gap:8px;margin-top:16px;} .ad-foot .btn{flex:1;min-height:48px;font-size:15px;} .ad-foot .btn.primary{flex:2;}
+  .ad-foot{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;} .ad-foot .btn{flex:1 1 auto;min-width:0;min-height:48px;font-size:15px;} .ad-foot .btn.primary{flex:2 1 auto;}
   .ad-nf .btn{width:100%;min-height:48px;font-size:15px;margin-top:12px;}
   #adSheetTitle:focus{outline:none;}
   .toast{position:fixed;bottom:calc(var(--foot-h,80px) + 16px);left:50%;transform:translateX(-50%);background:var(--panel-raised);border:1px solid var(--done-line);color:#cfe8cf;padding:10px 18px;border-radius:4px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:48;max-width:88%;text-align:center;}
@@ -629,7 +629,7 @@
   .set-days{width:100%;max-width:none;margin:0 0 12px;} .set-days button{font-family:'Menlo',monospace;font-size:12px;}
   .set-day-h{font-size:11px;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;margin:4px 0;}
   #edReset.set-reset{display:block;margin:24px auto 0;padding:12px 8px;background:none;border:0;font-family:'Georgia',serif;} /* beats .linkbtn's negative tap-area margin */
-  #adOpen{margin-top:12px;}
+  #adOpen{margin-top:12px;} #adOpen[hidden]{display:none;}
   #textSizeOpts{max-width:none;}
   /* an on/off setting inside a Settings page: its sentence, then the switch */
   .set-toggle{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:52px;font-size:15px;color:var(--text);cursor:pointer;}
@@ -4189,7 +4189,7 @@ function adRenderResults(){
     if(ad.muscle!=='all'){ res.innerHTML=`<div class="ad-note">No matches in ${esc((AD_CHIPS.find(c=>c[0]===ad.muscle)||[])[1])}. <span class="linkbtn" id="adAllM" style="text-decoration:underline">Search All Muscles</span></div>`;
       res.querySelector('#adAllM').onclick=()=>{ ad.muscle='all'; adRenderSearch('#adQ'); }; return; }
     res.innerHTML=`<div class="ad-nf alt"><div class="an">No exercises match "${esc(ad.q.trim())}"</div><div class="am">Not in the ${FULL_CATALOG.length.toLocaleString()}-exercise library. You can add it yourself.</div><button type="button" class="btn primary" id="adCustom">Add It as a Custom Exercise</button></div>`;
-    res.querySelector('#adCustom').onclick=()=>{ const q=ad.q.trim(); closeAddSheet(); adOpenCustom(q); }; return; }
+    res.querySelector('#adCustom').onclick=()=>{ const q=ad.q.trim(); closeAddSheet(); adOpenCustom(q); setTimeout(()=>document.getElementById('adName').focus(),0); }; return; } /* the sheet's close handler hands focus back to #adOpen after adOpenCustom ran; take it back */
   const hiddenEq=[...new Set(all.filter(a=>!equipAllowed(a)).map(a=>adEquipLabel(a.equip)))];
   const eqTxt=hiddenEq.length>1?hiddenEq.slice(0,-1).join(', ')+' and '+hiddenEq.slice(-1):hiddenEq[0];
   let html='';
