@@ -593,7 +593,7 @@
   .day-carousel{scroll-snap-type:x mandatory;scrollbar-width:none;padding-bottom:8px;}
   .day-carousel::-webkit-scrollbar{display:none;}
   .day-card{scroll-snap-align:start;}
-  .day-carousel.three .day-card{flex:1 0 100px;} /* exactly three days (Push/Pull/Legs) share the row, so the whole week shows without scrolling at 375 px */
+  .day-carousel.three .day-card{flex:1 0 84px;padding-left:10px;padding-right:10px;} /* exactly three days (Push/Pull/Legs) share the row, so the whole week shows without scrolling at 375 px or 320 px */
   .day-card{flex:0 0 124px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;position:relative;cursor:pointer;}
   .day-card.today{border-color:var(--accent);background:linear-gradient(160deg,var(--panel-raised),rgba(255,93,59,.1));}
   .day-card .dtag{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);min-height:14px;}
