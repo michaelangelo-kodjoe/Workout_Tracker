@@ -332,6 +332,7 @@
   .srow .sn{font-size:15px;} .srow .sd{font-size:12px;color:var(--text-dim);margin-top:2px;}
   .srow .sd .linkbtn{white-space:nowrap;position:relative;z-index:1;} /* Reset Baseline broke across two lines mid-sentence */
   .srow .sp{font-family:'Menlo',monospace;font-size:16px;text-align:right;white-space:nowrap;}
+  .srow.pace{display:flex;flex-wrap:wrap;gap:6px 10px;} .srow.pace>:first-child{flex:1 1 9em;min-width:0;overflow-wrap:anywhere;} .srow.pace .spark{flex:1 1 100%;min-width:0;} .srow.pace .sp{white-space:normal;} /* large text wraps the Pace row instead of overflowing it, as .stat does */
   .sp.up{color:var(--green);} .sp.down{color:var(--amber);} .sp.flat{color:var(--text-dim);}
   .spark{grid-column:1 / -1;height:28px;width:100%;margin-top:4px;overflow:visible;}
   .milestone{fill:var(--gold);filter:drop-shadow(0 0 4px rgba(232,178,61,.8));}
@@ -483,7 +484,6 @@
   .sal-chip:focus-visible{outline:2px solid var(--light);outline-offset:2px;}
   .sal-lbl{flex:none;}
   .sal-det{font:12px 'Menlo','SF Mono',monospace;color:var(--text-dim);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;} /* only the detail truncates; the label stays whole */
-  .rir-row.idle{visibility:hidden;pointer-events:none;} /* the row always owns its height, so entering reps never shifts the sets below */
   .rir-lbl{font-size:12px;color:var(--text-dim);margin-right:2px;white-space:nowrap;}
   .rir-pill{font-size:12px;color:var(--text-dim);background:var(--panel-raised);border:1px solid var(--line);border-radius:10px;padding:3px 9px;cursor:pointer;}
   .rir-pill.on{background:var(--light);border-color:var(--light);color:#0d1a22;}
@@ -742,7 +742,7 @@
   /* reps-left pills share the row's width and stay compact to look at; an invisible ::after takes the tappable area
      to 44 px tall, into spacing the row keeps clear above and below */
   .rir-row{margin:2px 0 6px;flex-wrap:nowrap;}
-  .rir-pill{position:relative;flex:1 1 0;text-align:center;padding:8px 0;border-radius:17px;}
+  .rir-pill{position:relative;flex:1 1 0;text-align:center;padding:8.25px 0;border-radius:17px;}
   .rir-pill::after{content:'';position:absolute;inset:-6px -2px;}
   /* 44 px day cells: a slimmer card inset and gap leave the 7 columns room at phone width */
   .cal-wrap{padding:16px 10px;} .cal-grid,.cal-dow{gap:2px;}
@@ -2636,9 +2636,9 @@ function restoreListFocus(k){
   const same=card.querySelectorAll(k.sig); const el=same[Math.min(k.i,same.length-1)]||card.querySelector('.ex-head');
   if(el) el.focus({preventScroll:true});
 }
-// an idle Reps Left row (no reps yet, not done) keeps its height but is invisible, inert and hidden from assistive tech
-function setRirIdle(r,idle,i){ r.classList.toggle('idle',idle); if(idle){ r.setAttribute('aria-hidden','true'); r.removeAttribute('role'); r.removeAttribute('aria-label'); } else { r.removeAttribute('aria-hidden'); r.setAttribute('role','group'); r.setAttribute('aria-label',`Set ${i+1} reps left in tank`); } }
-let popSet=null, salSeq=0;
+// the Reps Left row is hidden (no space) until reps are typed or the set is done
+function setRirA11y(r,i){ r.setAttribute('role','group'); r.setAttribute('aria-label',`Set ${i+1} reps left in tank`); }
+let popSet=null;
 // the Same as Last hint is rebuilt on every render, so a live region inside it is not reliably announced; this one persists
 function salAnnounce(msg){ let el=document.getElementById('salLive'); if(!el){ el=document.createElement('div'); el.id='salLive'; el.className='sr-only'; el.setAttribute('role','status'); el.setAttribute('aria-live','polite'); document.body.appendChild(el); } el.textContent=''; setTimeout(()=>{ el.textContent=msg; },60); } // the set whose check was just ticked, so only its check plays the pop
 function render(){
@@ -2812,7 +2812,7 @@ function render(){
       const [wI,rI]=row.querySelectorAll('input');
       if(bwLoaded) wI.oninput=e=>{s.add=e.target.value===''?'':storeWeight(e.target.value); s.w=bwTotal(s); touchDayStart(); sset('today:'+currentDay,todayData);};
       else wI.oninput=e=>{s.w=storeWeight(e.target.value); touchDayStart(); sset('today:'+currentDay,todayData); if(updatePlates) updatePlates(s.w);};
-      rI.oninput=e=>{s.r=e.target.value; touchDayStart(); sset('today:'+currentDay,todayData); const rr=row.nextElementSibling; if(rr&&rr.classList.contains('rir-row')) setRirIdle(rr,!(s.done||s.r!==''),i);};
+      rI.oninput=e=>{s.r=e.target.value; touchDayStart(); sset('today:'+currentDay,todayData); const rr=row.nextElementSibling; if(rr&&rr.classList.contains('rir-row')){ rr.hidden=!(s.done||s.r!==''); }};
       row.querySelector('.setdone').onclick=()=>{
         if(hold.key===holdKey(ex,i)) stopHold(false); // fills s.r with the elapsed seconds before the check below
         if(!s.done && s.r===''){ showToast(timed?'Add the seconds first':'Add reps first'); return; }
@@ -2845,7 +2845,7 @@ function render(){
       }
       if(!timed){
         // hidden until reps are in, then picked before the set can be checked; stays after Done so it can still be changed
-        const rir=document.createElement('div'); rir.className='rir-row'; setRirIdle(rir,!(s.done||s.r!==''),i);
+        const rir=document.createElement('div'); rir.className='rir-row'; setRirA11y(rir,i); rir.hidden=!(s.done||s.r!=='');
         rir.innerHTML=`<span class="rir-lbl" aria-hidden="true">Reps Left</span>`+[0,1,2,3,4].map(v=>`<span class="rir-pill${s.rir===v?' on':''}" data-v="${v}" aria-pressed="${s.rir===v}" aria-label="${v===4?'4 or more reps':v===1?'1 rep':v+' reps'} left">${v===4?'4+':v}</span>`).join('');
         rir.querySelectorAll('.rir-pill').forEach(p=>p.onclick=()=>{ const v=parseInt(p.dataset.v); s.rir=(s.rir===v)?null:v; touchDayStart(); sset('today:'+currentDay,todayData); render(); });
         body.appendChild(rir);
@@ -3912,7 +3912,7 @@ function renderConditioning(){
     const paceVals = paced.map(s=>s.duration/parsePace(s.distance)); // min per mile/km
     const p0=paceVals[0], p1=paceVals[paceVals.length-1];
     const paceChange = ((p0-p1)/p0*100); // positive = faster pace now
-    paceHtml = `<div class="srow" style="grid-template-columns:1fr 70px 64px"><div><div class="sn">Pace (min per ${unit})</div><div class="sd">${actName} · ${paced.length} sessions with distance logged</div></div><div class="se">${p1.toFixed(1)}</div><div class="sp ${paceChange>0.5?'up':paceChange<-0.5?'down':'flat'}">${paceChange>0.5?'Faster':paceChange<-0.5?'Slower':'Steady'}</div>${sparkline(paceVals,'var(--light)')}</div>`;
+    paceHtml = `<div class="srow pace"><div><div class="sn">Pace (min per ${unit})</div><div class="sd">${actName} · ${paced.length} sessions with distance logged</div></div><div class="se">${p1.toFixed(1)}</div><div class="sp ${paceChange>0.5?'up':paceChange<-0.5?'down':'flat'}">${paceChange>0.5?'Faster':paceChange<-0.5?'Slower':'Steady'}</div>${sparkline(paceVals,'var(--light)')}</div>`;
   }
   out.innerHTML = `
     <div class="stats2" style="margin-bottom:10px">
