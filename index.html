@@ -2637,7 +2637,7 @@ function restoreListFocus(k){
 }
 // the Reps Left row is hidden (no space) until reps are typed or the set is done
 function setRirA11y(r,i){ r.setAttribute('role','group'); r.setAttribute('aria-label',`Set ${i+1} reps left in tank`); }
-let popSet=null, salSeq=0;
+let popSet=null;
 // the Same as Last hint is rebuilt on every render, so a live region inside it is not reliably announced; this one persists
 function salAnnounce(msg){ let el=document.getElementById('salLive'); if(!el){ el=document.createElement('div'); el.id='salLive'; el.className='sr-only'; el.setAttribute('role','status'); el.setAttribute('aria-live','polite'); document.body.appendChild(el); } el.textContent=''; setTimeout(()=>{ el.textContent=msg; },60); } // the set whose check was just ticked, so only its check plays the pop
 function render(){
