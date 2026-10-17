@@ -1231,7 +1231,7 @@ const store = {
     else this.mem[k]=v;
     return true; }catch(e){ console.error(e); this.saveFailed=true; return false; } }
 };
-const KEYS = ['lastBackup','program','recovery','familiarity','soreOverride','recoveryLog','hist','sessions','notes','lastByName','bodyweight','settings','meta:sessionCount','meta:histMigratedV2','today:d1','today:d2','today:d3','today:d4','today:cardio','today:cardioDay','last:d1','last:d2','last:d3','last:d4','lastDeload','deloadStart','deloadEnd','dayStart','blockStart','blockNum','baselines','backupSnoozeUntil'];
+const KEYS = ['lastBackup','program','recovery','familiarity','soreOverride','recoveryLog','hist','sessions','notes','lastByName','bodyweight','settings','meta:sessionCount','meta:histMigratedV2','today:d1','today:d2','today:d3','today:d4','today:cardio','today:cardioDay','last:d1','last:d2','last:d3','last:d4','lastDeload','deloadStart','deloadEnd','dayStart','blockStart','blockNum','baselines','backupSnoozeUntil','routineId','programs'];
 const RECOVERY_LOG_CAP=2000;
 const RECOVERY_HOURS = { 'chest-upper':72, 'chest-mid':72, 'chest-lower':72, 'back-lats':72, 'back-traps':72, quads:72, hamstrings:72, glutes:72, lowerback:72, 'delt-front':48, 'delt-lateral':48, 'delt-rear':48, biceps:48, brachialis:48, 'triceps-lateral':48, 'triceps-long':48, 'forearm-flexor':48, 'forearm-extensor':48, 'calves-gastroc':48, 'calves-soleus':48, 'abs-upper':36, 'abs-lower':36, 'abs-obliques':36 };
 const MUSCLE_LABEL = { chest:'Chest', back:'Back', quads:'Quads', hamstrings:'Hamstrings', glutes:'Glutes', lowerback:'Lower back', shoulders:'Shoulders', biceps:'Biceps', triceps:'Triceps', forearms:'Forearms', calves:'Calves', abs:'Core' };
@@ -1495,6 +1495,17 @@ function dayType(d){ const n=(d&&d.name||'').toLowerCase(); return n.startsWith(
 function buildProgram(){ return TEMPLATE.map(d=>({id:d.id,name:d.name,sub:d.sub,badge:d.badge,factor:d.factor,exercises:d.slots.map(s=>slotExercise(s, CURATED_BY_NAME[s.pick]))})); }
 const DEFAULT_PROGRAM = buildProgram();
 let PROGRAM = JSON.parse(JSON.stringify(DEFAULT_PROGRAM));
+// Routines groundwork (R-A): the active routine id ('ul4' = the built-in Upper/Lower 4-day program, kept in `program`) and
+// other routines' day lists by id. Nothing writes these yet; they are only read, and absent means ul4.
+let ROUTINE_ID='ul4', PROGRAMS={};
+const UL4_IDS=['d1','d2','d3','d4'];
+// every day id that can own a today:/last: key: the built-in four, every day in the loaded `programs`, and (for a backup
+// being read) every day in the file's own `programs`. Ids are kept to plain word characters so a file cannot name a key oddly.
+function dayKeys(extra){
+  const ids=new Set(UL4_IDS);
+  [PROGRAMS,extra].forEach(ps=>{ if(ps&&typeof ps==='object'&&!Array.isArray(ps)) Object.values(ps).forEach(a=>{ if(Array.isArray(a)) a.forEach(d=>{ if(d&&typeof d.id==='string'&&/^[\w-]{1,24}$/.test(d.id)) ids.add(d.id); }); }); });
+  return [...ids];
+}
 let needsBuild=false; // true on first launch until the user accepts a program in the builder
 const EQUIP_TYPES=['barbell','dumbbell','kettlebell','cable','machine','bodyweight','band','accessory'];
 const EQUIP_LABEL={barbell:'Barbell',dumbbell:'Dumbbell',kettlebell:'Kettlebell',cable:'Cable',machine:'Machine',bodyweight:'Bodyweight',band:'Resistance Band',accessory:'Other (ball, roller, etc.)'};
@@ -4374,7 +4385,7 @@ const BACKUP_VERSION=1, BACKUP_MAX_BYTES=10*1024*1024;
 // expected top-level type per stored key (null is always allowed: an export writes null for a key that was never set).
 // today:/last: are per-day objects; every other KEYS entry not listed here is checked as an object.
 const BACKUP_TYPES={ lastBackup:'number', 'meta:sessionCount':'number', lastDeload:'number', deloadStart:'number', deloadEnd:'number', blockStart:'number', blockNum:'number', backupSnoozeUntil:'number',
-  'meta:histMigratedV2':'boolean', program:'array', recoveryLog:'array', sessions:'array', bodyweight:'array' };
+  'meta:histMigratedV2':'boolean', program:'array', routineId:'string', recoveryLog:'array', sessions:'array', bodyweight:'array' };
 // arrays whose entries are read as {t:…} by merge, history and the recovery gate
 const BACKUP_TIMED=['recoveryLog','sessions','bodyweight'];
 const isObj=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
@@ -4395,6 +4406,13 @@ function validateBackup(j){
     if(k==='hist'&&!Object.values(v).every(a=>Array.isArray(a)&&a.every(hasT))) return bad(k);
     if(['recovery','familiarity','soreOverride','lastByName'].includes(k)&&!Object.values(v).every(isObj)) return bad(k);
     if(k==='program'&&!v.every(d=>isObj(d)&&Array.isArray(d.exercises))) return bad(k);
+    if(k==='programs'&&!Object.values(v).every(a=>Array.isArray(a)&&a.every(d=>isObj(d)&&Array.isArray(d.exercises)))) return bad(k);
+    if(k==='routineId'&&!v.trim()) return bad(k);
+  }
+  // per-day drafts and last-session data for days that exist only in this file's own routines
+  for(const id of dayKeys(isObj(j.data.programs)?j.data.programs:null)) for(const k of ['today:'+id,'last:'+id]){
+    if(KEYS.includes(k)||!(k in j.data)) continue;
+    if(j.data[k]!==null&&!isObj(j.data[k])) return bad(k);
   }
   return {ok:true,data:j.data,exported:j.exported};
 }
@@ -4408,7 +4426,9 @@ async function readBackupFile(f){
 // back what was there before (best effort) and returns false, so a failed restore does not leave a quiet hybrid.
 async function restoreKeys(data){
   if(!('deloadEnd' in data)) data={...data,deloadEnd:0}; // an older backup has none; this phone's stale End Early time must not survive a Replace
-  const keys=KEYS.filter(k=>!k.startsWith('today:')&&k!=='dayStart'&&k in data), prev={};
+  // last:<id> of days that exist only in a routine from the file (the built-in four are already in KEYS); never today:
+  const extraLast=dayKeys(data.programs).map(id=>'last:'+id).filter(k=>!KEYS.includes(k)&&k in data);
+  const keys=[...KEYS.filter(k=>!k.startsWith('today:')&&k!=='dayStart'&&k in data), ...extraLast], prev={};
   for(const k of keys) prev[k]=await sget(k);
   // a write only counts as failed on an explicit false (store.set returns true/false once fix/save-failure-notice is in; undefined is not a failure)
   for(const k of keys){
@@ -4418,6 +4438,7 @@ async function restoreKeys(data){
 }
 async function doExport(){
   const out={}; for(const k of KEYS){ out[k]=await sget(k); }
+  for(const id of dayKeys()) for(const k of ['today:'+id,'last:'+id]) if(!(k in out)) out[k]=await sget(k); // other routines' days (none until routines can be switched on)
   Object.assign(out, await store.corruptCopies()); // corrupt:<key> raw text; import only reads KEYS, so it ignores these
   const blob=new Blob([JSON.stringify({app:'liftlog',v:BACKUP_VERSION,exported:new Date().toISOString(),data:out},null,1)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); const d=new Date(), p2=n=>String(n).padStart(2,'0'); a.download=`liftlog-backup-${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}.json`; document.body.appendChild(a); a.click(); a.remove();
@@ -4548,7 +4569,7 @@ async function doMergeImport(d){
   const localProgramRaw=await sget('program');
   if(!localProgramRaw && d.program){ PROGRAM=d.program; await must('program',PROGRAM); }
 
-  for(const dayId of ['d1','d2','d3','d4']){
+  for(const dayId of dayKeys(d.programs)){
     const localLatest=Math.max(0, ...localSessionsBefore.filter(s=>s.dayId===dayId).map(s=>s.t));
     const importedLatest=Math.max(0, ...importedSessions.filter(s=>s.dayId===dayId).map(s=>s.t));
     if(importedLatest>localLatest && d['last:'+dayId]) await must('last:'+dayId, d['last:'+dayId]);
@@ -4850,7 +4871,7 @@ async function init(){
   if(renameKeys(baselines,(a,b)=>Math.min(a,b))){ await sset('baselines',baselines); renamed=true; }
   let sessionsHit=false; sessions.forEach(s=>{ if(s.ex&&renameKeys(s.ex,keepNew)) sessionsHit=true; });
   if(sessionsHit){ await sset('sessions',sessions); renamed=true; }
-  for(const k of ['today:d1','today:d2','today:d3','today:d4','last:d1','last:d2','last:d3','last:d4']){
+  for(const k of dayKeys().flatMap(id=>['today:'+id,'last:'+id])){
     const v=await sget(k); if(v&&typeof v==='object'&&renameKeys(v,keepNew)) await sset(k,v);
   }
   if(renamed) await sset('program',PROGRAM);
