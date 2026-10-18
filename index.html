@@ -3926,14 +3926,14 @@ async function builderBack(){
   if(!qz||qz.ctx!=='fresh') qz=qzNew('fresh');
   qz.chosen=!skipped&&q&&q.pick&&ROUTINES[q.pick]?q.pick:null; qz.screen='result'; qz.err=false;
   setAppInert(true); document.getElementById('onboardBg').classList.add('on'); document.body.classList.remove('building');
-  renderOnboardStep(skipped?6:5);
+  renderHeaderStats(); renderOnboardStep(skipped?6:5);
 }
 async function finishOnboarding(){
   if(!await qzCommitFresh()){ const e=document.getElementById('onbFinErr'); if(e) e.hidden=false; return; }
   setAppInert(false);
   settings.onboarded=true;
   await sset('settings',settings);
-  render(); renderHistory(); renderStrength(); // units may have changed underneath
+  render(); renderHistory(); renderStrength(); renderHeaderStats(); // units may have changed underneath; the weekly goal follows the new routine
   document.getElementById('onboardBg').classList.remove('on');
   renderHome();
 }
