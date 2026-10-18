@@ -577,8 +577,8 @@
   .qz-pick{width:100%;max-width:360px;text-align:left;display:flex;flex-direction:column;} .qz-pick .rt-card{margin-bottom:12px;}
   .rt-card .rt-ex .rt-exh{margin-top:12px;}
   /* the days question: five large buttons and the where-it-leads list */
-  .qd-row{display:flex;gap:8px;width:100%;max-width:327px;margin-top:12px;}
-  .qd-btn{flex:1 1 0;min-width:44px;min-height:76px;padding:0;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--text);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+  .qd-row{display:flex;flex-wrap:wrap;gap:8px;width:100%;max-width:327px;margin-top:12px;} /* wraps to two rows only when text is enlarged on a very narrow phone */
+  .qd-btn{flex:1 1 52px;min-width:44px;min-height:76px;padding:0;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--text);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
   .qd-btn b{font:32px 'Menlo',monospace;font-weight:normal;line-height:1.1;}
   .qd-btn small{font-size:12px;color:var(--text-dim);}
   .qd-btn[aria-pressed="true"]{background:var(--text);color:var(--bg);border-color:var(--text);}
