@@ -26,7 +26,7 @@
   :root.ios-standalone{--edge:20px;} /* older iOS home-screen apps report navigator.standalone but not the media query */
   /* the app is dark-only: declaring it gives native controls (select menus, checkboxes, number spinners, scrollbars)
      their dark system styling instead of light boxes on a dark page */
-  :root{color-scheme:dark;--upper:#a98bf5;--lower:#38b7a8;--cardio:#5fa8e0;--danger:#f0619a;--bg:#14161a;--panel:#1c1f25;--panel-raised:#22262e;--line:#2c3038;--line-strong:#6c727e;--text:#e8e9ec;--text-dim:#8b8f98;--accent:#ff5d3b;--heavy:#ff5d3b;--light:#4fa3d1;--done-bg:#1f2a20;--done-line:#3d5c3f;--green:#5cbb6f;--amber:#d6a03a;--gold:#e8b23d;}
+  :root{color-scheme:dark;--upper:#a98bf5;--lower:#38b7a8;--push:#b9d95c;--pull:#d98ad9;--legs:#ee9a4d;--full:#a9b6cc;--cardio:#5fa8e0;--danger:#f0619a;--bg:#14161a;--panel:#1c1f25;--panel-raised:#22262e;--line:#2c3038;--line-strong:#6c727e;--text:#e8e9ec;--text-dim:#8b8f98;--accent:#ff5d3b;--heavy:#ff5d3b;--light:#4fa3d1;--done-bg:#1f2a20;--done-line:#3d5c3f;--green:#5cbb6f;--amber:#d6a03a;--gold:#e8b23d;}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Georgia','Iowan Old Style',serif;min-height:100%;}
   /* every tab at least as tall as the screen with Safari's toolbar tucked away (lvh), plus 1px, so every tab can scroll:
@@ -66,6 +66,7 @@
   .daytab.suggested.active{background:var(--panel-raised);}
   .daytab.active{border-color:var(--accent);color:var(--text);background:var(--panel-raised);}
   .daytab .dsub{display:block;font-size:12px;margin-top:2px;}
+  .daytab{max-width:220px;overflow:hidden;text-overflow:ellipsis;} /* one long renamed day cannot push the others off the strip */
   /* the subtitle is its tab's label at 75%, but only where that label is bright: on the plain tabs the label is already
      --text-dim, and 75% of that fell to 3.5:1 */
   .daytab.active .dsub,.daytab.suggested .dsub{opacity:.75;}
@@ -158,9 +159,9 @@
   /* ---------- day types ---------- */
   /* each kind of day has its own colour — Upper violet, Lower teal, Cardio blue — so orange only ever means "act" (buttons,
      the current tab, today's pick). Day tabs and Home cards carry it as a top stripe; badges are tinted with it. */
-  .t-upper{--dc:var(--upper);--dc-bg:rgba(169,139,245,.12);} .t-lower{--dc:var(--lower);--dc-bg:rgba(56,183,168,.12);} .t-cardio{--dc:var(--cardio);--dc-bg:rgba(95,168,224,.12);} .cal-tag.t-other{--dc:var(--text-dim);}
-  .badge.t-upper,.badge.t-lower,.badge.t-cardio{color:var(--dc);background:var(--dc-bg);border:1px solid var(--dc);}
-  .daytab.t-upper,.daytab.t-lower,.daytab.t-cardio,.day-card.t-upper,.day-card.t-lower{box-shadow:inset 0 3px 0 var(--dc);}
+  .t-upper{--dc:var(--upper);--dc-bg:rgba(169,139,245,.12);} .t-lower{--dc:var(--lower);--dc-bg:rgba(56,183,168,.12);} .t-cardio{--dc:var(--cardio);--dc-bg:rgba(95,168,224,.12);} .t-push{--dc:var(--push);--dc-bg:rgba(185,217,92,.12);} .t-pull{--dc:var(--pull);--dc-bg:rgba(217,138,217,.12);} .t-legs{--dc:var(--legs);--dc-bg:rgba(238,154,77,.12);} .t-full{--dc:var(--full);--dc-bg:rgba(169,182,204,.12);} .cal-tag.t-other{--dc:var(--text-dim);}
+  .badge.t-upper,.badge.t-lower,.badge.t-cardio,.badge.t-push,.badge.t-pull,.badge.t-legs,.badge.t-full{color:var(--dc);background:var(--dc-bg);border:1px solid var(--dc);}
+  .daytab.t-upper,.daytab.t-lower,.daytab.t-cardio,.daytab.t-push,.daytab.t-pull,.daytab.t-legs,.daytab.t-full,.day-card.t-upper,.day-card.t-lower,.day-card.t-push,.day-card.t-pull,.day-card.t-legs,.day-card.t-full{box-shadow:inset 0 3px 0 var(--dc);}
   .badge.plateau{background:rgba(214,160,58,.15);color:var(--amber);border:1px solid rgba(214,160,58,.4);margin-left:6px;margin-right:0;}
   /* text actions: a standalone action (Edit, close, history, see full breakdown) is 13 px blue with no underline, so it
      reads as the app's control rather than a web link; one inside a sentence keeps the sentence's size and an underline,
@@ -368,6 +369,7 @@
   .str-grp{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:16px 0 4px;font-size:12px;color:var(--text-dim);}
   .str-grp span:first-child{font-size:11px;letter-spacing:.08em;text-transform:uppercase;}
   .str-past{margin-top:16px;}
+  .str-past.out{margin:12px 0;} .str-one{flex-basis:100%;}
   .str-past-btn{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:52px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel-raised);color:var(--text);text-align:left;font-family:'Georgia',serif;cursor:pointer;}
   .str-past-btn b{display:block;font-weight:normal;font-size:15px;} .str-past-btn b+span{display:block;font-size:12px;color:var(--text-dim);}
   .str-past-act{font-size:13px;color:var(--light);}
@@ -546,6 +548,48 @@
   .onb-note{font-size:12px;color:var(--text-dim);max-width:320px;line-height:1.5;}
   .onb-foot{position:sticky;bottom:0;z-index:2;display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 0 calc(24px + var(--sa-b));background:var(--bg);box-shadow:0 -16px 16px -4px var(--bg);}
   .cel-cta.alt{background:none;color:var(--text);border:1px solid var(--line-strong);}
+  /* ---------- onboarding quiz (v83) ---------- */
+  .qz-eyebrow{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);}
+  .onb-body.qz-top{justify-content:flex-start;padding-top:16px;}
+  .qz-cap{font-size:13px;color:var(--text-dim);min-height:20px;margin-top:4px;text-align:center;}
+  .onb-opt.qz-opt{gap:12px;padding:10px 16px;min-height:60px;text-align:left;}
+  .qz-l{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;}
+  .qz-l small{font-size:13px;color:var(--text-dim);line-height:1.4;}
+  .qz-ck{flex:none;width:22px;height:22px;fill:none;stroke:var(--accent);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;visibility:hidden;}
+  .onb-opt[aria-pressed="true"] .qz-ck{visibility:visible;}
+  .qz-state{font-size:12px;color:var(--text-dim);max-width:300px;line-height:1.5;text-align:center;margin:8px 0 0;}
+  .qz-state.skipped{color:var(--text);}
+  .cel-cta[aria-disabled="true"]{opacity:.4;cursor:default;}
+  .qz-links{display:flex;justify-content:center;gap:8px;width:100%;max-width:320px;}
+  .qz-links .linkbtn,.qz-skipq{flex:1;min-height:44px;background:none;border:0;font:inherit;font-size:13px;color:var(--light);cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;}
+  .qz-skipq{flex:none;width:100%;max-width:320px;color:var(--text-dim);}
+  .qz-res{width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px;text-align:left;}
+  .qz-res .rt-card{margin:0;} .qz-res .rt-honest,.qz-res .qz-note{margin:0;}
+  .qz-note{font-size:13px;line-height:1.5;padding:10px 12px;border-left:2px solid var(--line-strong);background:var(--panel);border-radius:3px;color:var(--text);}
+  .qz-note.warn{border-left-color:var(--amber);background:var(--panel-raised);}
+  .qz-why{font-size:13px;line-height:1.5;color:var(--text);margin:0;}
+  .qz-head{text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center;}
+  .qz-head .cel-h1,.qz-head .cel-sub{margin:0;max-width:320px;}
+  .onb-foot .onb-note{text-align:center;}
+  .qz-err{width:100%;max-width:320px;box-sizing:border-box;font-size:13px;line-height:1.5;text-align:left;padding:10px 12px;border-left:2px solid var(--danger);background:var(--panel-raised);border-radius:3px;color:var(--text);}
+  .onb-skip{white-space:nowrap;} .onb-prog{min-width:0;} .onb-bars{width:100%;max-width:140px;}
+  .qz-pick{width:100%;max-width:360px;text-align:left;display:flex;flex-direction:column;} .qz-pick .rt-card{margin-bottom:12px;}
+  .rt-card .rt-ex .rt-exh{margin-top:12px;}
+  /* the days question: five large buttons */
+  .qd-row{display:flex;flex-wrap:wrap;gap:8px;width:100%;max-width:327px;margin-top:12px;} /* wraps to two rows only when text is enlarged on a very narrow phone */
+  .qd-btn{flex:1 1 52px;min-width:44px;min-height:76px;padding:0;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--text);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+  .qd-btn b{font:32px 'Menlo',monospace;font-weight:normal;line-height:1.1;}
+  .qd-btn small{font-size:12px;color:var(--text-dim);}
+  .qd-btn[aria-pressed="true"]{background:var(--text);color:var(--bg);border-color:var(--text);}
+  .qd-btn[aria-pressed="true"] small{color:var(--bg);}
+  /* short screens (a phone held sideways): the question screens keep a slim pinned foot; the result's foot drops into the page so every note stays reachable */
+  @media (max-height:420px){
+    .onb-foot.qz-f{gap:4px;padding:8px 0 calc(8px + var(--sa-b));}
+    .onb-foot.qz-f .onb-note{display:none;}
+    .onb-foot.qz-f.qz-foot-flow{position:static;box-shadow:none;padding:12px 0 calc(16px + var(--sa-b));gap:8px;}
+    .onb-foot.qz-f.qz-foot-flow .onb-note{display:block;}
+  }
+
   .cel-h1{font-size:22px;margin:0 0 6px;position:relative;z-index:2;}
   .cel-sub{font-size:13px;color:var(--text-dim);margin-bottom:26px;position:relative;z-index:2;}
   .cel-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;width:100%;max-width:320px;position:relative;z-index:2;margin-bottom:20px;}
@@ -591,6 +635,7 @@
   .day-carousel{scroll-snap-type:x mandatory;scrollbar-width:none;padding-bottom:8px;}
   .day-carousel::-webkit-scrollbar{display:none;}
   .day-card{scroll-snap-align:start;}
+  .day-carousel.three .day-card{flex:1 0 84px;padding-left:10px;padding-right:10px;} /* exactly three days (Push/Pull/Legs) share the row, so the whole week shows without scrolling at 375 px or 320 px */
   .day-card{flex:0 0 124px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;position:relative;cursor:pointer;}
   .day-card.today{border-color:var(--accent);background:linear-gradient(160deg,var(--panel-raised),rgba(255,93,59,.1));}
   .day-card .dtag{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);min-height:14px;}
@@ -620,8 +665,64 @@
   .set-row.static{cursor:default;}
   .set-row.static.has-cap{padding-top:10px;padding-bottom:10px;} /* a caption makes the row taller than the one-line rows: give it the same breathing room above and below (Units has no caption and keeps 52 px) */
   .set-val.warn{color:var(--amber);}
-  .set-lbl{flex:1;min-width:0;} .set-cap{display:block;font-size:12px;color:var(--text-dim);margin-top:2px;}
+  .set-lbl{flex:1;min-width:0;} .set-cap{display:block;font-size:12px;color:var(--text-dim);margin-top:2px;white-space:normal;}
   .set-val{font-size:13px;color:var(--text-dim);text-align:right;}
+  /* Routine row and the Change Routine sheet (R-B) */
+  .rt-card{border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:12px;background:var(--panel-raised);}
+  .rt-card.cur{border-color:var(--accent);}
+  .rt-top{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .rt-name{font-size:17px;line-height:1.3;min-width:0;}
+  .rt-chip{flex:none;font-family:'Menlo',monospace;font-size:12px;padding:2px 8px;border-radius:2px;border:1px solid var(--accent);color:var(--text);}
+  .rt-meta{font-size:13px;color:var(--text-dim);margin-top:2px;}
+  .rt-days{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0;padding:0;list-style:none;}
+  .rt-days .badge{margin:0;}
+  .rt-line{font-size:13px;line-height:1.5;margin-top:12px;color:var(--text);}
+  .rt-line.dim{color:var(--text-dim);}
+  .rt-card .btn.rt-go{display:block;width:100%;min-height:48px;font-size:15px;margin-top:16px;}
+  .rt-foot{font-size:13px;line-height:1.5;color:var(--text-dim);margin:4px 0 0;}
+  .rt-sec{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin:16px 0 8px;}
+  .rt-sec.first{margin-top:4px;}
+  .rt-list{list-style:none;margin:0;padding:0;}
+  .rt-list li{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.5;margin-bottom:8px;}
+  .rt-list svg{flex:none;width:16px;height:16px;margin-top:3px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+  .rt-list .keep svg{color:var(--green);} .rt-list .chg svg{color:var(--accent);}
+  .rt-backup{border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:16px 0 0;background:var(--panel-raised);font-size:13px;line-height:1.5;}
+  .rt-backup .btn{display:block;width:100%;min-height:48px;font-size:15px;margin-top:12px;}
+  .rt-ok{display:flex;gap:8px;align-items:flex-start;color:var(--green);margin-top:12px;}
+  .rt-ok svg{flex:none;width:16px;height:16px;margin-top:2px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+  .rt-note{font-size:13px;line-height:1.5;margin:12px 0 0;padding:10px 12px;border-left:2px solid var(--amber);background:var(--panel-raised);border-radius:3px;}
+  .rt-sheet-sub{font-size:12px;color:var(--text-dim);margin-top:2px;}
+  #routineTitle:focus{outline:none;}
+  .rt-blocked .rt-btns{display:flex;flex-direction:column;gap:8px;} .rt-blocked .rt-btns .btn{min-height:48px;font-size:15px;}
+  .rt-blocked .linkbtn.danger{display:block;width:100%;background:none;border:0;font:inherit;font-size:13px;text-align:center;margin-top:8px;padding:15px 0;}
+  .rt-honest{font-size:13px;line-height:1.5;margin:12px 0 0;padding:10px 12px;border-left:2px solid var(--accent);background:var(--panel);border-radius:3px;color:var(--text);}
+  .rt-honest-top{margin:4px 0 0;}
+  .rt-rownote{margin-top:6px;font-size:12px;line-height:1.45;white-space:normal;} .rt-rownote[hidden]{display:none;}
+  #routineRow.has-note{flex-wrap:wrap;padding-top:12px;padding-bottom:12px;}
+  #routineRow .rt-rownote{flex:0 0 100%;order:9;margin-top:4px;text-align:left;}
+  .rt-see{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:44px;margin-top:8px;padding:0;background:none;border:0;color:var(--accent);font:inherit;font-size:15px;text-align:left;cursor:pointer;}
+  .rt-see-chev{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+  .rt-see[aria-expanded=true] .rt-see-chev{transform:rotate(180deg);}
+  .rt-ex{border-top:1px solid var(--line);margin-top:4px;padding-top:12px;}
+  .rt-exh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0 4px;font-size:12px;font-weight:400;color:var(--text-dim);}
+  .rt-exh .badge{margin:0;}
+  .rt-exh2{font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-top:20px;display:block;}
+  .rt-exl{list-style:none;margin:0;padding:0;}
+  .rt-exl li{display:flex;justify-content:space-between;gap:12px;font-size:13px;line-height:1.4;padding:8px 0;border-bottom:1px solid var(--line);}
+  .rt-exl li:last-child{border-bottom:0;}
+  .rt-t{flex:none;font-family:'Menlo',monospace;font-size:12px;color:var(--text-dim);}
+  .rt-sets{display:grid;grid-template-columns:1fr 1fr;gap:0 24px;margin:8px 0 0;}
+  .rt-sets div{display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:6px 0;border-bottom:1px solid var(--line);}
+  .rt-sets dt{margin:0;} .rt-sets dd{margin:0;font-family:'Menlo',monospace;}
+  @media (max-width:340px){ .rt-sets{grid-template-columns:1fr;} }
+  .rt-sets-note{font-size:13px;line-height:1.5;color:var(--text-dim);margin:12px 0 0;}
+  .nb{white-space:nowrap;}
+  .rt-chips{display:flex;gap:6px;flex:none;}
+  .rt-card .rt-line.card-line{margin-top:8px;color:var(--text-dim);}
+  .rt-warn{font-size:13px;line-height:1.5;margin:12px 0 0;padding:10px 12px;border-left:2px solid var(--amber);background:var(--panel);border-radius:3px;}
+  .rt-card.suggest{border-color:var(--text-dim);}
+  .rt-see[aria-expanded=true]{color:var(--text);}
+  .toast.err{border-color:var(--danger);color:var(--text);}
   .set-chev{width:16px;height:16px;flex-shrink:0;fill:none;stroke:var(--text-dim);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
   .set-seg{width:auto;max-width:none;margin:0;padding:2px;gap:2px;} .set-seg button{flex:none;height:36px;padding:0 14px;}
   #setMain .reset-link{margin-top:24px;}
@@ -679,7 +780,7 @@
   .rh-bars i.now{background:rgba(92,187,111,.3);box-shadow:inset 0 0 0 1px var(--green);}
   .rh-axis{display:flex;gap:4px;margin-top:6px;padding-top:4px;border-top:1px solid var(--line);font-size:11px;color:var(--text-dim);}
   .rh-axis span{flex:1;white-space:nowrap;overflow:visible;}
-  .rh-cap{font-size:12px;color:var(--text-dim);margin-top:8px;}
+  .rh-cap{font-size:12px;color:var(--text-dim);margin-top:8px;} .rh-cap[hidden]{display:none;}
 
   /* ---------- history calendar ---------- */
   .cal-wrap{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:12px;}
@@ -912,6 +1013,7 @@
       <div class="rh-stats" id="rhStats"></div>
       <div class="rh-chart" id="rhChart" role="img"></div>
       <div class="rh-cap">Sessions per week, last 12 weeks</div>
+      <div class="rh-cap" id="rhGoalNote" hidden></div>
     </div>
     <div class="cal-wrap">
       <div class="cal-head"><span class="cal-nav" id="calPrev" aria-label="Previous Month"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></span><h3 class="cal-title" id="calTitle" aria-live="polite">—</h3><span class="cal-nav" id="calNext" aria-label="Next Month"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></div>
@@ -974,6 +1076,8 @@
       </div>
       <div class="set-group-h">Program</div>
       <div class="set-group">
+        <button class="set-row" id="routineRow" type="button" aria-haspopup="dialog" aria-describedby="routineNote"><span class="set-lbl">Routine<span class="set-cap" id="routineCap"></span></span><span class="set-val" id="sv-routine"></span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg><span class="set-cap rt-rownote" id="routineNote" hidden></span></button>
+        <button class="set-row" id="quizRow" type="button" aria-haspopup="dialog"><span class="set-lbl"><span id="quizLbl">Take the Quiz</span><span class="set-cap" id="quizCap"></span></span><span class="set-val" id="sv-quiz"></span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
         <button class="set-row" data-page="edit"><span class="set-lbl">Edit Workouts</span><span class="set-val" id="sv-edit"></span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
       </div>
       <div class="set-group-h">Your Data</div>
@@ -1106,6 +1210,18 @@
     <button class="btn" id="fatigueProceed"></button>
   </div>
 </div>
+<div class="sheet-bg" id="quizPromptBg"></div>
+<div class="sheet" id="quizPrompt">
+  <div class="sheet-head"><div><div id="quizPromptTitle" tabindex="-1" style="font-size:15px">Find Your Routine</div><div class="rt-sheet-sub">New in this version</div></div><span class="linkbtn" id="quizPromptClose">Close</span></div>
+  <p class="rt-line" style="margin:0 0 12px">Answer a few quick questions and we will suggest a routine. Or keep Upper/Lower. Nothing changes unless you say so.</p>
+  <p class="rt-line dim" style="margin:0 0 4px">It takes about half a minute. You can find it again in Settings.</p>
+  <div class="sheet-actions"><button class="btn" id="quizNotNow" type="button" style="flex:1;min-height:48px;font-size:15px">Not Now</button><button class="btn primary" id="quizTake" type="button" style="flex:1;min-height:48px;font-size:15px">Take the Quiz</button></div>
+</div>
+<div class="sheet-bg" id="routineBg"></div>
+<div class="sheet" id="routineSheet">
+  <div class="sheet-head"><div><div id="routineTitle" tabindex="-1" style="font-size:15px">Change Routine</div><div id="routineSub" class="rt-sheet-sub"></div></div><span class="linkbtn" id="routineClose">Close</span></div>
+  <div id="routineBody"></div>
+</div>
 <div class="sheet-bg" id="confirmBg"></div>
 <div class="sheet" id="confirmSheet">
   <div class="sheet-head"><div style="font-size:15px" id="confirmTitle">Are you sure?</div></div>
@@ -1231,7 +1347,7 @@ const store = {
     else this.mem[k]=v;
     return true; }catch(e){ console.error(e); this.saveFailed=true; return false; } }
 };
-const KEYS = ['lastBackup','program','recovery','familiarity','soreOverride','recoveryLog','hist','sessions','notes','lastByName','bodyweight','settings','meta:sessionCount','meta:histMigratedV2','today:d1','today:d2','today:d3','today:d4','today:cardio','today:cardioDay','last:d1','last:d2','last:d3','last:d4','lastDeload','deloadStart','deloadEnd','dayStart','blockStart','blockNum','baselines','backupSnoozeUntil','routineId','programs'];
+const KEYS = ['lastBackup','program','recovery','familiarity','soreOverride','recoveryLog','hist','sessions','notes','lastByName','bodyweight','settings','meta:sessionCount','meta:histMigratedV2','today:d1','today:d2','today:d3','today:d4','today:cardio','today:cardioDay','last:d1','last:d2','last:d3','last:d4','lastDeload','deloadStart','deloadEnd','dayStart','blockStart','blockNum','baselines','backupSnoozeUntil','routineId','programs','quiz'];
 const RECOVERY_LOG_CAP=2000;
 const RECOVERY_HOURS = { 'chest-upper':72, 'chest-mid':72, 'chest-lower':72, 'back-lats':72, 'back-traps':72, quads:72, hamstrings:72, glutes:72, lowerback:72, 'delt-front':48, 'delt-lateral':48, 'delt-rear':48, biceps:48, brachialis:48, 'triceps-lateral':48, 'triceps-long':48, 'forearm-flexor':48, 'forearm-extensor':48, 'calves-gastroc':48, 'calves-soleus':48, 'abs-upper':36, 'abs-lower':36, 'abs-obliques':36 };
 const MUSCLE_LABEL = { chest:'Chest', back:'Back', quads:'Quads', hamstrings:'Hamstrings', glutes:'Glutes', lowerback:'Lower back', shoulders:'Shoulders', biceps:'Biceps', triceps:'Triceps', forearms:'Forearms', calves:'Calves', abs:'Core' };
@@ -1491,8 +1607,212 @@ function slotExercise(slot, entry){
   return ex;
 }
 // colour class for a day: its name says whether it's an Upper or Lower day (see the "day types" styles)
-function dayType(d){ const f=dayFocus(d); return f==='upper'?'t-upper':f==='lower'?'t-lower':''; }
-function buildProgram(){ return TEMPLATE.map(d=>({id:d.id,name:d.name,sub:d.sub,badge:d.badge,factor:d.factor,exercises:d.slots.map(s=>slotExercise(s, CURATED_BY_NAME[s.pick]))})); }
+// A day's colour is its FAMILY; the tag letters and the label carry the identity (colour is never the only cue). Chest and Shoulders
+// use the Push colour, Back the Pull colour, Arms the Upper colour, Full Body its own slate, Legs its own amber (v83).
+const FOCUS_FAMILY={upper:'upper',lower:'lower',push:'push',pull:'pull',legs:'legs',full:'full',chest:'push',shoulders:'push',back:'pull',arms:'upper'};
+function dayType(d){ const f=FOCUS_FAMILY[dayFocus(d)]; return f?'t-'+f:''; }
+// a template becomes a day list; a day's `focus` (push, pull, legs) is stored only when the template names one, so the built-in
+// Upper/Lower list keeps exactly the shape it has always had
+function buildFromTemplate(tpl){ return tpl.map(d=>({id:d.id,name:d.name,sub:d.sub,badge:d.badge,factor:d.factor,...(d.focus?{focus:d.focus}:{}),...(d.lvl?{lvl:d.lvl}:{}),exercises:d.slots.map(s=>slotExercise(s, CURATED_BY_NAME[s.pick]))})); }
+function buildProgram(){ return buildFromTemplate(TEMPLATE); }
+// Push/Pull/Legs, three days (R-B). Seven lifts a day, three sets each, every name an exact curated-pool name so history carries over by name.
+// Day ids are namespaced (ppl-1..3) so they never collide with d1..d4; sub "Day 1..3" is template order, not a schedule.
+const PPL_TEMPLATE = [
+  { id:'ppl-1', name:'Push', sub:'Day 1', badge:'heavy', factor:1.0, focus:'push', slots:[
+    { group:'Chest', key:'chest', target:'3 x 6-10', pick:'Machine Chest Press' },
+    { group:'Chest', key:'chest', target:'3 x 10-12', pick:'Incline Smith Machine Press' },
+    { group:'Chest', key:'chest', target:'3 x 12-15', pick:'Machine Pec Fly' },
+    { group:'Shoulders', key:'shoulders', target:'3 x 6-10', pick:'Converging Shoulder Press' },
+    { group:'Shoulders', key:'shoulders', target:'3 x 12-15', pick:'Lateral Raise Machine' },
+    { group:'Arms', key:'triceps', target:'3 x 8-10', pick:'Seated Tricep Press' },
+    { group:'Arms', key:'triceps', target:'3 x 12-15', pick:'Dumbbell Overhead Tricep Extension' },
+  ]},
+  { id:'ppl-2', name:'Pull', sub:'Day 2', badge:'heavy', factor:1.0, focus:'pull', slots:[
+    { group:'Back', key:'back', target:'3 x 8-10', pick:'Lat Pulldown' },
+    { group:'Back', key:'back', target:'3 x 6-10', pick:'Machine Mid Row' },
+    { group:'Back', key:'back', target:'3 x 10-12', pick:'Diverging Seated Row' },
+    { group:'Shoulders', key:'shoulders', target:'3 x 12-15', pick:'Reverse Pec Deck' },
+    { group:'Shoulders', key:'shoulders', target:'3 x 12-15', pick:'Face Pulls' },
+    { group:'Arms', key:'biceps', target:'3 x 8-10', pick:'Machine Preacher Curl' },
+    { group:'Arms', key:'biceps', target:'3 x 12', pick:'Hammer Curl' },
+  ]},
+  { id:'ppl-3', name:'Legs', sub:'Day 3', badge:'heavy', factor:1.0, focus:'legs', slots:[
+    { group:'Quads', key:'quads', target:'3 x 8-12', pick:'Machine Leg Press' },
+    { group:'Quads', key:'quads', target:'3 x 10-12', pick:'Leg Extension' },
+    { group:'Hamstrings', key:'hamstrings', target:'3 x 10-12', pick:'Dumbbell Romanian Deadlift' },
+    { group:'Hamstrings', key:'hamstrings', target:'3 x 10-12', pick:'Seated Leg Curl' },
+    { group:'Calves', key:'calves', target:'3 x 12-15', pick:'Standing Calf Raise' },
+    { group:'Calves', key:'calves', target:'3 x 15-20', pick:'Seated Calf Raise' },
+    { group:'Core', key:'abs', target:'3 x 12-15', pick:'Hanging Leg Raise' },
+  ]},
+];
+// compact template days (v83): lifts as "Exact Curated Name|target;..." — the slot's key and group come from the pool the name lives in, so a
+// name that is not a curated lift fails loudly in QA. Every name is an exact curated-pool name so history and Last Time carry over by name.
+const GROUP_OF_KEY={chest:'Chest',back:'Back',shoulders:'Shoulders',biceps:'Arms',triceps:'Arms',forearms:'Forearms',quads:'Quads',hamstrings:'Hamstrings',calves:'Calves',abs:'Core'};
+const keyOfPick=n=>Object.keys(ALTS).find(k=>ALTS[k].some(a=>a.name===n));
+function tplDay(id,name,sub,badge,factor,focus,lifts){
+  return { id,name,sub,badge,factor,focus, slots:lifts.split(';').map(x=>{ const [pick,target]=x.split('|'), key=keyOfPick(pick); return {group:GROUP_OF_KEY[key],key,target,pick}; }) };
+}
+// Full Body, three days (v83). Day C has eight lifts (24 sets) so calves are trained twice; every other day has seven. 21-24 sets a session is design, not evidence.
+const FB3_TEMPLATE=[
+  tplDay('fb3-1','Full Body','A','heavy',1.0,'full','Machine Chest Press|3 x 6-10;Machine Mid Row|3 x 6-10;Machine Leg Press|3 x 6-10;Seated Leg Curl|3 x 8-10;Converging Shoulder Press|3 x 8-10;Machine Preacher Curl|3 x 8-10;Standing Calf Raise|3 x 12-15'),
+  tplDay('fb3-2','Full Body','B','light',0.85,'full','Incline Smith Machine Press|3 x 10-12;Lat Pulldown|3 x 10-12;Hack Squat|3 x 8-12;Dumbbell Romanian Deadlift|3 x 10-12;Lateral Raise Machine|3 x 12-15;Seated Tricep Press|3 x 10-12;Hanging Leg Raise|3 x 12-15'),
+  tplDay('fb3-3','Full Body','C','heavy',1.0,'full','Machine Pec Fly|3 x 12-15;Diverging Seated Row|3 x 10-12;Leg Extension|3 x 12-15;45° Back Extension|3 x 10;Reverse Pec Deck|3 x 12-15;Hammer Curl|3 x 12;Dumbbell Overhead Tricep Extension|3 x 12-15;Seated Calf Raise|3 x 15-20'),
+];
+// Upper/Lower/PPL 5-Day (v83): the two Heavy days of Upper/Lower 4-Day exactly as they are there (so history and Last Time carry over by name),
+// then Push, Pull and Legs. Legs uses Hack Squat so no lift repeats anywhere in the routine.
+const UL5_TEMPLATE=[
+  { ...TEMPLATE[0], id:'ul5-1', focus:'upper' },
+  { ...TEMPLATE[1], id:'ul5-2', focus:'lower' },
+  tplDay('ul5-3','Push','Day 3','light',0.85,'push','Incline Smith Machine Press|3 x 10-12;Machine Pec Fly|3 x 12-15;Dumbbell Shoulder Press|3 x 10-12;Lateral Raise Machine|3 x 12-15;Rope Pushdown|3 x 10-12;Dumbbell Overhead Tricep Extension|3 x 12-15'),
+  tplDay('ul5-4','Pull','Day 4','light',0.85,'pull','Diverging Seated Row|3 x 10-12;Single-arm Dumbbell Row|3 x 10-12/arm;Reverse Pec Deck|3 x 12-15;Face Pulls|3 x 12-15;Hammer Curl|3 x 12;Cable Curl|3 x 12-15'),
+  tplDay('ul5-5','Legs','Day 5','light',0.85,'legs','Bulgarian Split Squat|3 x 10-12/leg;Hack Squat|3 x 10-12;Dumbbell Romanian Deadlift|3 x 10-12;Lying Leg Curl|3 x 12-15;Seated Calf Raise|3 x 15-20;Plank / Pallof Press|3 x 30-45s'),
+];
+// Push/Pull/Legs, six days (v83): days 1-3 are the A (heavy) sessions, days 4-6 the B (volume) sessions with different lifts in the same slots.
+// Six lifts and 18 sets a day; every muscle is trained twice a week when all six are done.
+const PPL6_TEMPLATE=[
+  tplDay('ppl6-1','Push','A','heavy',1.0,'push','Machine Chest Press|3 x 6-10;Smith Machine Flat Press|3 x 8-10;Converging Shoulder Press|3 x 6-10;Lateral Raise Machine|3 x 12-15;Seated Tricep Press|3 x 8-10;Dumbbell Overhead Tricep Extension|3 x 10-12'),
+  tplDay('ppl6-2','Pull','A','heavy',1.0,'pull','Machine Mid Row|3 x 6-10;Lat Pulldown|3 x 8-10;Reverse Pec Deck|3 x 12-15;Machine Preacher Curl|3 x 8-10;Dumbbell Curl|3 x 8-10;Barbell Wrist Curl|3 x 10'),
+  tplDay('ppl6-3','Legs','A','heavy',1.0,'legs','Machine Leg Press|3 x 6-10;Leg Extension|3 x 8-10;Seated Leg Curl|3 x 8-10;45° Back Extension|3 x 10;Standing Calf Raise|3 x 12-15;Hanging Leg Raise|3 x 12-15'),
+  tplDay('ppl6-4','Push','B','light',0.85,'push','Incline Smith Machine Press|3 x 10-12;Machine Pec Fly|3 x 12-15;Dumbbell Shoulder Press|3 x 10-12;Cable Lateral Raise|3 x 12-15;Rope Pushdown|3 x 10-12;Rope Overhead Tricep Extension|3 x 12-15'),
+  tplDay('ppl6-5','Pull','B','light',0.85,'pull','Diverging Seated Row|3 x 10-12;Chest-supported T-bar Row|3 x 10-12;Face Pulls|3 x 12-15;Hammer Curl|3 x 12;Cable Curl|3 x 12-15;Reverse Wrist Curl|3 x 12-15'),
+  tplDay('ppl6-6','Legs','B','light',0.85,'legs','Bulgarian Split Squat|3 x 10-12/leg;Hack Squat|3 x 10-12;Dumbbell Romanian Deadlift|3 x 10-12;Lying Leg Curl|3 x 12-15;Seated Calf Raise|3 x 15-20;Plank / Pallof Press|3 x 30-45s'),
+];
+// Bro Split, five days (v83): one muscle group a day in the order Chest, Back, Legs, Shoulders, Arms (the two push-colour days never sit
+// side by side, arms last). Chest and Back are capped at five lifts (15 direct sets) so no muscle gets more than 15 sets in a day.
+const BRO5_TEMPLATE=[
+  tplDay('bro5-1','Chest','Day 1','heavy',1.0,'chest','Machine Chest Press|3 x 6-10;Incline Smith Machine Press|3 x 8-10;Incline Dumbbell Press|3 x 10-12;Machine Pec Fly|3 x 12-15;Smith Machine Flat Press|3 x 8-10'),
+  tplDay('bro5-2','Back','Day 2','heavy',1.0,'back','Machine Mid Row|3 x 6-10;Lat Pulldown|3 x 8-10;Chest-supported T-bar Row|3 x 8-10;Diverging Seated Row|3 x 10-12;Single-arm Dumbbell Row|3 x 10-12/arm'),
+  tplDay('bro5-3','Legs','Day 3','heavy',1.0,'legs','Machine Leg Press|3 x 6-10;Leg Extension|3 x 8-10;Bulgarian Split Squat|3 x 10-12/leg;Seated Leg Curl|3 x 8-10;Dumbbell Romanian Deadlift|3 x 10-12;Standing Calf Raise|3 x 12-15;Hanging Leg Raise|3 x 12-15'),
+  tplDay('bro5-4','Shoulders','Day 4','heavy',1.0,'shoulders','Converging Shoulder Press|3 x 6-10;Dumbbell Shoulder Press|3 x 8-10;Lateral Raise Machine|3 x 12-15;Cable Lateral Raise|3 x 12-15;Reverse Pec Deck|3 x 12-15;Face Pulls|3 x 12-15'),
+  tplDay('bro5-5','Arms','Day 5','heavy',1.0,'arms','Machine Preacher Curl|3 x 8-10;Hammer Curl|3 x 12;Cable Curl|3 x 12-15;Seated Tricep Press|3 x 8-10;Rope Pushdown|3 x 10-12;Dumbbell Overhead Tricep Extension|3 x 12-15;Barbell Wrist Curl|3 x 10'),
+];
+// routines the app can switch to. `perWeek` is the weekly session goal. Day lists other than ul4 live in `programs` by id.
+// `days` (label, colour class) and the copy feed the Change Routine sheet; `note` is the plain frequency sentence (ACSM wording agreed by the research loop).
+const ROUTINES = {
+  ul4: { id:'ul4', name:'Upper/Lower 4-Day', short:'Upper/Lower', perWeek:4, template:TEMPLATE, meta:'4 Days a Week', days:[['Upper Heavy','t-upper'],['Lower Heavy','t-lower'],['Upper Volume','t-upper'],['Lower Volume','t-lower']],
+    suits:'Best if you can train four days a week. Upper and lower body each get a heavy day and a volume day.',
+    freq:'Each muscle twice a week with a rest day between.' },
+  fb3: { id:'fb3', name:'Full Body 3-Day', perWeek:3, template:FB3_TEMPLATE, meta:'3 Days a Week', days:[['Full Body A','t-full'],['Full Body B','t-full'],['Full Body C','t-full']],
+    suits:'Best if you can train two or three days a week. Every session works your whole body.',
+    freq:'Chest, back, quads and hamstrings are trained three times a week; shoulders, biceps, triceps and calves twice; rear delts and core once.' },
+  ul5: { id:'ul5', name:'Upper/Lower/PPL 5-Day', perWeek:5, template:UL5_TEMPLATE, meta:'5 Days a Week', cardLine:'Upper, Lower, Push, Pull, Legs',
+    days:[['Upper Heavy','t-upper'],['Lower Heavy','t-lower'],['Push','t-push'],['Pull','t-pull'],['Legs','t-legs']],
+    suits:'Best if you can train five days a week. Two heavy days, then push, pull and legs.',
+    freq:'Most muscles are trained twice a week; rear delts and forearms once.' },
+  ppl3: { id:'ppl3', name:'Push/Pull/Legs 3-Day', perWeek:3, template:PPL_TEMPLATE, meta:'3 Days a Week', days:[['Push','t-push'],['Pull','t-pull'],['Legs','t-legs']],
+    suits:'Best if you can train three days a week. Every muscle group gets one full session.',
+    note:"Each muscle is trained once a week. ACSM's 2026 guidance suggests at least twice, so this is the lower-frequency option. Studies that match weekly sets mostly find little difference in muscle growth, though some favour more frequent training." },
+  bro5: { id:'bro5', name:'Bro Split 5-Day', perWeek:5, template:BRO5_TEMPLATE, meta:'5 Days a Week', days:[['Chest','t-push'],['Back','t-pull'],['Legs','t-legs'],['Shoulders','t-push'],['Arms','t-upper']],
+    suits:'Best if you like one muscle group a day: chest, back, legs, shoulders and arms.',
+    note:"Each muscle has its own day once a week, with some extra work from pressing and rowing on other days. ACSM's 2026 guidance suggests at least twice a week, so this is a lower-frequency option. Studies that match weekly sets mostly find little difference in muscle growth, though some favour more frequent training." },
+  ppl6: { id:'ppl6', name:'Push/Pull/Legs 6-Day', perWeek:6, template:PPL6_TEMPLATE, meta:'6 Days a Week', days:[['Push A','t-push'],['Pull A','t-pull'],['Legs A','t-legs'],['Push B','t-push'],['Pull B','t-pull'],['Legs B','t-legs']],
+    suits:'Best if you can train six days a week. Push, pull and legs, each trained twice.',
+    freq:'Each muscle is trained twice a week, with one rest day.' },
+};
+// the order the Change Routine sheet and Pick Another list the routines: by days a week, never reordered by the current routine
+const RT_ORDER=['fb3','ppl3','ul4','ul5','bro5','ppl6'];
+const rtIds=()=>RT_ORDER.filter(id=>ROUTINES[id]);
+// a routine's day list for the current equipment. A lift the filter rules out is replaced only by the best pick for its slot that
+// trains the SAME sub-muscle (a rear-delt slot never becomes a press, a calf slot never a skipping rope) and is not already used
+// anywhere in the routine. A slot with no such lift is left out and listed (AC-22), never swapped for an unrelated movement.
+// If a whole day would be empty it keeps its standard lifts and is reported in `bare` so the confirm can say so.
+function newRoutineProgram(rid,lvl){
+  lvl=levelOf(lvl); const r=ROUTINES[rid], full=levelTemplate(r.template,lvl,true), tpl=lvl==='new'?levelTemplate(r.template,'new'):full;
+  const days=buildFromTemplate(tpl); let missing=0; const gaps=[], bare=[];
+  const used=new Set(days.flatMap(d=>d.exercises.filter(equipAllowed).map(e=>e.name)));
+  // fill one day from its slots: a lift the filter rules out is replaced or left out (see above)
+  const fillDay=(day,slots)=>{
+    const keep=[], dayGaps=[];
+    day.exercises.forEach((ex,i)=>{
+      if(equipAllowed(ex)){ keep.push(ex); return; }
+      const slot=slots[i], want=recoveryKeysFor(CURATED_BY_NAME[slot.pick]||{name:slot.pick})[0];
+      const pick=bestPickFor(slot,used);
+      if(pick&&!pick.approx&&(!want||recoveryKeysFor(pick)[0]===want)){ used.add(pick.name); keep.push(slotExercise(slot,pick)); } else dayGaps.push(day.name+' '+slot.group);
+    });
+    return {keep,dayGaps};
+  };
+  days.forEach((day,di)=>{
+    let res=fillDay(day,tpl[di].slots);
+    // a reduced New day that would be empty goes back to its full list first; bare-day rule beats the reduction
+    if(!res.keep.length&&tpl[di]!==full[di]){ day.exercises=buildFromTemplate([full[di]])[0].exercises; day.exercises.filter(equipAllowed).forEach(e=>used.add(e.name)); res=fillDay(day,full[di].slots); }
+    if(res.keep.length){ day.exercises=res.keep; missing+=res.dayGaps.length; gaps.push(...res.dayGaps); } else bare.push(day.name); // an empty day keeps its standard lifts
+  });
+  if(lvl==='exp') levelAdds(days,r.template,bare);
+  return {days,missing,gaps,bare};
+}
+// ---------- experience levels (Lift Log's own design, not a guideline) ----------
+// A level is applied only when a routine is BUILT; it is stamped on each day as `lvl` ('new' or 'exp'; absent or anything else = Some)
+// and never rewrites a program that already exists. Some is today's list exactly. New drops lifts and moves rep ranges up, Experienced
+// moves rep ranges down and adds up to two lifts a day. Progression (suggestWeight) never reads the level.
+const levelOf=v=>v==='new'||v==='exp'?v:'some';
+const LEVEL_WORD={new:'New',some:'Some',exp:'Experienced'};
+// the answer a build uses: the quiz in progress, else the finished stored quiz (a draft or skipped quiz never decides); null = not answered
+const buildExp=()=>{ const v=qz&&qz.a?qz.a.exp:(QUIZ&&QUIZ.state==='done'?QUIZ.exp:null); return v==='new'||v==='some'||v==='exp'?v:null; };
+const buildLevel=()=>levelOf(buildExp());
+const BUILT_FOR={new:'New lifters',some:'Some experience',exp:'Experienced lifters'};
+const builtForLine=v=>'Built for: '+(BUILT_FOR[v]||'standard program');
+// a routine's day list for the level it would be built at, for previews: the same function the build uses, so a preview equals what is saved
+function previewProgram(id,lvl){ lvl=lvl||buildLevel(); return withQuizEquip(()=>newRoutineProgram(id,lvl)); }
+function withQuizEquip(fn){ const prev=settings.equipFilter; if(qz&&qz.a&&qz.a.equip) settings.equipFilter=QUIZ_EQUIP[qz.a.equip].slice(); try{ return fn(); } finally{ settings.equipFilter=prev; } }
+// Some shows the template as it always has; New and Experienced show the built days as a template-shaped list
+function rtPreviewTpl(id){
+  const r=ROUTINES[id], lvl=buildLevel(); if(lvl==='some') return r.template;
+  return previewProgram(id,lvl).days.map(d=>({...d,slots:d.exercises.map(e=>({key:e.key,pick:e.name,target:e.target}))}));
+}
+const REP_MAP={'6-10':['8-12','5-8'],'8-10':['10-12','6-10'],'10-12':['10-12','8-12'],'12-15':['12-15','10-15'],'15-20':['15-20','12-20']};
+// "3 x 6-10" -> the level's range; set count and a /leg /arm /side suffix are kept; single numbers, timed holds and any other range are unchanged
+function levelTarget(t,lvl){
+  if(lvl!=='new'&&lvl!=='exp') return t;
+  const m=/^(\d+ x )(\d+-\d+)(\/\w+)?$/.exec(t||''), r=m&&REP_MAP[m[2]];
+  return r?m[1]+r[lvl==='new'?0:1]+(m[3]||''):t;
+}
+const slotRk=s=>recoveryKeysFor(CURATED_BY_NAME[s.pick]||{name:s.pick})[0];
+// New: per muscle key on a day, drop floor(n/2) lifts. A lift whose first recovery key repeats an earlier lift's goes first, then the
+// last-listed; the first lift of a key is never dropped (no muscle reaches zero). A day keeps at least min(5, its Some count) lifts.
+function reduceSlotsNew(slots){
+  const byKey={}; slots.forEach((s,i)=>(byKey[s.key]=byKey[s.key]||[]).push(i));
+  const drop=new Set();
+  Object.values(byKey).forEach(idx=>{
+    const k=Math.floor(idx.length/2); if(!k) return;
+    const seen=new Set(), dups=[], rest=[];
+    idx.forEach((i,j)=>{ const rk=slotRk(slots[i]); if(seen.has(rk)) dups.push(i); else { seen.add(rk); if(j>0) rest.push(i); } });
+    [...dups.reverse(),...rest.reverse()].slice(0,k).forEach(i=>drop.add(i));
+  });
+  const floor=Math.min(5,slots.length);
+  for(let i=0;i<slots.length&&slots.length-drop.size<floor;i++) drop.delete(i); // restore in template order
+  return slots.filter((_,i)=>!drop.has(i));
+}
+// the template at a level. Some returns the template itself. `keepAll` skips the New reduction (rep ranges still move).
+function levelTemplate(tpl,lvl,keepAll){
+  if(lvl!=='new'&&lvl!=='exp') return tpl;
+  return tpl.map(d=>({...d,lvl,slots:(lvl==='new'&&!keepAll?reduceSlotsNew(d.slots):d.slots).map(s=>({...s,target:levelTarget(s.target,lvl)}))}));
+}
+// Experienced: after the equipment pass, each day takes up to 2 extra lifts (a day never above 10 lifts, a key never above 5 lifts a day).
+// Forearms, calves and core are never extended. The key with the fewest weekly sets goes first (ties: order in the day) and a key stops at
+// 18 weekly sets. The lift is the best pick for the slot that trains the same first recovery key, not already anywhere in the routine,
+// not a rough match; if no key qualifies the day simply gets fewer. Skipped on a bare day. Adds are extras, never reported as missing.
+const LEVEL_NO_ADD=['forearms','calves','abs'];
+function levelAdds(days,tpl,bare){
+  const weekly={}; days.forEach(d=>d.exercises.forEach(e=>{ weekly[e.key]=(weekly[e.key]||0)+rtSets(e.target); }));
+  const names=new Set(days.flatMap(d=>d.exercises.map(e=>e.name)));
+  days.forEach((day,di)=>{
+    if(bare.includes(day.name)) return;
+    for(let n=0;n<2&&day.exercises.length<10;n++){
+      const keys=[]; day.exercises.forEach(e=>{ if(!keys.includes(e.key)) keys.push(e.key); });
+      const cands=keys.filter(k=>!LEVEL_NO_ADD.includes(k)&&day.exercises.filter(e=>e.key===k).length<5&&(weekly[k]||0)<18).sort((a,b)=>(weekly[a]||0)-(weekly[b]||0));
+      let added=false;
+      for(const k of cands){
+        const anchor=day.exercises.filter(e=>e.key===k).pop(), st=tpl[di].slots.filter(s=>s.key===k).pop(); if(!st) continue;
+        const pick=bestPickFor({group:anchor.group,key:k,target:st.target,pick:anchor.name},names);
+        if(!pick||pick.approx||recoveryKeysFor(pick)[0]!==recoveryKeysFor(anchor)[0]) continue;
+        const ex=slotExercise({group:anchor.group,key:k,target:levelTarget(st.target,'exp'),pick:pick.name},pick);
+        day.exercises.push(ex); names.add(ex.name); weekly[k]=(weekly[k]||0)+rtSets(ex.target); added=true; break;
+      }
+      if(!added) break;
+    }
+  });
+}
 const DEFAULT_PROGRAM = buildProgram();
 let PROGRAM = JSON.parse(JSON.stringify(DEFAULT_PROGRAM));
 // Routines groundwork (R-A): the active routine id ('ul4' = the built-in Upper/Lower 4-day program, kept in `program`) and
@@ -1512,6 +1832,18 @@ function activeProgram(){
   const list=ROUTINE_ID!=='ul4'&&PROGRAMS?PROGRAMS[ROUTINE_ID]:null;
   return Array.isArray(list)&&list.length&&list.every(d=>d&&typeof d.id==='string'&&Array.isArray(d.exercises))?list:UL4_PROGRAM;
 }
+// QA-RA-1: the one place that decides which day list is live. UL4_PROGRAM (the Upper/Lower list kept in `program`) is assigned
+// ONLY here; boot, both imports, Reset Program and the routine switch all go through it, so a replaced list can never leave a
+// stale copy behind. Pass only what changed: {ul4:list}, {routineId}, {programs}. Nothing is stored or reloaded here.
+function applyRoutineState(o){
+  o=o||{};
+  if(o.ul4) UL4_PROGRAM=o.ul4;
+  if('routineId' in o) ROUTINE_ID=typeof o.routineId==='string'&&o.routineId.trim()?o.routineId:'ul4';
+  if('programs' in o) PROGRAMS=o.programs&&typeof o.programs==='object'&&!Array.isArray(o.programs)?o.programs:{};
+  PROGRAM=activeProgram(); if(PROGRAM===UL4_PROGRAM) ROUTINE_ID='ul4';
+  if(currentDay!=='cardio'&&!PROGRAM.some(d=>d.id===currentDay)) currentDay=PROGRAM[0].id;
+  return PROGRAM;
+}
 const programIds=p=>(p||PROGRAM).map(d=>d.id);
 // a day's focus for colour and totals: its own `focus` when it has one, else its name (Upper/Lower); anything else is ''
 function dayFocus(d){
@@ -1519,12 +1851,45 @@ function dayFocus(d){
   const n=(d&&d.name||'').toLowerCase(); return n.startsWith('upper')?'upper':n.startsWith('lower')?'lower':'';
 }
 // lifting days per week: 4 for the built-in program, otherwise the active program's own day count
-function weeklyGoal(){ return activeProgram()===UL4_PROGRAM?4:PROGRAM.length; }
+// After a finished quiz the days answer can LOWER the goal (never raise it) while the live routine is the one the quiz applied, so a two-day
+// answer on Full Body reads 1/2, 2/2. A later routine change, a skipped quiz or an unanswered days question leaves the routine's own number.
+function weeklyGoal(){
+  const own=activeProgram()===UL4_PROGRAM?4:((ROUTINES[ROUTINE_ID]&&ROUTINES[ROUTINE_ID].perWeek)||PROGRAM.length);
+  return QUIZ&&QUIZ.state==='done'&&QUIZ.pick===ROUTINE_ID&&Number.isInteger(QUIZ.days)?Math.min(own,QUIZ.days):own;
+}
 // where edits to the active program are saved: `program` for the built-in one, never over it for another routine
 function persistProgram(){ return activeProgram()===UL4_PROGRAM?sset('program',PROGRAM):sset('programs',PROGRAMS); }
 let needsBuild=false; // true on first launch until the user accepts a program in the builder
 const EQUIP_TYPES=['barbell','dumbbell','kettlebell','cable','machine','bodyweight','band','accessory'];
 const EQUIP_LABEL={barbell:'Barbell',dumbbell:'Dumbbell',kettlebell:'Kettlebell',cable:'Cable',machine:'Machine',bodyweight:'Bodyweight',band:'Resistance Band',accessory:'Other (ball, roller, etc.)'};
+// ---------- onboarding quiz (v83): the answer model and the pick ----------
+// The `quiz` key holds {v:1, state:'draft'|'done'|'skipped', goal:'lose'|'build'|'fit'|null, days:2..6|null, exp:'new'|'some'|'exp'|null,
+// equip:'full'|'home'|'db'|'body'|null, sk:[question keys left out with Skip Question], pick:<routine id>|null, at:<ms>}. It is its own key so a
+// Replace import of an older backup (which has none) cannot clear it and re-ask someone who already answered. Absent means never asked.
+// Read leniently: a wrong type in any field reads as null for that field and an unknown state reads as absent; nothing here ever throws.
+// `pick` is advisory only (routineId is the truth for the live routine).
+const QUIZ_QS=['goal','days','exp','equip'];
+const QUIZ_EQUIP={ full:EQUIP_TYPES.slice(), home:['barbell','dumbbell','kettlebell','bodyweight','band','accessory'], db:['dumbbell','bodyweight','accessory'], body:['bodyweight','band','accessory'] };
+const QUIZ_EQUIP_LABEL={ full:'Full Gym', home:'Home Gym', db:'Dumbbells Only', body:'Bodyweight Only' };
+const QUIZ_GOAL_LABEL={ lose:'Lose Weight', build:'Build Muscle', fit:'Stay Fit' };
+function cleanQuiz(v){
+  if(!v||typeof v!=='object'||Array.isArray(v)||!['draft','done','skipped'].includes(v.state)) return null;
+  const pickId=typeof v.pick==='string'&&/^[\w-]{1,24}$/.test(v.pick)?v.pick:null;
+  return { v:1, state:v.state, goal:['lose','build','fit'].includes(v.goal)?v.goal:null,
+    days:Number.isInteger(v.days)&&v.days>=2&&v.days<=6?v.days:null, exp:['new','some','exp'].includes(v.exp)?v.exp:null,
+    equip:QUIZ_EQUIP[v.equip]?v.equip:null, sk:Array.isArray(v.sk)?v.sk.filter(k=>QUIZ_QS.includes(k)):[], pick:pickId, at:Number.isFinite(v.at)?v.at:0 };
+}
+let QUIZ=null; // the sanitised stored quiz (null = never asked); set at boot and after every write
+// the equipment filter as one of the four presets, or null when it is none of them
+function equipPresetOf(list){ const s=new Set(list||[]); return Object.keys(QUIZ_EQUIP).find(k=>QUIZ_EQUIP[k].length===s.size&&QUIZ_EQUIP[k].every(t=>s.has(t)))||null; }
+// The pick: a pure function of the days answer only (a skipped days answer counts as 4). Goal, equipment and experience never change it:
+// experience (`exp`) sets rep ranges, lifts per day and a first-session tip when a routine is built, never which routine.
+function quizPick(a){
+  a=a||{}; const asked=Number.isInteger(a.days)?a.days:null, want=asked==null?4:asked;
+  const id=want<=3?'fb3':want===4?'ul4':want===5?'ul5':'ppl6';
+  return { id, asked, want };
+}
+async function saveQuiz(q){ q={v:1,at:Date.now(),...q}; if(await sset('quiz',q)===false) return false; QUIZ=cleanQuiz(q); return true; }
 // full exercise library (name/equip/muscles/cue), sourced from a third-party open dataset — no set/rep targets of its own.
 // offered as swap candidates via openSwap(), and as a last-resort fill in the builder when no curated pick passes the equipment filter
 const FULL_CATALOG=JSON.parse(document.getElementById('fullCatalog').textContent);
@@ -2186,7 +2551,7 @@ function sparklineHero(points,isDown){
   const color=isDown?'var(--amber)':'var(--green)';
   return `<polyline fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${line}"/><polygon points="${area}" fill="${color}" opacity=".15"/>`;
 }
-function showToast(m,ms){ hideUndo(); const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); const dur=ms||Math.max(1800,Math.min(5000,m.length*45)); clearTimeout(t._hideTimer); t._hideTimer=setTimeout(()=>t.classList.remove('show'),dur); }
+function showToast(m,ms,err){ hideUndo(); const t=document.getElementById('toast'); t.textContent=m; t.classList.toggle('err',!!err); t.classList.add('show'); const dur=ms||Math.max(1800,Math.min(5000,m.length*45)); clearTimeout(t._hideTimer); t._hideTimer=setTimeout(()=>t.classList.remove('show'),dur); }
 // in-app stand-in for window.confirm(): iOS Safari silently no-ops the native confirm()/alert()/prompt() dialogs
 // for a web app added to the home screen (standalone display mode) — the call returns immediately with no dialog
 // ever shown, which looks exactly like a dead button. Every yes/no confirmation in the app goes through this sheet
@@ -2480,10 +2845,10 @@ function weekRanges(n){
 // counting only weeks that start after the first session (a first week begun midweek undercounts). It takes 3 such
 // weeks to mean anything; before that the program's own days per week is the reference, and the copy says "plan".
 function weeklyRhythm(){
-  const lifts=sessions.filter(s=>!s.isCardio); if(!lifts.length) return {n:PROGRAM.length, learned:false};
+  const lifts=sessions.filter(s=>!s.isCardio); if(!lifts.length) return {n:weeklyGoal(), learned:false};
   const first=Math.min(...lifts.map(s=>s.t));
   const weeks=weekRanges(9).slice(0,-1).filter(([a])=>a>first);
-  if(weeks.length<3) return {n:PROGRAM.length, learned:false};
+  if(weeks.length<3) return {n:weeklyGoal(), learned:false};
   const counts=weeks.map(([a,b])=>lifts.filter(s=>s.t>=a&&s.t<b).length).sort((x,y)=>x-y);
   const mid=counts.length>>1, med=counts.length%2?counts[mid]:(counts[mid-1]+counts[mid])/2;
   return {n:Math.max(1,Math.round(med)), learned:true};
@@ -2552,7 +2917,7 @@ const BACK_TO_BACK_HOURS=72;
 // …and the nudge itself only lasts this long after the more recent of the two sessions. Without a cap it stayed
 // suggested Sunday, Monday, Tuesday after a Friday+Saturday pair until a cardio session was actually logged — for
 // someone who doesn't track cardio that meant the "Cardio's up next" sheet on every single lift day.
-const BACK_TO_BACK_CLEAR_HOURS=48;
+const BACK_TO_BACK_CLEAR_HOURS=40;
 // returns {id, reason, nextDay}: reason is one of 'backToBack' | 'recovery' | 'cardioStale' when id is 'cardio'
 // (checked in that order), null otherwise — Home and the cardio sheet word their copy from it, since telling
 // someone who hasn't lifted in three days that they "just did two sessions back to back" reads as broken.
@@ -2793,6 +3158,9 @@ function render(){
     if(ex.rotPrev){ const idx=day.exercises.indexOf(ex); const rt=document.createElement('div'); rt.className='plateau-tip'; rt.innerHTML=`Swapped in at the start of this block (was ${esc(ex.rotPrev.name)}). <span class="linkbtn" style="color:var(--amber)" data-act="undo">Undo</span> · <span class="linkbtn" style="color:var(--amber)" data-act="never">Never Suggest This</span>`; rt.querySelector('[data-act="undo"]').onclick=()=>undoRotation(day,idx); rt.querySelector('[data-act="never"]').onclick=()=>rejectRotation(day,idx); body.appendChild(rt); }
     if(sug===-1){ const fn=document.createElement('div'); fn.className='first-log-note'; fn.textContent='New lift — no history yet. Log a comfortable first set below; Lift Log will suggest a weight next time from what you log now.'; body.appendChild(fn); }
     else if(estFrom){ const fn=document.createElement('div'); fn.className='first-log-note'; fn.textContent=`New lift — the weight is a conservative estimate from ${estFrom} (same muscle group, adjusted for the implement and rep range). Adjust it to what feels right; Lift Log learns from what you log.`; body.appendChild(fn); }
+    // first-session effort cue for a New or Experienced build: only on a rep-based, loadable lift with no history anywhere; it never writes or changes anything
+    if((day.lvl==='new'||day.lvl==='exp')&&!isTimedTarget(ex.target)&&ex.start!==0&&ex.step!==0&&!(hist[ex.name]||[]).length&&!lastByName[ex.name]){
+      const cu=document.createElement('div'); cu.className='first-log-note'; cu.textContent=day.lvl==='new'?'Start light and leave 3 or more Reps Left.':'Work up to a weight that leaves about 2 Reps Left.'; body.appendChild(cu); }
 
     const timed=isTimedTarget(ex.target);
     // bodyweight lifts (split squats, dips, pull-ups…) log bodyweight plus whatever is held or worn: s.add is that
@@ -2905,13 +3273,18 @@ function render(){
 // ---------- first-launch program builder ----------
 // shown instead of the arrival hero until a program is accepted. Equipment chips drive applyEquipPicks(); "change" reuses openSwap(),
 // whose doSwap() persists the program — so a reload mid-build keeps the picks made so far and lands on the normal hero.
+// a new install that took the quiz sees which routine it is building and, if equipment was answered, that the answer set the chips
+const BUILD_LINE={ul4:'Upper and lower, one heavy and one volume day each.',fb3:'Three full-body days, A, B and C.',ppl3:'One session each for push, pull and legs.',ul5:'Two heavy days, then push, pull and legs.',bro5:'One muscle group a day: chest, back, legs, shoulders and arms.',ppl6:'Push, pull and legs, each twice.'};
+function builderSub(){ const r=ROUTINES[ROUTINE_ID]||ROUTINES.ul4, w=routineWord(r.perWeek); return `${w[0].toUpperCase()+w.slice(1)} days a week. ${BUILD_LINE[r.id]} ${QUIZ&&QUIZ.equip?'Your equipment answer set the chips below. ':'Tick what your gym has and every slot gets a recommended exercise. '}Change any pick now, or swap later from the log.`; }
 function renderBuilder(panel){
+  const quizBuilt=!!QUIZ&&QUIZ.state==='done';
   panel.style.display='block'; document.body.classList.add('building');
   panel.innerHTML=`
+    <div class="onb-top"><button class="onb-back" id="buildBack" type="button" aria-label="Back">${QZ_BACK}</button></div>
     <div class="greet-wrap">
-      <div class="greet-eyebrow">First Launch</div>
-      <h2 class="greet-h1">Build Your Program</h2>
-      <div class="greet-sub">Four days a week — Upper and Lower, one heavy and one volume day each. Tick what your gym has and every slot gets a recommended exercise. Change any pick now, or swap later from the log.</div>
+      <div class="greet-eyebrow">${quizBuilt?'Your Routine':'First Launch'}</div>
+      <h2 class="greet-h1">${quizBuilt&&ROUTINE_ID!=='ul4'?'Build Your '+esc(ROUTINES[ROUTINE_ID].name):'Build Your Program'}</h2>
+      <div class="greet-sub">${quizBuilt?builderSub():'Four days a week — Upper and Lower, one heavy and one volume day each. Tick what your gym has and every slot gets a recommended exercise. Change any pick now, or swap later from the log.'}</div>
     </div>
     <div class="build-hint" id="buildHint">Tap a chip to switch that equipment on or off.</div>
     <div class="build-eq" role="group" aria-labelledby="buildHint">${EQUIP_TYPES.map(t=>`<span class="eqchip${settings.equipFilter.includes(t)?' on':''}" data-t="${t}" aria-pressed="${settings.equipFilter.includes(t)}">${EQUIP_LABEL[t]}</span>`).join('')}</div>
@@ -2925,6 +3298,7 @@ function renderBuilder(panel){
     renderBuilder(panel);
   });
   panel.querySelectorAll('.bc').forEach(b=>b.onclick=()=>{ const day=PROGRAM.find(d=>d.id===b.dataset.d); openSwap(day.id, day.exercises[+b.dataset.i]); });
+  document.getElementById('buildBack').onclick=builderBack;
   document.getElementById('buildDone').onclick=async()=>{ await persistProgram(); needsBuild=false; document.body.classList.remove('building'); showToast('Program saved — edit it any time in Settings'); touchDayStart(); setView('log'); };
 }
 
@@ -2932,12 +3306,27 @@ function renderBuilder(panel){
 // Home is the landing tab — picking a day here (or accepting a built program) hands off to the Log tab, which now
 // always shows the active day's exercise list with no arrival/dismiss state of its own.
 let homePreviewOpen=false;
+// Home's day cards. A day whose sub is a single letter reads "Push, day A" to a screen reader (the card shows only the letter).
+function dayCardsHTML(){
+  return PROGRAM.map(d=>{ const letter=/^[A-C]$/.test(d.sub||''), today=d.id===currentDay;
+    return `<div class="day-card ${dayType(d)}${today?' today':''}" data-day="${d.id}"${letter?` aria-label="${esc(d.name)}, day ${d.sub}, ${d.exercises.length} Exercises${today?', '+dayTagText():''}"`:''}>${today?'<div class="ddot"></div>':''}<div class="dtag">${today?dayTagText():''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub}</div><div class="dsub">${d.exercises.length} Exercises</div></div>`; }).join('');
+}
+// With five or six days the cards scroll sideways. Home opens scrolled so Today is the first card in view (instant, no animation), once per
+// visit; a redraw while the user is looking keeps wherever they scrolled to. Four days or fewer are left exactly as they always were.
+let homeCarKey='';
+function placeCarousel(panel,prevLeft){
+  const car=panel.querySelector('.day-carousel'); if(!car) return;
+  const key=ROUTINE_ID+':'+currentDay;
+  if(PROGRAM.length>=5&&homeCarKey!==key){ const t=car.querySelector('.day-card.today'); if(t) car.scrollLeft=Math.max(0,t.offsetLeft-2); homeCarKey=key; }
+  else if(prevLeft) car.scrollLeft=prevLeft;
+  edgeFade(car);
+}
 // the loaded day is "Today" until a lift has been logged today; after that it's the next one in the rotation
 function dayTagText(){ const t0=new Date(); t0.setHours(0,0,0,0); return sessions.some(x=>!x.isCardio&&x.t>=t0.getTime())?'Next':'Today'; }
 function renderHome(){ renderHomeBody(); placeDeloadLine(); }
 function renderHomeBody(){
   updateBlockUI(); updateCardioLiveBanner();
-  const panel=document.getElementById('arrivalPanel');
+  const panel=document.getElementById('arrivalPanel'); const prevLeft=(panel.querySelector('.day-carousel')||{}).scrollLeft||0;
   document.body.classList.toggle('building', needsBuild);
   if(needsBuild){ renderBuilder(panel); return; }
   if(currentDay==='cardio'){
@@ -2949,12 +3338,12 @@ function renderHomeBody(){
       </div>
       <button class="start-cta" id="arrivalStart">${cardioLive?'Resume Cardio Session':'Go to Cardio Log'}</button>
       <div class="greet-sub" style="margin-top:14px">Feeling fine? Tap a lift day to train it instead.</div>
-      <div class="day-carousel">
-        ${PROGRAM.map(d=>`<div class="day-card ${dayType(d)}${d.id===currentDay?' today':''}" data-day="${d.id}">${d.id===currentDay?'<div class="ddot"></div>':''}<div class="dtag">${d.id===currentDay?dayTagText():''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub}</div><div class="dsub">${d.exercises.length} Exercises</div></div>`).join('')}
+      <div class="day-carousel${PROGRAM.length===3?' three':''}">
+        ${dayCardsHTML()}
       </div>`;
     document.getElementById('arrivalStart').onclick=()=>setView('log');
     panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day, ()=>setView('log')));
-    edgeFade(panel.querySelector('.day-carousel'));
+    placeCarousel(panel,prevLeft);
     return;
   }
   const day=PROGRAM.find(d=>d.id===currentDay);
@@ -2992,13 +3381,13 @@ function renderHomeBody(){
         <h2 class="greet-h1">${h1}</h2>
         <div class="greet-sub">${dayLine}${lastTxt}</div>
       </div>
-      <div class="day-carousel">
-        ${PROGRAM.map(d=>`<div class="day-card ${dayType(d)}${d.id===currentDay?' today':''}" data-day="${d.id}">${d.id===currentDay?'<div class="ddot"></div>':''}<div class="dtag">${d.id===currentDay?dayTagText():''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub}</div><div class="dsub">${d.exercises.length} Exercises</div></div>`).join('')}
+      <div class="day-carousel${PROGRAM.length===3?' three':''}">
+        ${dayCardsHTML()}
       </div>
       <div class="preview-list">${previewRows}${moreRow}</div>
       <button class="start-cta" id="arrivalStart">${ctaTxt}</button>`;
     panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day, ()=>setView('log')));
-    edgeFade(panel.querySelector('.day-carousel'));
+    placeCarousel(panel,prevLeft);
     const more=document.getElementById('previewMore'); if(more) more.onclick=()=>{ homePreviewOpen=!homePreviewOpen; renderHome(); document.getElementById('previewMore').focus({preventScroll:true}); };
   }
   document.getElementById('arrivalStart').onclick=()=>{ touchDayStart(); setView('log'); };
@@ -3088,7 +3477,7 @@ async function finishSession(){
     (hist[k]=hist[k]||[]).push({t:now,e1rm:Math.round(b*10)/10,w:topW,r:topR,d:currentDay,...(dl?{dl:1}:{})});
   });
   if(!await sset('hist',hist)) return saveFail();
-  sessions.push({t:now,dayId:currentDay,dayName:day.name,sub:day.sub,vol:Math.round(vol),sets:nsets,ex:exRec,...(dl?{deload:true}:{})}); if(!await sset('sessions',sessions)) return saveFail();
+  sessions.push({t:now,dayId:currentDay,dayName:day.name,sub:day.sub,vol:Math.round(vol),sets:nsets,ex:exRec,...(dl?{deload:true}:{}),...(ROUTINE_ID!=='ul4'?{routineId:ROUTINE_ID,...(dayFocus(day)?{focus:dayFocus(day)}:{})}:{})}); if(!await sset('sessions',sessions)) return saveFail();
   // gate on real weight+reps, not just a checked-off set — a session logged with weight left blank is exactly
   // the case this cross-day fallback exists to see past, so it must not itself become the fallback's source.
   worked.forEach(ex=>{ const sets=exRec[ex.name]; if(!sets.some(s=>s.w&&s.r)) return;
@@ -3163,7 +3552,7 @@ function showCelebration({day,worked,nsets,vol,durationMin,pr,rhythmCount}){
 // ---------- first-launch onboarding: welcome (import or start new) -> name -> units & body weight -> text size -> body-map intro ----------
 // shown once, on top of whatever init() already rendered underneath (Home showing the program builder,
 // since this only fires when needsBuild is true). Reuses the celebration overlay's look, unrelated content.
-const ONB_STEPS=4;
+const ONB_STEPS=6;
 let onbBw=null; // the body-weight entry this onboarding logged, so going Back and changing it edits rather than duplicates
 function onbShell(step,{skip,body,foot}){
   return `<div class="onb-top">
@@ -3256,8 +3645,14 @@ function renderOnboardStep(step){
     });
     $('onboardNext').onclick=()=>renderOnboardStep(4);
     $('onboardBack').onclick=()=>renderOnboardStep(2);
+  } else if(step===4){
+    if(!qz||qz.ctx!=='fresh') qz=qzNew('fresh');
+    qzQuestion(qz.screen&&qz.screen!=='result'?qz.screen:'goal'); return; // the quiz draws its own screens and focus
+  } else if(step===5){
+    if(!qz||qz.ctx!=='fresh') qz=qzNew('fresh');
+    qzResult(); return;
   } else {
-    inner.innerHTML=onbShell(4,{skip:false,
+    inner.innerHTML=onbShell(6,{skip:false,
       body:`<div class="cel-h1" id="onboardTitle" tabindex="-1">Meet Your Recovery Map</div>
         <div class="cel-sub">After a session, the muscles you trained show up red, then fade through amber to green as they recover. Check in here before every session.</div>
         <div class="onb-ex">
@@ -3268,10 +3663,10 @@ function renderOnboardStep(step){
           <div class="onb-ex-row"><i style="background:#4a9e5c"></i><span>Legs & Core</span><b>Ready</b></div>
           <div class="onb-note" style="margin-top:4px">Yours starts all green — nothing's been trained yet.</div>
         </div>`,
-      foot:`<button class="cel-cta" id="onboardDone">Let's Build Your Program</button>`});
+      foot:`<div class="qz-err" id="onbFinErr" role="alert" hidden>Could not save your routine. Nothing was changed. Try again.</div><button class="cel-cta" id="onboardDone">Let's Build Your Program</button>`});
     $('onboardExFigs').replaceWith(exampleRecoveryFigures());
     $('onboardDone').onclick=finishOnboarding;
-    $('onboardBack').onclick=()=>renderOnboardStep(3);
+    $('onboardBack').onclick=()=>renderOnboardStep(qz&&qz.chosen?5:4);
   }
   const title=$('onboardTitle'); if(title) title.focus({preventScroll:true});
   inner.parentElement.scrollTop=0;
@@ -3293,11 +3688,253 @@ function exampleRecoveryFigures(){
 }
 // while a full-screen overlay is up, the app behind it can't be reached by keyboard or screen reader
 function setAppInert(on){ ['header','main','footer'].forEach(sel=>document.querySelector(sel).toggleAttribute('inert',on)); }
+// ---------- onboarding quiz screens (v83) ----------
+// Four questions, one per screen: goal, days, experience (asked for every days answer), equipment.
+// The same overlay serves a new install (steps 4 and 5 of 6) and an existing user (Question n of m, Home sheet or Settings row).
+// Nothing is applied while answering; a fresh install applies its pick when setup finishes, an existing user through the Change Routine confirm.
+const QZ_CK='<svg class="qz-ck" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const QZ_BACK='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
+const QZ_Q={
+  goal:{t:'What is your main goal?',sub:'',label:'Main goal',opts:[['lose','Lose Weight'],['build','Build Muscle'],['fit','Stay Fit']],ifskip:'Skip and we leave your goal blank.',skipped:'Skipped. Your goal is left blank.'},
+  days:{t:'How many days a week can you train?',sub:'Pick what you can keep up most weeks, not your best week.',label:'Days per week',ifskip:'Skip and we plan for 4 days.',skipped:'Skipped. We are planning for 4 days.'},
+  exp:{t:'How Much Have You Lifted?',sub:'This sets your rep ranges, how many exercises each day has, and an effort tip for new lifts.',label:'Lifting experience',opts:[['new','New','Under 6 Months, or Back After a Long Break'],['some','Some','6 Months to 2 Years'],['exp','Experienced','2 or More Years']],ifskip:'Skip and we assume Some.',skipped:'Skipped. We are assuming Some.'},
+  equip:{t:'What equipment do you have?',sub:'This presets your equipment filter. You can still fine-tune it later.',label:'Equipment',opts:[['full','Full Gym','Every equipment type'],['home','Home Gym','Barbell, dumbbells, kettlebell and bands'],['db','Dumbbells Only','Dumbbells and your body weight'],['body','Bodyweight Only','Your body weight and bands']],ifskip:'Skip and we keep your current equipment.',skipped:'Skipped. We are keeping your current equipment.'}
+};
+const QZ_LEAD=[['2–3','fb3',[2,3]],['4','ul4',[4]],['5','ul5',[5]],['6','ppl6',[6]]];
+let qz=null; // the quiz in progress: {ctx:'fresh'|'existing', a:{goal,days,exp,equip}, sk:[], screen, total, resume, chosen, err}
+function qzNew(ctx){
+  const a={goal:null,days:null,exp:null,equip:null}, sk=[]; let resume='';
+  if(QUIZ&&(QUIZ.goal||QUIZ.days||QUIZ.exp||QUIZ.equip||QUIZ.sk.length)){ Object.assign(a,{goal:QUIZ.goal,days:QUIZ.days,exp:QUIZ.exp,equip:QUIZ.equip}); sk.push(...QUIZ.sk); resume=QUIZ.state==='done'?'Your last answers are filled in.':'Your earlier answers are filled in.'; }
+  else if(ctx!=='fresh'){ const r=ROUTINES[ROUTINE_ID]||ROUTINES.ul4; if(r.perWeek>=2&&r.perWeek<=6) a.days=r.perWeek; a.equip=equipPresetOf(settings.equipFilter); }
+  return {ctx,a,sk,screen:'goal',total:4,resume,chosen:null,err:false,alt:false,openEx:null,origEquip:settings.equipFilter.slice()};
+}
+// an existing user (Home sheet or the Settings row): the same questions as an overlay, no setup steps
+function qzOpen(){ qz=qzNew('existing'); qzQuestion('goal'); }
+const qzOrder=()=>['goal','days','exp','equip'];
+const qzBars=(n,t)=>Array.from({length:t},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('');
+function qzShell(prog,{back=true,skip='',body,foot,top=false,footCls=''}){
+  return `<div class="onb-top">
+      ${back?`<button class="onb-back" id="onboardBack" type="button" aria-label="Back">${QZ_BACK}</button>`:'<span style="width:44px"></span>'}
+      <div class="onb-prog">${prog.label}<div class="onb-bars" aria-hidden="true">${qzBars(prog.n,prog.t)}</div></div>
+      ${skip?`<button class="onb-skip" id="onboardSkip" type="button">${skip}</button>`:'<span style="width:44px"></span>'}
+    </div>
+    <div class="onb-body${top?' qz-top':''}">${body}</div>
+    <div class="onb-foot qz-f${footCls}">${foot}</div>`;
+}
+function qzShow(html,focusSel){
+  const inner=document.getElementById('onboardInner'), bg=document.getElementById('onboardBg');
+  inner.classList.add('onb'); inner.innerHTML=html; bg.classList.add('on'); setAppInert(true);
+  const f=focusSel&&inner.querySelector(focusSel)||inner.querySelector('#onboardTitle'); if(f) f.focus({preventScroll:!!focusSel});
+  if(!focusSel) bg.scrollTop=0;
+}
+// keep what has been answered when this quiz may still be abandoned: a draft only while nothing final is stored
+async function qzSaveDraft(){ if(QUIZ&&QUIZ.state!=='draft') return true; return saveQuiz({state:'draft',...qz.a,sk:qz.sk}); }
+function qzProg(key){
+  const ord=qzOrder(), n=ord.indexOf(key)+1, tot=4;
+  return qz.ctx==='fresh'?{label:'Step 4 of 6',n:4,t:6,q:`Question ${n} of ${tot}`}:{label:`Question ${n} of ${tot}`,n,t:tot,q:''};
+}
+function qzQuestion(key,focusSel){
+  qz.screen=key; const Q=QZ_Q[key], a=qz.a, val=a[key], skipped=qz.sk.includes(key)&&val==null, pr=qzProg(key);
+  let opts, state;
+  if(key==='days'){
+    opts=`<div class="qd-row" role="group" aria-label="${Q.label}">${[2,3,4,5,6].map(d=>`<button class="qd-btn" type="button" data-v="${d}" aria-pressed="${val===d}" aria-label="${d} days a week"><b>${d}</b><small>days</small></button>`).join('')}</div>`;
+    state='';
+  } else {
+    opts=`<div class="onb-opts" role="group" aria-label="${Q.label}">${Q.opts.map(o=>`<button class="onb-opt qz-opt" type="button" data-v="${o[0]}" aria-pressed="${val===o[0]}"><span class="qz-l">${o[1]}${o[2]?`<small>${o[2]}</small>`:''}</span>${QZ_CK}</button>`).join('')}</div>`;
+    state=skipped?`<p class="qz-state skipped" role="status">${Q.skipped}</p>`
+      :key==='goal'&&qz.resume?`<p class="qz-state" role="status">${qz.resume}</p>`
+      :key==='equip'&&val==null&&qz.ctx!=='fresh'&&!equipPresetOf(settings.equipFilter)?`<p class="qz-state">Keeping your current equipment unless you pick one.</p>`
+      :`<p class="qz-state">${Q.ifskip}</p>`;
+  }
+  const has=val!=null||skipped;
+  const body=`${pr.q?`<div class="qz-eyebrow" id="qzEyebrow">${pr.q}</div>`:''}<div class="cel-h1" id="onboardTitle" tabindex="-1">${Q.t}</div>${Q.sub?`<div class="cel-sub">${Q.sub}</div>`:''}${opts}${state}`;
+  const foot=`<button class="cel-cta" id="qzNext" type="button"${has?'':' aria-disabled="true"'}>Continue</button><button class="qz-skipq" id="qzSkipQ" type="button">Skip Question</button>${key==='goal'&&qz.ctx==='fresh'?'<div class="onb-note">Skip any question you like. You can change all of this later in Settings.</div>':''}`;
+  qzShow(qzShell(pr,{back:!(qz.ctx!=='fresh'&&key==='goal'),skip:'Skip Quiz',body,foot,top:key==='days'}),focusSel);
+  const inner=document.getElementById('onboardInner');
+  inner.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{
+    const v=key==='days'?+b.dataset.v:b.dataset.v; a[key]=v; qz.sk=qz.sk.filter(k=>k!==key);
+    qzQuestion(key,`[data-v="${b.dataset.v}"]`); });
+  document.getElementById('qzNext').onclick=()=>{ if(document.getElementById('qzNext').getAttribute('aria-disabled')==='true') return; qzAdvance(key); };
+  document.getElementById('qzSkipQ').onclick=()=>{ a[key]=null; if(!qz.sk.includes(key)) qz.sk.push(key); qzAdvance(key); };
+  document.getElementById('onboardSkip').onclick=qzSkipQuiz;
+  const back=document.getElementById('onboardBack'); if(back) back.onclick=()=>{ const ord=qzOrder(), i=ord.indexOf(key); if(i>0) qzQuestion(ord[i-1]); else if(qz.ctx==='fresh') renderOnboardStep(3); };
+}
+async function qzAdvance(key){
+  const ord=qzOrder(), i=ord.indexOf(key);
+  await qzSaveDraft();
+  if(i<ord.length-1) qzQuestion(ord[i+1]); else qzDone();
+}
+// Skip Quiz: a new install carries on with the standard Upper/Lower exactly as before; an existing user closes the quiz and keeps everything
+async function qzSkipQuiz(){
+  if(qz.ctx==='fresh'){ qz.chosen=null; await saveQuiz({state:'skipped',...qz.a,sk:qz.sk}); renderOnboardStep(6); return; }
+  const wrote=!QUIZ||QUIZ.state!=='done'; if(wrote) await saveQuiz({state:'skipped',...qz.a,sk:qz.sk});
+  qzClose(); showToast(wrote?'Skipped. You can take the quiz any time in Settings.':'Quiz closed. Nothing was changed.');
+}
+function qzClose(){ const ctx=qz&&qz.ctx; document.getElementById('onboardBg').classList.remove('on'); setAppInert(false); qz=null; if(ctx==='existing'){ const r=document.getElementById('quizRow'); if(r&&view==='more') r.focus({preventScroll:true}); } }
+// ---- the result ----
+// equipment gaps for a routine under the equipment this quiz would set (the live filter when equipment was skipped): lifts left out
+function qzGaps(id){
+  const prev=settings.equipFilter; if(qz.a.equip) settings.equipFilter=QUIZ_EQUIP[qz.a.equip].slice();
+  try{ const lvl=levelOf(qz.a.exp); if(id==='ul4'&&lvl==='some'){ const f=buildProgram(); applyEquipPicks(f); return f.flatMap(d=>d.exercises).filter(e=>!equipAllowed(e)).length; } return newRoutineProgram(id,lvl).missing; }
+  finally{ settings.equipFilter=prev; }
+}
+const qzGapLine=n=>n?`${n} lift${n===1?' needs':'s need'} equipment you did not choose and ${n===1?'is':'are'} left out.`:'';
+const LEVEL_APPLIES='Your programs stay as they are. Your new level applies to routines you build from now on.';
+const qzAllSkipped=()=>QUIZ_QS.every(k=>qz.sk.includes(k)&&qz.a[k]==null);
+function qzWhy(pk,allSk){
+  if(allSk) return 'You skipped every question, so we kept the standard plan. Upper/Lower is the plan the app has always started with.';
+  if(pk.asked==null) return 'Why: you did not pick days, so we used 4.';
+  if(pk.asked===2) return 'Why: you can train 2 days a week, so we start you on full body sessions.';
+  if(pk.asked===3) return 'Why: you can train 3 days a week.';
+  return `Why: you can train ${pk.asked} days a week.`;
+}
+// the weekly goal this quiz leaves: the routine's own, lowered (never raised) to the days that were asked
+const qzGoalFor=(id,a)=>Number.isInteger(a.days)?Math.min(ROUTINES[id].perWeek,a.days):ROUTINES[id].perWeek;
+const QZ_TWO='Two days a week: do any two of the three days and the app rotates the rest. Each region gets trained twice.';
+function qzResultProg(){ return qz.ctx==='fresh'?{label:'Step 5 of 6',n:5,t:6}:{label:'Your Result',n:4,t:4}; }
+function qzResult(){
+  qz.screen='result'; const a=qz.a, allSk=qzAllSkipped(), pk=quizPick(a), id=allSk?'ul4':pk.id, r=ROUTINES[id];
+  const cur=qz.ctx!=='fresh'&&id===ROUTINE_ID, notes=[];
+  // a Retake whose level differs from the level the live routine was built at offers a Rebuild of that routine (never automatic)
+  const rebuildable=cur&&!allSk&&levelOf(a.exp)!==levelOf((PROGRAM[0]||{}).lvl);
+  if(r.freq) notes.push(`<p class="qz-note">${r.freq}</p>`);
+  if(pk.asked===2&&id==='fb3'&&!allSk) notes.push(`<p class="qz-note">${QZ_TWO}</p><p class="qz-note">Your weekly goal will be 2 sessions, so the ring can close.</p>`);
+  if(r.note) notes.push(`<p class="rt-honest">${r.note}</p>`);
+  const gaps=qzGaps(id); if(gaps) notes.push(`<p class="qz-note warn">${qzGapLine(gaps)} You can still use this routine, or pick another.</p>`);
+  const body=`<div class="qz-res"><div class="qz-head"><div class="cel-h1" id="onboardTitle" tabindex="-1">We Suggest ${rtNb(r.short||r.name)}</div><div class="cel-sub">Based on your answers. You decide.</div></div>
+    <div class="rt-card"><div class="rt-top"><div class="rt-name">${rtNb(r.name)}</div>${cur?'<span class="rt-chips"><span class="rt-chip">Current</span></span>':''}</div><div class="rt-meta">${r.meta}</div>
+      <ul class="rt-days" aria-label="Days">${r.days.map(([n,c])=>`<li class="badge ${c}">${esc(n)}</li>`).join('')}</ul>${r.cardLine?`<div class="rt-line card-line">${r.cardLine}</div>`:''}</div>
+    <p class="qz-why">${qzWhy(pk,allSk)}</p>${allSk?'':cur?`<p class="qz-note">${LEVEL_APPLIES}</p>`:`<p class="qz-note">${builtForLine(qz.a.exp)}</p>`}${notes.join('')}</div>`;
+  const foot=`${qz.err?'<div class="qz-err" role="alert">Could not save your routine. Nothing was changed. Try again.</div>':''}
+    <button class="cel-cta" id="qzUse" type="button">${cur?`Keep ${esc(r.short||r.name)}`:'Use This Routine'}</button>
+    ${rebuildable?`<button class="btn" id="qzRebuild" type="button" style="width:100%;min-height:48px;font-size:15px;margin-top:10px">Rebuild ${esc(r.short||r.name)} for ${LEVEL_WORD[levelOf(a.exp)]}</button>`:''}
+    <div class="qz-links"><button class="linkbtn" id="qzPickBtn" type="button">Pick Another</button><button class="linkbtn" id="qzChange" type="button">Change Answers</button></div>
+    <div class="onb-note">${qz.ctx==='fresh'?'You can change this later in Settings.':'Nothing changes until you confirm.'}</div>`;
+  qzShow(qzShell(qzResultProg(),{back:true,body,foot,top:true,footCls:' qz-foot-flow'}));
+  const $=i=>document.getElementById(i);
+  $('qzUse').onclick=()=>qzUse(id);
+  if(rebuildable) $('qzRebuild').onclick=()=>qzRebuild(id);
+  $('qzPickBtn').onclick=()=>{ rt.open=null; qzPick(id); }; $('qzChange').onclick=()=>qzQuestion('goal');
+  $('onboardBack').onclick=()=>{ const o=qzOrder(); qzQuestion(o[o.length-1]); };
+}
+// Pick Another: every routine in the fixed order, the suggestion marked, the same cards and See Exercises as Change Routine
+function qzPick(sug,focusSel){
+  qz.screen='pick';
+  const warn={}; rtIds().forEach(i=>{ const n=qzGaps(i); if(n) warn[i]=qzGapLine(n); });
+  const cards=rtIds().map(i=>rtCard(i,{cur:qz.ctx==='fresh'?null:ROUTINE_ID,sug,open:rt.open,warn,label:x=>x===sug?'Use This Routine':'Use '+ROUTINES[x].name})).join('');
+  const body=`<div class="qz-pick"><div class="qz-head" style="margin-bottom:12px"><div class="cel-h1" id="onboardTitle" tabindex="-1">Pick a Routine</div><div class="cel-sub">Your suggestion is marked. Nothing changes until you tap Use.</div></div>${cards}</div>`;
+  const foot=`${qz.err?'<div class="qz-err" role="alert">Could not save your routine. Nothing was changed. Try again.</div>':''}<div class="qz-links"><button class="linkbtn" id="qzBackSug" type="button">Back to My Suggestion</button></div><div class="onb-note">${qz.ctx==='fresh'?'You can change this later in Settings.':'Nothing changes until you confirm.'}</div>`;
+  qzShow(qzShell(qzResultProg(),{back:true,body,foot,top:true,footCls:' qz-foot-flow'}),focusSel);
+  const inner=document.getElementById('onboardInner');
+  inner.querySelectorAll('.rt-go').forEach(b=>b.onclick=()=>qzUse(b.dataset.to));
+  rtWireSee(inner,sel=>qzPick(sug,sel));
+  document.getElementById('qzBackSug').onclick=()=>qzResult(); document.getElementById('onboardBack').onclick=()=>qzResult();
+}
+// "Use": a new install records its pick and carries on (it is applied when setup finishes); an existing user keeps their routine
+// (the quiz is just marked done) or goes through the same Change Routine confirm as Settings does, and nothing changes until they confirm
+// the shared end of a quiz that changes something for an existing user: equipment first, then the quiz itself last; false (with the equipment put back) if a save fails
+function qzFinisher(id){
+  const a=qz.a, orig=settings.equipFilter.slice(), eqChanged=!!a.equip&&a.equip!==equipPresetOf(orig);
+  const finish=async()=>{
+    if(eqChanged&&await sset('settings',settings)===false){ settings.equipFilter=orig; qz.err=true; qzResult(); return false; }
+    if(!await saveQuiz({state:'done',...a,sk:qz.sk,pick:id})){ qz.err=true; qzResult(); return false; }
+    qzClose(); renderSetMain(); renderHeaderStats(); renderHome(); return true;
+  };
+  return {orig,eqChanged,finish};
+}
+async function qzUse(id){
+  qz.err=false; const a=qz.a;
+  if(qz.ctx==='fresh'){
+    if(!await saveQuiz({state:'draft',...a,sk:qz.sk,pick:id})){ qz.err=true; qz.screen==='pick'?qzPick(quizPick(a).id):qzResult(); return; }
+    qz.chosen=id; qz.screen='result'; renderOnboardStep(6); return;
+  }
+  const {orig,eqChanged,finish}=qzFinisher(id);
+  if(eqChanged) settings.equipFilter=QUIZ_EQUIP[a.equip].slice();
+  if(id===ROUTINE_ID){ if(await finish()) showToast(`Quiz saved. You are staying on ${ROUTINES[id].name}. ${LEVEL_APPLIES}`); return; }
+  const draft=await openDraft();
+  openRoutine({step:draft?'blocked':'confirm',to:id,draft,ctx:'quiz',goal:qzGoalFor(id,a),onDone:finish,onCancel:leaving=>{ settings.equipFilter=orig; if(leaving) qzClose(); }});
+}
+// Rebuild: the live routine, rebuilt at the level this Retake chose, through the same confirm sheet (backup offer, then the explicit confirm).
+async function qzRebuild(id){
+  qz.err=false; const a=qz.a, {orig,eqChanged,finish}=qzFinisher(id);
+  if(eqChanged) settings.equipFilter=QUIZ_EQUIP[a.equip].slice();
+  const draft=await openDraft();
+  openRoutine({step:draft?'blocked':'rebuild',to:id,draft,ctx:'quiz',rebuild:true,goal:qzGoalFor(id,a),onDone:finish,onCancel:leaving=>{ settings.equipFilter=orig; if(leaving) qzClose(); }});
+}
+// ---- the one-time sheet for someone who already uses the app ----
+// Shown at most once per open, on Home only, and only when nothing else is going on: no open workout or running timer or cardio session,
+// no other sheet or overlay, no update banner, not in the first minute. Not Now, Close, Escape and a tap outside all mean Not Now, which
+// is remembered (state skipped), so it never returns by itself; Settings is the only way back. Nothing else is touched.
+const QUIZ_PROMPT_DELAY_MS=60000; let quizPromptAt=Date.now(), quizPrompted=false, quizPromptBusy=false;
+async function quizPromptDue(){
+  if(quizPrompted||view!=='home'||needsBuild||!(settings.onboarded||sessions.length)) return false;
+  if(QUIZ&&QUIZ.state!=='draft') return false; if(ROUTINE_ID!=='ul4') return false;
+  if(Date.now()-quizPromptAt<QUIZ_PROMPT_DELAY_MS) return false;
+  if(sheetReturnFocus.size||qz||document.querySelector('.celebrate-bg.on')||getComputedStyle(document.getElementById('updateBanner')).display!=='none') return false;
+  if(cardioLive||(timer.end&&document.getElementById('timer').classList.contains('on'))||sessionInProgress()) return false;
+  return !(await openDraft());
+}
+async function maybeQuizPrompt(){
+  if(quizPromptBusy) return; quizPromptBusy=true; let due=false; try{ due=await quizPromptDue(); }catch(e){ console.error(e); } quizPromptBusy=false;
+  if(!due||view!=='home'||sheetReturnFocus.size) return; // the world may have changed while the drafts were read
+  quizPrompted=true; document.getElementById('quizPromptBg').classList.add('on'); document.getElementById('quizPrompt').classList.add('on');
+}
+function closeQuizPrompt(){ document.getElementById('quizPromptBg').classList.remove('on'); document.getElementById('quizPrompt').classList.remove('on'); }
+async function quizNotNow(){ closeQuizPrompt(); await saveQuiz({state:'skipped',goal:QUIZ&&QUIZ.goal,days:QUIZ&&QUIZ.days,exp:QUIZ&&QUIZ.exp,equip:QUIZ&&QUIZ.equip,sk:QUIZ?QUIZ.sk:[]}); showToast('Skipped. You can take the quiz any time in Settings.'); }
+document.getElementById('quizNotNow').onclick=quizNotNow; document.getElementById('quizPromptClose').onclick=quizNotNow; document.getElementById('quizPromptBg').onclick=quizNotNow;
+document.getElementById('quizTake').onclick=()=>{ closeQuizPrompt(); qzOpen(); };
+setTimeout(maybeQuizPrompt,QUIZ_PROMPT_DELAY_MS+500);
+// the last question is answered: the result follows
+function qzDone(){ qzResult(); }
+// an existing user's quiz is not a sheet, so Escape is Skip Quiz here (never during first-run setup, and never while a sheet is on top of it)
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape'||!qz||qz.ctx==='fresh'||sheetReturnFocus.size||!document.getElementById('onboardBg').classList.contains('on')) return;
+  e.preventDefault(); qzSkipQuiz();
+});
+// A new install applies what the quiz picked once, when setup finishes: the equipment answer sets the filter, the pick is built for that
+// equipment, and writes go programs, program, routineId, then the quiz last. The Upper/Lower `program` is written too (with the equipment
+// applied) so a close before the first session can never send the user back into the builder. Returns false, having undone what it
+// wrote, if any save fails.
+async function qzCommitFresh(){
+  const id=qz&&qz.ctx==='fresh'&&qz.chosen; if(!id) return true;
+  const a=qz.a, prevFilter=settings.equipFilter.slice(), prevUl4=UL4_PROGRAM;
+  if(a.equip) settings.equipFilter=QUIZ_EQUIP[a.equip].slice();
+  const lvl=levelOf(a.exp), fresh=lvl==='some'?buildProgram():newRoutineProgram('ul4',lvl).days; if(lvl==='some') applyEquipPicks(fresh);
+  const undo=async()=>{ settings.equipFilter=prevFilter; if(id!=='ul4'){ await sset('routineId',null); await sset('programs',null); await sset('program',null); applyRoutineState({ul4:prevUl4,routineId:null,programs:{}}); } };
+  if(id!=='ul4'){
+    const programs={[id]:newRoutineProgram(id,lvl).days};
+    if(await sset('programs',programs)===false||await sset('program',fresh)===false||await sset('routineId',id)===false){ await undo(); return false; }
+    applyRoutineState({ul4:fresh,programs,routineId:id});
+  } else applyRoutineState({ul4:fresh});
+  if(!await saveQuiz({state:'done',...a,sk:qz.sk,pick:id})){ await undo(); return false; }
+  qz.prevFilter=prevFilter;
+  return true;
+}
+// Back on the builder (first run only): takes the setup commit back so nothing is half-applied, then reopens the quiz result (or the
+// Recovery Map when the quiz was skipped). Order: the quiz goes back to a draft first (if that save fails nothing has changed), then the
+// routine keys are cleared, then settings. While the builder is up nothing has been logged, so clearing program/programs/routineId is safe.
+// Choosing again re-runs qzCommitFresh from the answers, so the pick, equipment and program are rebuilt cleanly.
+async function builderBack(){
+  const q=QUIZ, fail=()=>showToast('Could not go back. Nothing was changed');
+  if(q&&q.state==='done'&&!await saveQuiz({state:'draft',goal:q.goal,days:q.days,exp:q.exp,equip:q.equip,sk:q.sk,pick:q.pick})) return fail();
+  if(await sset('program',null)===false||await sset('programs',null)===false||await sset('routineId',null)===false) return fail();
+  if(qz&&qz.prevFilter) settings.equipFilter=qz.prevFilter;
+  settings.onboarded=false;
+  if(await sset('settings',settings)===false) return fail();
+  const base=JSON.parse(JSON.stringify(DEFAULT_PROGRAM)); applyEquipPicks(base);
+  applyRoutineState({ul4:base,routineId:null,programs:{}});
+  const skipped=!!q&&q.state==='skipped';
+  if(!qz||qz.ctx!=='fresh') qz=qzNew('fresh');
+  qz.chosen=!skipped&&q&&q.pick&&ROUTINES[q.pick]?q.pick:null; qz.screen='result'; qz.err=false;
+  setAppInert(true); document.getElementById('onboardBg').classList.add('on'); document.body.classList.remove('building');
+  renderHeaderStats(); renderOnboardStep(skipped?6:5);
+}
 async function finishOnboarding(){
+  if(!await qzCommitFresh()){ const e=document.getElementById('onbFinErr'); if(e) e.hidden=false; return; }
   setAppInert(false);
   settings.onboarded=true;
   await sset('settings',settings);
-  render(); renderHistory(); renderStrength(); // units may have changed underneath
+  render(); renderHistory(); renderStrength(); renderHeaderStats(); // units may have changed underneath; the weekly goal follows the new routine
   document.getElementById('onboardBg').classList.remove('on');
   renderHome();
 }
@@ -3722,13 +4359,17 @@ function renderRhythm(){
     return `<span>${!prev||prev.getMonth()!==d.getMonth()?d.toLocaleDateString(undefined,{month:'short'}):''}</span>`; }).join('');
   const chart=document.getElementById('rhChart');
   chart.innerHTML=`<div class="rh-goal" style="top:${(1-RHYTHM_GOAL/top)*72}px"><span>Goal ${RHYTHM_GOAL}</span></div><div class="rh-bars">${bars}</div><div class="rh-axis">${axis}</div>`;
+  // while the 12 weeks hold sessions from another routine, say which goal the whole chart is drawn against
+  { const note=document.getElementById('rhGoalNote'), r=ROUTINES[ROUTINE_ID]||ROUTINES.ul4;
+    const mixed=lifts.some(s=>s.t>=ranges[0][0]&&(s.routineId||'ul4')!==(ROUTINES[ROUTINE_ID]?ROUTINE_ID:'ul4'));
+    note.hidden=!mixed; note.textContent=mixed?`Goal ${RHYTHM_GOAL} since you switched to ${r.name}. Earlier weeks are shown against it.`:''; }
   chart.setAttribute('aria-label',`Lifting sessions per week, last 12 weeks, oldest first: ${counts.join(', ')}. This week so far: ${counts[counts.length-1]}. Goal ${RHYTHM_GOAL} a week.`);
 }
 let calMonthOffset=0;
 // a session logged on a day outside the built-in four (another routine) is a neutral 'other', not skipped; the built-in
 // four keep the exact Upper/Lower name test, so existing sessions read as before
 function sessionType(s){ if(s.isCardio) return 'cardio'; const f=s.focus?dayFocus({focus:s.focus}):(s.dayName==='Upper'?'upper':s.dayName==='Lower'?'lower':'');
-  return f==='upper'||f==='lower'?f:(s.dayId&&!UL4_IDS.includes(s.dayId)?'other':null); }
+  return FOCUS_FAMILY[f]||(s.dayId&&!UL4_IDS.includes(s.dayId)?'other':null); }
 // ---------- editing and deleting logged sessions ----------
 // sessions[] is the source of truth; hist, lastByName, last:d# and the session counter are derived from it, so
 // every edit or delete re-derives those for the exercises and day involved. Recovery timers are left alone: they
@@ -3858,11 +4499,15 @@ document.getElementById('calDaySheetClose').onclick=closeCalDaySheet;
 document.getElementById('calDayBg').onclick=closeCalDaySheet;
 // a session's plan, as the calendar tags it: one initial per word of the day and its focus ("Upper" + "Heavy" → UH,
 // a custom "Full Body" day → FB), cardio is C
+const PLAN_TAG={push:'Ps',pull:'Pl',legs:'Lg',chest:'Ch',back:'Bk',shoulders:'Sh',arms:'Ar'};
 function sessionPlan(s){
   if(s.isCardio) return {key:'cardio', tag:'C', label:'Cardio', type:'cardio'};
   const label=[s.dayName,s.sub].filter(Boolean).join(' ');
-  const tag=label.split(/\s+/).filter(Boolean).slice(0,3).map(w=>w[0]).join('').toUpperCase();
-  return {key:label, tag, label, type:sessionType(s)||'other'};
+  // the tag follows the day's focus, not its label, so two plans can never share one (QA-RA-2); Upper/Lower keep their initials.
+  // Full Body is F plus its letter (FA, FB, FC); a lettered day of a six-day plan adds the letter (PsA, PlB); at most three characters.
+  const type=sessionType(s)||'other', focus=s.focus?dayFocus({focus:s.focus}):'', letter=/^[A-C]$/.test(s.sub||'')?s.sub:'';
+  const tag=focus==='full'?'F'+letter:PLAN_TAG[focus]?PLAN_TAG[focus]+letter:PLAN_TAG[type]||label.split(/\s+/).filter(Boolean).slice(0,3).map(w=>w[0]).join('').toUpperCase();
+  return {key:label, tag, label, type};
 }
 function renderCalendar(){
   const base=new Date(); base.setDate(1); base.setHours(0,0,0,0); base.setMonth(base.getMonth()+calMonthOffset);
@@ -3901,7 +4546,7 @@ function renderCalendar(){
     grid.appendChild(cell);
   }
   // legend: the current program's days in order, then any other plan logged this month (a renamed or removed day), cardio last
-  const legend=PROGRAM.map(d=>sessionPlan({dayName:d.name, sub:d.sub, isCardio:false}));
+  const legend=PROGRAM.map(d=>sessionPlan({dayName:d.name, sub:d.sub, focus:d.focus, isCardio:false}));
   Object.values(sessionsByDay).flat().map(sessionPlan).forEach(p=>{ if(p.type!=='cardio'&&!legend.some(q=>q.key===p.key)) legend.push(p); });
   legend.push(sessionPlan({isCardio:true}));
   document.getElementById('calLegend').innerHTML=legend.map(p=>`<span><i class="cal-tag t-${p.type}">${p.tag}</i>${p.label}</span>`).join('')+(monthHasDlDay?'<span><i class="key-wk" aria-hidden="true"></i>Deload Week</span>':'')+(monthHasDlSess?'<span><i class="cal-tag t-other dl" aria-hidden="true">UH</i>Deload Session</span>':'');
@@ -3957,6 +4602,10 @@ function renderStrength(){
   renderConditioning();
   const upperList=document.getElementById('upperStrList'), lowerList=document.getElementById('lowerStrList');
   upperList.innerHTML=''; lowerList.innerHTML='';
+  document.querySelectorAll('.str-past.out').forEach(e=>e.remove());
+  // a routine with no Upper/Lower days (Push/Pull/Legs) gets one full-width card named for it; R-C will group by focus instead
+  const single=activeProgram()!==UL4_PROGRAM, oneName=routineName(ROUTINE_ID)+' Strength';
+  if(single) strCardOpen.lower=false;
   let changes=[], upperTotal=0, upperBase=0, lowerTotal=0, lowerBase=0;
   let heroEvents=[], upperEvents=[], lowerEvents=[], heroBaseByName={}, upperBaseByName={}, lowerBaseByName={};
   const nameSlots={};
@@ -3965,7 +4614,7 @@ function renderStrength(){
   // the open list groups rows under each program day; a lift on two days of the same half shows once, under the first,
   // marked "also Volume"; retired lifts fold into a No Longer in Program group of their own
   const shownRows={}, pastBox={};
-  const listFor=day=>day.name==='Upper'?upperList:day.name==='Lower'?lowerList:null;
+  const listFor=day=>single?upperList:day.name==='Upper'?upperList:day.name==='Lower'?lowerList:null;
   const renderRow=(ex, day)=>{
     const half=listFor(day), targetList=day.past&&half?pastBox[half.id].list:half;
     const base=baselineFor(ex), cur=currentFor(ex), h=histFrom(ex), fullH=hist[histKey(ex)]||[];
@@ -3975,12 +4624,12 @@ function renderStrength(){
     // retired ("Past") lifts keep their rows, but the summary numbers only measure what you're training now
     if(firstOccurrence&&!day.past){
       if(p!==null) changes.push(p);
-      if(day.name==='Upper'){ upperTotal+=cur; upperBase+=base; }
+      if(single||day.name==='Upper'){ upperTotal+=cur; upperBase+=base; }
       else if(day.name==='Lower'){ lowerTotal+=cur; lowerBase+=base; }
       heroBaseByName[ex.name]=base;
       const events=h.map(x=>({t:x.t,name:ex.name,e1rm:x.e1rm}));
       heroEvents.push(...events);
-      if(day.name==='Upper'){ upperBaseByName[ex.name]=base; upperEvents.push(...events); }
+      if(single||day.name==='Upper'){ upperBaseByName[ex.name]=base; upperEvents.push(...events); }
       else if(day.name==='Lower'){ lowerBaseByName[ex.name]=base; lowerEvents.push(...events); }
     }
     const seenKey=half&&!day.past?half.id+'|'+ex.name:null;
@@ -4040,7 +4689,7 @@ function renderStrength(){
   });
   [upperList,lowerList].forEach(l=>{
     const key=l===upperList?'upper':'lower', box=document.createElement('div'); box.className='str-past';
-    box.innerHTML=`<button class="str-past-btn" aria-expanded="${!!strPastOpen[key]}"><span><b>No Longer in Program · <span data-n>0</span></b><span>Not counted in the totals above</span></span><span class="str-past-act">${strPastOpen[key]?'Hide':'Show'}</span></button><div class="str-past-list" style="${strPastOpen[key]?'':'display:none'}"></div>`;
+    box.innerHTML=`<button class="str-past-btn" aria-expanded="${!!strPastOpen[key]}"><span><b>No Longer in Program · <span data-n>0</span></b><span>${single?'Earlier lifts. Not counted in the total above':'Not counted in the totals above'}</span></span><span class="str-past-act">${strPastOpen[key]?'Hide':'Show'}</span></button><div class="str-past-list" style="${strPastOpen[key]?'':'display:none'}"></div>`;
     // stopPropagation: the re-render detaches the button, so the card's own "tap inside the list" check can't see it
     box.querySelector('.str-past-btn').onclick=e=>{ e.stopPropagation(); strPastOpen[key]=!strPastOpen[key]; renderStrength(); };
     l.appendChild(box); pastBox[l.id]={box,list:box.querySelector('.str-past-list')};
@@ -4060,6 +4709,7 @@ function renderStrength(){
   [upperList,lowerList].forEach(l=>{
     const {box,list}=pastBox[l.id], n=list.children.length;
     box.querySelector('[data-n]').textContent=n; box.style.display=n?'':'none';
+    if(single&&l===upperList){ box.classList.add('out','str-card-exlist'); document.querySelector('.str-split').after(box); } // the retired lifts sit in their own row below the card
     const hide=document.createElement('button'); hide.className='str-hide btn'; hide.textContent='Hide Exercises';
     if(hasDl){ const n=document.createElement('div'); n.className='str-dlnote'; n.textContent='Deload sessions are shown but not counted in progress, current strength, plateaus or PRs. Lifting lighter on purpose would look like losing strength.'; l.insertBefore(n,l.firstChild); }
     hide.onclick=e=>{ e.stopPropagation(); const key=l===upperList?'upper':'lower'; strCardOpen[key]=false; renderStrength(); document.getElementById(key+'StrCard').scrollIntoView({block:'nearest'}); };
@@ -4072,7 +4722,10 @@ function renderStrength(){
   document.getElementById('upperStrCard').setAttribute('aria-expanded',!!strCardOpen.upper);
   document.getElementById('lowerStrCard').setAttribute('aria-expanded',!!strCardOpen.lower);
   document.getElementById('upperStrCard').style.display=strCardOpen.lower?'none':'';
-  document.getElementById('lowerStrCard').style.display=strCardOpen.upper?'none':'';
+  document.getElementById('lowerStrCard').style.display=(strCardOpen.upper||single)?'none':'';
+  document.querySelector('#upperStrCard h3').textContent=single?oneName:'Upper Strength';
+  document.getElementById('upperStrCard').classList.toggle('str-one',single);
+  document.getElementById('upperStrScrub').setAttribute('aria-label',`${single?oneName.replace(' Strength',''):'Upper'} strength trend. Drag across it, or use the arrow keys, to see each session.`);
   document.getElementById('upperStrHint').textContent=strCardOpen.upper?'Hide Exercises':'See Exercises';
   document.getElementById('lowerStrHint').textContent=strCardOpen.lower?'Hide Exercises':'See Exercises';
   const avg=changes.length?changes.reduce((a,b)=>a+b,0)/changes.length:null;
@@ -4158,6 +4811,16 @@ function renderSetMain(){
   const eq=settings.equipFilter.length; sv('equip', eq===EQUIP_TYPES.length?`All ${eq}`:`${eq} of ${EQUIP_TYPES.length}`);
   sv('rotate', settings.autoRotate?`Every ${settings.blockWeeks||4} Weeks`:'Off');
   sv('rest', settings.smartRest?`Smart · ${settings.rest}s Fallback`:`${settings.rest}s`);
+  { const r=ROUTINES[ROUTINE_ID]||ROUTINES.ul4, row=document.getElementById('routineRow'), note=document.getElementById('routineNote');
+    document.getElementById('routineCap').textContent=r.meta; sv('routine',r.short||r.name);
+    row.setAttribute('aria-label',`Routine, ${r.name}, ${r.meta.toLowerCase()}`);
+    note.textContent=r.note||''; note.hidden=!r.note; row.classList.toggle('has-note',!!r.note); }
+  { const done=QUIZ&&QUIZ.state==='done', row=document.getElementById('quizRow');
+    const sum=done?[QUIZ.goal&&QUIZ_GOAL_LABEL[QUIZ.goal],QUIZ.days&&`${QUIZ.days} days`,QUIZ.equip&&QUIZ_EQUIP_LABEL[QUIZ.equip]].filter(Boolean).join(', ')||'All questions skipped':'';
+    document.getElementById('quizLbl').textContent=done?'Retake Quiz':'Take the Quiz';
+    document.getElementById('quizCap').textContent=done?sum:'Find the routine that fits your week.';
+    sv('quiz',done?'Done':QUIZ&&QUIZ.state==='skipped'?'Skipped':'');
+    row.setAttribute('aria-label',`${done?'Retake Quiz':'Take the Quiz'}, ${done?'last answers: '+sum:QUIZ&&QUIZ.state==='skipped'?'you skipped it':'not taken yet'}`); }
   const nEx=PROGRAM.reduce((a,d)=>a+d.exercises.length,0); sv('edit', `${PROGRAM.length} Days · ${nEx} Exercises`);
   sv('data', lastBackup?`Last: ${fmtDate(lastBackup)}`:'Never Backed Up');
   document.getElementById('sv-data').classList.toggle('warn', backupNag() && sessions.length>0); // same condition as the Home backup banner
@@ -4167,6 +4830,238 @@ function renderSetMain(){
   opts.innerHTML=[['standard','Standard',15],['large','Large',17],['larger','Larger',20]].map(([k,l,px])=>`<button class="onb-opt" data-k="${k}" aria-pressed="${cur===k}">${l}<b style="font-size:${px}px" aria-hidden="true">Aa</b></button>`).join('');
   opts.querySelectorAll('.onb-opt').forEach(b=>b.onclick=()=>{ settings.textSize=b.dataset.k; sset('settings',settings); applyTextSize(); renderSetMain(); });
 }
+// ---------- switching routines (R-B) ----------
+// A switch never writes `program` (the Upper/Lower list stays byte-for-byte as it is). Order: `programs` first (only when the
+// target routine has no day list yet), `routineId` last, so a failed write leaves the old routine live. Progress, history, the
+// block clock, recovery and settings are keyed by exercise name or by nothing at all and are not touched.
+const routineName=id=>(ROUTINES[id]&&ROUTINES[id].name)||'Upper/Lower';
+const routineWord=n=>['zero','one','two','three','four','five','six','seven'][n]||String(n);
+// the first day of the live routine with sets logged but not finished (a stored draft), as {day, n}; null when nothing is open
+async function openDraft(){
+  for(const day of PROGRAM){
+    const v=day.id===currentDay?todayData:await sget('today:'+day.id);
+    const n=Object.values(v||{}).reduce((a,x)=>a+((x&&x.sets)||[]).filter(q=>q&&(q.done||(q.w&&q.r))).length,0);
+    if(n) return {day,n};
+  }
+  return null;
+}
+async function discardDraft(day){
+  await sset('today:'+day.id,{}); if(day.id===currentDay) todayData={};
+  delete dayStartTimes[day.id]; await sset('dayStart',dayStartTimes);
+}
+// -> {ok:true} | {blocked:{day,n}} | {failed:true}
+let routineBusy=false;
+async function switchRoutine(to,lvl){
+  if(routineBusy||!ROUTINES[to]||to===ROUTINE_ID) return {failed:true};
+  routineBusy=true;
+  try{
+    const draft=await openDraft(); if(draft) return {blocked:draft};
+    const hadPrograms=await sget('programs'), programs={...PROGRAMS}; let wrote=false;
+    const usable=l=>Array.isArray(l)&&l.length&&l.every(d=>d&&typeof d.id==='string'&&Array.isArray(d.exercises));
+    if(to!=='ul4'&&!usable(programs[to])){
+      programs[to]=newRoutineProgram(to,lvl).days;
+      if(await sset('programs',programs)===false) return {failed:true};
+      wrote=true;
+    }
+    if(await sset('routineId',to)===false){
+      if(wrote) await (hadPrograms==null?store.remove('programs'):sset('programs',hadPrograms)); // put back what was there
+      return {failed:true};
+    }
+    applyRoutineState({routineId:to,programs});
+    document.getElementById('edDay').innerHTML=''; // the editor's day list is built once; rebuild it for the new days
+    const sd=suggestedDay(); await loadDay(sd.id==='cardio'?sd.nextDay.id:sd.id);
+    return {ok:true};
+  }catch(e){ console.error(e); return {failed:true}; }
+  finally{ routineBusy=false; }
+}
+
+// Rebuild the live routine at a level. Order as in a switch: `programs` first for every routine but Upper/Lower; `program` only for Upper/Lower
+// (its own list). Returns {ok,undo} | {blocked} | {failed}; undo() puts back exactly what was there (used if the quiz cannot be saved afterwards).
+async function rebuildRoutine(id,lvl){
+  if(routineBusy||!ROUTINES[id]||id!==ROUTINE_ID) return {failed:true};
+  routineBusy=true;
+  try{
+    const draft=await openDraft(); if(draft) return {blocked:draft};
+    const days=newRoutineProgram(id,lvl).days, prevPrograms=await sget('programs'), prevProgram=await sget('program'), prevUl4=UL4_PROGRAM, prevMap=PROGRAMS;
+    const reload=async()=>{ document.getElementById('edDay').innerHTML=''; await loadDay(currentDay); };
+    if(id==='ul4'){
+      if(await sset('program',days)===false) return {failed:true};
+      applyRoutineState({ul4:days});
+    } else {
+      const programs={...PROGRAMS,[id]:days};
+      if(await sset('programs',programs)===false) return {failed:true};
+      applyRoutineState({programs});
+    }
+    await reload();
+    const undo=async()=>{
+      if(id==='ul4'){ await (prevProgram==null?store.remove('program'):sset('program',prevProgram)); applyRoutineState({ul4:prevUl4}); }
+      else { await (prevPrograms==null?store.remove('programs'):sset('programs',prevPrograms)); applyRoutineState({programs:prevMap}); }
+      await reload();
+    };
+    return {ok:true,undo};
+  }catch(e){ console.error(e); return {failed:true}; }
+  finally{ routineBusy=false; }
+}
+
+// ---------- Change Routine sheet ----------
+// Direct working sets per muscle each week, counted from a routine's template (sum of its slots' sets; QA checks them by script).
+// Direct sets only: no indirect figure is shown anywhere. Rear delts are the shoulder slots whose first recovery key is the rear delt.
+const SET_ROWS=[['chest','Chest'],['back','Back'],['shoulders','Shoulders'],['rear','Rear Delts'],['biceps','Biceps'],['triceps','Triceps'],['forearms','Forearms'],['quads','Quads'],['hamstrings','Hamstrings'],['calves','Calves'],['abs','Core']];
+function routineSets(tpl){ // tpl: the template, or the leveled days in the same shape
+  const t={};
+  tpl.forEach(d=>d.slots.forEach(sl=>{ let k=sl.key; if(k==='shoulders'&&recoveryKeysFor(CURATED_BY_NAME[sl.pick]||{name:sl.pick})[0]==='delt-rear') k='rear'; t[k]=(t[k]||0)+rtSets(sl.target); }));
+  return SET_ROWS.filter(([k])=>t[k]).map(([k,l])=>[l,t[k]]);
+}
+const RT_CHK='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>', RT_ARROW='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+// rt.open is the id of the one card whose exercises are showing (one at a time); rt.ctx is 'settings' or 'quiz' (the confirm step then
+// returns to the quiz result on Cancel and hands the commit to rt.onDone)
+let rt={step:'list',to:null,backedUp:false,open:null,ctx:'settings',goal:null,onDone:null,onCancel:null};
+const rtSets=t=>parseInt((t||'').match(/^\s*(\d+)/)?.[1]||'3',10);
+const rtJoin=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];
+const rtNb=t=>esc(t).replace(/(\d-Day)/g,'<span class="nb">$1</span>'); // "3-Day" never splits across lines
+const SETS_NOTE="ACSM's 2026 guidance is about 10 direct sets per muscle each week. It is a published figure, not a target this app measures. Presses and rows add some indirect work.";
+const SETS_NOTE_PPL3="ACSM's 2026 guidance is about 10 direct sets per muscle each week. Every muscle here is below that, so this routine does not claim to match it. Presses and rows add some indirect work.";
+function rtPanel(id){
+  const r=ROUTINES[id], tp=rtPreviewTpl(id), sets=routineSets(tp);
+  return `<div id="rtEx-${id}" class="rt-ex">`+tp.map((d,i)=>{ const lbl=(r.days[i]||[d.name])[0], cls=dayType(d); return `<section aria-label="${esc(lbl)} day"><h4 class="rt-exh"><span class="badge ${cls}">${esc(lbl)}</span><span>${d.slots.length} Lifts · ${d.slots.reduce((a,x)=>a+rtSets(x.target),0)} Sets</span></h4><ol class="rt-exl">${d.slots.map(x=>`<li><span>${esc(x.pick)}</span><span class="rt-t">${esc(x.target)}</span></li>`).join('')}</ol></section>`; }).join('')+
+    `<h4 class="rt-exh rt-exh2">Direct Sets per Week</h4><dl class="rt-sets">${sets.map(x=>`<div><dt>${x[0]}</dt><dd>${x[1]}</dd></div>`).join('')}</dl>
+    <p class="rt-sets-note">${id==='ppl3'&&(buildLevel()==='some'||sets.every(x=>x[1]<10))?SETS_NOTE_PPL3:SETS_NOTE}</p></div>`;
+}
+// one routine card, shared by the Change Routine sheet and the quiz's Pick Another. o: {cur, sug, open, warn, label, btn}
+function rtCard(id,o){
+  o=o||{}; const r=ROUTINES[id], cur=o.cur===id, open=o.open===id, sug=o.sug===id&&!cur;
+  const chips=(cur?'<span class="rt-chip">Current</span>':'')+(sug?'<span class="rt-chip">Suggested</span>':'');
+  const chev='<svg class="rt-see-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+  return `<div class="rt-card${cur?' cur':''}${sug?' suggest':''}" data-r="${id}"${cur?' aria-current="true"':''}>
+    <div class="rt-top"><div class="rt-name">${rtNb(r.name)}</div><span class="rt-chips">${chips}</span></div>
+    <div class="rt-meta">${r.meta}</div>
+    <ul class="rt-days" aria-label="Days">${r.days.map(([n,c])=>`<li class="badge ${c}">${esc(n)}</li>`).join('')}</ul>
+    ${r.cardLine?`<div class="rt-line card-line">${r.cardLine}</div>`:''}
+    <div class="rt-line">${r.suits}</div>
+    ${r.note?`<p class="rt-honest">${r.note}</p>`:`<div class="rt-line dim">${r.freq||''}</div>`}
+    ${o.warn&&o.warn[id]?`<p class="rt-warn">${o.warn[id]}</p>`:''}
+    <button class="rt-see" id="rtSee-${id}" data-r="${id}" type="button" aria-expanded="${open}" aria-controls="rtEx-${id}"><span>${open?'Hide Exercises':'See Exercises'}</span>${chev}</button>
+    ${open?rtPanel(id):`<div id="rtEx-${id}" class="rt-ex" hidden></div>`}
+    ${cur?'':`<button class="btn primary rt-go" type="button" data-to="${id}">${esc(o.label?o.label(id):'Switch to '+r.name)}</button>`}</div>`;
+}
+// one toggle for a card list: opening a card closes the other, and puts the opened card at the top so its list is under the thumb
+function rtWireSee(root,rerender){
+  root.querySelectorAll('.rt-see').forEach(b=>b.onclick=()=>{ const id=b.dataset.r; rt.open=rt.open===id?null:id; rerender('#rtSee-'+id);
+    if(rt.open){ const c=root.querySelector(`[data-r="${id}"]`); if(c) c.scrollIntoView({block:'start'}); } });
+}
+// a lift both routines have, the one with the most history, for the "your progress carries over" line
+function rtSharedLift(to){
+  const days=(PROGRAMS[to]&&PROGRAMS[to].length?PROGRAMS[to]:to==='ul4'?UL4_PROGRAM:previewProgram(to).days);
+  const there=new Set(days.flatMap(d=>d.exercises.map(e=>e.name)));
+  const here=PROGRAM.flatMap(d=>d.exercises.map(e=>e.name)).filter(n=>there.has(n)&&(hist[n]||[]).length);
+  here.sort((a,b)=>hist[b].length-hist[a].length); return here[0]||null;
+}
+function rtBackup(){
+  return !sessions.length?`<div class="rt-backup">No history yet, so there is nothing to back up.</div>`:
+    `<div class="rt-backup">Want a copy of your data first? It takes a few seconds.<button class="btn" id="rtBk" type="button">${rt.backedUp?'Back Up Again':'Back Up First'}</button>${rt.backedUp?`<div class="rt-ok" role="status">${RT_CHK}<span>Backup saved. You can ${rt.rebuild?'rebuild':'switch'} now.</span></div>`:''}</div>`;
+}
+function rtRebuildView(){
+  const id=rt.to, r=ROUTINES[id], lvl=levelOf(qz&&qz.a?qz.a.exp:null), preview=previewProgram(id,lvl);
+  const eq=[];
+  if(preview.missing) eq.push(`${preview.missing} exercise${preview.missing===1?' has':'s have'} no match for your equipment, so ${preview.missing===1?'it is':'they are'} left out.`);
+  if(preview.bare.length) eq.push(`Nothing in ${esc(rtJoin(preview.bare))} matches your equipment, so ${preview.bare.length===1?'it starts':'they start'} with the standard lifts.`);
+  document.getElementById('routineTitle').textContent=`Rebuild ${r.name}?`;
+  document.getElementById('routineSub').textContent=`${LEVEL_WORD[lvl]} level`;
+  return `<p class="rt-warn" style="margin-top:0">Any edits you made to ${esc(r.name)} will be replaced: swapped, added or removed lifts, and changed targets.</p>
+    <div class="rt-sec">What Changes</div>
+    <ul class="rt-list"><li class="chg">${RT_ARROW}<span>Every day of ${esc(r.name)} is rebuilt for the ${LEVEL_WORD[lvl]} level.</span></li>
+      ${eq.map(t=>`<li class="chg">${RT_ARROW}<span>${t}</span></li>`).join('')}
+      <li class="chg">${RT_ARROW}<span>Exercise rotation may restart for lifts that change.</span></li></ul>
+    <div class="rt-sec">What Stays the Same</div>
+    <ul class="rt-list"><li class="keep">${RT_CHK}<span>Your history, records and notes.</span></li>
+      <li class="keep">${RT_CHK}<span>Your progress. Lifts carry over by name.</span></li>
+      <li class="keep">${RT_CHK}<span>Your other routines. Only ${esc(r.name)} changes.</span></li>
+      <li class="keep">${RT_CHK}<span>Your block start and sessions already logged this week.</span></li></ul>
+    ${rtBackup()}
+    <div class="sheet-actions"><button class="btn" id="rtCancel" type="button" style="flex:1;min-height:48px;font-size:15px">Cancel</button><button class="btn primary" id="rtGo" type="button" style="flex:1;min-height:48px;font-size:15px">Rebuild Routine</button></div>`;
+}
+function rtConfirm(){
+  const to=rt.to, r=ROUTINES[to], from=ROUTINES[ROUTINE_ID]||ROUTINES.ul4;
+  const preview=(!PROGRAMS[to]||!PROGRAMS[to].length)&&to!=='ul4'?previewProgram(to):null;
+  const shown=rtJoin(r.days.map(x=>x[0]));
+  const lift=rtSharedLift(to), goal=rt.goal||r.perWeek;
+  const eqNote=preview&&preview.missing?`${preview.missing} exercise${preview.missing===1?' has':'s have'} no match for your equipment, so ${preview.missing===1?'it is':'they are'} left out (${esc(rtJoin([...new Set(preview.gaps)].map(g=>{ const n=preview.gaps.filter(x=>x===g).length; return n>1?`${g} x${n}`:g; })))}). You can add ${preview.missing===1?'one':'some'} in Edit Workouts.`:'';
+  const eqBare=preview&&preview.bare.length?`Nothing in ${esc(rtJoin(preview.bare))} matches your equipment, so ${preview.bare.length===1?'it starts':'they start'} with the standard lifts. You can swap them in Edit Workouts.`:'';
+  const eq=[eqNote,eqBare].filter(Boolean);
+  const backup=rtBackup();
+  document.getElementById('routineTitle').textContent=`Switch to ${r.name}?`;
+  document.getElementById('routineSub').textContent=`${goal} days a week, replacing ${from.name}`;
+  return `${r.note?`<p class="rt-honest rt-honest-top">${r.note}</p>`:''}
+    <div class="rt-sec">What Changes</div>
+    <ul class="rt-list"><li class="chg">${RT_ARROW}<span>Your week goal becomes ${goal} sessions.</span></li>
+      <li class="chg">${RT_ARROW}<span>Home, Log and Edit Workouts show ${shown}.</span></li>
+      ${preview?`<li class="chg">${RT_ARROW}<span>${builtForLine(buildExp())}</span></li>`:''}
+      ${eq.map(t=>`<li class="chg">${RT_ARROW}<span>${t}</span></li>`).join('')}</ul>
+    <div class="rt-sec">What Stays the Same</div>
+    <ul class="rt-list"><li class="keep">${RT_CHK}<span>Your history, records and notes.</span></li>
+      <li class="keep">${RT_CHK}<span>Your progress. Lifts carry over by name${lift?`, so ${esc(lift)} picks up where you left off`:''}.</span></li>
+      <li class="keep">${RT_CHK}<span>Sessions already logged this week still count.</span></li>
+      <li class="keep">${RT_CHK}<span>Your training block. It keeps going, with no restart. Deload and exercise rotation carry on too.</span></li>
+      <li class="keep">${RT_CHK}<span>You can switch back any time. ${esc(from.name)} returns exactly as you left it, edits included.</span></li></ul>
+    ${backup}
+    <div class="sheet-actions"><button class="btn" id="rtCancel" type="button" style="flex:1;min-height:48px;font-size:15px">Cancel</button><button class="btn primary" id="rtGo" type="button" style="flex:1;min-height:48px;font-size:15px">Switch Routine</button></div>`;
+}
+function rtBlocked(){
+  const d=rt.draft; document.getElementById('routineTitle').textContent='Session in Progress';
+  document.getElementById('routineSub').textContent='You can switch as soon as it is closed.';
+  return `<div class="rt-blocked"><p class="plateau-tip" style="margin-bottom:14px">You have ${/^[AEIOU]/i.test(d.day.name)?'an':'a'} ${esc(d.day.name+' '+d.day.sub)} session open with ${d.n} set${d.n===1?'':'s'} logged. Finish it, or discard it, before you change routines.</p>
+    <div class="rt-btns"><button class="btn primary" id="rtGoLog" type="button">Go to Today's Session</button><button class="btn" id="rtCancel" type="button">Cancel</button></div>
+    <button class="linkbtn danger" id="rtDiscard" type="button">Discard Today's Session</button></div>`;
+}
+function renderRoutineSheet(focusSel){
+  const body=document.getElementById('routineBody');
+  if(rt.step==='list'){ document.getElementById('routineTitle').textContent='Change Routine'; document.getElementById('routineSub').textContent='Pick how you split your week.';
+    body.innerHTML=rtIds().map(id=>rtCard(id,{cur:ROUTINE_ID,open:rt.open})).join('')+'<p class="rt-foot">Nothing is deleted when you switch. History, records and notes stay.</p>'; }
+  else if(rt.step==='confirm') body.innerHTML=rtConfirm();
+  else if(rt.step==='rebuild') body.innerHTML=rtRebuildView();
+  else body.innerHTML=rtBlocked();
+  const q=s=>body.querySelector(s);
+  body.querySelectorAll('.rt-go').forEach(b=>b.onclick=async()=>{
+    const to=b.dataset.to, d=await openDraft(); rt.to=to;
+    if(d){ rt.draft=d; rt.step='blocked'; } else { rt.step='confirm'; rt.backedUp=false; }
+    renderRoutineSheet('#routineTitle'); });
+  rtWireSee(body,renderRoutineSheet);
+  const cancel=q('#rtCancel'); if(cancel) cancel.onclick=()=>{ if(rt.step==='blocked'||rt.ctx==='quiz'){ closeRoutine(); if(rt.onCancel) rt.onCancel(); } else { rt.step='list'; renderRoutineSheet('#routineTitle'); } };
+  const bk=q('#rtBk'); if(bk) bk.onclick=async()=>{ try{ rt.backedUp=!!(await doExport()); }catch(e){ console.error(e); showToast("Couldn't make the backup. You can still switch.",null,true); } renderRoutineSheet('#rtBk'); };
+  const go=q('#rtGo'); if(go) go.onclick=async()=>{
+    go.disabled=true; const to=rt.to;
+    if(rt.rebuild){
+      const lvl=levelOf(qz&&qz.a?qz.a.exp:null), rr=await rebuildRoutine(to,lvl);
+      if(rr.ok){ const done=rt.onDone; closeRoutine();
+        if(done&&await done()===false){ await rr.undo(); showToast('Could not save. Nothing was changed.',null,true); return; }
+        showToast(`Rebuilt ${ROUTINES[to].name} for the ${LEVEL_WORD[lvl]} level.`); }
+      else if(rr.blocked){ rt.draft=rr.blocked; rt.step='blocked'; renderRoutineSheet('#routineTitle'); }
+      else { go.disabled=false; showToast('Could not rebuild. Nothing was changed.',null,true); }
+      return; }
+    const r=await switchRoutine(to,buildLevel());
+    if(r.ok){ const done=rt.onDone, goal=rt.goal||ROUTINES[to].perWeek; closeRoutine();
+      if(done) await done(); else { const row=document.getElementById('routineRow'); row.focus(); renderSetMain(); row.focus(); }
+      showToast(`Now on ${ROUTINES[to].name}. Your week goal is ${goal} session${goal===1?'':'s'}.`); }
+    else if(r.blocked){ rt.draft=r.blocked; rt.step='blocked'; renderRoutineSheet('#routineTitle'); }
+    else { go.disabled=false; showToast('Could not switch routines. Nothing was changed.',null,true); } };
+  const gl=q('#rtGoLog'); if(gl) gl.onclick=async()=>{ const id=rt.draft.day.id; closeRoutine(); if(rt.onCancel) rt.onCancel(true); if(id!==currentDay) await loadDay(id); setView('log'); };
+  const dc=q('#rtDiscard'); if(dc) dc.onclick=async()=>{
+    const day=rt.draft.day;
+    if(!await confirmSheet(`Clear everything you've logged today for ${day.name} ${day.sub}? This can't be undone.`, 'Clear', null, true)) return;
+    await discardDraft(day); if(day.id===currentDay) render();
+    rt.step=rt.to?(rt.rebuild?'rebuild':'confirm'):'list'; renderRoutineSheet('#routineTitle'); };
+  if(!focusSel||focusSel==='#routineTitle') document.getElementById('routineSheet').scrollTop=0; // a new step starts at the top
+  const f=document.querySelector('#routineSheet '+(focusSel||'#routineTitle'));
+  if(f) requestAnimationFrame(()=>requestAnimationFrame(()=>f.focus({preventScroll:true})));
+}
+function openRoutine(o){
+  rt={step:'list',to:null,backedUp:false,open:null,ctx:'settings',goal:null,onDone:null,onCancel:null,...(o||{})}; renderRoutineSheet();
+  document.getElementById('routineBg').classList.add('on'); document.getElementById('routineSheet').classList.add('on');
+}
+function closeRoutine(){ document.getElementById('routineBg').classList.remove('on'); document.getElementById('routineSheet').classList.remove('on'); document.getElementById('routineBody').innerHTML=''; }
+document.getElementById('quizRow').onclick=e=>{ e.currentTarget.focus(); qzOpen(); };
+document.getElementById('routineRow').onclick=e=>{ e.currentTarget.focus(); openRoutine(); }; // focus first: Safari does not focus a tapped button, and the sheet returns focus to the opener
+{ const dismiss=()=>{ const q=rt.ctx==='quiz'&&document.getElementById('routineSheet').classList.contains('on'); closeRoutine(); if(q&&rt.onCancel) rt.onCancel(); }; document.getElementById('routineClose').onclick=dismiss; document.getElementById('routineBg').onclick=dismiss; }
 let setPage=null;
 function openSetPage(k){
   setPage=k; document.getElementById('setMain').hidden=true;
@@ -4247,7 +5142,7 @@ function renderEditor(){
   const day=PROGRAM.find(d=>d.id===sel.value); const list=document.getElementById('edList'); list.innerHTML='';
   // a tab per day with its exercise count; the (hidden) select still holds which day is open
   const tabs=document.getElementById('edTabs');
-  tabs.innerHTML=PROGRAM.map(d=>`<button data-d="${d.id}" aria-pressed="${d.id===day.id}" aria-label="${d.name} ${d.sub}, ${d.exercises.length} exercises">${sessionPlan({dayName:d.name,sub:d.sub}).tag} ${d.exercises.length}</button>`).join('');
+  tabs.innerHTML=PROGRAM.map(d=>`<button data-d="${d.id}" aria-pressed="${d.id===day.id}" aria-label="${d.name} ${d.sub}, ${d.exercises.length} exercises">${sessionPlan({dayName:d.name,sub:d.sub,focus:d.focus}).tag} ${d.exercises.length}</button>`).join('');
   tabs.querySelectorAll('button').forEach(b=>b.onclick=()=>{ sel.value=b.dataset.d; renderEditor(); });
   document.getElementById('edDayH').textContent=`${day.name} · ${day.sub}`;
   document.getElementById('adOpen').textContent=`+ Add an Exercise to ${day.name} ${day.sub}`;
@@ -4396,7 +5291,7 @@ document.getElementById('adBtn').onclick=()=>{
   day.exercises.push({group,name,target,m,seed:null,start,step,cue}); saveProgram();
   ['adName','adGroup','adTarget','adStart','adStep','adCue'].forEach(id=>document.getElementById(id).value=''); document.querySelectorAll('#adMuscles .eqchip').forEach(c=>{ c.classList.remove('on'); c.setAttribute('aria-pressed','false'); }); showToast('Added'); showAdForm(false); document.getElementById('adOpen').focus();
 };
-document.getElementById('edReset').onclick=async()=>{ if(await confirmSheet('Reset all four days to the recommended program for your equipment? Your logged data stays.', 'Reset', null, true)){ PROGRAM=buildProgram(); applyEquipPicks(PROGRAM); if(ROUTINE_ID==='ul4') UL4_PROGRAM=PROGRAM; await persistProgram(); document.getElementById('edDay').innerHTML=''; renderEditor(); showToast('Program reset'); } };
+document.getElementById('edReset').onclick=async()=>{ if(await confirmSheet(`Reset all ${routineWord(PROGRAM.length)} days to the recommended program for your equipment? Your logged data stays.`, 'Reset', null, true)){ { const fresh=buildProgram(); applyEquipPicks(fresh); if(ROUTINE_ID==='ul4') applyRoutineState({ul4:fresh}); else { PROGRAMS[ROUTINE_ID]=ROUTINES[ROUTINE_ID]?newRoutineProgram(ROUTINE_ID).days:fresh; applyRoutineState({programs:PROGRAMS}); } } await persistProgram(); document.getElementById('edDay').innerHTML=''; renderEditor(); showToast('Program reset'); } };
 
 let lastBackup=0;
 // ---------- backup import: one validator and one writer, shared by Replace, Merge and the onboarding import ----------
@@ -4404,7 +5299,7 @@ const BACKUP_VERSION=1, BACKUP_MAX_BYTES=10*1024*1024;
 // expected top-level type per stored key (null is always allowed: an export writes null for a key that was never set).
 // today:/last: are per-day objects; every other KEYS entry not listed here is checked as an object.
 const BACKUP_TYPES={ lastBackup:'number', 'meta:sessionCount':'number', lastDeload:'number', deloadStart:'number', deloadEnd:'number', blockStart:'number', blockNum:'number', backupSnoozeUntil:'number',
-  'meta:histMigratedV2':'boolean', program:'array', routineId:'string', recoveryLog:'array', sessions:'array', bodyweight:'array' };
+  'meta:histMigratedV2':'boolean', program:'array', routineId:'string', quiz:'object', recoveryLog:'array', sessions:'array', bodyweight:'array' };
 // arrays whose entries are read as {t:…} by merge, history and the recovery gate
 const BACKUP_TIMED=['recoveryLog','sessions','bodyweight'];
 const isObj=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
@@ -4419,6 +5314,7 @@ function validateBackup(j){
   for(const k of KEYS){
     if(!(k in j.data)) continue;
     const v=j.data[k]; if(v===null) continue;
+    if(k==='quiz'){ if(!isObj(v)) j.data.quiz=null; continue; } // the quiz is read leniently: a garbled one is treated as absent, it never makes a good backup look damaged
     const want=BACKUP_TYPES[k]||'object';
     if(want==='array'?!Array.isArray(v):want==='object'?!isObj(v):typeof v!==want) return bad(k);
     if(BACKUP_TIMED.includes(k)&&!v.every(hasT)) return bad(k);
@@ -4444,13 +5340,15 @@ async function readBackupFile(f){
 // routine keys are restored only when the file actually has a value: a backup without them (older, or exported while no routine
 // was set, which writes null) leaves this phone's routine alone, and never creates the keys
 const ROUTINE_KEYS=['routineId','programs'];
+// the quiz follows the same rule (v83): a file without one, such as every older backup, leaves this phone's answers and its seen flag alone
+const KEEP_IF_MISSING=[...ROUTINE_KEYS,'quiz'];
 // Replace write: every backed-up key except today's drafts and start times. Checks each write; on the first failure puts
 // back what was there before (best effort) and returns false, so a failed restore does not leave a quiet hybrid.
 async function restoreKeys(data){
   if(!('deloadEnd' in data)) data={...data,deloadEnd:0}; // an older backup has none; this phone's stale End Early time must not survive a Replace
   // last:<id> of days that exist only in a routine from the file (the built-in four are already in KEYS); never today:
   const extraLast=dayKeys(data.programs).map(id=>'last:'+id).filter(k=>!KEYS.includes(k)&&k in data);
-  const keys=[...KEYS.filter(k=>!k.startsWith('today:')&&k!=='dayStart'&&k in data&&!(ROUTINE_KEYS.includes(k)&&data[k]==null)), ...extraLast], prev={};
+  const keys=[...KEYS.filter(k=>!k.startsWith('today:')&&k!=='dayStart'&&k in data&&!(KEEP_IF_MISSING.includes(k)&&data[k]==null)), ...extraLast], prev={};
   for(const k of keys) prev[k]=await sget(k);
   // a write only counts as failed on an explicit false (store.set returns true/false once fix/save-failure-notice is in; undefined is not a failure)
   for(const k of keys){
@@ -4460,12 +5358,12 @@ async function restoreKeys(data){
 }
 async function doExport(){
   const out={}; for(const k of KEYS){ out[k]=await sget(k); }
-  for(const id of dayKeys()) for(const k of ['today:'+id,'last:'+id]) if(!(k in out)) out[k]=await sget(k); // other routines' days (none until routines can be switched on)
+  for(const id of dayKeys()) for(const k of ['today:'+id,'last:'+id]) if(!(k in out)) out[k]=await sget(k); // other routines' days
   Object.assign(out, await store.corruptCopies()); // corrupt:<key> raw text; import only reads KEYS, so it ignores these
   const blob=new Blob([JSON.stringify({app:'liftlog',v:BACKUP_VERSION,exported:new Date().toISOString(),data:out},null,1)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); const d=new Date(), p2=n=>String(n).padStart(2,'0'); a.download=`liftlog-backup-${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}.json`; document.body.appendChild(a); a.click(); a.remove();
   // only a tap on a Back Up Now / Export button runs this, so it records the backup (and resets the 7-day reminder)
-  lastBackup=Date.now(); await sset('lastBackup',lastBackup); updateBackupUI(true); showToast('Backup downloaded');
+  lastBackup=Date.now(); await sset('lastBackup',lastBackup); updateBackupUI(true); showToast('Backup downloaded'); return true;
 }
 function backupDue(){ return !lastBackup || (Date.now()-lastBackup) > 7*864e5; }
 // due AND the Weekly Backup Reminder is on: the only thing that may colour the celebration card, light the Settings row or show Home's banner
@@ -4589,16 +5487,20 @@ async function doMergeImport(d){
   await must('notes',notes);
 
   const localProgramRaw=await sget('program');
-  if(!localProgramRaw && d.program){ PROGRAM=d.program; await must('program',PROGRAM); }
+  if(!localProgramRaw && d.program){ await must('program',d.program); applyRoutineState({ul4:d.program}); }
 
   // routines: add a routine id only if this phone lacks it (a local entry is never overwritten); the active routine id is
   // taken from the file only when this phone has none, and after the programs, so it never points at a missing entry
   if(isObj(d.programs)){
     const localPrograms=await sget('programs'), merged=isObj(localPrograms)?{...localPrograms}:{}; let added=false;
     Object.keys(d.programs).forEach(id=>{ if(id!=='ul4'&&/^[\w-]{1,24}$/.test(id)&&id!=='__proto__'&&!Object.prototype.hasOwnProperty.call(merged,id)){ merged[id]=d.programs[id]; added=true; } });
-    if(added){ await must('programs',merged); PROGRAMS=merged; }
+    if(added){ await must('programs',merged); applyRoutineState({programs:merged}); }
   }
-  if(typeof d.routineId==='string'&&d.routineId.trim()&&(await sget('routineId'))==null) await must('routineId',d.routineId);
+  if(typeof d.routineId==='string'&&d.routineId.trim()&&(await sget('routineId'))==null){ await must('routineId',d.routineId); applyRoutineState({routineId:d.routineId}); }
+
+  // quiz: this phone's answered or skipped quiz is never replaced; a file's finished quiz is adopted only when this phone has none or only a draft
+  { const fq=cleanQuiz(d.quiz), lq=cleanQuiz(await sget('quiz'));
+    if(fq&&fq.state!=='draft'&&(!lq||lq.state==='draft')){ await must('quiz',d.quiz); QUIZ=fq; } }
 
   for(const dayId of dayKeys(d.programs)){
     const localLatest=Math.max(0, ...localSessionsBefore.filter(s=>s.dayId===dayId).map(s=>s.t));
@@ -4622,14 +5524,15 @@ document.getElementById('importFile').onchange=async e=>{
     else{
       // Replace overwrites everything here and there is no automatic backup first, so the sheet says so and points at Export Backup.
       const n=Array.isArray(d.sessions)?d.sessions.length:0, when=r.exported?` from ${fmtDate(Date.parse(r.exported))}`:'';
-      if(!await confirmSheet(`Replace overwrites everything currently on this phone with the backup${when} (${n} session${n===1?'':'s'}). Your ${sessions.length} session${sessions.length===1?'':'s'}, history and settings here will be lost and this cannot be undone. Cancel and use Export Backup first if you want a copy of what is here now.`, 'Replace', null, true)){ e.target.value=''; return; }
+      if(!await confirmSheet(`Replace overwrites everything currently on this phone with the backup${when} (${n} session${n===1?'':'s'}). Your ${sessions.length} session${sessions.length===1?'':'s'}, history and settings here will be lost and this cannot be undone. A backup from before routines keeps your current routine. Cancel and use Export Backup first if you want a copy of what is here now.`, 'Replace', null, true)){ e.target.value=''; return; }
       if(!await restoreKeys(d)){ showToast("Couldn't save the backup. Nothing was changed, so free up storage and try again"); e.target.value=''; return; }
+      { const prog=await sget('program'); applyRoutineState({ul4:Array.isArray(prog)&&prog.length===4?prog:PROGRAM, routineId:await sget('routineId'), programs:await sget('programs')}); }
       showToast('Restored — reloading'); }
     setTimeout(()=>location.reload(),900);
   }catch(err){ console.error(err); showToast("Couldn't finish the import. Your data may be partly updated, so try again"); }
   e.target.value='';
 };
-document.getElementById('wipeBtn').onclick=async()=>{ if(await confirmSheet('Erase all workouts, history and settings on this device?', 'Erase', null, true)&&await confirmSheet('Really erase? This cannot be undone.', 'Erase Everything', null, true)){ for(const k of KEYS) await sset(k,null); stopTimer(); await sset(REST_KEY,null); location.reload(); } };
+document.getElementById('wipeBtn').onclick=async()=>{ if(await confirmSheet('Erase all workouts, history and settings on this device?', 'Erase', null, true)&&await confirmSheet('Really erase? This cannot be undone.', 'Erase Everything', null, true)){ for(const k of KEYS) await sset(k,null); for(const id of dayKeys()) for(const k of ['today:'+id,'last:'+id]) await sset(k,null); stopTimer(); await sset(REST_KEY,null); location.reload(); } };
 
 // ---------- swap ----------
 function closeSheet(){ document.getElementById('sheet').classList.remove('on'); document.getElementById('sheetBg').classList.remove('on'); }
@@ -4681,10 +5584,10 @@ function bestPickFor(slot, exclude){
 function applyEquipPicks(program){
   let changed=0;
   program.forEach(day=>{
-    const tpl=TEMPLATE.find(t=>t.id===day.id);
+    const tpl=Object.values(ROUTINES).flatMap(r=>r.template||[]).find(t=>t.id===day.id);
     day.exercises.forEach((ex,i)=>{
       if(equipAllowed(ex)) return;
-      const slot=(tpl&&tpl.slots.length===day.exercises.length)?tpl.slots[i]:{group:ex.group,key:groupKeyFor(ex),target:ex.target,pick:ex.name};
+      const slot=(tpl&&!day.lvl&&tpl.slots.length===day.exercises.length)?tpl.slots[i]:{group:ex.group,key:groupKeyFor(ex),target:ex.target,pick:ex.name};
       const pick=bestPickFor(slot,new Set(day.exercises.map(e=>e.name)));
       if(pick){ day.exercises[i]=slotExercise(slot,pick); changed++; }
     });
@@ -4698,7 +5601,7 @@ function openSwap(dayId, ex){
   const key=groupKeyFor(ex); const inUse=new Set(day.exercises.map(e=>e.name));
   document.getElementById('sheetSub').textContent=`Replacing ${ex.name} · ${day.name} ${day.sub}`;
   const list=document.getElementById('sheetList'); list.innerHTML='';
-  const dflt=DEFAULT_PROGRAM.find(d=>d.id===dayId), original=dflt&&dflt.exercises[idx];
+  const dflt=DEFAULT_PROGRAM.find(d=>d.id===dayId), original=dflt&&!day.lvl&&dflt.exercises[idx]; // a New or Experienced build has its own lift order
   const slotTarget=anchorOf(ex).target;
   const render1=(alt,tag,searchable)=>{
     const el=document.createElement('div'); el.className='alt'+(searchable?' alt-searchable':'');
@@ -4777,10 +5680,10 @@ async function doSwap(day, idx, alt){
 // ---------- views ----------
 function setView(v){
   if(view==='log'&&v!=='log'&&cardioDraft&&cardioDraft.step==='intro'&&!cardioLive){ cardioDraft=newCardioDraft(); renderCardioForm(); } // leaving the Log abandons the cardio intro (nothing was saved): it returns to the picker
-  view=v; document.body.dataset.view=v; document.querySelectorAll('.viewtab').forEach(t=>{ t.classList.toggle('active',t.dataset.v===v); if(t.dataset.v===v) t.setAttribute('aria-current','page'); else t.removeAttribute('aria-current'); });
+  const prevView=view; view=v; document.body.dataset.view=v; document.querySelectorAll('.viewtab').forEach(t=>{ t.classList.toggle('active',t.dataset.v===v); if(t.dataset.v===v) t.setAttribute('aria-current','page'); else t.removeAttribute('aria-current'); });
   ['home','log','history','strength','more'].forEach(n=>document.getElementById(n+'View').style.display=(v===n?'':'none'));
   document.getElementById('dayTabs').style.display=v==='log'?'':'none'; document.getElementById('logFooter').style.display=v==='log'?'':'none';
-  if(v==='home') renderHome();
+  if(v==='home'){ if(view!==prevView) homeCarKey=''; renderHome(); maybeQuizPrompt(); }
   if(v==='log' && currentDay!=='cardio') render();
   if(v==='log' && currentDay==='cardio' && cardioLive && cardioLive.step==='finish') renderCardioForm(); // the form drawn while the Log was hidden could not take focus: draw it again so Duration is focused and selected
   if(v==='history') renderHistory(); if(v==='strength') renderStrength(); if(v==='more'){ if(setPage) closeSetPage(); else renderSettings(); }
@@ -4882,10 +5785,8 @@ async function init(){
   else if(sessionCount>0 || sessions.length>0){ await sset('program',PROGRAM); } // logged before a program was ever saved (the old fixed defaults): keep those exercises name-for-name so history keys still match, skip the builder
   else { needsBuild=true; applyEquipPicks(PROGRAM); }
   // routines groundwork: read-only here. No stored routine id (every install today) leaves the program above untouched.
-  UL4_PROGRAM=PROGRAM;
-  { const rid=await sget('routineId'), progs=await sget('programs');
-    ROUTINE_ID=typeof rid==='string'&&rid.trim()?rid:'ul4'; PROGRAMS=progs&&typeof progs==='object'&&!Array.isArray(progs)?progs:{};
-    PROGRAM=activeProgram(); if(PROGRAM===UL4_PROGRAM) ROUTINE_ID='ul4'; if(!PROGRAM.some(d=>d.id===currentDay)) currentDay=PROGRAM[0].id; }
+  applyRoutineState({ul4:PROGRAM, routineId:await sget('routineId'), programs:await sget('programs')});
+  QUIZ=cleanQuiz(await sget('quiz'));
 
   // renamed exercises: every store that keys on the name moves to the new one, so history, notes, last-used
   // weights and the program slot carry over. Idempotent: a no-op once nothing is stored under an old name.
