@@ -3157,6 +3157,9 @@ function render(){
     if(ex.rotPrev){ const idx=day.exercises.indexOf(ex); const rt=document.createElement('div'); rt.className='plateau-tip'; rt.innerHTML=`Swapped in at the start of this block (was ${esc(ex.rotPrev.name)}). <span class="linkbtn" style="color:var(--amber)" data-act="undo">Undo</span> · <span class="linkbtn" style="color:var(--amber)" data-act="never">Never Suggest This</span>`; rt.querySelector('[data-act="undo"]').onclick=()=>undoRotation(day,idx); rt.querySelector('[data-act="never"]').onclick=()=>rejectRotation(day,idx); body.appendChild(rt); }
     if(sug===-1){ const fn=document.createElement('div'); fn.className='first-log-note'; fn.textContent='New lift — no history yet. Log a comfortable first set below; Lift Log will suggest a weight next time from what you log now.'; body.appendChild(fn); }
     else if(estFrom){ const fn=document.createElement('div'); fn.className='first-log-note'; fn.textContent=`New lift — the weight is a conservative estimate from ${estFrom} (same muscle group, adjusted for the implement and rep range). Adjust it to what feels right; Lift Log learns from what you log.`; body.appendChild(fn); }
+    // first-session effort cue for a New or Experienced build: only on a rep-based, loadable lift with no history anywhere; it never writes or changes anything
+    if((day.lvl==='new'||day.lvl==='exp')&&!isTimedTarget(ex.target)&&ex.start!==0&&ex.step!==0&&!(hist[ex.name]||[]).length&&!lastByName[ex.name]){
+      const cu=document.createElement('div'); cu.className='first-log-note'; cu.textContent=day.lvl==='new'?'Start light and leave 3 or more Reps Left.':'Work up to a weight that leaves about 2 Reps Left.'; body.appendChild(cu); }
 
     const timed=isTimedTarget(ex.target);
     // bodyweight lifts (split squats, dips, pull-ups…) log bodyweight plus whatever is held or worn: s.add is that
