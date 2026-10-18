@@ -5159,6 +5159,7 @@ function validateBackup(j){
   for(const k of KEYS){
     if(!(k in j.data)) continue;
     const v=j.data[k]; if(v===null) continue;
+    if(k==='quiz'){ if(!isObj(v)) j.data.quiz=null; continue; } // the quiz is read leniently: a garbled one is treated as absent, it never makes a good backup look damaged
     const want=BACKUP_TYPES[k]||'object';
     if(want==='array'?!Array.isArray(v):want==='object'?!isObj(v):typeof v!==want) return bad(k);
     if(BACKUP_TIMED.includes(k)&&!v.every(hasT)) return bad(k);
