@@ -3279,7 +3279,7 @@ function renderBuilder(panel){
   const quizBuilt=!!QUIZ&&QUIZ.state==='done';
   panel.style.display='block'; document.body.classList.add('building');
   panel.innerHTML=`
-    <div class="onb-top"><button class="onb-back" id="buildBack" type="button" style="gap:4px;font-size:15px">${QZ_BACK}Back</button></div>
+    <div class="onb-top"><button class="onb-back" id="buildBack" type="button" aria-label="Back">${QZ_BACK}</button></div>
     <div class="greet-wrap">
       <div class="greet-eyebrow">${quizBuilt?'Your Routine':'First Launch'}</div>
       <h2 class="greet-h1">${quizBuilt&&ROUTINE_ID!=='ul4'?'Build Your '+esc(ROUTINES[ROUTINE_ID].name):'Build Your Program'}</h2>
