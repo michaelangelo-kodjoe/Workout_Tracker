@@ -3279,6 +3279,7 @@ function renderBuilder(panel){
   const quizBuilt=!!QUIZ&&QUIZ.state==='done';
   panel.style.display='block'; document.body.classList.add('building');
   panel.innerHTML=`
+    <div class="onb-top"><button class="onb-back" id="buildBack" type="button" style="gap:4px;font-size:15px">${QZ_BACK}Back</button></div>
     <div class="greet-wrap">
       <div class="greet-eyebrow">${quizBuilt?'Your Routine':'First Launch'}</div>
       <h2 class="greet-h1">${quizBuilt&&ROUTINE_ID!=='ul4'?'Build Your '+esc(ROUTINES[ROUTINE_ID].name):'Build Your Program'}</h2>
@@ -3296,6 +3297,7 @@ function renderBuilder(panel){
     renderBuilder(panel);
   });
   panel.querySelectorAll('.bc').forEach(b=>b.onclick=()=>{ const day=PROGRAM.find(d=>d.id===b.dataset.d); openSwap(day.id, day.exercises[+b.dataset.i]); });
+  document.getElementById('buildBack').onclick=builderBack;
   document.getElementById('buildDone').onclick=async()=>{ await persistProgram(); needsBuild=false; document.body.classList.remove('building'); showToast('Program saved — edit it any time in Settings'); touchDayStart(); setView('log'); };
 }
 
@@ -3904,7 +3906,27 @@ async function qzCommitFresh(){
     applyRoutineState({ul4:fresh,programs,routineId:id});
   } else applyRoutineState({ul4:fresh});
   if(!await saveQuiz({state:'done',...a,sk:qz.sk,pick:id})){ await undo(); return false; }
+  qz.prevFilter=prevFilter;
   return true;
+}
+// Back on the builder (first run only): takes the setup commit back so nothing is half-applied, then reopens the quiz result (or the
+// Recovery Map when the quiz was skipped). Order: the quiz goes back to a draft first (if that save fails nothing has changed), then the
+// routine keys are cleared, then settings. While the builder is up nothing has been logged, so clearing program/programs/routineId is safe.
+// Choosing again re-runs qzCommitFresh from the answers, so the pick, equipment and program are rebuilt cleanly.
+async function builderBack(){
+  const q=QUIZ, fail=()=>showToast('Could not go back. Nothing was changed');
+  if(q&&q.state==='done'&&!await saveQuiz({state:'draft',goal:q.goal,days:q.days,exp:q.exp,equip:q.equip,sk:q.sk,pick:q.pick})) return fail();
+  if(await sset('program',null)===false||await sset('programs',null)===false||await sset('routineId',null)===false) return fail();
+  if(qz&&qz.prevFilter) settings.equipFilter=qz.prevFilter;
+  settings.onboarded=false;
+  if(await sset('settings',settings)===false) return fail();
+  const base=JSON.parse(JSON.stringify(DEFAULT_PROGRAM)); applyEquipPicks(base);
+  applyRoutineState({ul4:base,routineId:null,programs:{}});
+  const skipped=!!q&&q.state==='skipped';
+  if(!qz||qz.ctx!=='fresh') qz=qzNew('fresh');
+  qz.chosen=!skipped&&q&&q.pick&&ROUTINES[q.pick]?q.pick:null; qz.screen='result'; qz.err=false;
+  setAppInert(true); document.getElementById('onboardBg').classList.add('on'); document.body.classList.remove('building');
+  renderOnboardStep(skipped?6:5);
 }
 async function finishOnboarding(){
   if(!await qzCommitFresh()){ const e=document.getElementById('onbFinErr'); if(e) e.hidden=false; return; }
