@@ -1222,6 +1222,13 @@
     <button class="btn" id="fatigueProceed"></button>
   </div>
 </div>
+<div class="sheet-bg" id="quizPromptBg"></div>
+<div class="sheet" id="quizPrompt">
+  <div class="sheet-head"><div><div id="quizPromptTitle" tabindex="-1" style="font-size:15px">Find Your Routine</div><div class="rt-sheet-sub">New in this version</div></div><span class="linkbtn" id="quizPromptClose">Close</span></div>
+  <p class="rt-line" style="margin:0 0 12px">Answer a few quick questions and we will suggest a routine. Or keep Upper/Lower. Nothing changes unless you say so.</p>
+  <p class="rt-line dim" style="margin:0 0 4px">It takes about half a minute. You can find it again in Settings.</p>
+  <div class="sheet-actions"><button class="btn" id="quizNotNow" type="button" style="flex:1;min-height:48px;font-size:15px">Not Now</button><button class="btn primary" id="quizTake" type="button" style="flex:1;min-height:48px;font-size:15px">Take the Quiz</button></div>
+</div>
 <div class="sheet-bg" id="routineBg"></div>
 <div class="sheet" id="routineSheet">
   <div class="sheet-head"><div><div id="routineTitle" tabindex="-1" style="font-size:15px">Change Routine</div><div id="routineSub" class="rt-sheet-sub"></div></div><span class="linkbtn" id="routineClose">Close</span></div>
@@ -3775,6 +3782,29 @@ async function qzUse(id){
   const draft=await openDraft();
   openRoutine({step:draft?'blocked':'confirm',to:id,draft,ctx:'quiz',goal:qzGoalFor(id,a),onDone:finish,onCancel:leaving=>{ settings.equipFilter=orig; if(leaving) qzClose(); }});
 }
+// ---- the one-time sheet for someone who already uses the app ----
+// Shown at most once per open, on Home only, and only when nothing else is going on: no open workout or running timer or cardio session,
+// no other sheet or overlay, no update banner, not in the first minute. Not Now, Close, Escape and a tap outside all mean Not Now, which
+// is remembered (state skipped), so it never returns by itself; Settings is the only way back. Nothing else is touched.
+const QUIZ_PROMPT_DELAY_MS=60000; let quizPromptAt=Date.now(), quizPrompted=false, quizPromptBusy=false;
+async function quizPromptDue(){
+  if(quizPrompted||view!=='home'||needsBuild||!(settings.onboarded||sessions.length)) return false;
+  if(QUIZ&&QUIZ.state!=='draft') return false; if(ROUTINE_ID!=='ul4') return false;
+  if(Date.now()-quizPromptAt<QUIZ_PROMPT_DELAY_MS) return false;
+  if(sheetReturnFocus.size||qz||document.querySelector('.celebrate-bg.on')||getComputedStyle(document.getElementById('updateBanner')).display!=='none') return false;
+  if(cardioLive||(timer.end&&document.getElementById('timer').classList.contains('on'))||sessionInProgress()) return false;
+  return !(await openDraft());
+}
+async function maybeQuizPrompt(){
+  if(quizPromptBusy) return; quizPromptBusy=true; let due=false; try{ due=await quizPromptDue(); }catch(e){ console.error(e); } quizPromptBusy=false;
+  if(!due||view!=='home'||sheetReturnFocus.size) return; // the world may have changed while the drafts were read
+  quizPrompted=true; document.getElementById('quizPromptBg').classList.add('on'); document.getElementById('quizPrompt').classList.add('on');
+}
+function closeQuizPrompt(){ document.getElementById('quizPromptBg').classList.remove('on'); document.getElementById('quizPrompt').classList.remove('on'); }
+async function quizNotNow(){ closeQuizPrompt(); await saveQuiz({state:'skipped',goal:QUIZ&&QUIZ.goal,days:QUIZ&&QUIZ.days,exp:QUIZ&&QUIZ.exp,equip:QUIZ&&QUIZ.equip,sk:QUIZ?QUIZ.sk:[]}); showToast('Skipped. You can take the quiz any time in Settings.'); }
+document.getElementById('quizNotNow').onclick=quizNotNow; document.getElementById('quizPromptClose').onclick=quizNotNow; document.getElementById('quizPromptBg').onclick=quizNotNow;
+document.getElementById('quizTake').onclick=()=>{ closeQuizPrompt(); qzOpen(); };
+setTimeout(maybeQuizPrompt,QUIZ_PROMPT_DELAY_MS+500);
 // the last question is answered: the result follows
 function qzDone(){ qzResult(); }
 // an existing user's quiz is not a sheet, so Escape is Skip Quiz here (never during first-run setup, and never while a sheet is on top of it)
@@ -5492,7 +5522,7 @@ function setView(v){
   const prevView=view; view=v; document.body.dataset.view=v; document.querySelectorAll('.viewtab').forEach(t=>{ t.classList.toggle('active',t.dataset.v===v); if(t.dataset.v===v) t.setAttribute('aria-current','page'); else t.removeAttribute('aria-current'); });
   ['home','log','history','strength','more'].forEach(n=>document.getElementById(n+'View').style.display=(v===n?'':'none'));
   document.getElementById('dayTabs').style.display=v==='log'?'':'none'; document.getElementById('logFooter').style.display=v==='log'?'':'none';
-  if(v==='home'){ if(view!==prevView) homeCarKey=''; renderHome(); }
+  if(v==='home'){ if(view!==prevView) homeCarKey=''; renderHome(); maybeQuizPrompt(); }
   if(v==='log' && currentDay!=='cardio') render();
   if(v==='log' && currentDay==='cardio' && cardioLive && cardioLive.step==='finish') renderCardioForm(); // the form drawn while the Log was hidden could not take focus: draw it again so Duration is focused and selected
   if(v==='history') renderHistory(); if(v==='strength') renderStrength(); if(v==='more'){ if(setPage) closeSetPage(); else renderSettings(); }
