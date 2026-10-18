@@ -4970,12 +4970,13 @@ function rtRebuildView(){
   return `<p class="rt-warn" style="margin-top:0">Any edits you made to ${esc(r.name)} will be replaced: swapped, added or removed lifts, and changed targets.</p>
     <div class="rt-sec">What Changes</div>
     <ul class="rt-list"><li class="chg">${RT_ARROW}<span>Every day of ${esc(r.name)} is rebuilt for the ${LEVEL_WORD[lvl]} level.</span></li>
-      ${eq.map(t=>`<li class="chg">${RT_ARROW}<span>${t}</span></li>`).join('')}</ul>
+      ${eq.map(t=>`<li class="chg">${RT_ARROW}<span>${t}</span></li>`).join('')}
+      <li class="chg">${RT_ARROW}<span>Exercise rotation for ${esc(r.name)} starts over.</span></li></ul>
     <div class="rt-sec">What Stays the Same</div>
     <ul class="rt-list"><li class="keep">${RT_CHK}<span>Your history, records and notes.</span></li>
       <li class="keep">${RT_CHK}<span>Your progress. Lifts carry over by name.</span></li>
       <li class="keep">${RT_CHK}<span>Your other routines. Only ${esc(r.name)} changes.</span></li>
-      <li class="keep">${RT_CHK}<span>Your training block and sessions already logged this week.</span></li></ul>
+      <li class="keep">${RT_CHK}<span>Your block start and sessions already logged this week.</span></li></ul>
     ${rtBackup()}
     <div class="sheet-actions"><button class="btn" id="rtCancel" type="button" style="flex:1;min-height:48px;font-size:15px">Cancel</button><button class="btn primary" id="rtGo" type="button" style="flex:1;min-height:48px;font-size:15px">Rebuild Routine</button></div>`;
 }
