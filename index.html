@@ -3165,12 +3165,27 @@ function renderBuilder(panel){
 // Home is the landing tab — picking a day here (or accepting a built program) hands off to the Log tab, which now
 // always shows the active day's exercise list with no arrival/dismiss state of its own.
 let homePreviewOpen=false;
+// Home's day cards. A day whose sub is a single letter reads "Push, day A" to a screen reader (the card shows only the letter).
+function dayCardsHTML(){
+  return PROGRAM.map(d=>{ const letter=/^[A-C]$/.test(d.sub||''), today=d.id===currentDay;
+    return `<div class="day-card ${dayType(d)}${today?' today':''}" data-day="${d.id}"${letter?` aria-label="${esc(d.name)}, day ${d.sub}, ${d.exercises.length} Exercises${today?', '+dayTagText():''}"`:''}>${today?'<div class="ddot"></div>':''}<div class="dtag">${today?dayTagText():''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub}</div><div class="dsub">${d.exercises.length} Exercises</div></div>`; }).join('');
+}
+// With five or six days the cards scroll sideways. Home opens scrolled so Today is the first card in view (instant, no animation), once per
+// visit; a redraw while the user is looking keeps wherever they scrolled to. Four days or fewer are left exactly as they always were.
+let homeCarKey='';
+function placeCarousel(panel,prevLeft){
+  const car=panel.querySelector('.day-carousel'); if(!car) return;
+  const key=ROUTINE_ID+':'+currentDay;
+  if(PROGRAM.length>=5&&homeCarKey!==key){ const t=car.querySelector('.day-card.today'); if(t) car.scrollLeft=Math.max(0,t.offsetLeft-2); homeCarKey=key; }
+  else if(prevLeft) car.scrollLeft=prevLeft;
+  edgeFade(car);
+}
 // the loaded day is "Today" until a lift has been logged today; after that it's the next one in the rotation
 function dayTagText(){ const t0=new Date(); t0.setHours(0,0,0,0); return sessions.some(x=>!x.isCardio&&x.t>=t0.getTime())?'Next':'Today'; }
 function renderHome(){ renderHomeBody(); placeDeloadLine(); }
 function renderHomeBody(){
   updateBlockUI(); updateCardioLiveBanner();
-  const panel=document.getElementById('arrivalPanel');
+  const panel=document.getElementById('arrivalPanel'); const prevLeft=(panel.querySelector('.day-carousel')||{}).scrollLeft||0;
   document.body.classList.toggle('building', needsBuild);
   if(needsBuild){ renderBuilder(panel); return; }
   if(currentDay==='cardio'){
@@ -3183,11 +3198,11 @@ function renderHomeBody(){
       <button class="start-cta" id="arrivalStart">${cardioLive?'Resume Cardio Session':'Go to Cardio Log'}</button>
       <div class="greet-sub" style="margin-top:14px">Feeling fine? Tap a lift day to train it instead.</div>
       <div class="day-carousel${PROGRAM.length===3?' three':''}">
-        ${PROGRAM.map(d=>`<div class="day-card ${dayType(d)}${d.id===currentDay?' today':''}" data-day="${d.id}">${d.id===currentDay?'<div class="ddot"></div>':''}<div class="dtag">${d.id===currentDay?dayTagText():''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub}</div><div class="dsub">${d.exercises.length} Exercises</div></div>`).join('')}
+        ${dayCardsHTML()}
       </div>`;
     document.getElementById('arrivalStart').onclick=()=>setView('log');
     panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day, ()=>setView('log')));
-    edgeFade(panel.querySelector('.day-carousel'));
+    placeCarousel(panel,prevLeft);
     return;
   }
   const day=PROGRAM.find(d=>d.id===currentDay);
@@ -3226,12 +3241,12 @@ function renderHomeBody(){
         <div class="greet-sub">${dayLine}${lastTxt}</div>
       </div>
       <div class="day-carousel${PROGRAM.length===3?' three':''}">
-        ${PROGRAM.map(d=>`<div class="day-card ${dayType(d)}${d.id===currentDay?' today':''}" data-day="${d.id}">${d.id===currentDay?'<div class="ddot"></div>':''}<div class="dtag">${d.id===currentDay?dayTagText():''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub}</div><div class="dsub">${d.exercises.length} Exercises</div></div>`).join('')}
+        ${dayCardsHTML()}
       </div>
       <div class="preview-list">${previewRows}${moreRow}</div>
       <button class="start-cta" id="arrivalStart">${ctaTxt}</button>`;
     panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day, ()=>setView('log')));
-    edgeFade(panel.querySelector('.day-carousel'));
+    placeCarousel(panel,prevLeft);
     const more=document.getElementById('previewMore'); if(more) more.onclick=()=>{ homePreviewOpen=!homePreviewOpen; renderHome(); document.getElementById('previewMore').focus({preventScroll:true}); };
   }
   document.getElementById('arrivalStart').onclick=()=>{ touchDayStart(); setView('log'); };
@@ -5207,10 +5222,10 @@ async function doSwap(day, idx, alt){
 // ---------- views ----------
 function setView(v){
   if(view==='log'&&v!=='log'&&cardioDraft&&cardioDraft.step==='intro'&&!cardioLive){ cardioDraft=newCardioDraft(); renderCardioForm(); } // leaving the Log abandons the cardio intro (nothing was saved): it returns to the picker
-  view=v; document.body.dataset.view=v; document.querySelectorAll('.viewtab').forEach(t=>{ t.classList.toggle('active',t.dataset.v===v); if(t.dataset.v===v) t.setAttribute('aria-current','page'); else t.removeAttribute('aria-current'); });
+  const prevView=view; view=v; document.body.dataset.view=v; document.querySelectorAll('.viewtab').forEach(t=>{ t.classList.toggle('active',t.dataset.v===v); if(t.dataset.v===v) t.setAttribute('aria-current','page'); else t.removeAttribute('aria-current'); });
   ['home','log','history','strength','more'].forEach(n=>document.getElementById(n+'View').style.display=(v===n?'':'none'));
   document.getElementById('dayTabs').style.display=v==='log'?'':'none'; document.getElementById('logFooter').style.display=v==='log'?'':'none';
-  if(v==='home') renderHome();
+  if(v==='home'){ if(view!==prevView) homeCarKey=''; renderHome(); }
   if(v==='log' && currentDay!=='cardio') render();
   if(v==='log' && currentDay==='cardio' && cardioLive && cardioLive.step==='finish') renderCardioForm(); // the form drawn while the Log was hidden could not take focus: draw it again so Duration is focused and selected
   if(v==='history') renderHistory(); if(v==='strength') renderStrength(); if(v==='more'){ if(setPage) closeSetPage(); else renderSettings(); }
