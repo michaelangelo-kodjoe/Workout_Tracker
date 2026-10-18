@@ -3776,7 +3776,7 @@ function qzGaps(id){
   finally{ settings.equipFilter=prev; }
 }
 const qzGapLine=n=>n?`${n} lift${n===1?' needs':'s need'} equipment you did not choose and ${n===1?'is':'are'} left out.`:'';
-const LEVEL_APPLIES='Your current program stays as it is. Your level applies to routines you build from now on.';
+const LEVEL_APPLIES='Your programs stay as they are. Your new level applies to routines you build from now on.';
 const qzAllSkipped=()=>QUIZ_QS.every(k=>qz.sk.includes(k)&&qz.a[k]==null);
 function qzWhy(pk,allSk){
   if(allSk) return 'You skipped every question, so we kept the standard plan. Upper/Lower is the plan the app has always started with.';
@@ -3792,6 +3792,8 @@ function qzResultProg(){ return qz.ctx==='fresh'?{label:'Step 5 of 6',n:5,t:6}:{
 function qzResult(){
   qz.screen='result'; const a=qz.a, allSk=qzAllSkipped(), pk=quizPick(a), id=allSk?'ul4':pk.id, r=ROUTINES[id];
   const cur=qz.ctx!=='fresh'&&id===ROUTINE_ID, notes=[];
+  // a Retake whose level differs from the level the live routine was built at offers a Rebuild of that routine (never automatic)
+  const rebuildable=cur&&!allSk&&levelOf(a.exp)!==levelOf((PROGRAM[0]||{}).lvl);
   if(r.freq) notes.push(`<p class="qz-note">${r.freq}</p>`);
   if(pk.asked===2&&id==='fb3'&&!allSk) notes.push(`<p class="qz-note">${QZ_TWO}</p><p class="qz-note">Your weekly goal will be 2 sessions, so the ring can close.</p>`);
   if(r.note) notes.push(`<p class="rt-honest">${r.note}</p>`);
@@ -3802,11 +3804,13 @@ function qzResult(){
     <p class="qz-why">${qzWhy(pk,allSk)}</p>${allSk?'':cur?`<p class="qz-note">${LEVEL_APPLIES}</p>`:`<p class="qz-note">${builtForLine(qz.a.exp)}</p>`}${notes.join('')}</div>`;
   const foot=`${qz.err?'<div class="qz-err" role="alert">Could not save your routine. Nothing was changed. Try again.</div>':''}
     <button class="cel-cta" id="qzUse" type="button">${cur?`Keep ${esc(r.short||r.name)}`:'Use This Routine'}</button>
+    ${rebuildable?`<button class="btn" id="qzRebuild" type="button" style="width:100%;min-height:48px;font-size:15px;margin-top:10px">Rebuild ${esc(r.short||r.name)} for ${LEVEL_WORD[levelOf(a.exp)]}</button>`:''}
     <div class="qz-links"><button class="linkbtn" id="qzPickBtn" type="button">Pick Another</button><button class="linkbtn" id="qzChange" type="button">Change Answers</button></div>
     <div class="onb-note">${qz.ctx==='fresh'?'You can change this later in Settings.':'Nothing changes until you confirm.'}</div>`;
   qzShow(qzShell(qzResultProg(),{back:true,body,foot,top:true,footCls:' qz-foot-flow'}));
   const $=i=>document.getElementById(i);
   $('qzUse').onclick=()=>qzUse(id);
+  if(rebuildable) $('qzRebuild').onclick=()=>qzRebuild(id);
   $('qzPickBtn').onclick=()=>{ rt.open=null; qzPick(id); }; $('qzChange').onclick=()=>qzQuestion('goal');
   $('onboardBack').onclick=()=>{ const o=qzOrder(); qzQuestion(o[o.length-1]); };
 }
@@ -3825,22 +3829,34 @@ function qzPick(sug,focusSel){
 }
 // "Use": a new install records its pick and carries on (it is applied when setup finishes); an existing user keeps their routine
 // (the quiz is just marked done) or goes through the same Change Routine confirm as Settings does, and nothing changes until they confirm
+// the shared end of a quiz that changes something for an existing user: equipment first, then the quiz itself last; false (with the equipment put back) if a save fails
+function qzFinisher(id){
+  const a=qz.a, orig=settings.equipFilter.slice(), eqChanged=!!a.equip&&a.equip!==equipPresetOf(orig);
+  const finish=async()=>{
+    if(eqChanged&&await sset('settings',settings)===false){ settings.equipFilter=orig; qz.err=true; qzResult(); return false; }
+    if(!await saveQuiz({state:'done',...a,sk:qz.sk,pick:id})){ qz.err=true; qzResult(); return false; }
+    qzClose(); renderSetMain(); renderHeaderStats(); renderHome(); return true;
+  };
+  return {orig,eqChanged,finish};
+}
 async function qzUse(id){
   qz.err=false; const a=qz.a;
   if(qz.ctx==='fresh'){
     if(!await saveQuiz({state:'draft',...a,sk:qz.sk,pick:id})){ qz.err=true; qz.screen==='pick'?qzPick(quizPick(a).id):qzResult(); return; }
     qz.chosen=id; qz.screen='result'; renderOnboardStep(6); return;
   }
-  const orig=settings.equipFilter.slice(), eqChanged=!!a.equip&&a.equip!==equipPresetOf(orig);
-  const finish=async()=>{
-    if(eqChanged&&await sset('settings',settings)===false){ settings.equipFilter=orig; qz.err=true; qzResult(); return false; }
-    if(!await saveQuiz({state:'done',...a,sk:qz.sk,pick:id})){ qz.err=true; qzResult(); return false; }
-    qzClose(); renderSetMain(); renderHeaderStats(); renderHome(); return true;
-  };
+  const {orig,eqChanged,finish}=qzFinisher(id);
   if(eqChanged) settings.equipFilter=QUIZ_EQUIP[a.equip].slice();
   if(id===ROUTINE_ID){ if(await finish()) showToast(`Quiz saved. You are staying on ${ROUTINES[id].name}. ${LEVEL_APPLIES}`); return; }
   const draft=await openDraft();
   openRoutine({step:draft?'blocked':'confirm',to:id,draft,ctx:'quiz',goal:qzGoalFor(id,a),onDone:finish,onCancel:leaving=>{ settings.equipFilter=orig; if(leaving) qzClose(); }});
+}
+// Rebuild: the live routine, rebuilt at the level this Retake chose, through the same confirm sheet (backup offer, then the explicit confirm).
+async function qzRebuild(id){
+  qz.err=false; const a=qz.a, {orig,eqChanged,finish}=qzFinisher(id);
+  if(eqChanged) settings.equipFilter=QUIZ_EQUIP[a.equip].slice();
+  const draft=await openDraft();
+  openRoutine({step:draft?'blocked':'rebuild',to:id,draft,ctx:'quiz',rebuild:true,goal:qzGoalFor(id,a),onDone:finish,onCancel:leaving=>{ settings.equipFilter=orig; if(leaving) qzClose(); }});
 }
 // ---- the one-time sheet for someone who already uses the app ----
 // Shown at most once per open, on Home only, and only when nothing else is going on: no open workout or running timer or cardio session,
@@ -4836,6 +4852,34 @@ async function switchRoutine(to,lvl){
   finally{ routineBusy=false; }
 }
 
+// Rebuild the live routine at a level. Order as in a switch: `programs` first for every routine but Upper/Lower; `program` only for Upper/Lower
+// (its own list). Returns {ok,undo} | {blocked} | {failed}; undo() puts back exactly what was there (used if the quiz cannot be saved afterwards).
+async function rebuildRoutine(id,lvl){
+  if(routineBusy||!ROUTINES[id]||id!==ROUTINE_ID) return {failed:true};
+  routineBusy=true;
+  try{
+    const draft=await openDraft(); if(draft) return {blocked:draft};
+    const days=newRoutineProgram(id,lvl).days, prevPrograms=await sget('programs'), prevProgram=await sget('program'), prevUl4=UL4_PROGRAM, prevMap=PROGRAMS;
+    const reload=async()=>{ document.getElementById('edDay').innerHTML=''; await loadDay(currentDay); };
+    if(id==='ul4'){
+      if(await sset('program',days)===false) return {failed:true};
+      applyRoutineState({ul4:days});
+    } else {
+      const programs={...PROGRAMS,[id]:days};
+      if(await sset('programs',programs)===false) return {failed:true};
+      applyRoutineState({programs});
+    }
+    await reload();
+    const undo=async()=>{
+      if(id==='ul4'){ await (prevProgram==null?store.remove('program'):sset('program',prevProgram)); applyRoutineState({ul4:prevUl4}); }
+      else { await (prevPrograms==null?store.remove('programs'):sset('programs',prevPrograms)); applyRoutineState({programs:prevMap}); }
+      await reload();
+    };
+    return {ok:true,undo};
+  }catch(e){ console.error(e); return {failed:true}; }
+  finally{ routineBusy=false; }
+}
+
 // ---------- Change Routine sheet ----------
 // Direct working sets per muscle each week, counted from a routine's template (sum of its slots' sets; QA checks them by script).
 // Direct sets only: no indirect figure is shown anywhere. Rear delts are the shoulder slots whose first recovery key is the rear delt.
@@ -4889,6 +4933,29 @@ function rtSharedLift(to){
   const here=PROGRAM.flatMap(d=>d.exercises.map(e=>e.name)).filter(n=>there.has(n)&&(hist[n]||[]).length);
   here.sort((a,b)=>hist[b].length-hist[a].length); return here[0]||null;
 }
+function rtBackup(){
+  return !sessions.length?`<div class="rt-backup">No history yet, so there is nothing to back up.</div>`:
+    `<div class="rt-backup">Want a copy of your data first? It takes a few seconds.<button class="btn" id="rtBk" type="button">${rt.backedUp?'Back Up Again':'Back Up First'}</button>${rt.backedUp?`<div class="rt-ok" role="status">${RT_CHK}<span>Backup saved. You can ${rt.rebuild?'rebuild':'switch'} now.</span></div>`:''}</div>`;
+}
+function rtRebuildView(){
+  const id=rt.to, r=ROUTINES[id], lvl=levelOf(qz&&qz.a?qz.a.exp:null), preview=previewProgram(id,lvl);
+  const eq=[];
+  if(preview.missing) eq.push(`${preview.missing} exercise${preview.missing===1?' has':'s have'} no match for your equipment, so ${preview.missing===1?'it is':'they are'} left out.`);
+  if(preview.bare.length) eq.push(`Nothing in ${esc(rtJoin(preview.bare))} matches your equipment, so ${preview.bare.length===1?'it starts':'they start'} with the standard lifts.`);
+  document.getElementById('routineTitle').textContent=`Rebuild ${r.name}?`;
+  document.getElementById('routineSub').textContent=`${LEVEL_WORD[lvl]} level`;
+  return `<p class="rt-warn" style="margin-top:0">Any edits you made to ${esc(r.name)} will be replaced: swapped, added or removed lifts, and changed targets.</p>
+    <div class="rt-sec">What Changes</div>
+    <ul class="rt-list"><li class="chg">${RT_ARROW}<span>Every day of ${esc(r.name)} is rebuilt for the ${LEVEL_WORD[lvl]} level.</span></li>
+      ${eq.map(t=>`<li class="chg">${RT_ARROW}<span>${t}</span></li>`).join('')}</ul>
+    <div class="rt-sec">What Stays the Same</div>
+    <ul class="rt-list"><li class="keep">${RT_CHK}<span>Your history, records and notes.</span></li>
+      <li class="keep">${RT_CHK}<span>Your progress. Lifts carry over by name.</span></li>
+      <li class="keep">${RT_CHK}<span>Your other routines. Only ${esc(r.name)} changes.</span></li>
+      <li class="keep">${RT_CHK}<span>Your training block and sessions already logged this week.</span></li></ul>
+    ${rtBackup()}
+    <div class="sheet-actions"><button class="btn" id="rtCancel" type="button" style="flex:1;min-height:48px;font-size:15px">Cancel</button><button class="btn primary" id="rtGo" type="button" style="flex:1;min-height:48px;font-size:15px">Rebuild Routine</button></div>`;
+}
 function rtConfirm(){
   const to=rt.to, r=ROUTINES[to], from=ROUTINES[ROUTINE_ID]||ROUTINES.ul4;
   const preview=(!PROGRAMS[to]||!PROGRAMS[to].length)&&to!=='ul4'?previewProgram(to):null;
@@ -4897,9 +4964,7 @@ function rtConfirm(){
   const eqNote=preview&&preview.missing?`${preview.missing} exercise${preview.missing===1?' has':'s have'} no match for your equipment, so ${preview.missing===1?'it is':'they are'} left out (${esc(rtJoin([...new Set(preview.gaps)].map(g=>{ const n=preview.gaps.filter(x=>x===g).length; return n>1?`${g} x${n}`:g; })))}). You can add ${preview.missing===1?'one':'some'} in Edit Workouts.`:'';
   const eqBare=preview&&preview.bare.length?`Nothing in ${esc(rtJoin(preview.bare))} matches your equipment, so ${preview.bare.length===1?'it starts':'they start'} with the standard lifts. You can swap them in Edit Workouts.`:'';
   const eq=[eqNote,eqBare].filter(Boolean);
-  const noHist=!sessions.length;
-  const backup=noHist?`<div class="rt-backup">No history yet, so there is nothing to back up.</div>`:
-    `<div class="rt-backup">Want a copy of your data first? It takes a few seconds.<button class="btn" id="rtBk" type="button">${rt.backedUp?'Back Up Again':'Back Up First'}</button>${rt.backedUp?`<div class="rt-ok" role="status">${RT_CHK}<span>Backup saved. You can switch now.</span></div>`:''}</div>`;
+  const backup=rtBackup();
   document.getElementById('routineTitle').textContent=`Switch to ${r.name}?`;
   document.getElementById('routineSub').textContent=`${goal} days a week, replacing ${from.name}`;
   return `${r.note?`<p class="rt-honest rt-honest-top">${r.note}</p>`:''}
@@ -4929,6 +4994,7 @@ function renderRoutineSheet(focusSel){
   if(rt.step==='list'){ document.getElementById('routineTitle').textContent='Change Routine'; document.getElementById('routineSub').textContent='Pick how you split your week.';
     body.innerHTML=rtIds().map(id=>rtCard(id,{cur:ROUTINE_ID,open:rt.open})).join('')+'<p class="rt-foot">Nothing is deleted when you switch. History, records and notes stay.</p>'; }
   else if(rt.step==='confirm') body.innerHTML=rtConfirm();
+  else if(rt.step==='rebuild') body.innerHTML=rtRebuildView();
   else body.innerHTML=rtBlocked();
   const q=s=>body.querySelector(s);
   body.querySelectorAll('.rt-go').forEach(b=>b.onclick=async()=>{
@@ -4939,7 +5005,16 @@ function renderRoutineSheet(focusSel){
   const cancel=q('#rtCancel'); if(cancel) cancel.onclick=()=>{ if(rt.step==='blocked'||rt.ctx==='quiz'){ closeRoutine(); if(rt.onCancel) rt.onCancel(); } else { rt.step='list'; renderRoutineSheet('#routineTitle'); } };
   const bk=q('#rtBk'); if(bk) bk.onclick=async()=>{ try{ rt.backedUp=!!(await doExport()); }catch(e){ console.error(e); showToast("Couldn't make the backup. You can still switch.",null,true); } renderRoutineSheet('#rtBk'); };
   const go=q('#rtGo'); if(go) go.onclick=async()=>{
-    go.disabled=true; const to=rt.to, r=await switchRoutine(to,buildLevel());
+    go.disabled=true; const to=rt.to;
+    if(rt.rebuild){
+      const lvl=levelOf(qz&&qz.a?qz.a.exp:null), rr=await rebuildRoutine(to,lvl);
+      if(rr.ok){ const done=rt.onDone; closeRoutine();
+        if(done&&await done()===false){ await rr.undo(); showToast('Could not save. Nothing was changed.',null,true); return; }
+        showToast(`Rebuilt ${ROUTINES[to].name} for the ${LEVEL_WORD[lvl]} level.`); }
+      else if(rr.blocked){ rt.draft=rr.blocked; rt.step='blocked'; renderRoutineSheet('#routineTitle'); }
+      else { go.disabled=false; showToast('Could not rebuild. Nothing was changed.',null,true); }
+      return; }
+    const r=await switchRoutine(to,buildLevel());
     if(r.ok){ const done=rt.onDone, goal=rt.goal||ROUTINES[to].perWeek; closeRoutine();
       if(done) await done(); else { const row=document.getElementById('routineRow'); row.focus(); renderSetMain(); row.focus(); }
       showToast(`Now on ${ROUTINES[to].name}. Your week goal is ${goal} session${goal===1?'':'s'}.`); }
@@ -4950,7 +5025,7 @@ function renderRoutineSheet(focusSel){
     const day=rt.draft.day;
     if(!await confirmSheet(`Clear everything you've logged today for ${day.name} ${day.sub}? This can't be undone.`, 'Clear', null, true)) return;
     await discardDraft(day); if(day.id===currentDay) render();
-    rt.step=rt.to?'confirm':'list'; renderRoutineSheet('#routineTitle'); };
+    rt.step=rt.to?(rt.rebuild?'rebuild':'confirm'):'list'; renderRoutineSheet('#routineTitle'); };
   if(!focusSel||focusSel==='#routineTitle') document.getElementById('routineSheet').scrollTop=0; // a new step starts at the top
   const f=document.querySelector('#routineSheet '+(focusSel||'#routineTitle'));
   if(f) requestAnimationFrame(()=>requestAnimationFrame(()=>f.focus({preventScroll:true})));
