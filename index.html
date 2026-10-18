@@ -2852,7 +2852,7 @@ const BACK_TO_BACK_HOURS=72;
 // …and the nudge itself only lasts this long after the more recent of the two sessions. Without a cap it stayed
 // suggested Sunday, Monday, Tuesday after a Friday+Saturday pair until a cardio session was actually logged — for
 // someone who doesn't track cardio that meant the "Cardio's up next" sheet on every single lift day.
-const BACK_TO_BACK_CLEAR_HOURS=48;
+const BACK_TO_BACK_CLEAR_HOURS=40;
 // returns {id, reason, nextDay}: reason is one of 'backToBack' | 'recovery' | 'cardioStale' when id is 'cardio'
 // (checked in that order), null otherwise — Home and the cardio sheet word their copy from it, since telling
 // someone who hasn't lifted in three days that they "just did two sessions back to back" reads as broken.
