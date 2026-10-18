@@ -677,7 +677,7 @@
   .set-row.static{cursor:default;}
   .set-row.static.has-cap{padding-top:10px;padding-bottom:10px;} /* a caption makes the row taller than the one-line rows: give it the same breathing room above and below (Units has no caption and keeps 52 px) */
   .set-val.warn{color:var(--amber);}
-  .set-lbl{flex:1;min-width:0;} .set-cap{display:block;font-size:12px;color:var(--text-dim);margin-top:2px;}
+  .set-lbl{flex:1;min-width:0;} .set-cap{display:block;font-size:12px;color:var(--text-dim);margin-top:2px;white-space:normal;}
   .set-val{font-size:13px;color:var(--text-dim);text-align:right;}
   /* Routine row and the Change Routine sheet (R-B) */
   .rt-card{border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:12px;background:var(--panel-raised);}
@@ -1089,6 +1089,7 @@
       <div class="set-group-h">Program</div>
       <div class="set-group">
         <button class="set-row" id="routineRow" type="button" aria-haspopup="dialog" aria-describedby="routineNote"><span class="set-lbl">Routine<span class="set-cap" id="routineCap"></span></span><span class="set-val" id="sv-routine"></span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg><span class="set-cap rt-rownote" id="routineNote" hidden></span></button>
+        <button class="set-row" id="quizRow" type="button" aria-haspopup="dialog"><span class="set-lbl"><span id="quizLbl">Take the Quiz</span><span class="set-cap" id="quizCap"></span></span><span class="set-val" id="sv-quiz"></span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
         <button class="set-row" data-page="edit"><span class="set-lbl">Edit Workouts</span><span class="set-val" id="sv-edit"></span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
       </div>
       <div class="set-group-h">Your Data</div>
@@ -3192,13 +3193,17 @@ function render(){
 // ---------- first-launch program builder ----------
 // shown instead of the arrival hero until a program is accepted. Equipment chips drive applyEquipPicks(); "change" reuses openSwap(),
 // whose doSwap() persists the program — so a reload mid-build keeps the picks made so far and lands on the normal hero.
+// a new install that took the quiz sees which routine it is building and, if equipment was answered, that the answer set the chips
+const BUILD_LINE={ul4:'Upper and lower, one heavy and one volume day each.',fb3:'Three full-body days, A, B and C.',ppl3:'One session each for push, pull and legs.',ul5:'Two heavy days, then push, pull and legs.',bro5:'One muscle group a day: chest, back, legs, shoulders and arms.',ppl6:'Push, pull and legs, each twice.'};
+function builderSub(){ const r=ROUTINES[ROUTINE_ID]||ROUTINES.ul4, w=routineWord(r.perWeek); return `${w[0].toUpperCase()+w.slice(1)} days a week. ${BUILD_LINE[r.id]} ${QUIZ&&QUIZ.equip?'Your equipment answer set the chips below. ':'Tick what your gym has and every slot gets a recommended exercise. '}Change any pick now, or swap later from the log.`; }
 function renderBuilder(panel){
+  const quizBuilt=!!QUIZ&&QUIZ.state==='done';
   panel.style.display='block'; document.body.classList.add('building');
   panel.innerHTML=`
     <div class="greet-wrap">
-      <div class="greet-eyebrow">First Launch</div>
-      <h2 class="greet-h1">Build Your Program</h2>
-      <div class="greet-sub">Four days a week — Upper and Lower, one heavy and one volume day each. Tick what your gym has and every slot gets a recommended exercise. Change any pick now, or swap later from the log.</div>
+      <div class="greet-eyebrow">${quizBuilt?'Your Routine':'First Launch'}</div>
+      <h2 class="greet-h1">${quizBuilt&&ROUTINE_ID!=='ul4'?'Build Your '+esc(ROUTINES[ROUTINE_ID].name):'Build Your Program'}</h2>
+      <div class="greet-sub">${quizBuilt?builderSub():'Four days a week — Upper and Lower, one heavy and one volume day each. Tick what your gym has and every slot gets a recommended exercise. Change any pick now, or swap later from the log.'}</div>
     </div>
     <div class="build-hint" id="buildHint">Tap a chip to switch that equipment on or off.</div>
     <div class="build-eq" role="group" aria-labelledby="buildHint">${EQUIP_TYPES.map(t=>`<span class="eqchip${settings.equipFilter.includes(t)?' on':''}" data-t="${t}" aria-pressed="${settings.equipFilter.includes(t)}">${EQUIP_LABEL[t]}</span>`).join('')}</div>
@@ -3691,7 +3696,7 @@ async function qzSkipQuiz(){
   const wrote=!QUIZ||QUIZ.state!=='done'; if(wrote) await saveQuiz({state:'skipped',...qz.a,sk:qz.sk});
   qzClose(); showToast(wrote?'Skipped. You can take the quiz any time in Settings.':'Quiz closed. Nothing was changed.');
 }
-function qzClose(){ document.getElementById('onboardBg').classList.remove('on'); setAppInert(false); qz=null; }
+function qzClose(){ const ctx=qz&&qz.ctx; document.getElementById('onboardBg').classList.remove('on'); setAppInert(false); qz=null; if(ctx==='existing'){ const r=document.getElementById('quizRow'); if(r&&view==='more') r.focus({preventScroll:true}); } }
 // ---- the result ----
 // equipment gaps for a routine under the equipment this quiz would set (the live filter when equipment was skipped): lifts left out
 function qzGaps(id){
@@ -4681,6 +4686,12 @@ function renderSetMain(){
     document.getElementById('routineCap').textContent=r.meta; sv('routine',r.short||r.name);
     row.setAttribute('aria-label',`Routine, ${r.name}, ${r.meta.toLowerCase()}`);
     note.textContent=r.note||''; note.hidden=!r.note; row.classList.toggle('has-note',!!r.note); }
+  { const done=QUIZ&&QUIZ.state==='done', row=document.getElementById('quizRow');
+    const sum=done?[QUIZ.goal&&QUIZ_GOAL_LABEL[QUIZ.goal],QUIZ.days&&`${QUIZ.days} days`,QUIZ.equip&&QUIZ_EQUIP_LABEL[QUIZ.equip]].filter(Boolean).join(', ')||'All questions skipped':'';
+    document.getElementById('quizLbl').textContent=done?'Retake Quiz':'Take the Quiz';
+    document.getElementById('quizCap').textContent=done?sum:'Find the routine that fits your week.';
+    sv('quiz',done?'Done':QUIZ&&QUIZ.state==='skipped'?'Skipped':'');
+    row.setAttribute('aria-label',`${done?'Retake Quiz':'Take the Quiz'}, ${done?'last answers: '+sum:QUIZ&&QUIZ.state==='skipped'?'you skipped it':'not taken yet'}`); }
   const nEx=PROGRAM.reduce((a,d)=>a+d.exercises.length,0); sv('edit', `${PROGRAM.length} Days · ${nEx} Exercises`);
   sv('data', lastBackup?`Last: ${fmtDate(lastBackup)}`:'Never Backed Up');
   document.getElementById('sv-data').classList.toggle('warn', backupNag() && sessions.length>0); // same condition as the Home backup banner
@@ -4858,6 +4869,7 @@ function openRoutine(o){
   document.getElementById('routineBg').classList.add('on'); document.getElementById('routineSheet').classList.add('on');
 }
 function closeRoutine(){ document.getElementById('routineBg').classList.remove('on'); document.getElementById('routineSheet').classList.remove('on'); document.getElementById('routineBody').innerHTML=''; }
+document.getElementById('quizRow').onclick=e=>{ e.currentTarget.focus(); qzOpen(); };
 document.getElementById('routineRow').onclick=e=>{ e.currentTarget.focus(); openRoutine(); }; // focus first: Safari does not focus a tapped button, and the sheet returns focus to the opener
 { const dismiss=()=>{ const q=rt.ctx==='quiz'&&document.getElementById('routineSheet').classList.contains('on'); closeRoutine(); if(q&&rt.onCancel) rt.onCancel(); }; document.getElementById('routineClose').onclick=dismiss; document.getElementById('routineBg').onclick=dismiss; }
 let setPage=null;
