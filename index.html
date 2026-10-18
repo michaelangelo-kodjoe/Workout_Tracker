@@ -26,7 +26,7 @@
   :root.ios-standalone{--edge:20px;} /* older iOS home-screen apps report navigator.standalone but not the media query */
   /* the app is dark-only: declaring it gives native controls (select menus, checkboxes, number spinners, scrollbars)
      their dark system styling instead of light boxes on a dark page */
-  :root{color-scheme:dark;--upper:#a98bf5;--lower:#38b7a8;--push:#b9d95c;--pull:#d98ad9;--cardio:#5fa8e0;--danger:#f0619a;--bg:#14161a;--panel:#1c1f25;--panel-raised:#22262e;--line:#2c3038;--line-strong:#6c727e;--text:#e8e9ec;--text-dim:#8b8f98;--accent:#ff5d3b;--heavy:#ff5d3b;--light:#4fa3d1;--done-bg:#1f2a20;--done-line:#3d5c3f;--green:#5cbb6f;--amber:#d6a03a;--gold:#e8b23d;}
+  :root{color-scheme:dark;--upper:#a98bf5;--lower:#38b7a8;--push:#b9d95c;--pull:#d98ad9;--legs:#ee9a4d;--full:#a9b6cc;--cardio:#5fa8e0;--danger:#f0619a;--bg:#14161a;--panel:#1c1f25;--panel-raised:#22262e;--line:#2c3038;--line-strong:#6c727e;--text:#e8e9ec;--text-dim:#8b8f98;--accent:#ff5d3b;--heavy:#ff5d3b;--light:#4fa3d1;--done-bg:#1f2a20;--done-line:#3d5c3f;--green:#5cbb6f;--amber:#d6a03a;--gold:#e8b23d;}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Georgia','Iowan Old Style',serif;min-height:100%;}
   /* every tab at least as tall as the screen with Safari's toolbar tucked away (lvh), plus 1px, so every tab can scroll:
@@ -159,9 +159,9 @@
   /* ---------- day types ---------- */
   /* each kind of day has its own colour — Upper violet, Lower teal, Cardio blue — so orange only ever means "act" (buttons,
      the current tab, today's pick). Day tabs and Home cards carry it as a top stripe; badges are tinted with it. */
-  .t-upper{--dc:var(--upper);--dc-bg:rgba(169,139,245,.12);} .t-lower{--dc:var(--lower);--dc-bg:rgba(56,183,168,.12);} .t-cardio{--dc:var(--cardio);--dc-bg:rgba(95,168,224,.12);} .t-push{--dc:var(--push);--dc-bg:rgba(185,217,92,.12);} .t-pull{--dc:var(--pull);--dc-bg:rgba(217,138,217,.12);} .t-legs{--dc:var(--lower);--dc-bg:rgba(56,183,168,.12);} .cal-tag.t-other{--dc:var(--text-dim);}
-  .badge.t-upper,.badge.t-lower,.badge.t-cardio,.badge.t-push,.badge.t-pull,.badge.t-legs{color:var(--dc);background:var(--dc-bg);border:1px solid var(--dc);}
-  .daytab.t-upper,.daytab.t-lower,.daytab.t-cardio,.daytab.t-push,.daytab.t-pull,.daytab.t-legs,.day-card.t-upper,.day-card.t-lower,.day-card.t-push,.day-card.t-pull,.day-card.t-legs{box-shadow:inset 0 3px 0 var(--dc);}
+  .t-upper{--dc:var(--upper);--dc-bg:rgba(169,139,245,.12);} .t-lower{--dc:var(--lower);--dc-bg:rgba(56,183,168,.12);} .t-cardio{--dc:var(--cardio);--dc-bg:rgba(95,168,224,.12);} .t-push{--dc:var(--push);--dc-bg:rgba(185,217,92,.12);} .t-pull{--dc:var(--pull);--dc-bg:rgba(217,138,217,.12);} .t-legs{--dc:var(--legs);--dc-bg:rgba(238,154,77,.12);} .t-full{--dc:var(--full);--dc-bg:rgba(169,182,204,.12);} .cal-tag.t-other{--dc:var(--text-dim);}
+  .badge.t-upper,.badge.t-lower,.badge.t-cardio,.badge.t-push,.badge.t-pull,.badge.t-legs,.badge.t-full{color:var(--dc);background:var(--dc-bg);border:1px solid var(--dc);}
+  .daytab.t-upper,.daytab.t-lower,.daytab.t-cardio,.daytab.t-push,.daytab.t-pull,.daytab.t-legs,.daytab.t-full,.day-card.t-upper,.day-card.t-lower,.day-card.t-push,.day-card.t-pull,.day-card.t-legs,.day-card.t-full{box-shadow:inset 0 3px 0 var(--dc);}
   .badge.plateau{background:rgba(214,160,58,.15);color:var(--amber);border:1px solid rgba(214,160,58,.4);margin-left:6px;margin-right:0;}
   /* text actions: a standalone action (Edit, close, history, see full breakdown) is 13 px blue with no underline, so it
      reads as the app's control rather than a web link; one inside a sentence keeps the sentence's size and an underline,
@@ -1551,7 +1551,10 @@ function slotExercise(slot, entry){
   return ex;
 }
 // colour class for a day: its name says whether it's an Upper or Lower day (see the "day types" styles)
-function dayType(d){ return {upper:'t-upper',lower:'t-lower',push:'t-push',pull:'t-pull',legs:'t-legs'}[dayFocus(d)]||''; }
+// A day's colour is its FAMILY; the tag letters and the label carry the identity (colour is never the only cue). Chest and Shoulders
+// use the Push colour, Back the Pull colour, Arms the Upper colour, Full Body its own slate, Legs its own amber (v83).
+const FOCUS_FAMILY={upper:'upper',lower:'lower',push:'push',pull:'pull',legs:'legs',full:'full',chest:'push',shoulders:'push',back:'pull',arms:'upper'};
+function dayType(d){ const f=FOCUS_FAMILY[dayFocus(d)]; return f?'t-'+f:''; }
 // a template becomes a day list; a day's `focus` (push, pull, legs) is stored only when the template names one, so the built-in
 // Upper/Lower list keeps exactly the shape it has always had
 function buildFromTemplate(tpl){ return tpl.map(d=>({id:d.id,name:d.name,sub:d.sub,badge:d.badge,factor:d.factor,...(d.focus?{focus:d.focus}:{}),exercises:d.slots.map(s=>slotExercise(s, CURATED_BY_NAME[s.pick]))})); }
@@ -3898,7 +3901,7 @@ let calMonthOffset=0;
 // a session logged on a day outside the built-in four (another routine) is a neutral 'other', not skipped; the built-in
 // four keep the exact Upper/Lower name test, so existing sessions read as before
 function sessionType(s){ if(s.isCardio) return 'cardio'; const f=s.focus?dayFocus({focus:s.focus}):(s.dayName==='Upper'?'upper':s.dayName==='Lower'?'lower':'');
-  return ['upper','lower','push','pull','legs'].includes(f)?f:(s.dayId&&!UL4_IDS.includes(s.dayId)?'other':null); }
+  return FOCUS_FAMILY[f]||(s.dayId&&!UL4_IDS.includes(s.dayId)?'other':null); }
 // ---------- editing and deleting logged sessions ----------
 // sessions[] is the source of truth; hist, lastByName, last:d# and the session counter are derived from it, so
 // every edit or delete re-derives those for the exercises and day involved. Recovery timers are left alone: they
@@ -4028,13 +4031,14 @@ document.getElementById('calDaySheetClose').onclick=closeCalDaySheet;
 document.getElementById('calDayBg').onclick=closeCalDaySheet;
 // a session's plan, as the calendar tags it: one initial per word of the day and its focus ("Upper" + "Heavy" → UH,
 // a custom "Full Body" day → FB), cardio is C
-const PLAN_TAG={push:'Ps',pull:'Pl',legs:'Lg'};
+const PLAN_TAG={push:'Ps',pull:'Pl',legs:'Lg',chest:'Ch',back:'Bk',shoulders:'Sh',arms:'Ar'};
 function sessionPlan(s){
   if(s.isCardio) return {key:'cardio', tag:'C', label:'Cardio', type:'cardio'};
   const label=[s.dayName,s.sub].filter(Boolean).join(' ');
-  // the tag follows the day's focus, not its label, so two plans can never share one (QA-RA-2); Upper/Lower keep their initials
-  const type=sessionType(s)||'other';
-  const tag=PLAN_TAG[type]||label.split(/\s+/).filter(Boolean).slice(0,3).map(w=>w[0]).join('').toUpperCase();
+  // the tag follows the day's focus, not its label, so two plans can never share one (QA-RA-2); Upper/Lower keep their initials.
+  // Full Body is F plus its letter (FA, FB, FC); a lettered day of a six-day plan adds the letter (PsA, PlB); at most three characters.
+  const type=sessionType(s)||'other', focus=s.focus?dayFocus({focus:s.focus}):'', letter=/^[A-C]$/.test(s.sub||'')?s.sub:'';
+  const tag=focus==='full'?'F'+letter:PLAN_TAG[focus]?PLAN_TAG[focus]+letter:PLAN_TAG[type]||label.split(/\s+/).filter(Boolean).slice(0,3).map(w=>w[0]).join('').toUpperCase();
   return {key:label, tag, label, type};
 }
 function renderCalendar(){
