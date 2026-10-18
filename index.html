@@ -576,7 +576,7 @@
   .onb-skip{white-space:nowrap;} .onb-prog{min-width:0;} .onb-bars{width:100%;max-width:140px;}
   .qz-pick{width:100%;max-width:360px;text-align:left;display:flex;flex-direction:column;} .qz-pick .rt-card{margin-bottom:12px;}
   .rt-card .rt-ex .rt-exh{margin-top:12px;}
-  /* the days question: five large buttons and the where-it-leads list */
+  /* the days question: five large buttons */
   .qd-row{display:flex;flex-wrap:wrap;gap:8px;width:100%;max-width:327px;margin-top:12px;} /* wraps to two rows only when text is enlarged on a very narrow phone */
   .qd-btn{flex:1 1 52px;min-width:44px;min-height:76px;padding:0;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--text);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
   .qd-btn b{font:32px 'Menlo',monospace;font-weight:normal;line-height:1.1;}
@@ -584,16 +584,6 @@
   .qd-btn[aria-pressed="true"]{background:var(--text);color:var(--bg);border-color:var(--text);}
   .qd-btn[aria-pressed="true"] small{color:var(--bg);}
   .qd-cap{font-size:17px;min-height:24px;margin-top:4px;text-align:center;}
-  .qd-route{width:100%;max-width:327px;margin:0;padding:0;list-style:none;text-align:left;}
-  .qd-h{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);width:100%;max-width:327px;margin:12px 0 8px;text-align:left;}
-  .qd-r{display:flex;align-items:center;gap:12px;min-height:48px;padding:6px 12px;margin-bottom:6px;border:1px solid var(--line);border-radius:8px;background:var(--panel);}
-  .qd-r .qd-n{flex:none;width:64px;font:13px 'Menlo',monospace;color:var(--text-dim);}
-  .qd-r .qd-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;font-size:15px;line-height:1.3;}
-  .qd-r .qd-dots{display:flex;gap:4px;} .qd-r .qd-dots i{width:14px;height:6px;border-radius:2px;background:var(--dc);display:block;}
-  .qd-r .qz-ck{width:20px;height:20px;}
-  .qd-r.on{border-color:var(--accent);background:var(--panel-raised);} .qd-r.on .qd-n{color:var(--text);} .qd-r.on .qz-ck{visibility:visible;} .qd-r:not(.on) .qz-ck{visibility:hidden;}
-  .qd-lead{font-size:13px;line-height:1.5;color:var(--text);max-width:327px;margin:4px 0 0;text-align:center;min-height:20px;}
-  @media (max-width:340px){ .qd-r .qd-n{width:52px;} .qd-r{padding:8px;gap:8px;} }
   /* short screens (a phone held sideways): the question screens keep a slim pinned foot; the result's foot drops into the page so every note stays reachable */
   @media (max-height:420px){
     .onb-foot.qz-f{gap:4px;padding:8px 0 calc(8px + var(--sa-b));}
@@ -3667,13 +3657,8 @@ function qzQuestion(key,focusSel){
   qz.screen=key; const Q=QZ_Q[key], a=qz.a, val=a[key], skipped=qz.sk.includes(key)&&val==null, pr=qzProg(key);
   let opts, state;
   if(key==='days'){
-    const eff=skipped?4:val, lead=skipped?Q.skipped:val==null?Q.ifskip:val<=3?`Leads to ${ROUTINES.fb3.name}.`:`Leads to ${ROUTINES[QZ_LEAD.find(x=>x[2].includes(val))[1]].name}. Your experience, asked next, can change this.`;
-    const rows=QZ_LEAD.map(([lab,id,ds])=>{ const on=eff!=null&&ds.includes(eff), r=ROUTINES[id];
-      return `<li class="qd-r${on?' on':''}"${on?' aria-current="true"':''}><span class="qd-n">${lab} days</span><span class="qd-t"><span>${rtNb(r.name)}</span><span class="qd-dots" aria-hidden="true">${r.template.map(d=>`<i class="${dayType(d)}"></i>`).join('')}</span></span>${QZ_CK}</li>`; }).join('');
     opts=`<div class="qd-row" role="group" aria-label="${Q.label}">${[2,3,4,5,6].map(d=>`<button class="qd-btn" type="button" data-v="${d}" aria-pressed="${val===d}" aria-label="${d} days a week"><b>${d}</b><small>days</small></button>`).join('')}</div>
-      <div class="qd-cap" aria-live="polite">${val?`${val} Days a Week`:''}</div>
-      <div class="qd-lead" role="status">${lead}</div>
-      <div class="qd-h" id="qdH">Where Each Answer Leads</div><ul class="qd-route" aria-labelledby="qdH">${rows}</ul>`;
+      <div class="qd-cap" aria-live="polite">${val?`${val} Days a Week`:''}</div>`;
     state='';
   } else {
     opts=`<div class="onb-opts" role="group" aria-label="${Q.label}">${Q.opts.map(o=>`<button class="onb-opt qz-opt" type="button" data-v="${o[0]}" aria-pressed="${val===o[0]}"><span class="qz-l">${o[1]}${o[2]?`<small>${o[2]}</small>`:''}</span>${QZ_CK}</button>`).join('')}</div>`;
