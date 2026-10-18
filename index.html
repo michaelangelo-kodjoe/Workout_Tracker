@@ -582,7 +582,6 @@
   .qd-btn small{font-size:12px;color:var(--text-dim);}
   .qd-btn[aria-pressed="true"]{background:var(--text);color:var(--bg);border-color:var(--text);}
   .qd-btn[aria-pressed="true"] small{color:var(--bg);}
-  .qd-cap{font-size:17px;min-height:24px;margin-top:4px;text-align:center;}
   /* short screens (a phone held sideways): the question screens keep a slim pinned foot; the result's foot drops into the page so every note stays reachable */
   @media (max-height:420px){
     .onb-foot.qz-f{gap:4px;padding:8px 0 calc(8px + var(--sa-b));}
@@ -3656,8 +3655,7 @@ function qzQuestion(key,focusSel){
   qz.screen=key; const Q=QZ_Q[key], a=qz.a, val=a[key], skipped=qz.sk.includes(key)&&val==null, pr=qzProg(key);
   let opts, state;
   if(key==='days'){
-    opts=`<div class="qd-row" role="group" aria-label="${Q.label}">${[2,3,4,5,6].map(d=>`<button class="qd-btn" type="button" data-v="${d}" aria-pressed="${val===d}" aria-label="${d} days a week"><b>${d}</b><small>days</small></button>`).join('')}</div>
-      <div class="qd-cap" aria-live="polite">${val?`${val} Days a Week`:''}</div>`;
+    opts=`<div class="qd-row" role="group" aria-label="${Q.label}">${[2,3,4,5,6].map(d=>`<button class="qd-btn" type="button" data-v="${d}" aria-pressed="${val===d}" aria-label="${d} days a week"><b>${d}</b><small>days</small></button>`).join('')}</div>`;
     state='';
   } else {
     opts=`<div class="onb-opts" role="group" aria-label="${Q.label}">${Q.opts.map(o=>`<button class="onb-opt qz-opt" type="button" data-v="${o[0]}" aria-pressed="${val===o[0]}"><span class="qz-l">${o[1]}${o[2]?`<small>${o[2]}</small>`:''}</span>${QZ_CK}</button>`).join('')}</div>`;
