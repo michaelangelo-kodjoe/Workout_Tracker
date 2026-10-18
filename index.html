@@ -1596,12 +1596,28 @@ const PPL_TEMPLATE = [
     { group:'Core', key:'abs', target:'3 x 12-15', pick:'Hanging Leg Raise' },
   ]},
 ];
+// compact template days (v83): lifts as "Exact Curated Name|target;..." — the slot's key and group come from the pool the name lives in, so a
+// name that is not a curated lift fails loudly in QA. Every name is an exact curated-pool name so history and Last Time carry over by name.
+const GROUP_OF_KEY={chest:'Chest',back:'Back',shoulders:'Shoulders',biceps:'Arms',triceps:'Arms',forearms:'Forearms',quads:'Quads',hamstrings:'Hamstrings',calves:'Calves',abs:'Core'};
+const keyOfPick=n=>Object.keys(ALTS).find(k=>ALTS[k].some(a=>a.name===n));
+function tplDay(id,name,sub,badge,factor,focus,lifts){
+  return { id,name,sub,badge,factor,focus, slots:lifts.split(';').map(x=>{ const [pick,target]=x.split('|'), key=keyOfPick(pick); return {group:GROUP_OF_KEY[key],key,target,pick}; }) };
+}
+// Full Body, three days (v83). Day C has eight lifts (24 sets) so calves are trained twice; every other day has seven. 21-24 sets a session is design, not evidence.
+const FB3_TEMPLATE=[
+  tplDay('fb3-1','Full Body','A','heavy',1.0,'full','Machine Chest Press|3 x 6-10;Machine Mid Row|3 x 6-10;Machine Leg Press|3 x 6-10;Seated Leg Curl|3 x 8-10;Converging Shoulder Press|3 x 8-10;Machine Preacher Curl|3 x 8-10;Standing Calf Raise|3 x 12-15'),
+  tplDay('fb3-2','Full Body','B','light',0.85,'full','Incline Smith Machine Press|3 x 10-12;Lat Pulldown|3 x 10-12;Hack Squat|3 x 8-12;Dumbbell Romanian Deadlift|3 x 10-12;Lateral Raise Machine|3 x 12-15;Seated Tricep Press|3 x 10-12;Hanging Leg Raise|3 x 12-15'),
+  tplDay('fb3-3','Full Body','C','heavy',1.0,'full','Machine Pec Fly|3 x 12-15;Diverging Seated Row|3 x 10-12;Leg Extension|3 x 12-15;45° Back Extension|3 x 10;Reverse Pec Deck|3 x 12-15;Hammer Curl|3 x 12;Dumbbell Overhead Tricep Extension|3 x 12-15;Seated Calf Raise|3 x 15-20'),
+];
 // routines the app can switch to. `perWeek` is the weekly session goal. Day lists other than ul4 live in `programs` by id.
 // `days` (label, colour class) and the copy feed the Change Routine sheet; `note` is the plain frequency sentence (ACSM wording agreed by the research loop).
 const ROUTINES = {
   ul4: { id:'ul4', name:'Upper/Lower 4-Day', short:'Upper/Lower', perWeek:4, template:TEMPLATE, meta:'4 Days a Week', days:[['Upper Heavy','t-upper'],['Lower Heavy','t-lower'],['Upper Volume','t-upper'],['Lower Volume','t-lower']],
     suits:'Best if you can train four days a week. Upper and lower body each get a heavy day and a volume day.',
     freq:'Each muscle twice a week with a rest day between.' },
+  fb3: { id:'fb3', name:'Full Body 3-Day', perWeek:3, template:FB3_TEMPLATE, meta:'3 Days a Week', days:[['Full Body A','t-full'],['Full Body B','t-full'],['Full Body C','t-full']],
+    suits:'Best if you can train two or three days a week. Every session works your whole body.',
+    freq:'Chest, back, quads and hamstrings are trained three times a week; shoulders, biceps, triceps and calves twice; rear delts and core once.' },
   ppl3: { id:'ppl3', name:'Push/Pull/Legs 3-Day', perWeek:3, template:PPL_TEMPLATE, meta:'3 Days a Week', days:[['Push','t-push'],['Pull','t-pull'],['Legs','t-legs']],
     suits:'Best if you can train three days a week. Every muscle group gets one full session.',
     note:"Each muscle is trained once a week. ACSM's 2026 guidance suggests at least twice, so this is the lower-frequency option. Studies that match weekly sets mostly find little difference in muscle growth, though some favour more frequent training." },
@@ -5057,7 +5073,7 @@ function bestPickFor(slot, exclude){
 function applyEquipPicks(program){
   let changed=0;
   program.forEach(day=>{
-    const tpl=[...TEMPLATE,...PPL_TEMPLATE].find(t=>t.id===day.id);
+    const tpl=Object.values(ROUTINES).flatMap(r=>r.template||[]).find(t=>t.id===day.id);
     day.exercises.forEach((ex,i)=>{
       if(equipAllowed(ex)) return;
       const slot=(tpl&&tpl.slots.length===day.exercises.length)?tpl.slots[i]:{group:ex.group,key:groupKeyFor(ex),target:ex.target,pick:ex.name};
