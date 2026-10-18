@@ -548,6 +548,60 @@
   .onb-note{font-size:12px;color:var(--text-dim);max-width:320px;line-height:1.5;}
   .onb-foot{position:sticky;bottom:0;z-index:2;display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 0 calc(24px + var(--sa-b));background:var(--bg);box-shadow:0 -16px 16px -4px var(--bg);}
   .cel-cta.alt{background:none;color:var(--text);border:1px solid var(--line-strong);}
+  /* ---------- onboarding quiz (v83) ---------- */
+  .qz-eyebrow{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);}
+  .onb-body.qz-top{justify-content:flex-start;padding-top:16px;}
+  .qz-cap{font-size:13px;color:var(--text-dim);min-height:20px;margin-top:4px;text-align:center;}
+  .onb-opt.qz-opt{gap:12px;padding:10px 16px;min-height:60px;text-align:left;}
+  .qz-l{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;}
+  .qz-l small{font-size:13px;color:var(--text-dim);line-height:1.4;}
+  .qz-ck{flex:none;width:22px;height:22px;fill:none;stroke:var(--accent);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;visibility:hidden;}
+  .onb-opt[aria-pressed="true"] .qz-ck{visibility:visible;}
+  .qz-state{font-size:12px;color:var(--text-dim);max-width:300px;line-height:1.5;text-align:center;margin:8px 0 0;}
+  .qz-state.skipped{color:var(--text);}
+  .cel-cta[aria-disabled="true"]{opacity:.4;cursor:default;}
+  .qz-links{display:flex;justify-content:center;gap:8px;width:100%;max-width:320px;}
+  .qz-links .linkbtn,.qz-skipq{flex:1;min-height:44px;background:none;border:0;font:inherit;font-size:13px;color:var(--light);cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;}
+  .qz-skipq{flex:none;width:100%;max-width:320px;color:var(--text-dim);}
+  .qz-res{width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px;text-align:left;}
+  .qz-res .rt-card{margin:0;} .qz-res .rt-honest,.qz-res .qz-note{margin:0;}
+  .qz-note{font-size:13px;line-height:1.5;padding:10px 12px;border-left:2px solid var(--line-strong);background:var(--panel);border-radius:3px;color:var(--text);}
+  .qz-note.warn{border-left-color:var(--amber);background:var(--panel-raised);}
+  .qz-why{font-size:13px;line-height:1.5;color:var(--text);margin:0;}
+  .cel-cta.alt.qz-alt{min-height:50px;}
+  .qz-head{text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center;}
+  .qz-head .cel-h1,.qz-head .cel-sub{margin:0;max-width:320px;}
+  .onb-foot .onb-note{text-align:center;}
+  .qz-err{width:100%;max-width:320px;box-sizing:border-box;font-size:13px;line-height:1.5;text-align:left;padding:10px 12px;border-left:2px solid var(--danger);background:var(--panel-raised);border-radius:3px;color:var(--text);}
+  .onb-skip{white-space:nowrap;} .onb-prog{min-width:0;} .onb-bars{width:100%;max-width:140px;}
+  .qz-pick{width:100%;max-width:360px;text-align:left;display:flex;flex-direction:column;} .qz-pick .rt-card{margin-bottom:12px;}
+  .rt-card .rt-ex .rt-exh{margin-top:12px;}
+  /* the days question: five large buttons and the where-it-leads list */
+  .qd-row{display:flex;gap:8px;width:100%;max-width:327px;margin-top:12px;}
+  .qd-btn{flex:1 1 0;min-width:44px;min-height:76px;padding:0;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--text);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+  .qd-btn b{font:32px 'Menlo',monospace;font-weight:normal;line-height:1.1;}
+  .qd-btn small{font-size:12px;color:var(--text-dim);}
+  .qd-btn[aria-pressed="true"]{background:var(--text);color:var(--bg);border-color:var(--text);}
+  .qd-btn[aria-pressed="true"] small{color:var(--bg);}
+  .qd-cap{font-size:17px;min-height:24px;margin-top:4px;text-align:center;}
+  .qd-route{width:100%;max-width:327px;margin:0;padding:0;list-style:none;text-align:left;}
+  .qd-h{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);width:100%;max-width:327px;margin:12px 0 8px;text-align:left;}
+  .qd-r{display:flex;align-items:center;gap:12px;min-height:48px;padding:6px 12px;margin-bottom:6px;border:1px solid var(--line);border-radius:8px;background:var(--panel);}
+  .qd-r .qd-n{flex:none;width:64px;font:13px 'Menlo',monospace;color:var(--text-dim);}
+  .qd-r .qd-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;font-size:15px;line-height:1.3;}
+  .qd-r .qd-dots{display:flex;gap:4px;} .qd-r .qd-dots i{width:14px;height:6px;border-radius:2px;background:var(--dc);display:block;}
+  .qd-r .qz-ck{width:20px;height:20px;}
+  .qd-r.on{border-color:var(--accent);background:var(--panel-raised);} .qd-r.on .qd-n{color:var(--text);} .qd-r.on .qz-ck{visibility:visible;} .qd-r:not(.on) .qz-ck{visibility:hidden;}
+  .qd-lead{font-size:13px;line-height:1.5;color:var(--text);max-width:327px;margin:4px 0 0;text-align:center;min-height:20px;}
+  @media (max-width:340px){ .qd-r .qd-n{width:52px;} .qd-r{padding:8px;gap:8px;} }
+  /* short screens (a phone held sideways): the question screens keep a slim pinned foot; the result's foot drops into the page so every note stays reachable */
+  @media (max-height:420px){
+    .onb-foot.qz-f{gap:4px;padding:8px 0 calc(8px + var(--sa-b));}
+    .onb-foot.qz-f .onb-note{display:none;}
+    .onb-foot.qz-f.qz-foot-flow{position:static;box-shadow:none;padding:12px 0 calc(16px + var(--sa-b));gap:8px;}
+    .onb-foot.qz-f.qz-foot-flow .onb-note{display:block;}
+  }
+
   .cel-h1{font-size:22px;margin:0 0 6px;position:relative;z-index:2;}
   .cel-sub{font-size:13px;color:var(--text-dim);margin-bottom:26px;position:relative;z-index:2;}
   .cel-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;width:100%;max-width:320px;position:relative;z-index:2;margin-bottom:20px;}
@@ -3411,7 +3465,7 @@ function showCelebration({day,worked,nsets,vol,durationMin,pr,rhythmCount}){
 // ---------- first-launch onboarding: welcome (import or start new) -> name -> units & body weight -> text size -> body-map intro ----------
 // shown once, on top of whatever init() already rendered underneath (Home showing the program builder,
 // since this only fires when needsBuild is true). Reuses the celebration overlay's look, unrelated content.
-const ONB_STEPS=4;
+const ONB_STEPS=6;
 let onbBw=null; // the body-weight entry this onboarding logged, so going Back and changing it edits rather than duplicates
 function onbShell(step,{skip,body,foot}){
   return `<div class="onb-top">
@@ -3504,8 +3558,11 @@ function renderOnboardStep(step){
     });
     $('onboardNext').onclick=()=>renderOnboardStep(4);
     $('onboardBack').onclick=()=>renderOnboardStep(2);
+  } else if(step===4){
+    if(!qz||qz.ctx!=='fresh') qz=qzNew('fresh');
+    qzQuestion(qz.screen&&qz.screen!=='result'?qz.screen:'goal'); return; // the quiz draws its own screens and focus
   } else {
-    inner.innerHTML=onbShell(4,{skip:false,
+    inner.innerHTML=onbShell(6,{skip:false,
       body:`<div class="cel-h1" id="onboardTitle" tabindex="-1">Meet Your Recovery Map</div>
         <div class="cel-sub">After a session, the muscles you trained show up red, then fade through amber to green as they recover. Check in here before every session.</div>
         <div class="onb-ex">
@@ -3519,7 +3576,7 @@ function renderOnboardStep(step){
       foot:`<button class="cel-cta" id="onboardDone">Let's Build Your Program</button>`});
     $('onboardExFigs').replaceWith(exampleRecoveryFigures());
     $('onboardDone').onclick=finishOnboarding;
-    $('onboardBack').onclick=()=>renderOnboardStep(3);
+    $('onboardBack').onclick=()=>renderOnboardStep(4);
   }
   const title=$('onboardTitle'); if(title) title.focus({preventScroll:true});
   inner.parentElement.scrollTop=0;
@@ -3541,6 +3598,102 @@ function exampleRecoveryFigures(){
 }
 // while a full-screen overlay is up, the app behind it can't be reached by keyboard or screen reader
 function setAppInert(on){ ['header','main','footer'].forEach(sel=>document.querySelector(sel).toggleAttribute('inert',on)); }
+// ---------- onboarding quiz screens (v83) ----------
+// Four questions, one per screen: goal, days (its own screen with where each answer leads), experience (only at 4 or more days), equipment.
+// The same overlay serves a new install (steps 4 and 5 of 6) and an existing user (Question n of m, Home sheet or Settings row).
+// Nothing is applied while answering; a fresh install applies its pick when setup finishes, an existing user through the Change Routine confirm.
+const QZ_CK='<svg class="qz-ck" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const QZ_BACK='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
+const QZ_Q={
+  goal:{t:'What is your main goal?',sub:'',label:'Main goal',opts:[['lose','Lose Weight'],['build','Build Muscle'],['fit','Stay Fit']],ifskip:'Skip and we leave your goal blank.',skipped:'Skipped. Your goal is left blank.'},
+  days:{t:'How many days a week can you train?',sub:'Pick what you can keep up most weeks, not your best week.',label:'Days per week',ifskip:'Skip and we plan for 4 days.',skipped:'Skipped. We are planning for 4 days.'},
+  exp:{t:'How long have you been lifting?',sub:'This helps us pick the right routine for you.',label:'Lifting experience',opts:[['new','New','Under 6 Months'],['some','Some','6 Months to 2 Years'],['exp','Experienced','2+ Years']],ifskip:'Skip and we assume Some.',skipped:'Skipped. We are assuming Some.'},
+  equip:{t:'What equipment do you have?',sub:'This presets your equipment filter. You can still fine-tune it later.',label:'Equipment',opts:[['full','Full Gym','Every equipment type'],['home','Home Gym','Barbell, dumbbells, kettlebell and bands'],['db','Dumbbells Only','Dumbbells and your body weight'],['body','Bodyweight Only','Your body weight and bands']],ifskip:'Skip and we keep your current equipment.',skipped:'Skipped. We are keeping your current equipment.'}
+};
+const QZ_LEAD=[['2–3','fb3',[2,3]],['4','ul4',[4]],['5','ul5',[5]],['6','ppl6',[6]]];
+let qz=null; // the quiz in progress: {ctx:'fresh'|'existing', a:{goal,days,exp,equip}, sk:[], screen, total, resume, chosen, err}
+function qzNew(ctx){
+  const a={goal:null,days:null,exp:null,equip:null}, sk=[]; let resume='';
+  if(QUIZ&&(QUIZ.goal||QUIZ.days||QUIZ.exp||QUIZ.equip||QUIZ.sk.length)){ Object.assign(a,{goal:QUIZ.goal,days:QUIZ.days,exp:QUIZ.exp,equip:QUIZ.equip}); sk.push(...QUIZ.sk); resume=QUIZ.state==='done'?'Your last answers are filled in.':'Your earlier answers are filled in.'; }
+  else if(ctx!=='fresh'){ const r=ROUTINES[ROUTINE_ID]||ROUTINES.ul4; if(r.perWeek>=2&&r.perWeek<=6) a.days=r.perWeek; a.equip=equipPresetOf(settings.equipFilter); }
+  return {ctx,a,sk,screen:'goal',total:4,resume,chosen:null,err:false,alt:false,openEx:null,origEquip:settings.equipFilter.slice()};
+}
+const qzOrder=()=>['goal','days',...(quizAsksExp(qz.a)?['exp']:[]),'equip'];
+const qzBars=(n,t)=>Array.from({length:t},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('');
+function qzShell(prog,{back=true,skip='',body,foot,top=false,footCls=''}){
+  return `<div class="onb-top">
+      ${back?`<button class="onb-back" id="onboardBack" type="button" aria-label="Back">${QZ_BACK}</button>`:'<span style="width:44px"></span>'}
+      <div class="onb-prog">${prog.label}<div class="onb-bars" aria-hidden="true">${qzBars(prog.n,prog.t)}</div></div>
+      ${skip?`<button class="onb-skip" id="onboardSkip" type="button">${skip}</button>`:'<span style="width:44px"></span>'}
+    </div>
+    <div class="onb-body${top?' qz-top':''}">${body}</div>
+    <div class="onb-foot qz-f${footCls}">${foot}</div>`;
+}
+function qzShow(html,focusSel){
+  const inner=document.getElementById('onboardInner'), bg=document.getElementById('onboardBg');
+  inner.classList.add('onb'); inner.innerHTML=html; bg.classList.add('on'); setAppInert(true);
+  const f=focusSel&&inner.querySelector(focusSel)||inner.querySelector('#onboardTitle'); if(f) f.focus({preventScroll:!!focusSel});
+  if(!focusSel) bg.scrollTop=0;
+}
+// keep what has been answered when this quiz may still be abandoned: a draft only while nothing final is stored
+async function qzSaveDraft(){ if(QUIZ&&QUIZ.state!=='draft') return true; return saveQuiz({state:'draft',...qz.a,sk:qz.sk}); }
+function qzProg(key){
+  const ord=qzOrder(), n=ord.indexOf(key)+1, tot=(key==='goal'||key==='days')?4:qz.total;
+  return qz.ctx==='fresh'?{label:'Step 4 of 6',n:4,t:6,q:`Question ${n} of ${tot}`}:{label:`Question ${n} of ${tot}`,n,t:tot,q:''};
+}
+function qzQuestion(key,focusSel){
+  qz.screen=key; const Q=QZ_Q[key], a=qz.a, val=a[key], skipped=qz.sk.includes(key)&&val==null, pr=qzProg(key);
+  let opts, state;
+  if(key==='days'){
+    const eff=skipped?4:val, lead=skipped?Q.skipped:val==null?Q.ifskip:val<=3?`Leads to ${ROUTINES.fb3.name}.`:`Leads to ${ROUTINES[QZ_LEAD.find(x=>x[2].includes(val))[1]].name}. Your experience, asked next, can change this.`;
+    const rows=QZ_LEAD.map(([lab,id,ds])=>{ const on=eff!=null&&ds.includes(eff), r=ROUTINES[id];
+      return `<li class="qd-r${on?' on':''}"${on?' aria-current="true"':''}><span class="qd-n">${lab} days</span><span class="qd-t"><span>${rtNb(r.name)}</span><span class="qd-dots" aria-hidden="true">${r.template.map(d=>`<i class="${dayType(d)}"></i>`).join('')}</span></span>${QZ_CK}</li>`; }).join('');
+    opts=`<div class="qd-row" role="group" aria-label="${Q.label}">${[2,3,4,5,6].map(d=>`<button class="qd-btn" type="button" data-v="${d}" aria-pressed="${val===d}" aria-label="${d} days a week"><b>${d}</b><small>days</small></button>`).join('')}</div>
+      <div class="qd-cap" aria-live="polite">${val?`${val} Days a Week`:''}</div>
+      <div class="qd-lead" role="status">${lead}</div>
+      <div class="qd-h" id="qdH">Where Each Answer Leads</div><ul class="qd-route" aria-labelledby="qdH">${rows}</ul>`;
+    state='';
+  } else {
+    opts=`<div class="onb-opts" role="group" aria-label="${Q.label}">${Q.opts.map(o=>`<button class="onb-opt qz-opt" type="button" data-v="${o[0]}" aria-pressed="${val===o[0]}"><span class="qz-l">${o[1]}${o[2]?`<small>${o[2]}</small>`:''}</span>${QZ_CK}</button>`).join('')}</div>`;
+    state=skipped?`<p class="qz-state skipped" role="status">${Q.skipped}</p>`
+      :key==='goal'&&qz.resume?`<p class="qz-state" role="status">${qz.resume}</p>`
+      :key==='equip'&&val==null&&qz.ctx!=='fresh'&&!equipPresetOf(settings.equipFilter)?`<p class="qz-state">Keeping your current equipment unless you pick one.</p>`
+      :`<p class="qz-state">${Q.ifskip}</p>`;
+  }
+  const has=val!=null||skipped;
+  const body=`${pr.q?`<div class="qz-eyebrow" id="qzEyebrow">${pr.q}</div>`:''}<div class="cel-h1" id="onboardTitle" tabindex="-1">${Q.t}</div>${Q.sub?`<div class="cel-sub">${Q.sub}</div>`:''}${opts}${state}`;
+  const foot=`<button class="cel-cta" id="qzNext" type="button"${has?'':' aria-disabled="true"'}>Continue</button><button class="qz-skipq" id="qzSkipQ" type="button">Skip Question</button>${key==='goal'&&qz.ctx==='fresh'?'<div class="onb-note">Skip any question you like. You can change all of this later in Settings.</div>':''}`;
+  qzShow(qzShell(pr,{back:!(qz.ctx!=='fresh'&&key==='goal'),skip:'Skip Quiz',body,foot,top:key==='days'}),focusSel);
+  const inner=document.getElementById('onboardInner');
+  inner.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{
+    const v=key==='days'?+b.dataset.v:b.dataset.v; a[key]=v; qz.sk=qz.sk.filter(k=>k!==key);
+    if(key==='days'&&!quizAsksExp(a)){ a.exp=null; qz.sk=qz.sk.filter(k=>k!=='exp'); } // no hidden answer may decide anything
+    qzQuestion(key,`[data-v="${b.dataset.v}"]`); });
+  document.getElementById('qzNext').onclick=()=>{ if(document.getElementById('qzNext').getAttribute('aria-disabled')==='true') return; qzAdvance(key); };
+  document.getElementById('qzSkipQ').onclick=()=>{ a[key]=null; if(!qz.sk.includes(key)) qz.sk.push(key); qzAdvance(key); };
+  document.getElementById('onboardSkip').onclick=qzSkipQuiz;
+  const back=document.getElementById('onboardBack'); if(back) back.onclick=()=>{ const ord=qzOrder(), i=ord.indexOf(key); if(i>0) qzQuestion(ord[i-1]); else if(qz.ctx==='fresh') renderOnboardStep(3); };
+}
+async function qzAdvance(key){
+  const ord=qzOrder(), i=ord.indexOf(key);
+  if(key==='days') qz.total=quizAsksExp(qz.a)?4:3; // the total changes only here, on Continue from the days question
+  await qzSaveDraft();
+  if(i<ord.length-1) qzQuestion(ord[i+1]); else qzDone();
+}
+// Skip Quiz: a new install carries on with the standard Upper/Lower exactly as before; an existing user closes the quiz and keeps everything
+async function qzSkipQuiz(){
+  if(qz.ctx==='fresh'){ qz.chosen=null; await saveQuiz({state:'skipped',...qz.a,sk:qz.sk}); renderOnboardStep(6); return; }
+  const wrote=!QUIZ||QUIZ.state!=='done'; if(wrote) await saveQuiz({state:'skipped',...qz.a,sk:qz.sk});
+  qzClose(); showToast(wrote?'Skipped. You can take the quiz any time in Settings.':'Quiz closed. Nothing was changed.');
+}
+function qzClose(){ document.getElementById('onboardBg').classList.remove('on'); setAppInert(false); qz=null; }
+// the last question is answered (task 9 adds the result screen here)
+function qzDone(){ if(qz.ctx==='fresh') renderOnboardStep(6); else qzClose(); }
+// an existing user's quiz is not a sheet, so Escape is Skip Quiz here (never during first-run setup, and never while a sheet is on top of it)
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape'||!qz||qz.ctx==='fresh'||sheetReturnFocus.size||!document.getElementById('onboardBg').classList.contains('on')) return;
+  e.preventDefault(); qzSkipQuiz();
+});
 async function finishOnboarding(){
   setAppInert(false);
   settings.onboarded=true;
