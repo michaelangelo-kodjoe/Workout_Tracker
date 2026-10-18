@@ -1613,7 +1613,7 @@ const FOCUS_FAMILY={upper:'upper',lower:'lower',push:'push',pull:'pull',legs:'le
 function dayType(d){ const f=FOCUS_FAMILY[dayFocus(d)]; return f?'t-'+f:''; }
 // a template becomes a day list; a day's `focus` (push, pull, legs) is stored only when the template names one, so the built-in
 // Upper/Lower list keeps exactly the shape it has always had
-function buildFromTemplate(tpl){ return tpl.map(d=>({id:d.id,name:d.name,sub:d.sub,badge:d.badge,factor:d.factor,...(d.focus?{focus:d.focus}:{}),exercises:d.slots.map(s=>slotExercise(s, CURATED_BY_NAME[s.pick]))})); }
+function buildFromTemplate(tpl){ return tpl.map(d=>({id:d.id,name:d.name,sub:d.sub,badge:d.badge,factor:d.factor,...(d.focus?{focus:d.focus}:{}),...(d.lvl?{lvl:d.lvl}:{}),exercises:d.slots.map(s=>slotExercise(s, CURATED_BY_NAME[s.pick]))})); }
 function buildProgram(){ return buildFromTemplate(TEMPLATE); }
 // Push/Pull/Legs, three days (R-B). Seven lifts a day, three sets each, every name an exact curated-pool name so history carries over by name.
 // Day ids are namespaced (ppl-1..3) so they never collide with d1..d4; sub "Day 1..3" is template order, not a schedule.
@@ -1717,20 +1717,88 @@ const rtIds=()=>RT_ORDER.filter(id=>ROUTINES[id]);
 // trains the SAME sub-muscle (a rear-delt slot never becomes a press, a calf slot never a skipping rope) and is not already used
 // anywhere in the routine. A slot with no such lift is left out and listed (AC-22), never swapped for an unrelated movement.
 // If a whole day would be empty it keeps its standard lifts and is reported in `bare` so the confirm can say so.
-function newRoutineProgram(rid){
-  const r=ROUTINES[rid]; const days=buildFromTemplate(r.template); let missing=0; const gaps=[], bare=[];
+function newRoutineProgram(rid,lvl){
+  lvl=levelOf(lvl); const r=ROUTINES[rid], full=levelTemplate(r.template,lvl,true), tpl=lvl==='new'?levelTemplate(r.template,'new'):full;
+  const days=buildFromTemplate(tpl); let missing=0; const gaps=[], bare=[];
   const used=new Set(days.flatMap(d=>d.exercises.filter(equipAllowed).map(e=>e.name)));
-  days.forEach((day,di)=>{
-    const tpl=r.template[di], keep=[], dayGaps=[];
+  // fill one day from its slots: a lift the filter rules out is replaced or left out (see above)
+  const fillDay=(day,slots)=>{
+    const keep=[], dayGaps=[];
     day.exercises.forEach((ex,i)=>{
       if(equipAllowed(ex)){ keep.push(ex); return; }
-      const slot=tpl.slots[i], want=recoveryKeysFor(CURATED_BY_NAME[slot.pick]||{name:slot.pick})[0];
+      const slot=slots[i], want=recoveryKeysFor(CURATED_BY_NAME[slot.pick]||{name:slot.pick})[0];
       const pick=bestPickFor(slot,used);
       if(pick&&!pick.approx&&(!want||recoveryKeysFor(pick)[0]===want)){ used.add(pick.name); keep.push(slotExercise(slot,pick)); } else dayGaps.push(day.name+' '+slot.group);
     });
-    if(keep.length){ day.exercises=keep; missing+=dayGaps.length; gaps.push(...dayGaps); } else bare.push(day.name); // an empty day keeps its standard lifts
+    return {keep,dayGaps};
+  };
+  days.forEach((day,di)=>{
+    let res=fillDay(day,tpl[di].slots);
+    // a reduced New day that would be empty goes back to its full list first; bare-day rule beats the reduction
+    if(!res.keep.length&&tpl[di]!==full[di]){ day.exercises=buildFromTemplate([full[di]])[0].exercises; day.exercises.filter(equipAllowed).forEach(e=>used.add(e.name)); res=fillDay(day,full[di].slots); }
+    if(res.keep.length){ day.exercises=res.keep; missing+=res.dayGaps.length; gaps.push(...res.dayGaps); } else bare.push(day.name); // an empty day keeps its standard lifts
   });
+  if(lvl==='exp') levelAdds(days,r.template,bare);
   return {days,missing,gaps,bare};
+}
+// ---------- experience levels (Lift Log's own design, not a guideline) ----------
+// A level is applied only when a routine is BUILT; it is stamped on each day as `lvl` ('new' or 'exp'; absent or anything else = Some)
+// and never rewrites a program that already exists. Some is today's list exactly. New drops lifts and moves rep ranges up, Experienced
+// moves rep ranges down and adds up to two lifts a day. Progression (suggestWeight) never reads the level.
+const levelOf=v=>v==='new'||v==='exp'?v:'some';
+const LEVEL_WORD={new:'New',some:'Some',exp:'Experienced'};
+const REP_MAP={'6-10':['8-12','5-8'],'8-10':['10-12','6-10'],'10-12':['10-12','8-12'],'12-15':['12-15','10-15'],'15-20':['15-20','12-20']};
+// "3 x 6-10" -> the level's range; set count and a /leg /arm /side suffix are kept; single numbers, timed holds and any other range are unchanged
+function levelTarget(t,lvl){
+  if(lvl!=='new'&&lvl!=='exp') return t;
+  const m=/^(\d+ x )(\d+-\d+)(\/\w+)?$/.exec(t||''), r=m&&REP_MAP[m[2]];
+  return r?m[1]+r[lvl==='new'?0:1]+(m[3]||''):t;
+}
+const slotRk=s=>recoveryKeysFor(CURATED_BY_NAME[s.pick]||{name:s.pick})[0];
+// New: per muscle key on a day, drop floor(n/2) lifts. A lift whose first recovery key repeats an earlier lift's goes first, then the
+// last-listed; the first lift of a key is never dropped (no muscle reaches zero). A day keeps at least min(5, its Some count) lifts.
+function reduceSlotsNew(slots){
+  const byKey={}; slots.forEach((s,i)=>(byKey[s.key]=byKey[s.key]||[]).push(i));
+  const drop=new Set();
+  Object.values(byKey).forEach(idx=>{
+    const k=Math.floor(idx.length/2); if(!k) return;
+    const seen=new Set(), dups=[], rest=[];
+    idx.forEach((i,j)=>{ const rk=slotRk(slots[i]); if(seen.has(rk)) dups.push(i); else { seen.add(rk); if(j>0) rest.push(i); } });
+    [...dups.reverse(),...rest.reverse()].slice(0,k).forEach(i=>drop.add(i));
+  });
+  const floor=Math.min(5,slots.length);
+  for(let i=0;i<slots.length&&slots.length-drop.size<floor;i++) drop.delete(i); // restore in template order
+  return slots.filter((_,i)=>!drop.has(i));
+}
+// the template at a level. Some returns the template itself. `keepAll` skips the New reduction (rep ranges still move).
+function levelTemplate(tpl,lvl,keepAll){
+  if(lvl!=='new'&&lvl!=='exp') return tpl;
+  return tpl.map(d=>({...d,lvl,slots:(lvl==='new'&&!keepAll?reduceSlotsNew(d.slots):d.slots).map(s=>({...s,target:levelTarget(s.target,lvl)}))}));
+}
+// Experienced: after the equipment pass, each day takes up to 2 extra lifts (a day never above 10 lifts, a key never above 5 lifts a day).
+// Forearms, calves and core are never extended. The key with the fewest weekly sets goes first (ties: order in the day) and a key stops at
+// 18 weekly sets. The lift is the best pick for the slot that trains the same first recovery key, not already anywhere in the routine,
+// not a rough match; if no key qualifies the day simply gets fewer. Skipped on a bare day. Adds are extras, never reported as missing.
+const LEVEL_NO_ADD=['forearms','calves','abs'];
+function levelAdds(days,tpl,bare){
+  const weekly={}; days.forEach(d=>d.exercises.forEach(e=>{ weekly[e.key]=(weekly[e.key]||0)+rtSets(e.target); }));
+  const names=new Set(days.flatMap(d=>d.exercises.map(e=>e.name)));
+  days.forEach((day,di)=>{
+    if(bare.includes(day.name)) return;
+    for(let n=0;n<2&&day.exercises.length<10;n++){
+      const keys=[]; day.exercises.forEach(e=>{ if(!keys.includes(e.key)) keys.push(e.key); });
+      const cands=keys.filter(k=>!LEVEL_NO_ADD.includes(k)&&day.exercises.filter(e=>e.key===k).length<5&&(weekly[k]||0)<18).sort((a,b)=>(weekly[a]||0)-(weekly[b]||0));
+      let added=false;
+      for(const k of cands){
+        const anchor=day.exercises.filter(e=>e.key===k).pop(), st=tpl[di].slots.filter(s=>s.key===k).pop(); if(!st) continue;
+        const pick=bestPickFor({group:anchor.group,key:k,target:st.target,pick:anchor.name},names);
+        if(!pick||pick.approx||recoveryKeysFor(pick)[0]!==recoveryKeysFor(anchor)[0]) continue;
+        const ex=slotExercise({group:anchor.group,key:k,target:levelTarget(st.target,'exp'),pick:pick.name},pick);
+        day.exercises.push(ex); names.add(ex.name); weekly[k]=(weekly[k]||0)+rtSets(ex.target); added=true; break;
+      }
+      if(!added) break;
+    }
+  });
 }
 const DEFAULT_PROGRAM = buildProgram();
 let PROGRAM = JSON.parse(JSON.stringify(DEFAULT_PROGRAM));
@@ -5403,7 +5471,7 @@ function applyEquipPicks(program){
     const tpl=Object.values(ROUTINES).flatMap(r=>r.template||[]).find(t=>t.id===day.id);
     day.exercises.forEach((ex,i)=>{
       if(equipAllowed(ex)) return;
-      const slot=(tpl&&tpl.slots.length===day.exercises.length)?tpl.slots[i]:{group:ex.group,key:groupKeyFor(ex),target:ex.target,pick:ex.name};
+      const slot=(tpl&&!day.lvl&&tpl.slots.length===day.exercises.length)?tpl.slots[i]:{group:ex.group,key:groupKeyFor(ex),target:ex.target,pick:ex.name};
       const pick=bestPickFor(slot,new Set(day.exercises.map(e=>e.name)));
       if(pick){ day.exercises[i]=slotExercise(slot,pick); changed++; }
     });
@@ -5417,7 +5485,7 @@ function openSwap(dayId, ex){
   const key=groupKeyFor(ex); const inUse=new Set(day.exercises.map(e=>e.name));
   document.getElementById('sheetSub').textContent=`Replacing ${ex.name} · ${day.name} ${day.sub}`;
   const list=document.getElementById('sheetList'); list.innerHTML='';
-  const dflt=DEFAULT_PROGRAM.find(d=>d.id===dayId), original=dflt&&dflt.exercises[idx];
+  const dflt=DEFAULT_PROGRAM.find(d=>d.id===dayId), original=dflt&&!day.lvl&&dflt.exercises[idx]; // a New or Experienced build has its own lift order
   const slotTarget=anchorOf(ex).target;
   const render1=(alt,tag,searchable)=>{
     const el=document.createElement('div'); el.className='alt'+(searchable?' alt-searchable':'');
