@@ -568,7 +568,6 @@
   .qz-note{font-size:13px;line-height:1.5;padding:10px 12px;border-left:2px solid var(--line-strong);background:var(--panel);border-radius:3px;color:var(--text);}
   .qz-note.warn{border-left-color:var(--amber);background:var(--panel-raised);}
   .qz-why{font-size:13px;line-height:1.5;color:var(--text);margin:0;}
-  .cel-cta.alt.qz-alt{min-height:50px;}
   .qz-head{text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center;}
   .qz-head .cel-h1,.qz-head .cel-sub{margin:0;max-width:320px;}
   .onb-foot .onb-note{text-align:center;}
@@ -1805,12 +1804,12 @@ let QUIZ=null; // the sanitised stored quiz (null = never asked); set at boot an
 function equipPresetOf(list){ const s=new Set(list||[]); return Object.keys(QUIZ_EQUIP).find(k=>QUIZ_EQUIP[k].length===s.size&&QUIZ_EQUIP[k].every(t=>s.has(t)))||null; }
 // The pick: a pure function of (days, experience). Goal and equipment never change it. Q3 (experience) is asked only when the days
 // answer is 4 or more (a skipped days answer counts as 4); a skipped or unasked experience counts as Some. Caps: New 3, Some 5, Experienced 6.
-// Returns the routine id, whether the asked days were cut down (`capped`), and the routine a New lifter can still take (`anyway`).
+// Returns the routine id, whether the asked days were cut down (`capped`).
 function quizPick(a){
   a=a||{}; const asked=Number.isInteger(a.days)?a.days:null, want=asked==null?4:asked;
   const exp=want>=4?(a.exp||'some'):null, cap=exp==='new'?3:exp==='exp'?6:5, eff=Math.min(want,cap);
   const id=eff<=3?'fb3':eff===4?'ul4':eff===5?'ul5':'ppl6', capped=eff<want;
-  return { id, asked, want, exp, eff, capped, anyway:capped&&exp==='new'?(want===4?'ul4':'ul5'):null };
+  return { id, asked, want, exp, eff, capped };
 }
 // whether Q3 is asked for these answers: the days answer is 4 or more, or was skipped (counts as 4)
 function quizAsksExp(a){ return Number.isInteger(a.days)?a.days>=4:true; }
@@ -3724,19 +3723,17 @@ function qzResult(){
   if(pk.asked===2&&id==='fb3'&&!allSk) notes.push(`<p class="qz-note">${QZ_TWO}</p><p class="qz-note">Your weekly goal will be 2 sessions, so the ring can close.</p>`);
   if(r.note) notes.push(`<p class="rt-honest">${r.note}</p>`);
   const gaps=qzGaps(id); if(gaps) notes.push(`<p class="qz-note warn">${qzGapLine(gaps)} You can still use this routine, or pick another.</p>`);
-  const any=!allSk&&pk.anyway?pk.anyway:null;
   const body=`<div class="qz-res"><div class="qz-head"><div class="cel-h1" id="onboardTitle" tabindex="-1">We Suggest ${rtNb(r.short||r.name)}</div><div class="cel-sub">Based on your answers. You decide.</div></div>
     <div class="rt-card"><div class="rt-top"><div class="rt-name">${rtNb(r.name)}</div>${cur?'<span class="rt-chips"><span class="rt-chip">Current</span></span>':''}</div><div class="rt-meta">${r.meta}</div>
       <ul class="rt-days" aria-label="Days">${r.days.map(([n,c])=>`<li class="badge ${c}">${esc(n)}</li>`).join('')}</ul>${r.cardLine?`<div class="rt-line card-line">${r.cardLine}</div>`:''}</div>
     <p class="qz-why">${qzWhy(pk,allSk)}</p>${notes.join('')}</div>`;
   const foot=`${qz.err?'<div class="qz-err" role="alert">Could not save your routine. Nothing was changed. Try again.</div>':''}
     <button class="cel-cta" id="qzUse" type="button">${cur?`Keep ${esc(r.short||r.name)}`:'Use This Routine'}</button>
-    ${any?`<button class="cel-cta alt qz-alt" id="qzAnyway" type="button">Use ${rtNb(ROUTINES[any].name)} Anyway</button>`:''}
     <div class="qz-links"><button class="linkbtn" id="qzPickBtn" type="button">Pick Another</button><button class="linkbtn" id="qzChange" type="button">Change Answers</button></div>
     <div class="onb-note">${qz.ctx==='fresh'?'You can change this later in Settings.':'Nothing changes until you confirm.'}</div>`;
   qzShow(qzShell(qzResultProg(),{back:true,body,foot,top:true,footCls:' qz-foot-flow'}));
   const $=i=>document.getElementById(i);
-  $('qzUse').onclick=()=>qzUse(id); if($('qzAnyway')) $('qzAnyway').onclick=()=>qzUse(any);
+  $('qzUse').onclick=()=>qzUse(id);
   $('qzPickBtn').onclick=()=>{ rt.open=null; qzPick(id); }; $('qzChange').onclick=()=>qzQuestion('goal');
   $('onboardBack').onclick=()=>{ const o=qzOrder(); qzQuestion(o[o.length-1]); };
 }
