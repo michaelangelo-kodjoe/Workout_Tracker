@@ -674,6 +674,12 @@
   .rt-sets dt{margin:0;} .rt-sets dd{margin:0;font-family:'Menlo',monospace;}
   @media (max-width:340px){ .rt-sets{grid-template-columns:1fr;} }
   .rt-sets-note{font-size:13px;line-height:1.5;color:var(--text-dim);margin:12px 0 0;}
+  .nb{white-space:nowrap;}
+  .rt-chips{display:flex;gap:6px;flex:none;}
+  .rt-card .rt-line.card-line{margin-top:8px;color:var(--text-dim);}
+  .rt-warn{font-size:13px;line-height:1.5;margin:12px 0 0;padding:10px 12px;border-left:2px solid var(--amber);background:var(--panel);border-radius:3px;}
+  .rt-card.suggest{border-color:var(--text-dim);}
+  .rt-see[aria-expanded=true]{color:var(--text);}
   .toast.err{border-color:var(--danger);color:var(--text);}
   .set-chev{width:16px;height:16px;flex-shrink:0;fill:none;stroke:var(--text-dim);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
   .set-seg{width:auto;max-width:none;margin:0;padding:2px;gap:2px;} .set-seg button{flex:none;height:36px;padding:0 14px;}
@@ -1593,12 +1599,16 @@ const PPL_TEMPLATE = [
 // routines the app can switch to. `perWeek` is the weekly session goal. Day lists other than ul4 live in `programs` by id.
 // `days` (label, colour class) and the copy feed the Change Routine sheet; `note` is the plain frequency sentence (ACSM wording agreed by the research loop).
 const ROUTINES = {
-  ul4: { id:'ul4', name:'Upper/Lower', perWeek:4, meta:'4 Days a Week', days:[['Upper Heavy','t-upper'],['Lower Heavy','t-lower'],['Upper Volume','t-upper'],['Lower Volume','t-lower']],
-    suits:'Best if you can train four days a week. Upper and lower body each get a heavy day and a volume day.' },
-  ppl3: { id:'ppl3', name:'Push/Pull/Legs', perWeek:3, template:PPL_TEMPLATE, meta:'3 Days a Week', days:[['Push','t-push'],['Pull','t-pull'],['Legs','t-legs']],
+  ul4: { id:'ul4', name:'Upper/Lower 4-Day', short:'Upper/Lower', perWeek:4, template:TEMPLATE, meta:'4 Days a Week', days:[['Upper Heavy','t-upper'],['Lower Heavy','t-lower'],['Upper Volume','t-upper'],['Lower Volume','t-lower']],
+    suits:'Best if you can train four days a week. Upper and lower body each get a heavy day and a volume day.',
+    freq:'Each muscle twice a week with a rest day between.' },
+  ppl3: { id:'ppl3', name:'Push/Pull/Legs 3-Day', perWeek:3, template:PPL_TEMPLATE, meta:'3 Days a Week', days:[['Push','t-push'],['Pull','t-pull'],['Legs','t-legs']],
     suits:'Best if you can train three days a week. Every muscle group gets one full session.',
-    note:"Each muscle is trained once a week. ACSM's 2026 guidance suggests at least twice, so this is the lower-frequency option; with equal weekly sets, research has not found it weaker." },
+    note:"Each muscle is trained once a week. ACSM's 2026 guidance suggests at least twice, so this is the lower-frequency option. Studies that match weekly sets mostly find little difference in muscle growth, though some favour more frequent training." },
 };
+// the order the Change Routine sheet and Pick Another list the routines: by days a week, never reordered by the current routine
+const RT_ORDER=['fb3','ppl3','ul4','ul5','bro5','ppl6'];
+const rtIds=()=>RT_ORDER.filter(id=>ROUTINES[id]);
 // a routine's day list for the current equipment. A lift the filter rules out is replaced only by the best pick for its slot that
 // trains the SAME sub-muscle (a rear-delt slot never becomes a press, a calf slot never a skipping rope) and is not already used
 // anywhere in the routine. A slot with no such lift is left out and listed (AC-22), never swapped for an unrelated movement.
@@ -4344,7 +4354,7 @@ function renderSetMain(){
   sv('rotate', settings.autoRotate?`Every ${settings.blockWeeks||4} Weeks`:'Off');
   sv('rest', settings.smartRest?`Smart · ${settings.rest}s Fallback`:`${settings.rest}s`);
   { const r=ROUTINES[ROUTINE_ID]||ROUTINES.ul4, row=document.getElementById('routineRow'), note=document.getElementById('routineNote');
-    document.getElementById('routineCap').textContent=r.meta; sv('routine',r.name);
+    document.getElementById('routineCap').textContent=r.meta; sv('routine',r.short||r.name);
     row.setAttribute('aria-label',`Routine, ${r.name}, ${r.meta.toLowerCase()}`);
     note.textContent=r.note||''; note.hidden=!r.note; row.classList.toggle('has-note',!!r.note); }
   const nEx=PROGRAM.reduce((a,d)=>a+d.exercises.length,0); sv('edit', `${PROGRAM.length} Days · ${nEx} Exercises`);
@@ -4402,36 +4412,50 @@ async function switchRoutine(to){
 }
 
 // ---------- Change Routine sheet ----------
-// Direct working sets per muscle each week for Push/Pull/Legs (sum of the template's slots; checked against it in QA). Direct sets only:
-// no indirect figure is shown anywhere.
-const PPL_SETS=[['Chest',9],['Back',9],['Quads',6],['Hamstrings',6],['Shoulders',6],['Rear Delts',6],['Triceps',6],['Biceps',6],['Calves',6],['Core',3]];
+// Direct working sets per muscle each week, counted from a routine's template (sum of its slots' sets; QA checks them by script).
+// Direct sets only: no indirect figure is shown anywhere. Rear delts are the shoulder slots whose first recovery key is the rear delt.
+const SET_ROWS=[['chest','Chest'],['back','Back'],['shoulders','Shoulders'],['rear','Rear Delts'],['biceps','Biceps'],['triceps','Triceps'],['forearms','Forearms'],['quads','Quads'],['hamstrings','Hamstrings'],['calves','Calves'],['abs','Core']];
+function routineSets(tpl){
+  const t={};
+  tpl.forEach(d=>d.slots.forEach(sl=>{ let k=sl.key; if(k==='shoulders'&&recoveryKeysFor(CURATED_BY_NAME[sl.pick]||{name:sl.pick})[0]==='delt-rear') k='rear'; t[k]=(t[k]||0)+rtSets(sl.target); }));
+  return SET_ROWS.filter(([k])=>t[k]).map(([k,l])=>[l,t[k]]);
+}
 const RT_CHK='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>', RT_ARROW='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
-let rt={step:'list',to:null,backedUp:false,exOpen:false};
+// rt.open is the id of the one card whose exercises are showing (one at a time); rt.ctx is 'settings' or 'quiz' (the confirm step then
+// returns to the quiz result on Cancel and hands the commit to rt.onDone)
+let rt={step:'list',to:null,backedUp:false,open:null,ctx:'settings',goal:null,onDone:null,onCancel:null};
 const rtSets=t=>parseInt((t||'').match(/^\s*(\d+)/)?.[1]||'3',10);
 const rtJoin=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];
-function rtSeeBlock(){
-  const open=rt.exOpen;
-  const chev='<svg class="rt-see-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
-  let h=`<button class="rt-see" type="button" aria-expanded="${open}" aria-controls="rtEx"><span>${open?'Hide Exercises':'See Exercises'}</span>${chev}</button>`;
-  if(!open) return h+'<div id="rtEx" class="rt-ex" hidden></div>';
-  const cls={push:'t-push',pull:'t-pull',legs:'t-legs'};
-  h+=`<div id="rtEx" class="rt-ex">`+PPL_TEMPLATE.map(d=>`<section aria-label="${esc(d.name)} day"><h4 class="rt-exh"><span class="badge ${cls[d.focus]}">${esc(d.name)}</span><span>${d.slots.length} Lifts · ${d.slots.reduce((a,x)=>a+rtSets(x.target),0)} Sets</span></h4><ol class="rt-exl">${d.slots.map(x=>`<li><span>${esc(x.pick)}</span><span class="rt-t">${esc(x.target)}</span></li>`).join('')}</ol></section>`).join('')+
-    `<h4 class="rt-exh rt-exh2">Direct Sets per Week</h4><dl class="rt-sets">${PPL_SETS.map(x=>`<div><dt>${x[0]}</dt><dd>${x[1]}</dd></div>`).join('')}</dl>
-    <p class="rt-sets-note">ACSM's 2026 guidance is about 10 direct sets per muscle each week. Every muscle here is below that, so this routine does not claim to match it. Presses and rows add some indirect work.</p></div>`;
-  return h;
+const rtNb=t=>esc(t).replace(/(\d-Day)/g,'<span class="nb">$1</span>'); // "3-Day" never splits across lines
+const SETS_NOTE="ACSM's 2026 guidance is about 10 direct sets per muscle each week. It is a published figure, not a target this app measures. Presses and rows add some indirect work.";
+const SETS_NOTE_PPL3="ACSM's 2026 guidance is about 10 direct sets per muscle each week. Every muscle here is below that, so this routine does not claim to match it. Presses and rows add some indirect work.";
+function rtPanel(id){
+  const r=ROUTINES[id];
+  return `<div id="rtEx-${id}" class="rt-ex">`+r.template.map((d,i)=>{ const lbl=(r.days[i]||[d.name])[0], cls=dayType(d); return `<section aria-label="${esc(lbl)} day"><h4 class="rt-exh"><span class="badge ${cls}">${esc(lbl)}</span><span>${d.slots.length} Lifts · ${d.slots.reduce((a,x)=>a+rtSets(x.target),0)} Sets</span></h4><ol class="rt-exl">${d.slots.map(x=>`<li><span>${esc(x.pick)}</span><span class="rt-t">${esc(x.target)}</span></li>`).join('')}</ol></section>`; }).join('')+
+    `<h4 class="rt-exh rt-exh2">Direct Sets per Week</h4><dl class="rt-sets">${routineSets(r.template).map(x=>`<div><dt>${x[0]}</dt><dd>${x[1]}</dd></div>`).join('')}</dl>
+    <p class="rt-sets-note">${id==='ppl3'?SETS_NOTE_PPL3:SETS_NOTE}</p></div>`;
 }
-function rtCard(id){
-  const r=ROUTINES[id], cur=id===ROUTINE_ID;
-  let extra='';
-  if(id==='ul4') extra=cur?'Your own edits to these workouts are saved as you left them.':'Your customised Upper/Lower is kept exactly as you left it.';
-  else extra=cur?'Your changes to Push/Pull/Legs are saved when you switch away.':'Exercises come from your Equipment settings. You can change any of them in Edit Workouts.';
-  return `<div class="rt-card${cur?' cur':''}"${cur?' aria-current="true"':''}>
-    <div class="rt-top"><div class="rt-name">${esc(r.name)}</div>${cur?'<span class="rt-chip">Current</span>':''}</div>
+// one routine card, shared by the Change Routine sheet and the quiz's Pick Another. o: {cur, sug, open, warn, label, btn}
+function rtCard(id,o){
+  o=o||{}; const r=ROUTINES[id], cur=o.cur===id, open=o.open===id, sug=o.sug===id&&!cur;
+  const chips=(cur?'<span class="rt-chip">Current</span>':'')+(sug?'<span class="rt-chip">Suggested</span>':'');
+  const chev='<svg class="rt-see-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+  return `<div class="rt-card${cur?' cur':''}${sug?' suggest':''}" data-r="${id}"${cur?' aria-current="true"':''}>
+    <div class="rt-top"><div class="rt-name">${rtNb(r.name)}</div><span class="rt-chips">${chips}</span></div>
     <div class="rt-meta">${r.meta}</div>
     <ul class="rt-days" aria-label="Days">${r.days.map(([n,c])=>`<li class="badge ${c}">${esc(n)}</li>`).join('')}</ul>
-    <div class="rt-line">${r.suits}</div><div class="rt-line dim">${extra}</div>
-    ${r.note?`<p class="rt-honest">${r.note}</p>${rtSeeBlock()}`:''}
-    ${cur?'':`<button class="btn primary rt-go" type="button" data-to="${id}">Switch to ${esc(r.name)}</button>`}</div>`;
+    ${r.cardLine?`<div class="rt-line card-line">${r.cardLine}</div>`:''}
+    <div class="rt-line">${r.suits}</div>
+    ${r.note?`<p class="rt-honest">${r.note}</p>`:`<div class="rt-line dim">${r.freq||''}</div>`}
+    ${o.warn&&o.warn[id]?`<p class="rt-warn">${o.warn[id]}</p>`:''}
+    <button class="rt-see" id="rtSee-${id}" data-r="${id}" type="button" aria-expanded="${open}" aria-controls="rtEx-${id}"><span>${open?'Hide Exercises':'See Exercises'}</span>${chev}</button>
+    ${open?rtPanel(id):`<div id="rtEx-${id}" class="rt-ex" hidden></div>`}
+    ${cur?'':`<button class="btn primary rt-go" type="button" data-to="${id}">${esc(o.label?o.label(id):'Switch to '+r.name)}</button>`}</div>`;
+}
+// one toggle for a card list: opening a card closes the other, and puts the opened card at the top so its list is under the thumb
+function rtWireSee(root,rerender){
+  root.querySelectorAll('.rt-see').forEach(b=>b.onclick=()=>{ const id=b.dataset.r; rt.open=rt.open===id?null:id; rerender('#rtSee-'+id);
+    if(rt.open){ const c=document.querySelector(`[data-r="${id}"]`); if(c) c.scrollIntoView({block:'start'}); } });
 }
 // a lift both routines have, the one with the most history, for the "your progress carries over" line
 function rtSharedLift(to){
@@ -4441,10 +4465,10 @@ function rtSharedLift(to){
   here.sort((a,b)=>hist[b].length-hist[a].length); return here[0]||null;
 }
 function rtConfirm(){
-  const to=rt.to, r=ROUTINES[to], from=ROUTINES[ROUTINE_ID], toPPL=!!r.note;
+  const to=rt.to, r=ROUTINES[to], from=ROUTINES[ROUTINE_ID]||ROUTINES.ul4;
   const preview=(!PROGRAMS[to]||!PROGRAMS[to].length)&&to!=='ul4'?newRoutineProgram(to):null;
-  const shown=to==='ul4'?'Upper Heavy, Lower Heavy, Upper Volume and Lower Volume':rtJoin(r.days.map(x=>x[0]));
-  const lift=rtSharedLift(to);
+  const shown=rtJoin(r.days.map(x=>x[0]));
+  const lift=rtSharedLift(to), goal=rt.goal||r.perWeek;
   const eqNote=preview&&preview.missing?`${preview.missing} exercise${preview.missing===1?' has':'s have'} no match for your equipment, so ${preview.missing===1?'it is':'they are'} left out (${esc(rtJoin([...new Set(preview.gaps)].map(g=>{ const n=preview.gaps.filter(x=>x===g).length; return n>1?`${g} x${n}`:g; })))}). You can add ${preview.missing===1?'one':'some'} in Edit Workouts.`:'';
   const eqBare=preview&&preview.bare.length?`Nothing in ${esc(rtJoin(preview.bare))} matches your equipment, so ${preview.bare.length===1?'it starts':'they start'} with the standard lifts. You can swap them in Edit Workouts.`:'';
   const eq=[eqNote,eqBare].filter(Boolean);
@@ -4452,10 +4476,10 @@ function rtConfirm(){
   const backup=noHist?`<div class="rt-backup">No history yet, so there is nothing to back up.</div>`:
     `<div class="rt-backup">Want a copy of your data first? It takes a few seconds.<button class="btn" id="rtBk" type="button">${rt.backedUp?'Back Up Again':'Back Up First'}</button>${rt.backedUp?`<div class="rt-ok" role="status">${RT_CHK}<span>Backup saved. You can switch now.</span></div>`:''}</div>`;
   document.getElementById('routineTitle').textContent=`Switch to ${r.name}?`;
-  document.getElementById('routineSub').textContent=`${r.perWeek} days a week, replacing ${from.name}`;
-  return `${toPPL?`<p class="rt-honest rt-honest-top">${r.note}</p>`:''}
+  document.getElementById('routineSub').textContent=`${goal} days a week, replacing ${from.name}`;
+  return `${r.note?`<p class="rt-honest rt-honest-top">${r.note}</p>`:''}
     <div class="rt-sec">What Changes</div>
-    <ul class="rt-list"><li class="chg">${RT_ARROW}<span>Your week goal becomes ${r.perWeek} sessions.</span></li>
+    <ul class="rt-list"><li class="chg">${RT_ARROW}<span>Your week goal becomes ${goal} sessions.</span></li>
       <li class="chg">${RT_ARROW}<span>Home, Log and Edit Workouts show ${shown}.</span></li>
       ${eq.map(t=>`<li class="chg">${RT_ARROW}<span>${t}</span></li>`).join('')}</ul>
     <div class="rt-sec">What Stays the Same</div>
@@ -4463,7 +4487,7 @@ function rtConfirm(){
       <li class="keep">${RT_CHK}<span>Your progress. Lifts carry over by name${lift?`, so ${esc(lift)} picks up where you left off`:''}.</span></li>
       <li class="keep">${RT_CHK}<span>Sessions already logged this week still count.</span></li>
       <li class="keep">${RT_CHK}<span>Your training block. It keeps going, with no restart. Deload and exercise rotation carry on too.</span></li>
-      <li class="keep">${RT_CHK}<span>${toPPL?'You can switch back any time. Upper/Lower returns exactly as you left it, edits included.':'Your Push/Pull/Legs edits are saved. Switch back any time.'}</span></li></ul>
+      <li class="keep">${RT_CHK}<span>You can switch back any time. ${esc(from.name)} returns exactly as you left it, edits included.</span></li></ul>
     ${backup}
     <div class="sheet-actions"><button class="btn" id="rtCancel" type="button" style="flex:1;min-height:48px;font-size:15px">Cancel</button><button class="btn primary" id="rtGo" type="button" style="flex:1;min-height:48px;font-size:15px">Switch Routine</button></div>`;
 }
@@ -4477,7 +4501,7 @@ function rtBlocked(){
 function renderRoutineSheet(focusSel){
   const body=document.getElementById('routineBody');
   if(rt.step==='list'){ document.getElementById('routineTitle').textContent='Change Routine'; document.getElementById('routineSub').textContent='Pick how you split your week.';
-    body.innerHTML=Object.keys(ROUTINES).map(rtCard).join('')+'<p class="rt-foot">Nothing is deleted when you switch. History, records and notes stay.</p>'; }
+    body.innerHTML=rtIds().map(id=>rtCard(id,{cur:ROUTINE_ID,open:rt.open})).join('')+'<p class="rt-foot">Nothing is deleted when you switch. History, records and notes stay.</p>'; }
   else if(rt.step==='confirm') body.innerHTML=rtConfirm();
   else body.innerHTML=rtBlocked();
   const q=s=>body.querySelector(s);
@@ -4485,16 +4509,17 @@ function renderRoutineSheet(focusSel){
     const to=b.dataset.to, d=await openDraft(); rt.to=to;
     if(d){ rt.draft=d; rt.step='blocked'; } else { rt.step='confirm'; rt.backedUp=false; }
     renderRoutineSheet('#routineTitle'); });
-  const see=q('.rt-see'); if(see) see.onclick=()=>{ rt.exOpen=!rt.exOpen; renderRoutineSheet('.rt-see'); };
-  const cancel=q('#rtCancel'); if(cancel) cancel.onclick=()=>{ if(rt.step==='blocked') closeRoutine(); else { rt.step='list'; renderRoutineSheet('#routineTitle'); } };
+  rtWireSee(body,renderRoutineSheet);
+  const cancel=q('#rtCancel'); if(cancel) cancel.onclick=()=>{ if(rt.step==='blocked'||rt.ctx==='quiz'){ closeRoutine(); if(rt.onCancel) rt.onCancel(); } else { rt.step='list'; renderRoutineSheet('#routineTitle'); } };
   const bk=q('#rtBk'); if(bk) bk.onclick=async()=>{ try{ rt.backedUp=!!(await doExport()); }catch(e){ console.error(e); showToast("Couldn't make the backup. You can still switch.",null,true); } renderRoutineSheet('#rtBk'); };
   const go=q('#rtGo'); if(go) go.onclick=async()=>{
     go.disabled=true; const to=rt.to, r=await switchRoutine(to);
-    if(r.ok){ const row=document.getElementById('routineRow'); row.focus(); closeRoutine(); renderSetMain(); row.focus(); const n=ROUTINES[to].perWeek;
-      showToast(`Now on ${ROUTINES[to].name}. Your week goal is ${n} session${n===1?'':'s'}.`); }
+    if(r.ok){ const done=rt.onDone, goal=rt.goal||ROUTINES[to].perWeek; closeRoutine();
+      if(done) await done(); else { const row=document.getElementById('routineRow'); row.focus(); renderSetMain(); row.focus(); }
+      showToast(`Now on ${ROUTINES[to].name}. Your week goal is ${goal} session${goal===1?'':'s'}.`); }
     else if(r.blocked){ rt.draft=r.blocked; rt.step='blocked'; renderRoutineSheet('#routineTitle'); }
     else { go.disabled=false; showToast('Could not switch routines. Nothing was changed.',null,true); } };
-  const gl=q('#rtGoLog'); if(gl) gl.onclick=async()=>{ const id=rt.draft.day.id; closeRoutine(); if(id!==currentDay) await loadDay(id); setView('log'); };
+  const gl=q('#rtGoLog'); if(gl) gl.onclick=async()=>{ const id=rt.draft.day.id; closeRoutine(); if(rt.onCancel) rt.onCancel(true); if(id!==currentDay) await loadDay(id); setView('log'); };
   const dc=q('#rtDiscard'); if(dc) dc.onclick=async()=>{
     const day=rt.draft.day;
     if(!await confirmSheet(`Clear everything you've logged today for ${day.name} ${day.sub}? This can't be undone.`, 'Clear', null, true)) return;
@@ -4504,13 +4529,13 @@ function renderRoutineSheet(focusSel){
   const f=document.querySelector('#routineSheet '+(focusSel||'#routineTitle'));
   if(f) requestAnimationFrame(()=>requestAnimationFrame(()=>f.focus({preventScroll:true})));
 }
-function openRoutine(){
-  rt={step:'list',to:null,backedUp:false,exOpen:false}; renderRoutineSheet();
+function openRoutine(o){
+  rt={step:'list',to:null,backedUp:false,open:null,ctx:'settings',goal:null,onDone:null,onCancel:null,...(o||{})}; renderRoutineSheet();
   document.getElementById('routineBg').classList.add('on'); document.getElementById('routineSheet').classList.add('on');
 }
 function closeRoutine(){ document.getElementById('routineBg').classList.remove('on'); document.getElementById('routineSheet').classList.remove('on'); }
 document.getElementById('routineRow').onclick=e=>{ e.currentTarget.focus(); openRoutine(); }; // focus first: Safari does not focus a tapped button, and the sheet returns focus to the opener
-document.getElementById('routineClose').onclick=closeRoutine; document.getElementById('routineBg').onclick=closeRoutine;
+{ const dismiss=()=>{ const q=rt.ctx==='quiz'&&document.getElementById('routineSheet').classList.contains('on'); closeRoutine(); if(q&&rt.onCancel) rt.onCancel(); }; document.getElementById('routineClose').onclick=dismiss; document.getElementById('routineBg').onclick=dismiss; }
 let setPage=null;
 function openSetPage(k){
   setPage=k; document.getElementById('setMain').hidden=true;
