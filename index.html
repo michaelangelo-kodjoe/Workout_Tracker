@@ -1782,7 +1782,12 @@ function dayFocus(d){
   const n=(d&&d.name||'').toLowerCase(); return n.startsWith('upper')?'upper':n.startsWith('lower')?'lower':'';
 }
 // lifting days per week: 4 for the built-in program, otherwise the active program's own day count
-function weeklyGoal(){ return activeProgram()===UL4_PROGRAM?4:((ROUTINES[ROUTINE_ID]&&ROUTINES[ROUTINE_ID].perWeek)||PROGRAM.length); }
+// After a finished quiz the days answer can LOWER the goal (never raise it) while the live routine is the one the quiz applied, so a two-day
+// answer on Full Body reads 1/2, 2/2. A later routine change, a skipped quiz or an unanswered days question leaves the routine's own number.
+function weeklyGoal(){
+  const own=activeProgram()===UL4_PROGRAM?4:((ROUTINES[ROUTINE_ID]&&ROUTINES[ROUTINE_ID].perWeek)||PROGRAM.length);
+  return QUIZ&&QUIZ.state==='done'&&QUIZ.pick===ROUTINE_ID&&Number.isInteger(QUIZ.days)?Math.min(own,QUIZ.days):own;
+}
 // where edits to the active program are saved: `program` for the built-in one, never over it for another routine
 function persistProgram(){ return activeProgram()===UL4_PROGRAM?sset('program',PROGRAM):sset('programs',PROGRAMS); }
 let needsBuild=false; // true on first launch until the user accepts a program in the builder
@@ -2775,10 +2780,10 @@ function weekRanges(n){
 // counting only weeks that start after the first session (a first week begun midweek undercounts). It takes 3 such
 // weeks to mean anything; before that the program's own days per week is the reference, and the copy says "plan".
 function weeklyRhythm(){
-  const lifts=sessions.filter(s=>!s.isCardio); if(!lifts.length) return {n:PROGRAM.length, learned:false};
+  const lifts=sessions.filter(s=>!s.isCardio); if(!lifts.length) return {n:weeklyGoal(), learned:false};
   const first=Math.min(...lifts.map(s=>s.t));
   const weeks=weekRanges(9).slice(0,-1).filter(([a])=>a>first);
-  if(weeks.length<3) return {n:PROGRAM.length, learned:false};
+  if(weeks.length<3) return {n:weeklyGoal(), learned:false};
   const counts=weeks.map(([a,b])=>lifts.filter(s=>s.t>=a&&s.t<b).length).sort((x,y)=>x-y);
   const mid=counts.length>>1, med=counts.length%2?counts[mid]:(counts[mid-1]+counts[mid])/2;
   return {n:Math.max(1,Math.round(med)), learned:true};
