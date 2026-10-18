@@ -1747,6 +1747,18 @@ function newRoutineProgram(rid,lvl){
 // moves rep ranges down and adds up to two lifts a day. Progression (suggestWeight) never reads the level.
 const levelOf=v=>v==='new'||v==='exp'?v:'some';
 const LEVEL_WORD={new:'New',some:'Some',exp:'Experienced'};
+// the answer a build uses: the quiz in progress, else the finished stored quiz (a draft or skipped quiz never decides); null = not answered
+const buildExp=()=>{ const v=qz&&qz.a?qz.a.exp:(QUIZ&&QUIZ.state==='done'?QUIZ.exp:null); return v==='new'||v==='some'||v==='exp'?v:null; };
+const buildLevel=()=>levelOf(buildExp());
+const builtForLine=v=>'Built for: '+(LEVEL_WORD[v]?LEVEL_WORD[v]+' experience':'standard program');
+// a routine's day list for the level it would be built at, for previews: the same function the build uses, so a preview equals what is saved
+function previewProgram(id,lvl){ lvl=lvl||buildLevel(); return withQuizEquip(()=>newRoutineProgram(id,lvl)); }
+function withQuizEquip(fn){ const prev=settings.equipFilter; if(qz&&qz.a&&qz.a.equip) settings.equipFilter=QUIZ_EQUIP[qz.a.equip].slice(); try{ return fn(); } finally{ settings.equipFilter=prev; } }
+// Some shows the template as it always has; New and Experienced show the built days as a template-shaped list
+function rtPreviewTpl(id){
+  const r=ROUTINES[id], lvl=buildLevel(); if(lvl==='some') return r.template;
+  return previewProgram(id,lvl).days.map(d=>({...d,slots:d.exercises.map(e=>({key:e.key,pick:e.name,target:e.target}))}));
+}
 const REP_MAP={'6-10':['8-12','5-8'],'8-10':['10-12','6-10'],'10-12':['10-12','8-12'],'12-15':['12-15','10-15'],'15-20':['15-20','12-20']};
 // "3 x 6-10" -> the level's range; set count and a /leg /arm /side suffix are kept; single numbers, timed holds and any other range are unchanged
 function levelTarget(t,lvl){
@@ -3757,10 +3769,11 @@ function qzClose(){ const ctx=qz&&qz.ctx; document.getElementById('onboardBg').c
 // equipment gaps for a routine under the equipment this quiz would set (the live filter when equipment was skipped): lifts left out
 function qzGaps(id){
   const prev=settings.equipFilter; if(qz.a.equip) settings.equipFilter=QUIZ_EQUIP[qz.a.equip].slice();
-  try{ if(id==='ul4'){ const f=buildProgram(); applyEquipPicks(f); return f.flatMap(d=>d.exercises).filter(e=>!equipAllowed(e)).length; } return newRoutineProgram(id).missing; }
+  try{ const lvl=levelOf(qz.a.exp); if(id==='ul4'&&lvl==='some'){ const f=buildProgram(); applyEquipPicks(f); return f.flatMap(d=>d.exercises).filter(e=>!equipAllowed(e)).length; } return newRoutineProgram(id,lvl).missing; }
   finally{ settings.equipFilter=prev; }
 }
 const qzGapLine=n=>n?`${n} lift${n===1?' needs':'s need'} equipment you did not choose and ${n===1?'is':'are'} left out.`:'';
+const LEVEL_APPLIES='Your current program stays as it is. Your level applies to routines you build from now on.';
 const qzAllSkipped=()=>QUIZ_QS.every(k=>qz.sk.includes(k)&&qz.a[k]==null);
 function qzWhy(pk,allSk){
   if(allSk) return 'You skipped every question, so we kept the standard plan. Upper/Lower is the plan the app has always started with.';
@@ -3783,7 +3796,7 @@ function qzResult(){
   const body=`<div class="qz-res"><div class="qz-head"><div class="cel-h1" id="onboardTitle" tabindex="-1">We Suggest ${rtNb(r.short||r.name)}</div><div class="cel-sub">Based on your answers. You decide.</div></div>
     <div class="rt-card"><div class="rt-top"><div class="rt-name">${rtNb(r.name)}</div>${cur?'<span class="rt-chips"><span class="rt-chip">Current</span></span>':''}</div><div class="rt-meta">${r.meta}</div>
       <ul class="rt-days" aria-label="Days">${r.days.map(([n,c])=>`<li class="badge ${c}">${esc(n)}</li>`).join('')}</ul>${r.cardLine?`<div class="rt-line card-line">${r.cardLine}</div>`:''}</div>
-    <p class="qz-why">${qzWhy(pk,allSk)}</p>${notes.join('')}</div>`;
+    <p class="qz-why">${qzWhy(pk,allSk)}</p>${allSk?'':cur?`<p class="qz-note">${LEVEL_APPLIES}</p>`:`<p class="qz-note">${builtForLine(qz.a.exp)}</p>`}${notes.join('')}</div>`;
   const foot=`${qz.err?'<div class="qz-err" role="alert">Could not save your routine. Nothing was changed. Try again.</div>':''}
     <button class="cel-cta" id="qzUse" type="button">${cur?`Keep ${esc(r.short||r.name)}`:'Use This Routine'}</button>
     <div class="qz-links"><button class="linkbtn" id="qzPickBtn" type="button">Pick Another</button><button class="linkbtn" id="qzChange" type="button">Change Answers</button></div>
@@ -3822,7 +3835,7 @@ async function qzUse(id){
     qzClose(); renderSetMain(); renderHeaderStats(); renderHome(); return true;
   };
   if(eqChanged) settings.equipFilter=QUIZ_EQUIP[a.equip].slice();
-  if(id===ROUTINE_ID){ if(await finish()) showToast(`Quiz saved. You are staying on ${ROUTINES[id].name}.`); return; }
+  if(id===ROUTINE_ID){ if(await finish()) showToast(`Quiz saved. You are staying on ${ROUTINES[id].name}. ${LEVEL_APPLIES}`); return; }
   const draft=await openDraft();
   openRoutine({step:draft?'blocked':'confirm',to:id,draft,ctx:'quiz',goal:qzGoalFor(id,a),onDone:finish,onCancel:leaving=>{ settings.equipFilter=orig; if(leaving) qzClose(); }});
 }
@@ -3864,10 +3877,10 @@ async function qzCommitFresh(){
   const id=qz&&qz.ctx==='fresh'&&qz.chosen; if(!id) return true;
   const a=qz.a, prevFilter=settings.equipFilter.slice(), prevUl4=UL4_PROGRAM;
   if(a.equip) settings.equipFilter=QUIZ_EQUIP[a.equip].slice();
-  const fresh=buildProgram(); applyEquipPicks(fresh);
+  const lvl=levelOf(a.exp), fresh=lvl==='some'?buildProgram():newRoutineProgram('ul4',lvl).days; if(lvl==='some') applyEquipPicks(fresh);
   const undo=async()=>{ settings.equipFilter=prevFilter; if(id!=='ul4'){ await sset('routineId',null); await sset('programs',null); await sset('program',null); applyRoutineState({ul4:prevUl4,routineId:null,programs:{}}); } };
   if(id!=='ul4'){
-    const programs={[id]:newRoutineProgram(id).days};
+    const programs={[id]:newRoutineProgram(id,lvl).days};
     if(await sset('programs',programs)===false||await sset('program',fresh)===false||await sset('routineId',id)===false){ await undo(); return false; }
     applyRoutineState({ul4:fresh,programs,routineId:id});
   } else applyRoutineState({ul4:fresh});
@@ -4796,7 +4809,7 @@ async function discardDraft(day){
 }
 // -> {ok:true} | {blocked:{day,n}} | {failed:true}
 let routineBusy=false;
-async function switchRoutine(to){
+async function switchRoutine(to,lvl){
   if(routineBusy||!ROUTINES[to]||to===ROUTINE_ID) return {failed:true};
   routineBusy=true;
   try{
@@ -4804,7 +4817,7 @@ async function switchRoutine(to){
     const hadPrograms=await sget('programs'), programs={...PROGRAMS}; let wrote=false;
     const usable=l=>Array.isArray(l)&&l.length&&l.every(d=>d&&typeof d.id==='string'&&Array.isArray(d.exercises));
     if(to!=='ul4'&&!usable(programs[to])){
-      programs[to]=newRoutineProgram(to).days;
+      programs[to]=newRoutineProgram(to,lvl).days;
       if(await sset('programs',programs)===false) return {failed:true};
       wrote=true;
     }
@@ -4824,7 +4837,7 @@ async function switchRoutine(to){
 // Direct working sets per muscle each week, counted from a routine's template (sum of its slots' sets; QA checks them by script).
 // Direct sets only: no indirect figure is shown anywhere. Rear delts are the shoulder slots whose first recovery key is the rear delt.
 const SET_ROWS=[['chest','Chest'],['back','Back'],['shoulders','Shoulders'],['rear','Rear Delts'],['biceps','Biceps'],['triceps','Triceps'],['forearms','Forearms'],['quads','Quads'],['hamstrings','Hamstrings'],['calves','Calves'],['abs','Core']];
-function routineSets(tpl){
+function routineSets(tpl){ // tpl: the template, or the leveled days in the same shape
   const t={};
   tpl.forEach(d=>d.slots.forEach(sl=>{ let k=sl.key; if(k==='shoulders'&&recoveryKeysFor(CURATED_BY_NAME[sl.pick]||{name:sl.pick})[0]==='delt-rear') k='rear'; t[k]=(t[k]||0)+rtSets(sl.target); }));
   return SET_ROWS.filter(([k])=>t[k]).map(([k,l])=>[l,t[k]]);
@@ -4839,10 +4852,10 @@ const rtNb=t=>esc(t).replace(/(\d-Day)/g,'<span class="nb">$1</span>'); // "3-Da
 const SETS_NOTE="ACSM's 2026 guidance is about 10 direct sets per muscle each week. It is a published figure, not a target this app measures. Presses and rows add some indirect work.";
 const SETS_NOTE_PPL3="ACSM's 2026 guidance is about 10 direct sets per muscle each week. Every muscle here is below that, so this routine does not claim to match it. Presses and rows add some indirect work.";
 function rtPanel(id){
-  const r=ROUTINES[id];
-  return `<div id="rtEx-${id}" class="rt-ex">`+r.template.map((d,i)=>{ const lbl=(r.days[i]||[d.name])[0], cls=dayType(d); return `<section aria-label="${esc(lbl)} day"><h4 class="rt-exh"><span class="badge ${cls}">${esc(lbl)}</span><span>${d.slots.length} Lifts · ${d.slots.reduce((a,x)=>a+rtSets(x.target),0)} Sets</span></h4><ol class="rt-exl">${d.slots.map(x=>`<li><span>${esc(x.pick)}</span><span class="rt-t">${esc(x.target)}</span></li>`).join('')}</ol></section>`; }).join('')+
-    `<h4 class="rt-exh rt-exh2">Direct Sets per Week</h4><dl class="rt-sets">${routineSets(r.template).map(x=>`<div><dt>${x[0]}</dt><dd>${x[1]}</dd></div>`).join('')}</dl>
-    <p class="rt-sets-note">${id==='ppl3'?SETS_NOTE_PPL3:SETS_NOTE}</p></div>`;
+  const r=ROUTINES[id], tp=rtPreviewTpl(id), sets=routineSets(tp);
+  return `<div id="rtEx-${id}" class="rt-ex">`+tp.map((d,i)=>{ const lbl=(r.days[i]||[d.name])[0], cls=dayType(d); return `<section aria-label="${esc(lbl)} day"><h4 class="rt-exh"><span class="badge ${cls}">${esc(lbl)}</span><span>${d.slots.length} Lifts · ${d.slots.reduce((a,x)=>a+rtSets(x.target),0)} Sets</span></h4><ol class="rt-exl">${d.slots.map(x=>`<li><span>${esc(x.pick)}</span><span class="rt-t">${esc(x.target)}</span></li>`).join('')}</ol></section>`; }).join('')+
+    `<h4 class="rt-exh rt-exh2">Direct Sets per Week</h4><dl class="rt-sets">${sets.map(x=>`<div><dt>${x[0]}</dt><dd>${x[1]}</dd></div>`).join('')}</dl>
+    <p class="rt-sets-note">${id==='ppl3'&&(buildLevel()==='some'||sets.every(x=>x[1]<10))?SETS_NOTE_PPL3:SETS_NOTE}</p></div>`;
 }
 // one routine card, shared by the Change Routine sheet and the quiz's Pick Another. o: {cur, sug, open, warn, label, btn}
 function rtCard(id,o){
@@ -4868,14 +4881,14 @@ function rtWireSee(root,rerender){
 }
 // a lift both routines have, the one with the most history, for the "your progress carries over" line
 function rtSharedLift(to){
-  const days=(PROGRAMS[to]&&PROGRAMS[to].length?PROGRAMS[to]:to==='ul4'?UL4_PROGRAM:newRoutineProgram(to).days);
+  const days=(PROGRAMS[to]&&PROGRAMS[to].length?PROGRAMS[to]:to==='ul4'?UL4_PROGRAM:previewProgram(to).days);
   const there=new Set(days.flatMap(d=>d.exercises.map(e=>e.name)));
   const here=PROGRAM.flatMap(d=>d.exercises.map(e=>e.name)).filter(n=>there.has(n)&&(hist[n]||[]).length);
   here.sort((a,b)=>hist[b].length-hist[a].length); return here[0]||null;
 }
 function rtConfirm(){
   const to=rt.to, r=ROUTINES[to], from=ROUTINES[ROUTINE_ID]||ROUTINES.ul4;
-  const preview=(!PROGRAMS[to]||!PROGRAMS[to].length)&&to!=='ul4'?newRoutineProgram(to):null;
+  const preview=(!PROGRAMS[to]||!PROGRAMS[to].length)&&to!=='ul4'?previewProgram(to):null;
   const shown=rtJoin(r.days.map(x=>x[0]));
   const lift=rtSharedLift(to), goal=rt.goal||r.perWeek;
   const eqNote=preview&&preview.missing?`${preview.missing} exercise${preview.missing===1?' has':'s have'} no match for your equipment, so ${preview.missing===1?'it is':'they are'} left out (${esc(rtJoin([...new Set(preview.gaps)].map(g=>{ const n=preview.gaps.filter(x=>x===g).length; return n>1?`${g} x${n}`:g; })))}). You can add ${preview.missing===1?'one':'some'} in Edit Workouts.`:'';
@@ -4890,6 +4903,7 @@ function rtConfirm(){
     <div class="rt-sec">What Changes</div>
     <ul class="rt-list"><li class="chg">${RT_ARROW}<span>Your week goal becomes ${goal} sessions.</span></li>
       <li class="chg">${RT_ARROW}<span>Home, Log and Edit Workouts show ${shown}.</span></li>
+      ${preview?`<li class="chg">${RT_ARROW}<span>${builtForLine(buildExp())}</span></li>`:''}
       ${eq.map(t=>`<li class="chg">${RT_ARROW}<span>${t}</span></li>`).join('')}</ul>
     <div class="rt-sec">What Stays the Same</div>
     <ul class="rt-list"><li class="keep">${RT_CHK}<span>Your history, records and notes.</span></li>
@@ -4922,7 +4936,7 @@ function renderRoutineSheet(focusSel){
   const cancel=q('#rtCancel'); if(cancel) cancel.onclick=()=>{ if(rt.step==='blocked'||rt.ctx==='quiz'){ closeRoutine(); if(rt.onCancel) rt.onCancel(); } else { rt.step='list'; renderRoutineSheet('#routineTitle'); } };
   const bk=q('#rtBk'); if(bk) bk.onclick=async()=>{ try{ rt.backedUp=!!(await doExport()); }catch(e){ console.error(e); showToast("Couldn't make the backup. You can still switch.",null,true); } renderRoutineSheet('#rtBk'); };
   const go=q('#rtGo'); if(go) go.onclick=async()=>{
-    go.disabled=true; const to=rt.to, r=await switchRoutine(to);
+    go.disabled=true; const to=rt.to, r=await switchRoutine(to,buildLevel());
     if(r.ok){ const done=rt.onDone, goal=rt.goal||ROUTINES[to].perWeek; closeRoutine();
       if(done) await done(); else { const row=document.getElementById('routineRow'); row.focus(); renderSetMain(); row.focus(); }
       showToast(`Now on ${ROUTINES[to].name}. Your week goal is ${goal} session${goal===1?'':'s'}.`); }
