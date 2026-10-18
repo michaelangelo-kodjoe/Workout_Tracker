@@ -3697,7 +3697,7 @@ const QZ_BACK='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7
 const QZ_Q={
   goal:{t:'What is your main goal?',sub:'',label:'Main goal',opts:[['lose','Lose Weight'],['build','Build Muscle'],['fit','Stay Fit']],ifskip:'Skip and we leave your goal blank.',skipped:'Skipped. Your goal is left blank.'},
   days:{t:'How many days a week can you train?',sub:'Pick what you can keep up most weeks, not your best week.',label:'Days per week',ifskip:'Skip and we plan for 4 days.',skipped:'Skipped. We are planning for 4 days.'},
-  exp:{t:'How Much Have You Lifted?',sub:'This sets your rep ranges, how many exercises each day has, and a start-weight tip for new lifts.',label:'Lifting experience',opts:[['new','New','Under 6 Months, or Back After a Long Break'],['some','Some','6 Months to 2 Years'],['exp','Experienced','2 or More Years']],ifskip:'Skip and we assume Some.',skipped:'Skipped. We are assuming Some.'},
+  exp:{t:'How Much Have You Lifted?',sub:'This sets your rep ranges, how many exercises each day has, and an effort tip for new lifts.',label:'Lifting experience',opts:[['new','New','Under 6 Months, or Back After a Long Break'],['some','Some','6 Months to 2 Years'],['exp','Experienced','2 or More Years']],ifskip:'Skip and we assume Some.',skipped:'Skipped. We are assuming Some.'},
   equip:{t:'What equipment do you have?',sub:'This presets your equipment filter. You can still fine-tune it later.',label:'Equipment',opts:[['full','Full Gym','Every equipment type'],['home','Home Gym','Barbell, dumbbells, kettlebell and bands'],['db','Dumbbells Only','Dumbbells and your body weight'],['body','Bodyweight Only','Your body weight and bands']],ifskip:'Skip and we keep your current equipment.',skipped:'Skipped. We are keeping your current equipment.'}
 };
 const QZ_LEAD=[['2–3','fb3',[2,3]],['4','ul4',[4]],['5','ul5',[5]],['6','ppl6',[6]]];
@@ -4971,7 +4971,7 @@ function rtRebuildView(){
     <div class="rt-sec">What Changes</div>
     <ul class="rt-list"><li class="chg">${RT_ARROW}<span>Every day of ${esc(r.name)} is rebuilt for the ${LEVEL_WORD[lvl]} level.</span></li>
       ${eq.map(t=>`<li class="chg">${RT_ARROW}<span>${t}</span></li>`).join('')}
-      <li class="chg">${RT_ARROW}<span>Exercise rotation for ${esc(r.name)} starts over.</span></li></ul>
+      <li class="chg">${RT_ARROW}<span>Exercise rotation may restart for lifts that change.</span></li></ul>
     <div class="rt-sec">What Stays the Same</div>
     <ul class="rt-list"><li class="keep">${RT_CHK}<span>Your history, records and notes.</span></li>
       <li class="keep">${RT_CHK}<span>Your progress. Lifts carry over by name.</span></li>
