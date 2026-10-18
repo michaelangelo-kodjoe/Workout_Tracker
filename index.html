@@ -1787,7 +1787,7 @@ const EQUIP_LABEL={barbell:'Barbell',dumbbell:'Dumbbell',kettlebell:'Kettlebell'
 // Replace import of an older backup (which has none) cannot clear it and re-ask someone who already answered. Absent means never asked.
 // Read leniently: a wrong type in any field reads as null for that field and an unknown state reads as absent; nothing here ever throws.
 // `pick` is advisory only (routineId is the truth for the live routine).
-const QUIZ_QS=['goal','days','exp','equip'];
+const QUIZ_QS=['goal','days','equip'];
 const QUIZ_EQUIP={ full:EQUIP_TYPES.slice(), home:['barbell','dumbbell','kettlebell','bodyweight','band','accessory'], db:['dumbbell','bodyweight','accessory'], body:['bodyweight','band','accessory'] };
 const QUIZ_EQUIP_LABEL={ full:'Full Gym', home:'Home Gym', db:'Dumbbells Only', body:'Bodyweight Only' };
 const QUIZ_GOAL_LABEL={ lose:'Lose Weight', build:'Build Muscle', fit:'Stay Fit' };
@@ -1801,17 +1801,12 @@ function cleanQuiz(v){
 let QUIZ=null; // the sanitised stored quiz (null = never asked); set at boot and after every write
 // the equipment filter as one of the four presets, or null when it is none of them
 function equipPresetOf(list){ const s=new Set(list||[]); return Object.keys(QUIZ_EQUIP).find(k=>QUIZ_EQUIP[k].length===s.size&&QUIZ_EQUIP[k].every(t=>s.has(t)))||null; }
-// The pick: a pure function of (days, experience). Goal and equipment never change it. Q3 (experience) is asked only when the days
-// answer is 4 or more (a skipped days answer counts as 4); a skipped or unasked experience counts as Some. Caps: New 3, Some 5, Experienced 6.
-// Returns the routine id, whether the asked days were cut down (`capped`).
+// The pick: a pure function of the days answer only (a skipped days answer counts as 4). Goal, equipment and any stored `exp` never change it.
 function quizPick(a){
   a=a||{}; const asked=Number.isInteger(a.days)?a.days:null, want=asked==null?4:asked;
-  const exp=want>=4?(a.exp||'some'):null, cap=exp==='new'?3:exp==='exp'?6:5, eff=Math.min(want,cap);
-  const id=eff<=3?'fb3':eff===4?'ul4':eff===5?'ul5':'ppl6', capped=eff<want;
-  return { id, asked, want, exp, eff, capped };
+  const id=want<=3?'fb3':want===4?'ul4':want===5?'ul5':'ppl6';
+  return { id, asked, want };
 }
-// whether Q3 is asked for these answers: the days answer is 4 or more, or was skipped (counts as 4)
-function quizAsksExp(a){ return Number.isInteger(a.days)?a.days>=4:true; }
 async function saveQuiz(q){ q={v:1,at:Date.now(),...q}; if(await sset('quiz',q)===false) return false; QUIZ=cleanQuiz(q); return true; }
 // full exercise library (name/equip/muscles/cue), sourced from a third-party open dataset — no set/rep targets of its own.
 // offered as swap candidates via openSwap(), and as a last-resort fill in the builder when no curated pick passes the equipment filter
@@ -3607,7 +3602,7 @@ function exampleRecoveryFigures(){
 // while a full-screen overlay is up, the app behind it can't be reached by keyboard or screen reader
 function setAppInert(on){ ['header','main','footer'].forEach(sel=>document.querySelector(sel).toggleAttribute('inert',on)); }
 // ---------- onboarding quiz screens (v83) ----------
-// Four questions, one per screen: goal, days (its own screen with where each answer leads), experience (only at 4 or more days), equipment.
+// Three questions, one per screen: goal, days, equipment.
 // The same overlay serves a new install (steps 4 and 5 of 6) and an existing user (Question n of m, Home sheet or Settings row).
 // Nothing is applied while answering; a fresh install applies its pick when setup finishes, an existing user through the Change Routine confirm.
 const QZ_CK='<svg class="qz-ck" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
@@ -3615,7 +3610,6 @@ const QZ_BACK='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7
 const QZ_Q={
   goal:{t:'What is your main goal?',sub:'',label:'Main goal',opts:[['lose','Lose Weight'],['build','Build Muscle'],['fit','Stay Fit']],ifskip:'Skip and we leave your goal blank.',skipped:'Skipped. Your goal is left blank.'},
   days:{t:'How many days a week can you train?',sub:'Pick what you can keep up most weeks, not your best week.',label:'Days per week',ifskip:'Skip and we plan for 4 days.',skipped:'Skipped. We are planning for 4 days.'},
-  exp:{t:'How long have you been lifting?',sub:'This helps us pick the right routine for you.',label:'Lifting experience',opts:[['new','New','Under 6 Months'],['some','Some','6 Months to 2 Years'],['exp','Experienced','2+ Years']],ifskip:'Skip and we assume Some.',skipped:'Skipped. We are assuming Some.'},
   equip:{t:'What equipment do you have?',sub:'This presets your equipment filter. You can still fine-tune it later.',label:'Equipment',opts:[['full','Full Gym','Every equipment type'],['home','Home Gym','Barbell, dumbbells, kettlebell and bands'],['db','Dumbbells Only','Dumbbells and your body weight'],['body','Bodyweight Only','Your body weight and bands']],ifskip:'Skip and we keep your current equipment.',skipped:'Skipped. We are keeping your current equipment.'}
 };
 const QZ_LEAD=[['2–3','fb3',[2,3]],['4','ul4',[4]],['5','ul5',[5]],['6','ppl6',[6]]];
@@ -3624,11 +3618,11 @@ function qzNew(ctx){
   const a={goal:null,days:null,exp:null,equip:null}, sk=[]; let resume='';
   if(QUIZ&&(QUIZ.goal||QUIZ.days||QUIZ.exp||QUIZ.equip||QUIZ.sk.length)){ Object.assign(a,{goal:QUIZ.goal,days:QUIZ.days,exp:QUIZ.exp,equip:QUIZ.equip}); sk.push(...QUIZ.sk); resume=QUIZ.state==='done'?'Your last answers are filled in.':'Your earlier answers are filled in.'; }
   else if(ctx!=='fresh'){ const r=ROUTINES[ROUTINE_ID]||ROUTINES.ul4; if(r.perWeek>=2&&r.perWeek<=6) a.days=r.perWeek; a.equip=equipPresetOf(settings.equipFilter); }
-  return {ctx,a,sk,screen:'goal',total:4,resume,chosen:null,err:false,alt:false,openEx:null,origEquip:settings.equipFilter.slice()};
+  return {ctx,a,sk,screen:'goal',total:3,resume,chosen:null,err:false,alt:false,openEx:null,origEquip:settings.equipFilter.slice()};
 }
 // an existing user (Home sheet or the Settings row): the same questions as an overlay, no setup steps
 function qzOpen(){ qz=qzNew('existing'); qzQuestion('goal'); }
-const qzOrder=()=>['goal','days',...(quizAsksExp(qz.a)?['exp']:[]),'equip'];
+const qzOrder=()=>['goal','days','equip'];
 const qzBars=(n,t)=>Array.from({length:t},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('');
 function qzShell(prog,{back=true,skip='',body,foot,top=false,footCls=''}){
   return `<div class="onb-top">
@@ -3648,7 +3642,7 @@ function qzShow(html,focusSel){
 // keep what has been answered when this quiz may still be abandoned: a draft only while nothing final is stored
 async function qzSaveDraft(){ if(QUIZ&&QUIZ.state!=='draft') return true; return saveQuiz({state:'draft',...qz.a,sk:qz.sk}); }
 function qzProg(key){
-  const ord=qzOrder(), n=ord.indexOf(key)+1, tot=(key==='goal'||key==='days')?4:qz.total;
+  const ord=qzOrder(), n=ord.indexOf(key)+1, tot=3;
   return qz.ctx==='fresh'?{label:'Step 4 of 6',n:4,t:6,q:`Question ${n} of ${tot}`}:{label:`Question ${n} of ${tot}`,n,t:tot,q:''};
 }
 function qzQuestion(key,focusSel){
@@ -3671,7 +3665,6 @@ function qzQuestion(key,focusSel){
   const inner=document.getElementById('onboardInner');
   inner.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{
     const v=key==='days'?+b.dataset.v:b.dataset.v; a[key]=v; qz.sk=qz.sk.filter(k=>k!==key);
-    if(key==='days'&&!quizAsksExp(a)){ a.exp=null; qz.sk=qz.sk.filter(k=>k!=='exp'); } // no hidden answer may decide anything
     qzQuestion(key,`[data-v="${b.dataset.v}"]`); });
   document.getElementById('qzNext').onclick=()=>{ if(document.getElementById('qzNext').getAttribute('aria-disabled')==='true') return; qzAdvance(key); };
   document.getElementById('qzSkipQ').onclick=()=>{ a[key]=null; if(!qz.sk.includes(key)) qz.sk.push(key); qzAdvance(key); };
@@ -3680,7 +3673,6 @@ function qzQuestion(key,focusSel){
 }
 async function qzAdvance(key){
   const ord=qzOrder(), i=ord.indexOf(key);
-  if(key==='days') qz.total=quizAsksExp(qz.a)?4:3; // the total changes only here, on Continue from the days question
   await qzSaveDraft();
   if(i<ord.length-1) qzQuestion(ord[i+1]); else qzDone();
 }
@@ -3700,15 +3692,12 @@ function qzGaps(id){
 }
 const qzGapLine=n=>n?`${n} lift${n===1?' needs':'s need'} equipment you did not choose and ${n===1?'is':'are'} left out.`:'';
 const qzAllSkipped=()=>QUIZ_QS.every(k=>qz.sk.includes(k)&&qz.a[k]==null);
-const qzExpWords={new:'you are new to lifting',some:'you have some lifting behind you',exp:'you are an experienced lifter'};
 function qzWhy(pk,allSk){
-  const a=qz.a;
   if(allSk) return 'You skipped every question, so we kept the standard plan. Upper/Lower is the plan the app has always started with.';
-  if(pk.asked==null) return `Why: you did not pick days, so we used 4${a.exp?` and ${qzExpWords[a.exp]}`:''}.`;
+  if(pk.asked==null) return 'Why: you did not pick days, so we used 4.';
   if(pk.asked===2) return 'Why: you can train 2 days a week, so we start you on full body sessions.';
   if(pk.asked===3) return 'Why: you can train 3 days a week.';
-  if(!a.exp) return `Why: you can train ${pk.asked} days a week. You skipped experience, so we assumed Some.`;
-  return `Why: you can train ${pk.asked} days a week and ${qzExpWords[a.exp]}.`;
+  return `Why: you can train ${pk.asked} days a week.`;
 }
 // the weekly goal this quiz leaves: the routine's own, lowered (never raised) to the days that were asked
 const qzGoalFor=(id,a)=>Number.isInteger(a.days)?Math.min(ROUTINES[id].perWeek,a.days):ROUTINES[id].perWeek;
