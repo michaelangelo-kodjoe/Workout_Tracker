@@ -1750,7 +1750,8 @@ const LEVEL_WORD={new:'New',some:'Some',exp:'Experienced'};
 // the answer a build uses: the quiz in progress, else the finished stored quiz (a draft or skipped quiz never decides); null = not answered
 const buildExp=()=>{ const v=qz&&qz.a?qz.a.exp:(QUIZ&&QUIZ.state==='done'?QUIZ.exp:null); return v==='new'||v==='some'||v==='exp'?v:null; };
 const buildLevel=()=>levelOf(buildExp());
-const builtForLine=v=>'Built for: '+(LEVEL_WORD[v]?LEVEL_WORD[v]+' experience':'standard program');
+const BUILT_FOR={new:'New lifters',some:'Some experience',exp:'Experienced lifters'};
+const builtForLine=v=>'Built for: '+(BUILT_FOR[v]||'standard program');
 // a routine's day list for the level it would be built at, for previews: the same function the build uses, so a preview equals what is saved
 function previewProgram(id,lvl){ lvl=lvl||buildLevel(); return withQuizEquip(()=>newRoutineProgram(id,lvl)); }
 function withQuizEquip(fn){ const prev=settings.equipFilter; if(qz&&qz.a&&qz.a.equip) settings.equipFilter=QUIZ_EQUIP[qz.a.equip].slice(); try{ return fn(); } finally{ settings.equipFilter=prev; } }
