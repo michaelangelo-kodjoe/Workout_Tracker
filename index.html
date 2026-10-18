@@ -1628,6 +1628,15 @@ const PPL6_TEMPLATE=[
   tplDay('ppl6-5','Pull','B','light',0.85,'pull','Diverging Seated Row|3 x 10-12;Chest-supported T-bar Row|3 x 10-12;Face Pulls|3 x 12-15;Hammer Curl|3 x 12;Cable Curl|3 x 12-15;Reverse Wrist Curl|3 x 12-15'),
   tplDay('ppl6-6','Legs','B','light',0.85,'legs','Bulgarian Split Squat|3 x 10-12/leg;Hack Squat|3 x 10-12;Dumbbell Romanian Deadlift|3 x 10-12;Lying Leg Curl|3 x 12-15;Seated Calf Raise|3 x 15-20;Plank / Pallof Press|3 x 30-45s'),
 ];
+// Bro Split, five days (v83): one muscle group a day in the order Chest, Back, Legs, Shoulders, Arms (the two push-colour days never sit
+// side by side, arms last). Chest and Back are capped at five lifts (15 direct sets) so no muscle gets more than 15 sets in a day.
+const BRO5_TEMPLATE=[
+  tplDay('bro5-1','Chest','Day 1','heavy',1.0,'chest','Machine Chest Press|3 x 6-10;Incline Smith Machine Press|3 x 8-10;Incline Dumbbell Press|3 x 10-12;Machine Pec Fly|3 x 12-15;Smith Machine Flat Press|3 x 8-10'),
+  tplDay('bro5-2','Back','Day 2','heavy',1.0,'back','Machine Mid Row|3 x 6-10;Lat Pulldown|3 x 8-10;Chest-supported T-bar Row|3 x 8-10;Diverging Seated Row|3 x 10-12;Single-arm Dumbbell Row|3 x 10-12/arm'),
+  tplDay('bro5-3','Legs','Day 3','heavy',1.0,'legs','Machine Leg Press|3 x 6-10;Leg Extension|3 x 8-10;Bulgarian Split Squat|3 x 10-12/leg;Seated Leg Curl|3 x 8-10;Dumbbell Romanian Deadlift|3 x 10-12;Standing Calf Raise|3 x 12-15;Hanging Leg Raise|3 x 12-15'),
+  tplDay('bro5-4','Shoulders','Day 4','heavy',1.0,'shoulders','Converging Shoulder Press|3 x 6-10;Dumbbell Shoulder Press|3 x 8-10;Lateral Raise Machine|3 x 12-15;Cable Lateral Raise|3 x 12-15;Reverse Pec Deck|3 x 12-15;Face Pulls|3 x 12-15'),
+  tplDay('bro5-5','Arms','Day 5','heavy',1.0,'arms','Machine Preacher Curl|3 x 8-10;Hammer Curl|3 x 12;Cable Curl|3 x 12-15;Seated Tricep Press|3 x 8-10;Rope Pushdown|3 x 10-12;Dumbbell Overhead Tricep Extension|3 x 12-15;Barbell Wrist Curl|3 x 10'),
+];
 // routines the app can switch to. `perWeek` is the weekly session goal. Day lists other than ul4 live in `programs` by id.
 // `days` (label, colour class) and the copy feed the Change Routine sheet; `note` is the plain frequency sentence (ACSM wording agreed by the research loop).
 const ROUTINES = {
@@ -1644,6 +1653,9 @@ const ROUTINES = {
   ppl3: { id:'ppl3', name:'Push/Pull/Legs 3-Day', perWeek:3, template:PPL_TEMPLATE, meta:'3 Days a Week', days:[['Push','t-push'],['Pull','t-pull'],['Legs','t-legs']],
     suits:'Best if you can train three days a week. Every muscle group gets one full session.',
     note:"Each muscle is trained once a week. ACSM's 2026 guidance suggests at least twice, so this is the lower-frequency option. Studies that match weekly sets mostly find little difference in muscle growth, though some favour more frequent training." },
+  bro5: { id:'bro5', name:'Bro Split 5-Day', perWeek:5, template:BRO5_TEMPLATE, meta:'5 Days a Week', days:[['Chest','t-push'],['Back','t-pull'],['Legs','t-legs'],['Shoulders','t-push'],['Arms','t-upper']],
+    suits:'Best if you like one muscle group a day: chest, back, legs, shoulders and arms.',
+    note:"Each muscle has its own day once a week, with some extra work from pressing and rowing on other days. ACSM's 2026 guidance suggests at least twice a week, so this is a lower-frequency option. Studies that match weekly sets mostly find little difference in muscle growth, though some favour more frequent training." },
   ppl6: { id:'ppl6', name:'Push/Pull/Legs 6-Day', perWeek:6, template:PPL6_TEMPLATE, meta:'6 Days a Week', days:[['Push A','t-push'],['Pull A','t-pull'],['Legs A','t-legs'],['Push B','t-push'],['Pull B','t-pull'],['Legs B','t-legs']],
     suits:'Best if you can train six days a week. Push, pull and legs, each trained twice.',
     freq:'Each muscle is trained twice a week, with one rest day.' },
