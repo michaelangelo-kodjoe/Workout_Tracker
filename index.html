@@ -1609,6 +1609,15 @@ const FB3_TEMPLATE=[
   tplDay('fb3-2','Full Body','B','light',0.85,'full','Incline Smith Machine Press|3 x 10-12;Lat Pulldown|3 x 10-12;Hack Squat|3 x 8-12;Dumbbell Romanian Deadlift|3 x 10-12;Lateral Raise Machine|3 x 12-15;Seated Tricep Press|3 x 10-12;Hanging Leg Raise|3 x 12-15'),
   tplDay('fb3-3','Full Body','C','heavy',1.0,'full','Machine Pec Fly|3 x 12-15;Diverging Seated Row|3 x 10-12;Leg Extension|3 x 12-15;45° Back Extension|3 x 10;Reverse Pec Deck|3 x 12-15;Hammer Curl|3 x 12;Dumbbell Overhead Tricep Extension|3 x 12-15;Seated Calf Raise|3 x 15-20'),
 ];
+// Upper/Lower/PPL 5-Day (v83): the two Heavy days of Upper/Lower 4-Day exactly as they are there (so history and Last Time carry over by name),
+// then Push, Pull and Legs. Legs uses Hack Squat so no lift repeats anywhere in the routine.
+const UL5_TEMPLATE=[
+  { ...TEMPLATE[0], id:'ul5-1', focus:'upper' },
+  { ...TEMPLATE[1], id:'ul5-2', focus:'lower' },
+  tplDay('ul5-3','Push','Day 3','light',0.85,'push','Incline Smith Machine Press|3 x 10-12;Machine Pec Fly|3 x 12-15;Dumbbell Shoulder Press|3 x 10-12;Lateral Raise Machine|3 x 12-15;Rope Pushdown|3 x 10-12;Dumbbell Overhead Tricep Extension|3 x 12-15'),
+  tplDay('ul5-4','Pull','Day 4','light',0.85,'pull','Diverging Seated Row|3 x 10-12;Single-arm Dumbbell Row|3 x 10-12/arm;Reverse Pec Deck|3 x 12-15;Face Pulls|3 x 12-15;Hammer Curl|3 x 12;Cable Curl|3 x 12-15'),
+  tplDay('ul5-5','Legs','Day 5','light',0.85,'legs','Bulgarian Split Squat|3 x 10-12/leg;Hack Squat|3 x 10-12;Dumbbell Romanian Deadlift|3 x 10-12;Lying Leg Curl|3 x 12-15;Seated Calf Raise|3 x 15-20;Plank / Pallof Press|3 x 30-45s'),
+];
 // routines the app can switch to. `perWeek` is the weekly session goal. Day lists other than ul4 live in `programs` by id.
 // `days` (label, colour class) and the copy feed the Change Routine sheet; `note` is the plain frequency sentence (ACSM wording agreed by the research loop).
 const ROUTINES = {
@@ -1618,6 +1627,10 @@ const ROUTINES = {
   fb3: { id:'fb3', name:'Full Body 3-Day', perWeek:3, template:FB3_TEMPLATE, meta:'3 Days a Week', days:[['Full Body A','t-full'],['Full Body B','t-full'],['Full Body C','t-full']],
     suits:'Best if you can train two or three days a week. Every session works your whole body.',
     freq:'Chest, back, quads and hamstrings are trained three times a week; shoulders, biceps, triceps and calves twice; rear delts and core once.' },
+  ul5: { id:'ul5', name:'Upper/Lower/PPL 5-Day', perWeek:5, template:UL5_TEMPLATE, meta:'5 Days a Week', cardLine:'Upper, Lower, Push, Pull, Legs',
+    days:[['Upper Heavy','t-upper'],['Lower Heavy','t-lower'],['Push','t-push'],['Pull','t-pull'],['Legs','t-legs']],
+    suits:'Best if you can train five days a week. Two heavy days, then push, pull and legs.',
+    freq:'Most muscles are trained twice a week; rear delts and forearms once.' },
   ppl3: { id:'ppl3', name:'Push/Pull/Legs 3-Day', perWeek:3, template:PPL_TEMPLATE, meta:'3 Days a Week', days:[['Push','t-push'],['Pull','t-pull'],['Legs','t-legs']],
     suits:'Best if you can train three days a week. Every muscle group gets one full session.',
     note:"Each muscle is trained once a week. ACSM's 2026 guidance suggests at least twice, so this is the lower-frequency option. Studies that match weekly sets mostly find little difference in muscle growth, though some favour more frequent training." },
