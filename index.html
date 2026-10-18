@@ -3561,6 +3561,9 @@ function renderOnboardStep(step){
   } else if(step===4){
     if(!qz||qz.ctx!=='fresh') qz=qzNew('fresh');
     qzQuestion(qz.screen&&qz.screen!=='result'?qz.screen:'goal'); return; // the quiz draws its own screens and focus
+  } else if(step===5){
+    if(!qz||qz.ctx!=='fresh') qz=qzNew('fresh');
+    qzResult(); return;
   } else {
     inner.innerHTML=onbShell(6,{skip:false,
       body:`<div class="cel-h1" id="onboardTitle" tabindex="-1">Meet Your Recovery Map</div>
@@ -3573,10 +3576,10 @@ function renderOnboardStep(step){
           <div class="onb-ex-row"><i style="background:#4a9e5c"></i><span>Legs & Core</span><b>Ready</b></div>
           <div class="onb-note" style="margin-top:4px">Yours starts all green — nothing's been trained yet.</div>
         </div>`,
-      foot:`<button class="cel-cta" id="onboardDone">Let's Build Your Program</button>`});
+      foot:`<div class="qz-err" id="onbFinErr" role="alert" hidden>Could not save your routine. Nothing was changed. Try again.</div><button class="cel-cta" id="onboardDone">Let's Build Your Program</button>`});
     $('onboardExFigs').replaceWith(exampleRecoveryFigures());
     $('onboardDone').onclick=finishOnboarding;
-    $('onboardBack').onclick=()=>renderOnboardStep(4);
+    $('onboardBack').onclick=()=>renderOnboardStep(qz&&qz.chosen?5:4);
   }
   const title=$('onboardTitle'); if(title) title.focus({preventScroll:true});
   inner.parentElement.scrollTop=0;
@@ -3618,6 +3621,8 @@ function qzNew(ctx){
   else if(ctx!=='fresh'){ const r=ROUTINES[ROUTINE_ID]||ROUTINES.ul4; if(r.perWeek>=2&&r.perWeek<=6) a.days=r.perWeek; a.equip=equipPresetOf(settings.equipFilter); }
   return {ctx,a,sk,screen:'goal',total:4,resume,chosen:null,err:false,alt:false,openEx:null,origEquip:settings.equipFilter.slice()};
 }
+// an existing user (Home sheet or the Settings row): the same questions as an overlay, no setup steps
+function qzOpen(){ qz=qzNew('existing'); qzQuestion('goal'); }
 const qzOrder=()=>['goal','days',...(quizAsksExp(qz.a)?['exp']:[]),'equip'];
 const qzBars=(n,t)=>Array.from({length:t},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('');
 function qzShell(prog,{back=true,skip='',body,foot,top=false,footCls=''}){
@@ -3687,14 +3692,111 @@ async function qzSkipQuiz(){
   qzClose(); showToast(wrote?'Skipped. You can take the quiz any time in Settings.':'Quiz closed. Nothing was changed.');
 }
 function qzClose(){ document.getElementById('onboardBg').classList.remove('on'); setAppInert(false); qz=null; }
-// the last question is answered (task 9 adds the result screen here)
-function qzDone(){ if(qz.ctx==='fresh') renderOnboardStep(6); else qzClose(); }
+// ---- the result ----
+// equipment gaps for a routine under the equipment this quiz would set (the live filter when equipment was skipped): lifts left out
+function qzGaps(id){
+  const prev=settings.equipFilter; if(qz.a.equip) settings.equipFilter=QUIZ_EQUIP[qz.a.equip].slice();
+  try{ if(id==='ul4'){ const f=buildProgram(); applyEquipPicks(f); return f.flatMap(d=>d.exercises).filter(e=>!equipAllowed(e)).length; } return newRoutineProgram(id).missing; }
+  finally{ settings.equipFilter=prev; }
+}
+const qzGapLine=n=>n?`${n} lift${n===1?' needs':'s need'} equipment you did not choose and ${n===1?'is':'are'} left out.`:'';
+const qzAllSkipped=()=>QUIZ_QS.every(k=>qz.sk.includes(k)&&qz.a[k]==null);
+const qzExpWords={new:'you are new to lifting',some:'you have some lifting behind you',exp:'you are an experienced lifter'};
+function qzWhy(pk,allSk){
+  const a=qz.a;
+  if(allSk) return 'You skipped every question, so we kept the standard plan. Upper/Lower is the plan the app has always started with.';
+  if(pk.asked==null) return `Why: you did not pick days, so we used 4${a.exp?` and ${qzExpWords[a.exp]}`:''}.`;
+  if(pk.asked===2) return 'Why: you can train 2 days a week, so we start you on full body sessions.';
+  if(pk.asked===3) return 'Why: you can train 3 days a week.';
+  if(!a.exp) return `Why: you can train ${pk.asked} days a week. You skipped experience, so we assumed Some.`;
+  return `Why: you can train ${pk.asked} days a week and ${qzExpWords[a.exp]}.`;
+}
+// the weekly goal this quiz leaves: the routine's own, lowered (never raised) to the days that were asked
+const qzGoalFor=(id,a)=>Number.isInteger(a.days)?Math.min(ROUTINES[id].perWeek,a.days):ROUTINES[id].perWeek;
+const QZ_TWO='Two days a week: do any two of the three days and the app rotates the rest. Each region gets trained twice.';
+function qzResultProg(){ return qz.ctx==='fresh'?{label:'Step 5 of 6',n:5,t:6}:{label:'Your Result',n:4,t:4}; }
+function qzResult(){
+  qz.screen='result'; const a=qz.a, allSk=qzAllSkipped(), pk=quizPick(a), id=allSk?'ul4':pk.id, r=ROUTINES[id];
+  const cur=qz.ctx!=='fresh'&&id===ROUTINE_ID, notes=[];
+  if(r.freq) notes.push(`<p class="qz-note">${r.freq}</p>`);
+  if(pk.asked===2&&id==='fb3'&&!allSk) notes.push(`<p class="qz-note">${QZ_TWO}</p><p class="qz-note">Your weekly goal will be 2 sessions, so the ring can close.</p>`);
+  if(r.note) notes.push(`<p class="rt-honest">${r.note}</p>`);
+  const gaps=qzGaps(id); if(gaps) notes.push(`<p class="qz-note warn">${qzGapLine(gaps)} You can still use this routine, or pick another.</p>`);
+  const any=!allSk&&pk.anyway?pk.anyway:null;
+  const body=`<div class="qz-res"><div class="qz-head"><div class="cel-h1" id="onboardTitle" tabindex="-1">We Suggest ${rtNb(r.short||r.name)}</div><div class="cel-sub">Based on your answers. You decide.</div></div>
+    <div class="rt-card"><div class="rt-top"><div class="rt-name">${rtNb(r.name)}</div>${cur?'<span class="rt-chips"><span class="rt-chip">Current</span></span>':''}</div><div class="rt-meta">${r.meta}</div>
+      <ul class="rt-days" aria-label="Days">${r.days.map(([n,c])=>`<li class="badge ${c}">${esc(n)}</li>`).join('')}</ul>${r.cardLine?`<div class="rt-line card-line">${r.cardLine}</div>`:''}</div>
+    <p class="qz-why">${qzWhy(pk,allSk)}</p>${notes.join('')}</div>`;
+  const foot=`${qz.err?'<div class="qz-err" role="alert">Could not save your routine. Nothing was changed. Try again.</div>':''}
+    <button class="cel-cta" id="qzUse" type="button">${cur?`Keep ${esc(r.short||r.name)}`:'Use This Routine'}</button>
+    ${any?`<button class="cel-cta alt qz-alt" id="qzAnyway" type="button">Use ${rtNb(ROUTINES[any].name)} Anyway</button>`:''}
+    <div class="qz-links"><button class="linkbtn" id="qzPickBtn" type="button">Pick Another</button><button class="linkbtn" id="qzChange" type="button">Change Answers</button></div>
+    <div class="onb-note">${qz.ctx==='fresh'?'You can change this later in Settings.':'Nothing changes until you confirm.'}</div>`;
+  qzShow(qzShell(qzResultProg(),{back:true,body,foot,top:true,footCls:' qz-foot-flow'}));
+  const $=i=>document.getElementById(i);
+  $('qzUse').onclick=()=>qzUse(id); if($('qzAnyway')) $('qzAnyway').onclick=()=>qzUse(any);
+  $('qzPickBtn').onclick=()=>{ rt.open=null; qzPick(id); }; $('qzChange').onclick=()=>qzQuestion('goal');
+  $('onboardBack').onclick=()=>{ const o=qzOrder(); qzQuestion(o[o.length-1]); };
+}
+// Pick Another: every routine in the fixed order, the suggestion marked, the same cards and See Exercises as Change Routine
+function qzPick(sug,focusSel){
+  qz.screen='pick';
+  const warn={}; rtIds().forEach(i=>{ const n=qzGaps(i); if(n) warn[i]=qzGapLine(n); });
+  const cards=rtIds().map(i=>rtCard(i,{cur:qz.ctx==='fresh'?null:ROUTINE_ID,sug,open:rt.open,warn,label:x=>x===sug?'Use This Routine':'Use '+ROUTINES[x].name})).join('');
+  const body=`<div class="qz-pick"><div class="qz-head" style="margin-bottom:12px"><div class="cel-h1" id="onboardTitle" tabindex="-1">Pick a Routine</div><div class="cel-sub">Your suggestion is marked. Nothing changes until you tap Use.</div></div>${cards}</div>`;
+  const foot=`${qz.err?'<div class="qz-err" role="alert">Could not save your routine. Nothing was changed. Try again.</div>':''}<div class="qz-links"><button class="linkbtn" id="qzBackSug" type="button">Back to My Suggestion</button></div><div class="onb-note">${qz.ctx==='fresh'?'You can change this later in Settings.':'Nothing changes until you confirm.'}</div>`;
+  qzShow(qzShell(qzResultProg(),{back:true,body,foot,top:true,footCls:' qz-foot-flow'}),focusSel);
+  const inner=document.getElementById('onboardInner');
+  inner.querySelectorAll('.rt-go').forEach(b=>b.onclick=()=>qzUse(b.dataset.to));
+  rtWireSee(inner,sel=>qzPick(sug,sel));
+  document.getElementById('qzBackSug').onclick=()=>qzResult(); document.getElementById('onboardBack').onclick=()=>qzResult();
+}
+// "Use": a new install records its pick and carries on (it is applied when setup finishes); an existing user keeps their routine
+// (the quiz is just marked done) or goes through the same Change Routine confirm as Settings does, and nothing changes until they confirm
+async function qzUse(id){
+  qz.err=false; const a=qz.a;
+  if(qz.ctx==='fresh'){
+    if(!await saveQuiz({state:'draft',...a,sk:qz.sk,pick:id})){ qz.err=true; qz.screen==='pick'?qzPick(quizPick(a).id):qzResult(); return; }
+    qz.chosen=id; qz.screen='result'; renderOnboardStep(6); return;
+  }
+  const orig=settings.equipFilter.slice(), eqChanged=!!a.equip&&a.equip!==equipPresetOf(orig);
+  const finish=async()=>{
+    if(eqChanged&&await sset('settings',settings)===false){ settings.equipFilter=orig; qz.err=true; qzResult(); return false; }
+    if(!await saveQuiz({state:'done',...a,sk:qz.sk,pick:id})){ qz.err=true; qzResult(); return false; }
+    qzClose(); renderSetMain(); renderHeaderStats(); renderHome(); return true;
+  };
+  if(eqChanged) settings.equipFilter=QUIZ_EQUIP[a.equip].slice();
+  if(id===ROUTINE_ID){ if(await finish()) showToast(`Quiz saved. You are staying on ${ROUTINES[id].name}.`); return; }
+  const draft=await openDraft();
+  openRoutine({step:draft?'blocked':'confirm',to:id,draft,ctx:'quiz',goal:qzGoalFor(id,a),onDone:finish,onCancel:leaving=>{ settings.equipFilter=orig; if(leaving) qzClose(); }});
+}
+// the last question is answered: the result follows
+function qzDone(){ qzResult(); }
 // an existing user's quiz is not a sheet, so Escape is Skip Quiz here (never during first-run setup, and never while a sheet is on top of it)
 document.addEventListener('keydown',e=>{
   if(e.key!=='Escape'||!qz||qz.ctx==='fresh'||sheetReturnFocus.size||!document.getElementById('onboardBg').classList.contains('on')) return;
   e.preventDefault(); qzSkipQuiz();
 });
+// A new install applies what the quiz picked once, when setup finishes: the equipment answer sets the filter, the pick is built for that
+// equipment, and writes go programs, program, routineId, then the quiz last. The Upper/Lower `program` is written too (with the equipment
+// applied) so a close before the first session can never send the user back into the builder. Returns false, having undone what it
+// wrote, if any save fails.
+async function qzCommitFresh(){
+  const id=qz&&qz.ctx==='fresh'&&qz.chosen; if(!id) return true;
+  const a=qz.a, prevFilter=settings.equipFilter.slice(), prevUl4=UL4_PROGRAM;
+  if(a.equip) settings.equipFilter=QUIZ_EQUIP[a.equip].slice();
+  const fresh=buildProgram(); applyEquipPicks(fresh);
+  const undo=async()=>{ settings.equipFilter=prevFilter; if(id!=='ul4'){ await sset('routineId',null); await sset('programs',null); await sset('program',null); applyRoutineState({ul4:prevUl4,routineId:null,programs:{}}); } };
+  if(id!=='ul4'){
+    const programs={[id]:newRoutineProgram(id).days};
+    if(await sset('programs',programs)===false||await sset('program',fresh)===false||await sset('routineId',id)===false){ await undo(); return false; }
+    applyRoutineState({ul4:fresh,programs,routineId:id});
+  } else applyRoutineState({ul4:fresh});
+  if(!await saveQuiz({state:'done',...a,sk:qz.sk,pick:id})){ await undo(); return false; }
+  return true;
+}
 async function finishOnboarding(){
+  if(!await qzCommitFresh()){ const e=document.getElementById('onbFinErr'); if(e) e.hidden=false; return; }
   setAppInert(false);
   settings.onboarded=true;
   await sset('settings',settings);
@@ -4677,7 +4779,7 @@ function rtCard(id,o){
 // one toggle for a card list: opening a card closes the other, and puts the opened card at the top so its list is under the thumb
 function rtWireSee(root,rerender){
   root.querySelectorAll('.rt-see').forEach(b=>b.onclick=()=>{ const id=b.dataset.r; rt.open=rt.open===id?null:id; rerender('#rtSee-'+id);
-    if(rt.open){ const c=document.querySelector(`[data-r="${id}"]`); if(c) c.scrollIntoView({block:'start'}); } });
+    if(rt.open){ const c=root.querySelector(`[data-r="${id}"]`); if(c) c.scrollIntoView({block:'start'}); } });
 }
 // a lift both routines have, the one with the most history, for the "your progress carries over" line
 function rtSharedLift(to){
@@ -4755,7 +4857,7 @@ function openRoutine(o){
   rt={step:'list',to:null,backedUp:false,open:null,ctx:'settings',goal:null,onDone:null,onCancel:null,...(o||{})}; renderRoutineSheet();
   document.getElementById('routineBg').classList.add('on'); document.getElementById('routineSheet').classList.add('on');
 }
-function closeRoutine(){ document.getElementById('routineBg').classList.remove('on'); document.getElementById('routineSheet').classList.remove('on'); }
+function closeRoutine(){ document.getElementById('routineBg').classList.remove('on'); document.getElementById('routineSheet').classList.remove('on'); document.getElementById('routineBody').innerHTML=''; }
 document.getElementById('routineRow').onclick=e=>{ e.currentTarget.focus(); openRoutine(); }; // focus first: Safari does not focus a tapped button, and the sheet returns focus to the opener
 { const dismiss=()=>{ const q=rt.ctx==='quiz'&&document.getElementById('routineSheet').classList.contains('on'); closeRoutine(); if(q&&rt.onCancel) rt.onCancel(); }; document.getElementById('routineClose').onclick=dismiss; document.getElementById('routineBg').onclick=dismiss; }
 let setPage=null;
