@@ -1962,7 +1962,7 @@ function daySavedFor(dayId,name){
   const n=mine.find(x=>!x.deload&&x.ex&&x.ex[name]&&x.ex[name].some(y=>y.w&&y.r));
   return n?{open:false,sets:n.ex[name].map(x=>({w:x.w,r:x.r,done:true,rir:x.rir??null}))}:undefined; // lift has no normal session on this day: let the caller fall to lastByName's pre-deload sets
 }
-function isDeloadActive(){ return !!deloadStart && (Date.now()-deloadStart < 7*864e5); }
+function isDeloadActive(){ return !!deloadStart && !isFuture(deloadStart) && (Date.now()-deloadStart < 7*864e5); }
 // lastByName[name] is what progression starts from: the newest NORMAL session's sets. A deload session never replaces it
 // (that restarted lifters ~10% low after a deload); its sets ride along as the optional dlSets {sets,t}. An entry with
 // dl:1 exists only when the lift has never been done outside a deload. Old entries without flags read as normal.
@@ -2368,8 +2368,8 @@ async function undoRotation(day,idx){
 // ---------- deload / periodization ----------
 function plateauCountAll(){ const seen=new Set(); let n=0; PROGRAM.forEach(day=>day.exercises.forEach(ex=>{ if(seen.has(ex.name)) return; seen.add(ex.name); if(ex.start!==0 && isPlateau(ex)) n++; })); return n; }
 function weeksSinceDeload(){
-  const base=lastDeload || (sessions.length?Math.min(...sessions.map(s=>s.t)):Date.now());
-  return (Date.now()-base)/(7*864e5);
+  const base=(lastDeload&&!isFuture(lastDeload)&&lastDeload) || (sessions.length?Math.min(...sessions.map(s=>s.t)):Date.now());
+  return Math.max(0,Date.now()-base)/(7*864e5);
 }
 const DELOAD_WEEKS=5, DELOAD_PLATEAUS=3; // the rule; the Home copy never quotes the numbers
 function deloadDue(){ return !isDeloadActive() && (weeksSinceDeload()>=DELOAD_WEEKS || plateauCountAll()>=DELOAD_PLATEAUS); }
@@ -3512,6 +3512,7 @@ async function finishSession(){
 function celBackupMsg(){
   if(!backupNag()) return lastBackup?`Last backup: ${fmtDate(lastBackup)}.`:"You haven't backed up yet."; // reminder off or not due: plain facts, no nudge
   if(!lastBackup) return "You haven't backed up yet. Back up now to keep your history safe.";
+  if(isFuture(lastBackup)) return 'Your last backup is dated in the future. Back up now to keep your history safe.';
   return `It's been ${gapPhrase(lastBackup)} since your last backup. Back up now to keep your history safe.`;
 }
 function showCelebration({day,worked,nsets,vol,durationMin,pr,rhythmCount}){
@@ -5368,7 +5369,8 @@ async function doExport(){
   // only a tap on a Back Up Now / Export button runs this, so it records the backup (and resets the 7-day reminder)
   lastBackup=Date.now(); await sset('lastBackup',lastBackup); updateBackupUI(true); showToast('Backup downloaded'); return true;
 }
-function backupDue(){ return !lastBackup || (Date.now()-lastBackup) > 7*864e5; }
+const isFuture=t=>t>Date.now()+864e5; // a stored time more than a day ahead means the device clock was wrong or changed; never trusted as 'recent'
+function backupDue(){ return !lastBackup || isFuture(lastBackup) || (Date.now()-lastBackup) > 7*864e5; }
 // due AND the Weekly Backup Reminder is on: the only thing that may colour the celebration card, light the Settings row or show Home's banner
 function backupNag(){ return settings.autoBackup!==false && backupDue(); }
 function updateBackupUI(fade){ // fade: a backup was just taken, so Home's banner fades out once instead of vanishing
@@ -5397,7 +5399,7 @@ function placeDeloadLine(){
   document.getElementById('endDeloadBtn').onclick=async()=>{ deloadEnd=Date.now(); await sset('deloadEnd',deloadEnd); deloadStart=0; await sset('deloadStart',0); updateDeloadUI(); render(); const st=document.getElementById('arrivalStart'); if(st&&view==='home') st.focus({preventScroll:true}); showToast('Deload week ended'); };
 }
 // ---------- body weight: staleness reminder + rate-of-change note ----------
-function bwLastT(){ return bodyweight.reduce((m,b)=>b&&b.t>m?b.t:m,0); } // newest entry by t, whatever the array order
+function bwLastT(){ const ok=bodyweight.filter(b=>b&&!isFuture(b.t)), l=ok.length?ok:bodyweight; return l.reduce((m,b)=>b&&b.t>m?b.t:m,0); } // newest entry by t, whatever the array order
 function bwDue(){ return bodyweight.length && (Date.now()-bwLastT() > 7*864e5); }
 function calDaysSince(t){ const a=new Date(); a.setHours(0,0,0,0); const b=new Date(t); b.setHours(0,0,0,0); return Math.round((a-b)/864e5); } // calendar days, so a daylight-saving change can't move it by one
 function gapPhrase(t){ // shared wording for "how long ago" text: t = epoch ms of the last event
@@ -5405,7 +5407,7 @@ function gapPhrase(t){ // shared wording for "how long ago" text: t = epoch ms o
   return d<1 ? 'less than a day' : d<14 ? (d===1?'1 day':d+' days') : yr>=1 ? 'over a year' : mo>=2 ? 'over '+mo+' months' : mo>=1 && d>=35 ? 'over a month' : 'about '+wk+' weeks';
 }
 function bwGapText(){ return `It's been ${gapPhrase(bwLastT())} since you last logged your weight.`; }
-function backupGapText(){ return lastBackup ? `It's been ${gapPhrase(lastBackup)} since your last backup.` : "You haven't backed up yet."; }
+function backupGapText(){ return isFuture(lastBackup) ? "Your last backup is dated in the future, so back up again to be safe." : lastBackup ? `It's been ${gapPhrase(lastBackup)} since your last backup.` : "You haven't backed up yet."; }
 function updateBwUI(){ applyBanners(); }
 function bwWeeklyRate(){
   if(bodyweight.length<2) return null;
