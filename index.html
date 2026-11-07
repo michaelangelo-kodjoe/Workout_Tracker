@@ -2242,10 +2242,10 @@ function openBlockSheet(){
   blockProposals=buildBlockProposals();
   // nothing to decide: skip the empty sheet, but still advance the block and reset rotation counters so the banner stops firing
   if(!blockProposals.length){ applyBlock([]); return; }
-  const weeks=blockStart?((Date.now()-blockStart)/(7*864e5)).toFixed(1):'0';
+  const weeks=blockStart?Math.max(0,Math.round((Date.now()-blockStart)/(7*864e5))):0;
   const n=blockProposals.length;
   document.getElementById('blockTitle').textContent=`Block ${blockNum} Complete`;
-  document.getElementById('blockStats').textContent=`${weeks} weeks · ${n} change${n===1?'':'s'} proposed`;
+  document.getElementById('blockStats').textContent=`${weeks} week${weeks===1?'':'s'} · ${n} change${n===1?'':'s'} proposed`;
   document.getElementById('blockIntro').textContent=n
     ? `Untick anything you'd rather keep — everything not listed stays as it is. Primary lifts (the first two of each day) only change once they've stalled, or every other block; accessories get a fresh variation each block.`
     : `Nothing needs to change yet — primary lifts stay until they stall or two blocks pass, and accessories only rotate once they've been trained. Starting the next block just resets the clock.`;
@@ -5418,8 +5418,8 @@ function bwWeeklyRate(){
 document.getElementById('bwBannerBtn').onclick=()=>{ setView('strength'); document.getElementById('bwInput').focus(); };
 document.getElementById('updateBannerBtn').onclick=()=>{ reloadedForUpdate=true; location.reload(); };
 function openDeloadSheet(){
-  const wks=weeksSinceDeload().toFixed(1); const plat=plateauCountAll();
-  document.getElementById('deloadStats').textContent=`${wks} weeks since your last deload · ${plat} exercise${plat===1?'':'s'} currently plateaued`;
+  const wks=Math.max(0,Math.round(weeksSinceDeload())); const plat=plateauCountAll();
+  document.getElementById('deloadStats').textContent=`${wks} week${wks===1?'':'s'} since your last deload · ${plat} exercise${plat===1?'':'s'} currently plateaued`;
   document.getElementById('deloadBg').classList.add('on'); document.getElementById('deloadSheet').classList.add('on');
 }
 function closeDeloadSheet(){ document.getElementById('deloadBg').classList.remove('on'); document.getElementById('deloadSheet').classList.remove('on'); }
