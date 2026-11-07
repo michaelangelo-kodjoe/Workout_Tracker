@@ -1175,11 +1175,11 @@
       <div class="card">
       <div class="note-sm" style="margin-bottom:8px">Moves logged sets from one exercise to another, for when history was logged under the wrong name.</div>
       <div class="ad-f mv-combo"><label for="mvFromTxt">From</label>
-        <div class="mv-box"><input type="hidden" id="mvFrom"><input class="in" id="mvFromTxt" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="mvFromList" aria-describedby="mvFromHelp" autocomplete="off" autocapitalize="words" spellcheck="false" maxlength="60" placeholder="Search Logged Exercises"><button type="button" class="mv-clear" id="mvFromClear" aria-label="Clear Source Exercise" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+        <div class="mv-box"><input type="hidden" id="mvFrom"><input class="in" id="mvFromTxt" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="mvFromList" aria-describedby="mvFromHelp" autocomplete="off" autocapitalize="words" spellcheck="false" maxlength="60" placeholder="Search Logged" aria-label="From: Search Logged Exercises"><button type="button" class="mv-clear" id="mvFromClear" aria-label="Clear Source Exercise" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
         <ul class="mv-list" id="mvFromList" role="listbox" aria-label="Source Exercises" hidden></ul>
         <div class="mv-help" id="mvFromHelp" aria-live="polite"></div></div>
       <div class="ad-f mv-combo" style="margin-top:10px"><label for="mvTo">To</label>
-        <div class="mv-box"><input class="in" id="mvTo" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="mvList" aria-describedby="mvHelp" autocomplete="off" autocapitalize="words" spellcheck="false" maxlength="60" placeholder="Search or Type a Name"><button type="button" class="mv-clear" id="mvClear" aria-label="Clear Destination" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+        <div class="mv-box"><input class="in" id="mvTo" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="mvList" aria-describedby="mvHelp" autocomplete="off" autocapitalize="words" spellcheck="false" maxlength="60" placeholder="Search or Type" aria-label="To: Search the Library or Type a Name"><button type="button" class="mv-clear" id="mvClear" aria-label="Clear Destination" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
         <ul class="mv-list" id="mvList" role="listbox" aria-label="Destination Exercises" hidden></ul>
         <div class="mv-help" id="mvHelp" aria-live="polite"></div></div>
       <div class="ad-f" style="margin-top:10px"><span id="mvWhichL">Which Sessions</span><div class="onb-seg set-seg" role="group" aria-labelledby="mvWhichL" style="width:100%" id="mvWhich"><button data-w="before" aria-pressed="true">Before a Date</button><button data-w="all" aria-pressed="false">All</button></div></div>
@@ -5210,7 +5210,7 @@ function renderMovePage(keepFrom){
   const fromEl=document.getElementById('mvFrom'), fromTxt=document.getElementById('mvFromTxt'), inp=document.getElementById('mvTo');
   const prevFrom=keepFrom&&names.includes(fromEl.value)?fromEl.value:(names.find(n=>n==='Dumbbell Overhead Tricep Extension')||names[0]||'');
   fromEl.value=prevFrom; fromTxt.value=prevFrom; fromTxt.disabled=!names.length;
-  fromTxt.placeholder=names.length?'Search Logged Exercises':'No Logged Exercises';
+  fromTxt.placeholder=names.length?'Search Logged':'None Logged';
   mvFromOpen(false);
   if(!keepFrom) inp.value='';
   inp.disabled=!names.length; mvShowAll=false;
