@@ -4349,7 +4349,7 @@ async function saveLiveCardio(){
 // The goal line is the header's 4 a week; the current week is outlined, since it's still in progress.
 function renderRhythm(){
   const RHYTHM_GOAL=weeklyGoal();
-  const week=weekStart(), month=Date.now()-30*864e5;
+  const week=weekStart(), month=(()=>{ const m=new Date(); m.setDate(m.getDate()-30); return m.getTime(); })(); // 30 calendar days back
   const lifts=sessions.filter(s=>!s.isCardio), cardioWeek=sessions.filter(s=>s.isCardio&&s.t>=week);
   const cardioMin=cardioWeek.reduce((a,b)=>a+(b.duration||0),0);
   document.getElementById('rhStats').innerHTML=`<div><b>${lifts.filter(s=>s.t>=month).length}</b><span>Lifting, Last 30 Days</span></div>
@@ -4481,7 +4481,7 @@ let calSheetDate=null;
 function refreshCalDaySheet(){
   renderHistory();
   if(!calSheetDate) return;
-  const d0=new Date(calSheetDate); d0.setHours(0,0,0,0); const d1=d0.getTime()+864e5;
+  const d0=new Date(calSheetDate); d0.setHours(0,0,0,0); const d1e=new Date(d0); d1e.setDate(d1e.getDate()+1); const d1=d1e.getTime(); // next midnight, so a 23h or 25h daylight-saving day is still one day
   const ds=sessions.filter(s=>s.t>=d0.getTime()&&s.t<d1&&sessionType(s)).sort((a,b)=>a.t-b.t);
   if(!ds.length){ closeCalDaySheet(); return; }
   openCalDaySheet(calSheetDate, ds);
@@ -5394,7 +5394,7 @@ function placeDeloadLine(){
   const old=document.getElementById('deloadLine'); if(old) old.remove();
   if(!isDeloadActive() || needsBuild) return;
   const el=document.createElement('div'); el.className='deload-line'; el.id='deloadLine';
-  el.innerHTML=`<span><b>Deload week:</b> suggested weights are lighter through ${fmtDate(deloadStart+7*864e5)}, then go back to normal.</span><button type="button" class="linkbtn" id="endDeloadBtn">End Early</button>`;
+  el.innerHTML=`<span><b>Deload week:</b> suggested weights are lighter through ${fmtDate((()=>{ const e=new Date(deloadStart); e.setDate(e.getDate()+7); return e.getTime(); })())}, then go back to normal.</span><button type="button" class="linkbtn" id="endDeloadBtn">End Early</button>`;
   const g=panel.querySelector('.greet-wrap'); if(g) g.after(el); else panel.prepend(el);
   document.getElementById('endDeloadBtn').onclick=async()=>{ deloadEnd=Date.now(); await sset('deloadEnd',deloadEnd); deloadStart=0; await sset('deloadStart',0); updateDeloadUI(); render(); const st=document.getElementById('arrivalStart'); if(st&&view==='home') st.focus({preventScroll:true}); showToast('Deload week ended'); };
 }
