@@ -5223,6 +5223,7 @@ function updateMoveInfo(){
   document.querySelectorAll('#mvWhich button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.w===mvState.which)));
   if(document.getElementById('mvList').hidden) mvHelp(r,'');
   if(!list.length){ info.textContent=from?'No sessions match, so nothing would move.':(Object.keys(mvCounts).length?'Pick an exercise to move from.':'There is no logged history to move yet.'); go.disabled=true; return; }
+  if(r.same){ info.textContent='Nothing moves while From and To are the same exercise.'; go.disabled=true; return; }
   const stay=total-list.length;
   let t=`${list.length} session${list.length===1?'':'s'} move${list.length===1?'s':''}, ${fmtDate(list[0].t)}${list.length>1?' – '+fmtDate(list[list.length-1].t):''}.${stay?` ${stay} stay${stay===1?'s':''}.`:''}`;
   if(r.ok&&r.existing){ const had=sessions.filter(x=>!x.isCardio&&x.ex&&hasOwn(x.ex,r.name)).length; if(had) t+=` ${r.name} already has ${mvSess(had)}; the moved sets join them.`;
