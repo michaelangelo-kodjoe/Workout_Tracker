@@ -3510,8 +3510,7 @@ async function finishSession(){
 function celBackupMsg(){
   if(!backupNag()) return lastBackup?`Last backup: ${fmtDate(lastBackup)}.`:"You haven't backed up yet."; // reminder off or not due: plain facts, no nudge
   if(!lastBackup) return "You haven't backed up yet. Back up now to keep your history safe.";
-  const n=Math.floor((Date.now()-lastBackup)/864e5);
-  return `It's been ${n} days since your last backup. Back up now to keep your history safe.`;
+  return `It's been ${gapPhrase(lastBackup)} since your last backup. Back up now to keep your history safe.`;
 }
 function showCelebration({day,worked,nsets,vol,durationMin,pr,rhythmCount}){
   const bg=document.getElementById('celebrateBg'), inner=document.getElementById('celebrateInner');
