@@ -507,6 +507,8 @@
   .mv-new svg{width:18px;height:18px;flex:none;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;}
   .mv-new .t{display:flex;flex-direction:column;min-width:0;}
   .mv-help{font-size:12px;color:var(--text-dim);line-height:1.5;margin-top:2px;} .mv-help:empty{display:none;}
+  #mvFromTxt:not(:focus){text-overflow:ellipsis;} .mv-opt.mv-cur{padding-right:44px;position:relative;} .mv-opt.mv-cur::after{content:'';position:absolute;right:16px;top:50%;width:12px;height:7px;margin-top:-6px;border-left:2px solid var(--green);border-bottom:2px solid var(--green);transform:rotate(-45deg);}
+  #mvGo:disabled{opacity:.4;cursor:not-allowed;}
   .mv-help.warn{color:var(--text);border-left:2px solid var(--amber);padding-left:8px;}
   .ad-f{display:flex;flex-direction:column;gap:4px;min-width:0;font-size:12px;color:var(--text-dim);}
   .ad-f[hidden]{display:none;}
@@ -1172,7 +1174,10 @@
       <div class="set-sub"><button class="set-back" aria-label="Back to Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Settings</button><h2 tabindex="-1">Move History</h2></div>
       <div class="card">
       <div class="note-sm" style="margin-bottom:8px">Moves logged sets from one exercise to another, for when history was logged under the wrong name.</div>
-      <label class="ad-f" for="mvFrom">From<select class="in" id="mvFrom"></select></label>
+      <div class="ad-f mv-combo"><label for="mvFromTxt">From</label>
+        <div class="mv-box"><input type="hidden" id="mvFrom"><input class="in" id="mvFromTxt" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="mvFromList" aria-describedby="mvFromHelp" autocomplete="off" autocapitalize="words" spellcheck="false" maxlength="60" placeholder="Search Logged Exercises"><button type="button" class="mv-clear" id="mvFromClear" aria-label="Clear Source Exercise" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+        <ul class="mv-list" id="mvFromList" role="listbox" aria-label="Source Exercises" hidden></ul>
+        <div class="mv-help" id="mvFromHelp" aria-live="polite"></div></div>
       <div class="ad-f mv-combo" style="margin-top:10px"><label for="mvTo">To</label>
         <div class="mv-box"><input class="in" id="mvTo" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="mvList" aria-describedby="mvHelp" autocomplete="off" autocapitalize="words" spellcheck="false" maxlength="60" placeholder="Search or Type an Exercise"><button type="button" class="mv-clear" id="mvClear" aria-label="Clear Destination" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
         <ul class="mv-list" id="mvList" role="listbox" aria-label="Destination Exercises" hidden></ul>
@@ -5202,13 +5207,14 @@ function mvAfterChange(){ document.getElementById('mvClear').hidden=!document.ge
 function renderMovePage(keepFrom){
   mvBuildPool();
   const names=Object.keys(mvCounts).sort();
-  const fromSel=document.getElementById('mvFrom'), inp=document.getElementById('mvTo');
-  const prevFrom=keepFrom&&names.includes(fromSel.value)?fromSel.value:(names.find(n=>n==='Dumbbell Overhead Tricep Extension')||names[0]||'');
-  fromSel.innerHTML=names.map(n=>`<option value="${esc(n)}">${esc(n)} · ${mvCounts[n]} session${mvCounts[n]===1?'':'s'}</option>`).join('')||'<option value="">No history yet</option>';
-  fromSel.value=prevFrom;
+  const fromEl=document.getElementById('mvFrom'), fromTxt=document.getElementById('mvFromTxt'), inp=document.getElementById('mvTo');
+  const prevFrom=keepFrom&&names.includes(fromEl.value)?fromEl.value:(names.find(n=>n==='Dumbbell Overhead Tricep Extension')||names[0]||'');
+  fromEl.value=prevFrom; fromTxt.value=prevFrom; fromTxt.disabled=!names.length;
+  fromTxt.placeholder=names.length?'Search Logged Exercises':'No Logged Exercises';
+  mvFromOpen(false);
   if(!keepFrom) inp.value='';
   inp.disabled=!names.length; mvShowAll=false;
-  mvRenderList(); mvOpen(false); mvAfterChange();
+  mvRenderList(); mvOpen(false); mvFromHelpUpdate(); mvAfterChange();
 }
 function updateMoveInfo(){
   const list=moveSessions(), from=document.getElementById('mvFrom').value, total=sessions.filter(x=>!x.isCardio&&x.ex&&x.ex[from]).length;
@@ -5216,7 +5222,7 @@ function updateMoveInfo(){
   document.getElementById('mvDateWrap').hidden=mvState.which==='all';
   document.querySelectorAll('#mvWhich button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.w===mvState.which)));
   if(document.getElementById('mvList').hidden) mvHelp(r,'');
-  if(!list.length){ info.textContent=from?'No sessions match, so nothing would move.':'There is no logged history to move yet.'; go.disabled=true; return; }
+  if(!list.length){ info.textContent=from?'No sessions match, so nothing would move.':(Object.keys(mvCounts).length?'Pick an exercise to move from.':'There is no logged history to move yet.'); go.disabled=true; return; }
   const stay=total-list.length;
   let t=`${list.length} session${list.length===1?'':'s'} move${list.length===1?'s':''}, ${fmtDate(list[0].t)}${list.length>1?' – '+fmtDate(list[list.length-1].t):''}.${stay?` ${stay} stay${stay===1?'s':''}.`:''}`;
   if(r.ok&&r.existing){ const had=sessions.filter(x=>!x.isCardio&&x.ex&&hasOwn(x.ex,r.name)).length; if(had) t+=` ${r.name} already has ${mvSess(had)}; the moved sets join them.`;
@@ -5239,11 +5245,69 @@ async function doMoveHistory(){
   showToast(`Moved ${list.length} session${list.length===1?'':'s'}`);
   document.getElementById('mvTo').value=''; renderMovePage(true);
 }
-document.getElementById('mvFrom').onchange=()=>renderMovePage(true);
+// From combobox: logged names only. #mvFrom (hidden) holds the committed name, #mvFromTxt is what the owner sees and types.
+let mvFromActive=-1;
+const mvFromNames=()=>Object.keys(mvCounts).sort();
+function mvFromOpen(on){ const l=document.getElementById('mvFromList'), i=document.getElementById('mvFromTxt'); l.hidden=!on; i.setAttribute('aria-expanded',String(on)); if(!on){ mvFromActive=-1; i.removeAttribute('aria-activedescendant'); } }
+function mvFromQuery(){ const t=document.getElementById('mvFromTxt').value, c=document.getElementById('mvFrom').value; return c&&t.toLowerCase()===c.toLowerCase()?'':mvClean(t); }
+function mvFromMatch(){ const q=mvClean(document.getElementById('mvFromTxt').value).toLowerCase(); return q?mvFromNames().find(n=>n.toLowerCase()===q)||'':''; }
+function mvFromHelpUpdate(extra){
+  const h=document.getElementById('mvFromHelp'), c=document.getElementById('mvFrom').value, t=document.getElementById('mvFromTxt');
+  h.textContent=extra||(!mvFromNames().length?'Nothing is logged yet, so there is nothing to move.':c?`${mvSess(mvCounts[c])} logged.`:'Pick one of the logged exercises.');
+  document.getElementById('mvFromClear').hidden=!t.value||t.disabled;
+}
+function mvFromRender(){
+  const list=document.getElementById('mvFromList'), c=document.getElementById('mvFrom').value, q=mvFromQuery(), words=q.toLowerCase().split(/\s+/).filter(Boolean);
+  const names=mvFromNames().filter(n=>words.every(w=>n.toLowerCase().includes(w)));
+  list.innerHTML=names.length?`<li role="presentation"><ul role="group" aria-labelledby="mvgFrom" style="list-style:none;margin:0;padding:0"><li role="presentation" class="mv-grp" id="mvgFrom">Logged Exercises</li>${names.map((n,i)=>`<li class="mv-opt${n===c?' mv-cur':''}" role="option" id="mvf${i}" aria-selected="false"><span>${esc(n)}</span><span class="m">${mvSess(mvCounts[n])} logged</span></li>`).join('')}</ul></li>`
+    :'<li class="mv-note" role="presentation">No logged exercise matches. Only exercises with logged sessions can be moved.</li>';
+  list._names=names; list.scrollTop=0;
+  mvFromSetActive(q?(names.length?0:-1):names.indexOf(c));
+  mvFromHelpUpdate(q?(names.length?`${names.length} match${names.length===1?'':'es'}.`:'No matches.'):`${mvFromNames().length} exercises with logged sessions.`);
+}
+function mvFromSetActive(i){
+  const list=document.getElementById('mvFromList'), inp=document.getElementById('mvFromTxt'), n=(list._names||[]).length;
+  list.querySelectorAll('[aria-selected=true]').forEach(e=>e.setAttribute('aria-selected','false'));
+  mvFromActive=n?Math.max(-1,Math.min(i,n-1)):-1;
+  const el=mvFromActive>=0?document.getElementById('mvf'+mvFromActive):null;
+  if(el){ el.setAttribute('aria-selected','true'); inp.setAttribute('aria-activedescendant',el.id); el.scrollIntoView({block:'nearest'}); } else inp.removeAttribute('aria-activedescendant');
+}
+function mvFromCommit(name){ // set the committed value ('' when the text is not a logged name), then refresh To and the info line
+  const el=document.getElementById('mvFrom'), changed=el.value!==name; el.value=name;
+  if(changed){ mvRenderList(); mvOpen(false); }
+  mvFromHelpUpdate(); mvAfterChange();
+}
+function mvFromSettle(){ // on close or leave: an exact case-insensitive match takes the logged spelling
+  const m=mvFromMatch(); if(m) document.getElementById('mvFromTxt').value=m;
+  mvFromCommit(m); mvFromOpen(false); mvFromHelpUpdate();
+}
+function mvFromOpenList(){ mvOpen(false); mvFromRender(); mvFromOpen(true); }
+function mvFromChoose(i){
+  const n=(document.getElementById('mvFromList')._names||[])[i]; if(n==null) return;
+  document.getElementById('mvFromTxt').value=n; mvFromCommit(n); mvFromOpen(false); mvFromHelpUpdate(); document.getElementById('mvFromTxt').focus();
+}
+{ const inp=document.getElementById('mvFromTxt'), list=document.getElementById('mvFromList'), combo=inp.closest('.mv-combo');
+  inp.oninput=()=>{ mvFromCommit(mvFromMatch()); mvFromOpenList(); };
+  inp.onfocus=()=>{ if(list.hidden){ mvFromOpenList(); inp.select(); } };
+  inp.onclick=()=>{ if(list.hidden) mvFromOpenList(); };
+  inp.onkeydown=e=>{
+    const n=(list._names||[]).length;
+    if(e.key==='ArrowDown'){ e.preventDefault(); if(list.hidden) mvFromOpenList(); else mvFromSetActive(mvFromActive+1>=n?0:mvFromActive+1); }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); if(!list.hidden) mvFromSetActive(mvFromActive<=0?n-1:mvFromActive-1); }
+    else if(e.key==='Enter'){ if(!list.hidden){ e.preventDefault(); if(mvFromActive>=0) mvFromChoose(mvFromActive); else mvFromSettle(); } }
+    else if(e.key==='Escape'){ if(!list.hidden){ e.stopPropagation(); mvFromSettle(); } else if(inp.value){ e.stopPropagation(); inp.value=''; mvFromCommit(''); } }
+    else if(e.key==='Tab') mvFromSettle();
+  };
+  list.onmousedown=e=>e.preventDefault();
+  list.onclick=e=>{ const li=e.target.closest('[role=option]'); if(li) mvFromChoose(+li.id.slice(3)); };
+  combo.addEventListener('focusout',()=>setTimeout(()=>{ if(!combo.contains(document.activeElement)&&!list.hidden) mvFromSettle(); },120));
+  document.getElementById('mvFromClear').onclick=()=>{ inp.value=''; mvFromCommit(''); inp.focus(); mvFromOpenList(); };
+}
 { const inp=document.getElementById('mvTo'), list=document.getElementById('mvList'), combo=inp.closest('.mv-combo');
   inp.oninput=()=>{ mvShowAll=false; mvRenderList(); mvOpen(true); mvSetActive(mvClean(inp.value)&&(list._opts||[]).length?0:-1); mvAfterChange(); };
-  inp.onfocus=()=>{ if(list.hidden){ mvRenderList(); mvOpen(true); mvSetActive(-1); } };
-  inp.onclick=()=>{ if(list.hidden){ mvRenderList(); mvOpen(true); } };
+  const closeFrom=()=>{ if(!document.getElementById('mvFromList').hidden) mvFromSettle(); };
+  inp.onfocus=()=>{ closeFrom(); if(list.hidden){ mvRenderList(); mvOpen(true); mvSetActive(-1); } };
+  inp.onclick=()=>{ closeFrom(); if(list.hidden){ mvRenderList(); mvOpen(true); } };
   inp.onkeydown=e=>{
     const n=(list._opts||[]).length;
     if(e.key==='ArrowDown'){ e.preventDefault(); if(list.hidden){ mvRenderList(); mvOpen(true); } else mvSetActive(mvActive+1>=n?0:mvActive+1); }
