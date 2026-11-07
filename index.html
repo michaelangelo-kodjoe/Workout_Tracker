@@ -2389,7 +2389,9 @@ function plateauBreakIdx(h){
   }
   return idx;
 }
-function fmtDate(t){ const d=new Date(t); return d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}); }
+function fmtDate(t){ const d=new Date(t); if(isNaN(d)) return 'an unknown date';
+  const far=Math.abs(Date.now()-d.getTime())>=300*864e5; // a date almost a year away or more carries its year, so "Nov 7" can't be last year's
+  return d.toLocaleDateString(undefined,far?{weekday:'short',month:'short',day:'numeric',year:'numeric'}:{weekday:'short',month:'short',day:'numeric'}); }
 // ---------- units: everything is stored in lb always; these convert only at the display boundary ----------
 const LB_PER_KG=1/0.45359237;
 // Text Size zooms the whole app rather than just the type, so every layout keeps its proportions and nothing overlaps
@@ -4023,7 +4025,7 @@ function cardioRecent(){ // the last four distinct activities, newest first
   const out=[]; [...sessions].filter(s=>s.isCardio&&s.cact&&cardioAct(s.cact)).sort((a,b)=>b.t-a.t).forEach(s=>{ if(out.length<4&&!out.some(x=>x.k===s.cact)) out.push({k:s.cact,s}); }); return out;
 }
 function cardioWhen(t){ const d0=new Date(); d0.setHours(0,0,0,0); const n=Math.round((d0-new Date(new Date(t).setHours(0,0,0,0)))/864e5);
-  return n<=0?'Today':n===1?'Yesterday':n<7?new Date(t).toLocaleDateString(undefined,{weekday:'short'}):new Date(t).toLocaleDateString(undefined,{month:'short',day:'numeric'}); }
+  return n<=0?'Today':n===1?'Yesterday':n<7?new Date(t).toLocaleDateString(undefined,{weekday:'short'}):new Date(t).toLocaleDateString(undefined,n>=300?{month:'short',day:'numeric',year:'numeric'}:{month:'short',day:'numeric'}); }
 function newCardioDraft(){ const r=cardioRecent()[0]; return {step:1,group:r?cardioAct(r.k).g:'Machine',act:null,structure:'steady',duration:'',vals:{},work:'30',rest:'90',rounds:'8',name:'',rpe:0,notes:'',more:false,effort:false,focus:null,manual:false}; }
 let cardioDraft=newCardioDraft();
 function cardioIntervalTotal(d){ const w=parseFloat(d.work)||0, r=parseFloat(d.rest)||0, n=parseInt(d.rounds)||0; const a=cardioAct(d.act);
