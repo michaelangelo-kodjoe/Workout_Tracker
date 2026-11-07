@@ -5398,9 +5398,10 @@ function placeDeloadLine(){
 // ---------- body weight: staleness reminder + rate-of-change note ----------
 function bwLastT(){ return bodyweight.reduce((m,b)=>b&&b.t>m?b.t:m,0); } // newest entry by t, whatever the array order
 function bwDue(){ return bodyweight.length && (Date.now()-bwLastT() > 7*864e5); }
-function gapPhrase(t){ // shared wording for "how long ago" banners: t = epoch ms of the last event
-  const d=Math.floor((Date.now()-t)/864e5), wk=Math.floor(d/7), mo=Math.floor(d/30.4), yr=Math.floor(d/365);
-  return yr>=1 ? 'over a year' : mo>=2 ? 'over '+mo+' months' : mo>=1 && d>=35 ? 'over a month' : wk<=1 ? 'a week' : 'about '+wk+' weeks';
+function calDaysSince(t){ const a=new Date(); a.setHours(0,0,0,0); const b=new Date(t); b.setHours(0,0,0,0); return Math.round((a-b)/864e5); } // calendar days, so a daylight-saving change can't move it by one
+function gapPhrase(t){ // shared wording for "how long ago" text: t = epoch ms of the last event
+  const d=calDaysSince(t), wk=Math.floor(d/7), mo=Math.floor(d/30.4), yr=Math.floor(d/365);
+  return d<1 ? 'less than a day' : d<14 ? (d===1?'1 day':d+' days') : yr>=1 ? 'over a year' : mo>=2 ? 'over '+mo+' months' : mo>=1 && d>=35 ? 'over a month' : 'about '+wk+' weeks';
 }
 function bwGapText(){ return `It's been ${gapPhrase(bwLastT())} since you last logged your weight.`; }
 function backupGapText(){ return lastBackup ? `It's been ${gapPhrase(lastBackup)} since your last backup.` : "You haven't backed up yet."; }
