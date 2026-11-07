@@ -2948,10 +2948,10 @@ const CARDIO_REASON_COPY={
     body:"You've done two straight lifting sessions, so conditioning work is next in the rotation — it gives your joints and nervous system a break from heavy loading while still building your aerobic base. Totally fine to lift again today if that's what you'd rather do." },
   recovery:{ sub:'Your next lift day is still recovering', home:(d)=>`${d.name} ${d.sub} is next, but its muscles aren't recovered yet — today's suggested as a conditioning day instead.`,
     body:(d)=>`The muscles ${d.name} ${d.sub} trains haven't finished recovering, so conditioning fills the gap without loading them again early. Totally fine to lift today if you feel ready — you'll get a heads-up on what's still recovering.` },
-  cardioStale:{ sub:"It's been a week since your last conditioning session", home:"It's been over a week since your last conditioning session — today's a good day to get one in.",
-    body:"Your last conditioning session was over a week ago. Two to three a week keeps the aerobic base you've built; a lighter day now also gives your joints a break. Totally fine to lift today if that's what you'd rather do." },
+  cardioStale:{ sub:(d,g)=>`It's been ${g} since your last conditioning session`, home:(d,g)=>`It's been ${g} since your last conditioning session — today's a good day to get one in.`,
+    body:(d,g)=>`Your last conditioning session was ${g} ago. Two to three a week keeps the aerobic base you've built; a lighter day now also gives your joints a break. Totally fine to lift today if that's what you'd rather do.` },
 };
-function cardioReasonCopy(){ const {reason,nextDay}=suggestedDay(); const c=CARDIO_REASON_COPY[reason]||CARDIO_REASON_COPY.backToBack; const f=v=>typeof v==='function'?v(nextDay):v; return {sub:f(c.sub),home:f(c.home),body:f(c.body)}; }
+function cardioReasonCopy(){ const {reason,nextDay}=suggestedDay(); const c=CARDIO_REASON_COPY[reason]||CARDIO_REASON_COPY.backToBack; const lc=sessions.filter(x=>x.isCardio).reduce((m,x)=>x.t>m?x.t:m,0), g=lc?gapPhrase(lc):''; const f=v=>typeof v==='function'?v(nextDay,g):v; return {sub:f(c.sub),home:f(c.home),body:f(c.body)}; }
 function renderTabs(){ const w=document.getElementById('dayTabs'); w.innerHTML='';
   const suggested=suggestedDayId();
   PROGRAM.forEach(d=>{ const el=document.createElement('div'); el.className='daytab '+dayType(d)+(d.id===currentDay?' active':'')+(d.id===suggested?' suggested':''); if(d.id===suggested) el.title='Next up in your rotation'; if(d.id===currentDay) el.setAttribute('aria-current','true'); el.innerHTML=`${d.name}<span class="dsub">${d.sub}</span>`; el.onclick=()=>attemptLoadDay(d.id); w.appendChild(el); });
