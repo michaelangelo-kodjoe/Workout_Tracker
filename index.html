@@ -2720,7 +2720,7 @@ function recovGroup(m){
 }
 function recovStatusText(m){
   const p=recoveryProgress(m), sore=isSore(m)?' · marked sore':'';
-  if(p<1){ const r=effectiveRecovery(m); const left=Math.max(0,r.hours-(Date.now()-r.start)/3600000); return `${Math.round(p*100)}% · ~${fmtTimeLeft(left)} left${sore}`; }
+  if(p<1){ const r=effectiveRecovery(m); const left=Math.max(0,r.hours-Math.max(0,Date.now()-r.start)/3600000); return `${Math.round(p*100)}% · ~${fmtTimeLeft(left)} left${sore}`; }
   return 'ready'+sore;
 }
 function renderBody(){
@@ -2763,8 +2763,8 @@ function renderBody(){
   if(!active.length){
     sub.textContent='Every muscle group is fully recovered — ready for anything today.';
   } else {
-    const worst=active[0], wr=effectiveRecovery(worst), leftH=Math.max(0,wr.hours-(Date.now()-wr.start)/3600000);
-    const day=new Date(wr.start).toLocaleDateString(undefined,{weekday:'long'});
+    const worst=active[0], wr=effectiveRecovery(worst), leftH=Math.max(0,wr.hours-Math.max(0,Date.now()-wr.start)/3600000);
+    const dAgo=calDaysSince(wr.start), day=dAgo<=0?'today':dAgo===1?'yesterday':new Date(wr.start).toLocaleDateString(undefined,{weekday:'long'});
     // ready muscles by group, so chest reads once rather than as "Upper chest, Mid chest, Lower chest"
     const groups=Object.keys(MUSCLE_LABEL).filter(g=>allMuscles.some(m=>recovGroup(m)===g));
     const readyGroups=groups.filter(g=>allMuscles.filter(m=>recovGroup(m)===g).every(m=>!active.includes(m))).map(g=>MUSCLE_LABEL[g]);
@@ -2962,7 +2962,7 @@ function renderTabs(){ const w=document.getElementById('dayTabs'); w.innerHTML='
 function dayFatigueConflicts(day){
   const muscles=new Set(); day.exercises.forEach(ex=>recoveryKeysFor(ex).forEach(k=>muscles.add(k)));
   return [...muscles].filter(m=>recoveryProgress(m)<1).map(m=>{
-    const r=effectiveRecovery(m); const left=Math.max(0,r.hours-(Date.now()-r.start)/3600000);
+    const r=effectiveRecovery(m); const left=Math.max(0,r.hours-Math.max(0,Date.now()-r.start)/3600000);
     return {m,pct:Math.round(recoveryProgress(m)*100),left};
   }).sort((a,b)=>a.pct-b.pct);
 }
