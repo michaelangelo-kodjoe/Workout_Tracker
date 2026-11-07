@@ -938,7 +938,7 @@
       <div class="banner has-x" id="backupBanner" style="display:none"><div class="bmain"><span>It's been a week since your last backup.</span><div class="bfoot"><button type="button" class="linkbtn" id="bannerBtn">Back Up Now</button></div></div><button type="button" class="bx" aria-label="Dismiss Backup Reminder"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
       <div class="banner has-x" id="blockBanner" style="display:none"><div class="bmain"><span id="blockBannerTxt">Your training block is complete.</span><div class="bfoot"><button type="button" class="linkbtn" id="blockBannerBtn">Review What's Changing</button></div></div><button type="button" class="bx" aria-label="Dismiss Training Block Reminder"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
       <div class="banner has-x" id="deloadBanner" style="display:none"><div class="bmain"><span id="deloadBannerTxt"></span><div class="bfoot"><button type="button" class="linkbtn" id="deloadBannerBtn">Plan a Deload Week</button></div></div><button type="button" class="bx" aria-label="Dismiss Deload Reminder"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
-      <div class="banner has-x" id="bwBanner" style="display:none"><div class="bmain"><span>It's been a week since you last logged your weight.</span><div class="bfoot"><button type="button" class="linkbtn" id="bwBannerBtn">Log It Now</button></div></div><button type="button" class="bx" aria-label="Dismiss Body Weight Reminder"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
+      <div class="banner has-x" id="bwBanner" style="display:none"><div class="bmain"><span id="bwBannerTxt">It's been a week since you last logged your weight.</span><div class="bfoot"><button type="button" class="linkbtn" id="bwBannerBtn">Log It Now</button></div></div><button type="button" class="bx" aria-label="Dismiss Body Weight Reminder"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
       <div class="bmore-row" id="bannerMoreRow" hidden><button type="button" class="bmore" id="bannerMoreBtn" aria-expanded="false"><span id="bannerMoreTxt"></span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4.5l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
     </div>
     <span class="sr-only" id="bannerStatus" role="status" aria-live="polite" aria-atomic="true"></span>
@@ -2310,6 +2310,7 @@ function bannerDueMap(){
 }
 function applyBanners(announce){
   const slot=document.getElementById('bannerSlot'); if(!slot) return;
+  const bwT=document.getElementById('bwBannerTxt'); if(bwT&&bwDue()) bwT.textContent=bwGapText();
   const due=bannerDueMap(); bannerDismissed.forEach(id=>{ if(!due[id]) bannerDismissed.delete(id); });
   const q=bannerQueue(due), n=q.length-1;
   if(n<1) bannerOpen=false;
@@ -5394,7 +5395,13 @@ function placeDeloadLine(){
   document.getElementById('endDeloadBtn').onclick=async()=>{ deloadEnd=Date.now(); await sset('deloadEnd',deloadEnd); deloadStart=0; await sset('deloadStart',0); updateDeloadUI(); render(); const st=document.getElementById('arrivalStart'); if(st&&view==='home') st.focus({preventScroll:true}); showToast('Deload week ended'); };
 }
 // ---------- body weight: staleness reminder + rate-of-change note ----------
-function bwDue(){ return bodyweight.length && (Date.now()-bodyweight[bodyweight.length-1].t > 7*864e5); }
+function bwLastT(){ return bodyweight.reduce((m,b)=>b&&b.t>m?b.t:m,0); } // newest entry by t, whatever the array order
+function bwDue(){ return bodyweight.length && (Date.now()-bwLastT() > 7*864e5); }
+function bwGapText(){
+  const d=Math.floor((Date.now()-bwLastT())/864e5), wk=Math.floor(d/7), mo=Math.floor(d/30.4), yr=Math.floor(d/365);
+  const gap = yr>=1 ? 'over a year' : mo>=2 ? 'over '+mo+' months' : mo>=1 && d>=35 ? 'over a month' : wk<=1 ? 'a week' : 'about '+wk+' weeks';
+  return `It's been ${gap} since you last logged your weight.`;
+}
 function updateBwUI(){ applyBanners(); }
 function bwWeeklyRate(){
   if(bodyweight.length<2) return null;
