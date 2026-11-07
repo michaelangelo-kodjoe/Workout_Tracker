@@ -5281,7 +5281,7 @@ function mvFromSettle(){ // on close or leave: an exact case-insensitive match t
   const m=mvFromMatch(); if(m) document.getElementById('mvFromTxt').value=m;
   mvFromCommit(m); mvFromOpen(false); mvFromHelpUpdate();
 }
-function mvFromOpenList(){ mvOpen(false); mvFromRender(); mvFromOpen(true); }
+function mvFromOpenList(){ mvOpen(false); mvFromOpen(true); mvFromRender(); } // open first: scrollIntoView does nothing in a hidden list
 function mvFromChoose(i){
   const n=(document.getElementById('mvFromList')._names||[])[i]; if(n==null) return;
   document.getElementById('mvFromTxt').value=n; mvFromCommit(n); mvFromOpen(false); mvFromHelpUpdate(); document.getElementById('mvFromTxt').focus();
