@@ -2953,7 +2953,7 @@ const CARDIO_REASON_COPY={
   cardioStale:{ sub:(d,g)=>`It's been ${g} since your last conditioning session`, home:(d,g)=>`It's been ${g} since your last conditioning session — today's a good day to get one in.`,
     body:(d,g)=>`Your last conditioning session was ${g} ago. Two to three a week keeps the aerobic base you've built; a lighter day now also gives your joints a break. Totally fine to lift today if that's what you'd rather do.` },
 };
-function cardioReasonCopy(){ const {reason,nextDay}=suggestedDay(); const c=CARDIO_REASON_COPY[reason]||CARDIO_REASON_COPY.backToBack; const lc=sessions.filter(x=>x.isCardio).reduce((m,x)=>x.t>m?x.t:m,0), g=lc?gapPhrase(lc):''; const f=v=>typeof v==='function'?v(nextDay,g):v; return {sub:f(c.sub),home:f(c.home),body:f(c.body)}; }
+function cardioReasonCopy(){ const {reason,nextDay}=suggestedDay(); const c=CARDIO_REASON_COPY[reason]||CARDIO_REASON_COPY.backToBack; const lc=sessions.filter(x=>x.isCardio&&!isFuture(x.t)).reduce((m,x)=>x.t>m?x.t:m,0), g=lc?gapPhrase(lc):''; const f=v=>typeof v==='function'?v(nextDay,g):v; return {sub:f(c.sub),home:f(c.home),body:f(c.body)}; }
 function renderTabs(){ const w=document.getElementById('dayTabs'); w.innerHTML='';
   const suggested=suggestedDayId();
   PROGRAM.forEach(d=>{ const el=document.createElement('div'); el.className='daytab '+dayType(d)+(d.id===currentDay?' active':'')+(d.id===suggested?' suggested':''); if(d.id===suggested) el.title='Next up in your rotation'; if(d.id===currentDay) el.setAttribute('aria-current','true'); el.innerHTML=`${d.name}<span class="dsub">${d.sub}</span>`; el.onclick=()=>attemptLoadDay(d.id); w.appendChild(el); });
@@ -5403,7 +5403,8 @@ function bwLastT(){ const ok=bodyweight.filter(b=>b&&!isFuture(b.t)), l=ok.lengt
 function bwDue(){ return bodyweight.length && (Date.now()-bwLastT() > 7*864e5); }
 function calDaysSince(t){ const a=new Date(); a.setHours(0,0,0,0); const b=new Date(t); b.setHours(0,0,0,0); return Math.round((a-b)/864e5); } // calendar days, so a daylight-saving change can't move it by one
 function gapPhrase(t){ // shared wording for "how long ago" text: t = epoch ms of the last event
-  const d=calDaysSince(t), wk=Math.floor(d/7), mo=Math.floor(d/30.4), yr=Math.floor(d/365);
+  let d=calDaysSince(t); if(Date.now()-t>=7*864e5) d=Math.max(d,7); // due is judged in elapsed time, so wording never reads below 7 days when due (a fall-back daylight-saving week is 1 h short in calendar days)
+  const wk=Math.floor(d/7), mo=Math.floor(d/30.4), yr=Math.floor(d/365);
   return d<1 ? 'less than a day' : d<14 ? (d===1?'1 day':d+' days') : yr>=1 ? 'over a year' : mo>=2 ? 'over '+mo+' months' : mo>=1 && d>=35 ? 'over a month' : 'about '+wk+' weeks';
 }
 function bwGapText(){ return `It's been ${gapPhrase(bwLastT())} since you last logged your weight.`; }
