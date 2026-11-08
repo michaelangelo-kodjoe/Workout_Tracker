@@ -2611,6 +2611,7 @@ function syncTimer(saved){
   if(saved===undefined){ if(!timer.end||!document.getElementById('timer').classList.contains('on')||document.getElementById('timer').classList.contains('done')) return; }
   else if(saved&&saved.end>0&&saved.total>0&&Date.now()-saved.end<REST_MAX_AGE){ timer.end=saved.end; timer.total=saved.total; document.getElementById('timer').classList.add('on'); }
   else { if(saved) clearTimerSave(); return; }
+  { const cap=Date.now()+timer.total*1000; if(timer.end>cap){ timer.end=cap; saveTimer(); } } // clock moved back: never more rest left than the rest length
   clearInterval(timer.iv);
   if(timer.end<=Date.now()){ tick(true); return; }
   tick(); timer.iv=setInterval(tick,1000);
