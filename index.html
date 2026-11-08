@@ -2938,7 +2938,7 @@ function suggestedDay(){
   const lastDone=id=>{ const s=lifts.find(x=>x.dayId===id); return s?s.t:-Infinity; };
   const byWait=PROGRAM.map((_,k)=>PROGRAM[(idx+1+k)%PROGRAM.length]).sort((a,b)=>lastDone(a.id)-lastDone(b.id));
   const nextDay=byWait.find(dayMusclesRecovered)||byWait[0];
-  const lastCardio=recent.find(s=>s.isCardio);
+  const lastCardio=recent.find(s=>s.isCardio&&!isFuture(s.t)); // a future-dated conditioning session is not 'recent'
   const cardioStale=!!lastCardio && (Date.now()-lastCardio.t)>=7*864e5;
   const backToBack=recent.length>=2 && !recent[0].isCardio && !recent[1].isCardio && (recent[0].t-recent[1].t)<=BACK_TO_BACK_HOURS*3600000 && (Date.now()-recent[0].t)<BACK_TO_BACK_CLEAR_HOURS*3600000;
   const reason=backToBack?'backToBack':!dayMusclesRecovered(nextDay)?'recovery':cardioStale?'cardioStale':null;
