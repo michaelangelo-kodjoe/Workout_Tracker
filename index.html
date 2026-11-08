@@ -5399,8 +5399,8 @@ function placeDeloadLine(){
   document.getElementById('endDeloadBtn').onclick=async()=>{ deloadEnd=Date.now(); await sset('deloadEnd',deloadEnd); deloadStart=0; await sset('deloadStart',0); updateDeloadUI(); render(); const st=document.getElementById('arrivalStart'); if(st&&view==='home') st.focus({preventScroll:true}); showToast('Deload week ended'); };
 }
 // ---------- body weight: staleness reminder + rate-of-change note ----------
-function bwLastT(){ const ok=bodyweight.filter(b=>b&&!isFuture(b.t)), l=ok.length?ok:bodyweight; return l.reduce((m,b)=>b&&b.t>m?b.t:m,0); } // newest entry by t, whatever the array order
-function bwDue(){ return bodyweight.length && (Date.now()-bwLastT() > 7*864e5); }
+function bwLastT(){ const ok=bodyweight.filter(b=>b&&!isFuture(b.t)); return ok.reduce((m,b)=>b&&b.t>m?b.t:m,0); } // newest entry by t, whatever the array order
+function bwDue(){ const t=bwLastT(); return !!t && (Date.now()-t > 7*864e5); } // only entries not dated in the future count; none left is treated like no entries
 function calDaysSince(t){ const a=new Date(); a.setHours(0,0,0,0); const b=new Date(t); b.setHours(0,0,0,0); return Math.round((a-b)/864e5); } // calendar days, so a daylight-saving change can't move it by one
 function gapPhrase(t){ // shared wording for "how long ago" text: t = epoch ms of the last event
   let d=calDaysSince(t); if(Date.now()-t>=7*864e5) d=Math.max(d,7); // due is judged in elapsed time, so wording never reads below 7 days when due (a fall-back daylight-saving week is 1 h short in calendar days)
