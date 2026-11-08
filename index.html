@@ -667,6 +667,7 @@
   .set-val.warn{color:var(--amber);}
   .set-lbl{flex:1;min-width:0;} .set-cap{display:block;font-size:12px;color:var(--text-dim);margin-top:2px;white-space:normal;}
   .set-val{font-size:13px;color:var(--text-dim);text-align:right;}
+  #sv-data{white-space:pre-line;} /* the future-date note sits on its own line under the date */
   /* Routine row and the Change Routine sheet (R-B) */
   .rt-card{border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:12px;background:var(--panel-raised);}
   .rt-card.cur{border-color:var(--accent);}
@@ -4827,7 +4828,7 @@ function renderSetMain(){
     sv('quiz',done?'Done':QUIZ&&QUIZ.state==='skipped'?'Skipped':'');
     row.setAttribute('aria-label',`${done?'Retake Quiz':'Take the Quiz'}, ${done?'last answers: '+sum:QUIZ&&QUIZ.state==='skipped'?'you skipped it':'not taken yet'}`); }
   const nEx=PROGRAM.reduce((a,d)=>a+d.exercises.length,0); sv('edit', `${PROGRAM.length} Days · ${nEx} Exercises`);
-  sv('data', lastBackup?`Last: ${fmtDate(lastBackup)}`:'Never Backed Up');
+  sv('data', lastBackup?`Last: ${fmtDate(lastBackup)}${isFuture(lastBackup)?'\n(dated in the future)':''}`:'Never Backed Up');
   document.getElementById('sv-data').classList.toggle('warn', backupNag() && sessions.length>0); // same condition as the Home backup banner
   document.querySelectorAll('#setMain .set-seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.u===(settings.unit||'lb')));
   // the same size options as onboarding, applied as soon as one is picked
@@ -5382,7 +5383,7 @@ function updateBackupUI(fade){ // fade: a backup was just taken, so Home's banne
     backupFading=true; applyBanners(); b.classList.add('fade-out');
     setTimeout(()=>{ backupFading=false; b.classList.remove('fade-out'); applyBanners('Backup done'); },650); }
   else { backupFading=false; applyBanners(fade?'Backup done':undefined); }
-  const l=document.getElementById('lastBackup'); l.textContent = lastBackup ? `Last backup: ${fmtDate(lastBackup)}${backupDue()?' — a new one is due':''}` : 'No backup yet.';
+  const l=document.getElementById('lastBackup'); l.textContent = lastBackup ? `Last backup: ${fmtDate(lastBackup)}${isFuture(lastBackup)?' (dated in the future)':''}${backupDue()?' — a new one is due':''}` : 'No backup yet.';
 }
 function updateDeloadUI(){
   document.getElementById('deloadBannerTxt').textContent = deloadCauseCopy();
