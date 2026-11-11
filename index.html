@@ -1676,6 +1676,11 @@ const keyOfPick=n=>Object.keys(ALTS).find(k=>ALTS[k].some(a=>a.name===n));
 function tplDay(id,name,sub,badge,factor,focus,lifts){
   return { id,name,sub,badge,factor,focus, slots:lifts.split(';').map(x=>{ const [pick,target]=x.split('|'), key=keyOfPick(pick); return {group:GROUP_OF_KEY[key],key,target,pick}; }) };
 }
+// Full Body, two days (v86). Two different whole-body sessions, A heavier and B lighter. 24 sets a session is design, not evidence.
+const FB2_TEMPLATE=[
+  tplDay('fb2-1','Full Body','A','heavy',1.0,'full','Machine Leg Press|4 x 6-10;Machine Chest Press|4 x 6-10;Machine Mid Row|4 x 6-10;Seated Leg Curl|3 x 8-10;Converging Shoulder Press|3 x 8-10;Machine Preacher Curl|3 x 8-10;Standing Calf Raise|3 x 12-15'),
+  tplDay('fb2-2','Full Body','B','light',0.85,'full','Dumbbell Romanian Deadlift|4 x 10-12;Incline Smith Machine Press|4 x 10-12;Lat Pulldown|4 x 10-12;Hack Squat|3 x 10-12;Lateral Raise Machine|3 x 12-15;Seated Tricep Press|3 x 10-12;Hanging Leg Raise|3 x 12-15'),
+];
 // Full Body, three days (v83). Day C has eight lifts (24 sets) so calves are trained twice; every other day has seven. 21-24 sets a session is design, not evidence.
 const FB3_TEMPLATE=[
   tplDay('fb3-1','Full Body','A','heavy',1.0,'full','Machine Chest Press|3 x 6-10;Machine Mid Row|3 x 6-10;Machine Leg Press|3 x 6-10;Seated Leg Curl|3 x 8-10;Converging Shoulder Press|3 x 8-10;Machine Preacher Curl|3 x 8-10;Standing Calf Raise|3 x 12-15'),
@@ -1716,6 +1721,9 @@ const ROUTINES = {
   ul4: { id:'ul4', name:'Upper/Lower 4-Day', short:'Upper/Lower', perWeek:4, template:TEMPLATE, meta:'4 Days a Week', days:[['Upper Heavy','t-upper'],['Lower Heavy','t-lower'],['Upper Volume','t-upper'],['Lower Volume','t-lower']],
     suits:'Best if you can train four days a week. Upper and lower body each get a heavy day and a volume day.',
     freq:'Each muscle twice a week with a rest day between.' },
+  fb2: { id:'fb2', name:'Full Body 2-Day', perWeek:2, template:FB2_TEMPLATE, meta:'2 Days a Week', days:[['Full Body A','t-full'],['Full Body B','t-full']],
+    suits:'Made for two days a week. Every session works your whole body, and A and B alternate.',
+    freq:'Chest, back, quads, hamstrings and shoulders are trained twice a week; biceps, triceps, calves and core once. Leave a couple of days between sessions, for example Monday and Thursday.' },
   fb3: { id:'fb3', name:'Full Body 3-Day', perWeek:3, template:FB3_TEMPLATE, meta:'3 Days a Week', days:[['Full Body A','t-full'],['Full Body B','t-full'],['Full Body C','t-full']],
     suits:'Best if you can train two or three days a week. Every session works your whole body.',
     freq:'Chest, back, quads and hamstrings are trained three times a week; shoulders, biceps, triceps and calves twice; rear delts and core once.' },
@@ -1734,7 +1742,7 @@ const ROUTINES = {
     freq:'Each muscle is trained twice a week, with one rest day.' },
 };
 // the order the Change Routine sheet and Pick Another list the routines: by days a week, never reordered by the current routine
-const RT_ORDER=['fb3','ppl3','ul4','ul5','bro5','ppl6'];
+const RT_ORDER=['fb2','fb3','ppl3','ul4','ul5','bro5','ppl6'];
 const rtIds=()=>RT_ORDER.filter(id=>ROUTINES[id]);
 // a routine's day list for the current equipment. A lift the filter rules out is replaced only by the best pick for its slot that
 // trains the SAME sub-muscle (a rear-delt slot never becomes a press, a calf slot never a skipping rope) and is not already used
@@ -1909,7 +1917,7 @@ function equipPresetOf(list){ const s=new Set(list||[]); return Object.keys(QUIZ
 // experience (`exp`) sets rep ranges, lifts per day and a first-session tip when a routine is built, never which routine.
 function quizPick(a){
   a=a||{}; const asked=Number.isInteger(a.days)?a.days:null, want=asked==null?4:asked;
-  const id=want<=3?'fb3':want===4?'ul4':want===5?'ul5':'ppl6';
+  const id=want<=2?'fb2':want===3?'fb3':want===4?'ul4':want===5?'ul5':'ppl6';
   return { id, asked, want };
 }
 async function saveQuiz(q){ q={v:1,at:Date.now(),...q}; if(await sset('quiz',q)===false) return false; QUIZ=cleanQuiz(q); return true; }
@@ -3818,7 +3826,6 @@ function qzWhy(pk,allSk){
 }
 // the weekly goal this quiz leaves: the routine's own, lowered (never raised) to the days that were asked
 const qzGoalFor=(id,a)=>Number.isInteger(a.days)?Math.min(ROUTINES[id].perWeek,a.days):ROUTINES[id].perWeek;
-const QZ_TWO='Two days a week: do any two of the three days and the app rotates the rest. Each region gets trained twice.';
 function qzResultProg(){ return qz.ctx==='fresh'?{label:'Step 5 of 6',n:5,t:6}:{label:'Your Result',n:4,t:4}; }
 function qzResult(){
   qz.screen='result'; const a=qz.a, allSk=qzAllSkipped(), pk=quizPick(a), id=allSk?'ul4':pk.id, r=ROUTINES[id];
@@ -3826,7 +3833,6 @@ function qzResult(){
   // a Retake whose level differs from the level the live routine was built at offers a Rebuild of that routine (never automatic)
   const rebuildable=cur&&!allSk&&levelOf(a.exp)!==levelOf((PROGRAM[0]||{}).lvl);
   if(r.freq) notes.push(`<p class="qz-note">${r.freq}</p>`);
-  if(pk.asked===2&&id==='fb3'&&!allSk) notes.push(`<p class="qz-note">${QZ_TWO}</p><p class="qz-note">Your weekly goal will be 2 sessions, so the ring can close.</p>`);
   if(r.note) notes.push(`<p class="rt-honest">${r.note}</p>`);
   const gaps=qzGaps(id); if(gaps) notes.push(`<p class="qz-note warn">${qzGapLine(gaps)} You can still use this routine, or pick another.</p>`);
   const body=`<div class="qz-res"><div class="qz-head"><div class="cel-h1" id="onboardTitle" tabindex="-1">We Suggest ${rtNb(r.short||r.name)}</div><div class="cel-sub">Based on your answers. You decide.</div></div>
