@@ -934,7 +934,6 @@
 </head>
 <body>
 <header><div class="header-inner">
-  <div class="banner info" id="updateBanner" style="display:none"><span>A new version of Lift Log is ready.</span><span class="linkbtn" id="updateBannerBtn">Refresh Now</span></div>
   <div class="title-row"><h1>Lift Log</h1>
     <div class="rhythm">
       <div class="rhythm-label">This Week <b id="weekCount">0</b>/<span id="weekGoal">4</span><br><span class="rhythm-total"><span id="sessionCount">0</span> Sessions Total</span></div>
@@ -2295,7 +2294,7 @@ function updateBlockUI(){
   applyBanners();
 }
 // ---------- Home reminders: one at a time ----------
-// bannerQueue is the only place that decides order: the due ids, highest priority first. The update banner is outside it.
+// bannerQueue is the only place that decides order: the due ids, highest priority first.
 const BANNER_ORDER=['cardioLiveBanner','backupBanner','blockBanner','deloadBanner','bwBanner'];
 function bannerQueue(due){ return BANNER_ORDER.filter(id=>due[id]&&!bannerDismissed.has(id)); }
 let bannerOpen=false, backupFading=false, bannerFocusPending=false, bannerFocusId=null;
@@ -3892,14 +3891,14 @@ async function qzRebuild(id){
 }
 // ---- the one-time sheet for someone who already uses the app ----
 // Shown at most once per open, on Home only, and only when nothing else is going on: no open workout or running timer or cardio session,
-// no other sheet or overlay, no update banner, not in the first minute. Not Now, Close, Escape and a tap outside all mean Not Now, which
+// no other sheet or overlay, not in the first minute. Not Now, Close, Escape and a tap outside all mean Not Now, which
 // is remembered (state skipped), so it never returns by itself; Settings is the only way back. Nothing else is touched.
 const QUIZ_PROMPT_DELAY_MS=60000; let quizPromptAt=Date.now(), quizPrompted=false, quizPromptBusy=false;
 async function quizPromptDue(){
   if(quizPrompted||view!=='home'||needsBuild||!(settings.onboarded||sessions.length)) return false;
   if(QUIZ&&QUIZ.state!=='draft') return false; if(ROUTINE_ID!=='ul4') return false;
   if(Date.now()-quizPromptAt<QUIZ_PROMPT_DELAY_MS) return false;
-  if(sheetReturnFocus.size||qz||document.querySelector('.celebrate-bg.on')||getComputedStyle(document.getElementById('updateBanner')).display!=='none') return false;
+  if(sheetReturnFocus.size||qz||document.querySelector('.celebrate-bg.on')) return false;
   if(cardioLive||(timer.end&&document.getElementById('timer').classList.contains('on'))||sessionInProgress()) return false;
   return !(await openDraft());
 }
@@ -5612,7 +5611,6 @@ function bwWeeklyRate(){
   return ((latest.w-ref.w)/ref.w*100)/(days/7);
 }
 document.getElementById('bwBannerBtn').onclick=()=>{ setView('strength'); document.getElementById('bwInput').focus(); };
-document.getElementById('updateBannerBtn').onclick=()=>{ reloadedForUpdate=true; location.reload(); };
 function openDeloadSheet(){
   const wks=Math.max(0,Math.round(weeksSinceDeload())); const plat=plateauCountAll();
   document.getElementById('deloadStats').textContent=`${wks} week${wks===1?'':'s'} since your last deload · ${plat} exercise${plat===1?'':'s'} currently plateaued`;
@@ -6092,46 +6090,18 @@ window.addEventListener('error',e=>{ if(booting) showBootFailure(e.error||e.mess
 window.addEventListener('unhandledrejection',e=>{ if(booting) showBootFailure(e.reason); });
 init().then(()=>{ booting=false; },showBootFailure);
 if('serviceWorker' in navigator) window.addEventListener('load',()=>{
-  const hadController=!!navigator.serviceWorker.controller; // false on a first-ever install — nothing to "update" from yet
   navigator.serviceWorker.register('sw.js').then(reg=>{
     setInterval(()=>reg.update().catch(()=>{}), 60*60*1000); // catch updates during long-lived sessions, not just fresh loads
     // reopening an installed PWA usually resumes a suspended tab rather than firing a fresh 'load' —
     // the interval above won't have ticked yet either if it was backgrounded, so check right away too
     document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') reg.update().catch(()=>{}); });
   }).catch(()=>{});
-  navigator.serviceWorker.addEventListener('controllerchange',()=>{
-    if(hadController) document.getElementById('updateBanner').style.display='flex';
-  });
 });
-// Belt-and-suspenders update check, independent of the service worker update lifecycle above: that lifecycle
-// has proven unreliable on iOS home-screen PWAs specifically — a tab that's suspended rather than fully closed
-// can sit on old JS indefinitely, since resuming it fires neither 'load' nor a guaranteed SW update check. This
-// instead diffs the live sw.js against whatever this page itself loaded with, which stays correct across a
-// suspend/resume cycle because the comparison variable is only ever set once, when this script first ran.
-// The owner's rule is "always ask": nothing here ever reloads the page by itself. Every path (this check on
-// resume, the 5-minute check, the service-worker 'controllerchange' above) only raises the same update banner, which
-// stays up until tapped; the banner tap is the one user-initiated reload. reloadedForUpdate stops a double reload.
-// Tapping it mid-rest-timer or mid-cardio just reloads: sets are saved as they are typed.
-// BUILD_ID is the release this index.html shipped with. RELEASE: bump it together with CACHE_VERSION in sw.js at
-// every release (they must be equal; scripts/check.sh checks it). The service worker serves the cached shell when
-// the network is slower than 3 s, so an old shell can open while the live sw.js is already newer; the text diff
-// below can't see that (it only compares sw.js against itself), but comparing BUILD_ID to the live version can.
+// Updates are silent: the service worker opens the cached copy and refreshes it in the background, so a new
+// version shows on a later launch. Nothing here reloads the page or shows a banner.
+// BUILD_ID is the release this index.html shipped with. It has no runtime effect; it exists only so scripts/check.sh
+// can confirm it equals CACHE_VERSION in sw.js. RELEASE: bump it together with CACHE_VERSION at every release.
 const BUILD_ID='liftlog-v84';
-let initialSwText=null, reloadedForUpdate=false;
-fetch('sw.js',{cache:'reload'}).then(r=>r.text()).then(t=>{
-  initialSwText=t;
-  const m=/CACHE_VERSION\s*=\s*['"]([^'"]+)['"]/.exec(t);
-  if(m&&m[1]!==BUILD_ID&&!reloadedForUpdate) document.getElementById('updateBanner').style.display='flex'; // banner only, never auto-reload
-}).catch(()=>{});
-function checkSwDrift(){
-  if(initialSwText==null) return;
-  fetch('sw.js',{cache:'reload'}).then(r=>r.text()).then(txt=>{
-    if(txt===initialSwText||reloadedForUpdate) return;
-    document.getElementById('updateBanner').style.display='flex';
-  }).catch(()=>{});
-}
-document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') checkSwDrift(); });
-setInterval(checkSwDrift, 5*60*1000);
 
 // ---------- on-screen keyboard ----------
 // Phones keep position:fixed elements on screen while the keyboard is up, so the tab bar, finish button and rest timer
