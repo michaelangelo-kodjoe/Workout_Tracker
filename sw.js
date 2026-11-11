@@ -1,62 +1,79 @@
-// App-shell cache for offline support. Network-first with a 3 second limit for the shell and page loads: a device
-// with a good connection gets the latest deploy; on a weak or dead connection the cached copy opens instead of
-// a blank wait. Trade-off: on a weak connection an older cached shell may open once, while the slow network
-// response still lands in the cache in the background, so the next launch gets the latest.
-// The {cache:'reload'} below forces a real network hit even when the browser's own HTTP cache
-// (GitHub Pages sends Cache-Control: max-age=600) would otherwise still consider a stale copy fresh.
+// App-shell cache for offline support and a fast open. Cache-first for page loads (navigations) and the SHELL
+// files: the cached copy is answered at once, with no wait on the network, and a silent background request then
+// refreshes the cache so a later launch shows the newest deploy. There is no update banner and nothing ever
+// reloads a running page; a deploy shows up one or two launches later (owner decision 2026-11-10).
+// Background refreshes use {cache:'no-cache'} (a conditional request, a 304 costs almost nothing). Install uses
+// {cache:'reload'} so the first copy is never a stale one from the browser's HTTP cache (GitHub Pages sends
+// Cache-Control: max-age=600). If testing ever shows no-cache handing back a stale copy, change it to 'reload'.
 //
 // IMPORTANT: browsers only know a new version of this app exists by byte-diffing THIS FILE. index.html
-// changing on its own is not a signal to anyone — so bump CACHE_VERSION on every deploy you want
-// existing installs to notice (which, in practice, means every deploy). Skipping this means installed
-// users can sit on an old cached shell indefinitely with no "update available" banner ever appearing,
-// even though network-first would otherwise have served them the latest index.html on their next visit.
+// changing on its own is not a signal to anyone, so bump CACHE_VERSION on every deploy you want existing
+// installs to pick up (in practice every deploy). sw.js itself is never answered from a cache or stored by this
+// worker (no respondWith for it), so the browser's update check always reaches the network.
 // RELEASE: bump this together with BUILD_ID in index.html (they must be equal; scripts/check.sh checks it).
 const CACHE_VERSION = 'liftlog-v84';
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './favicon-32.png', './apple-touch-icon.png'];
+const INDEX = new URL('./index.html', self.location).href;
+const ROOT = new URL('./', self.location).href;
+
+// './' and './index.html' are always stored from ONE response so the two copies are byte-identical.
+const putShell = (cache, url, res) => {
+  if(url===INDEX || url===ROOT) return Promise.all([cache.put(INDEX, res.clone()), cache.put(ROOT, res.clone())]);
+  return cache.put(url, res);
+};
 
 self.addEventListener('install', e=>{
   self.skipWaiting();
-  // addAll is all-or-nothing, so if it fails fall back to caching each file on its own;
-  // one bad file then does not block the rest.
-  e.waitUntil(caches.open(CACHE_VERSION).then(c=>
-    c.addAll(SHELL).catch(()=>Promise.all(SHELL.map(u=>c.add(u).catch(()=>{}))))
-  ).catch(()=>{}));
+  // Fetch each file past the HTTP cache. index.html is required: if it cannot be fetched and stored the install
+  // rejects, the browser discards this worker, and the previous worker and cache keep serving. The rest is best-effort.
+  e.waitUntil(caches.open(CACHE_VERSION).then(async c=>{
+    const res=await fetch(INDEX,{cache:'reload'});
+    if(!res.ok) throw new Error('index.html '+res.status);
+    await putShell(c, INDEX, res);
+    await Promise.all(SHELL.map(f=>new URL(f,self.location).href).filter(u=>u!==INDEX && u!==ROOT).map(u=>
+      fetch(u,{cache:'reload'}).then(r=>r.ok?putShell(c,u,r):null).catch(()=>{})
+    ));
+  }));
 });
 
 self.addEventListener('activate', e=>{
+  // Old caches go only here, and only after install proved this cache holds a usable index.html.
   e.waitUntil(
     caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE_VERSION).map(k=>caches.delete(k))))
       .then(()=>self.clients.claim())
   );
 });
 
-const SHELL_TIMEOUT_MS=3000;
-const cachedShell=req=>caches.match(req).then(hit=>hit||caches.match('./index.html'));
+// Silent refresh of one shell URL; stores only a good response, swallows every failure.
+const refresh = url => fetch(url,{cache:'no-cache'}).then(res=>{
+  if(!res.ok) return;
+  return caches.open(CACHE_VERSION).then(c=>putShell(c,url,res));
+}).catch(()=>{});
 
 self.addEventListener('fetch', e=>{
   if(e.request.method!=='GET') return;
   const url=new URL(e.request.url);
-  const isShell=e.request.mode==='navigate' || (url.origin===self.location.origin && SHELL.some(f=>new URL(f,self.location).href===url.href));
-  const net=fetch(e.request,{cache:'reload'}).then(res=>{
-    // Only keep good responses (opaque ones, e.g. cross-origin images, have status 0 and are fine).
-    if(res.ok || res.type==='opaque'){
-      const copy=res.clone();
-      caches.open(CACHE_VERSION).then(c=>c.put(e.request,copy)).catch(()=>{});
-    }
-    return res;
-  });
+  if(url.origin===self.location.origin && url.pathname.endsWith('/sw.js')) return; // never answered or stored by the worker
+  const isNav=e.request.mode==='navigate';
+  const isShell=isNav || (url.origin===self.location.origin && SHELL.some(f=>new URL(f,self.location).href===url.href));
   if(!isShell){
-    e.respondWith(net.catch(()=>cachedShell(e.request)));
+    // Other requests (for example cross-origin images): network first, remembered, cached copy only if the network fails.
+    const net=fetch(e.request,{cache:'reload'}).then(res=>{
+      if(res.ok || res.type==='opaque'){
+        const copy=res.clone();
+        caches.open(CACHE_VERSION).then(c=>c.put(e.request,copy)).catch(()=>{});
+      }
+      return res;
+    });
+    e.respondWith(net.catch(()=>caches.match(e.request).then(hit=>hit||net).catch(()=>net)));
     return;
   }
-  // Shell and page loads: wait at most SHELL_TIMEOUT_MS for the network, then serve the cached copy. The request
-  // keeps running, so a slow response still refreshes the cache for the next launch (waitUntil keeps the worker alive).
-  e.waitUntil(net.catch(()=>{}));
-  const slow=new Promise(r=>setTimeout(()=>r(null),SHELL_TIMEOUT_MS));
+  // Shell: cached copy first, then refresh in the background. Any cache error or miss falls through to the network.
+  e.waitUntil(refresh(isNav ? INDEX : url.href));
   e.respondWith(
-    Promise.race([net.catch(()=>null),slow]).then(res=>res||
-      // no response in time (or offline): cached copy; with nothing cached yet, keep waiting on the network
-      cachedShell(e.request).then(hit=>hit||net)
-    )
+    caches.open(CACHE_VERSION)
+      .then(c=>c.match(isNav ? INDEX : e.request))
+      .then(hit=>hit && hit.ok ? hit : fetch(e.request))
+      .catch(()=>fetch(e.request))
   );
 });
