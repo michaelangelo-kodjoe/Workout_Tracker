@@ -667,6 +667,7 @@
   .set-val.warn{color:var(--amber);}
   .set-lbl{flex:1;min-width:0;} .set-cap{display:block;font-size:12px;color:var(--text-dim);margin-top:2px;white-space:normal;}
   .set-val{font-size:13px;color:var(--text-dim);text-align:right;}
+  #sv-data{white-space:pre-line;} /* the future-date note sits on its own line under the date */
   /* Routine row and the Change Routine sheet (R-B) */
   .rt-card{border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:12px;background:var(--panel-raised);}
   .rt-card.cur{border-color:var(--accent);}
@@ -935,10 +936,10 @@
   <section id="homeView">
     <div id="bannerSlot" role="region" aria-label="Reminders" hidden>
       <div class="banner info" id="cardioLiveBanner" style="display:none"><span id="cardioLiveTxt"></span><button type="button" class="linkbtn" id="cardioLiveBtn">Resume</button></div>
-      <div class="banner has-x" id="backupBanner" style="display:none"><div class="bmain"><span>It's been a week since your last backup.</span><div class="bfoot"><button type="button" class="linkbtn" id="bannerBtn">Back Up Now</button></div></div><button type="button" class="bx" aria-label="Dismiss Backup Reminder"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
+      <div class="banner has-x" id="backupBanner" style="display:none"><div class="bmain"><span id="backupBannerTxt">It's been a week since your last backup.</span><div class="bfoot"><button type="button" class="linkbtn" id="bannerBtn">Back Up Now</button></div></div><button type="button" class="bx" aria-label="Dismiss Backup Reminder"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
       <div class="banner has-x" id="blockBanner" style="display:none"><div class="bmain"><span id="blockBannerTxt">Your training block is complete.</span><div class="bfoot"><button type="button" class="linkbtn" id="blockBannerBtn">Review What's Changing</button></div></div><button type="button" class="bx" aria-label="Dismiss Training Block Reminder"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
       <div class="banner has-x" id="deloadBanner" style="display:none"><div class="bmain"><span id="deloadBannerTxt"></span><div class="bfoot"><button type="button" class="linkbtn" id="deloadBannerBtn">Plan a Deload Week</button></div></div><button type="button" class="bx" aria-label="Dismiss Deload Reminder"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
-      <div class="banner has-x" id="bwBanner" style="display:none"><div class="bmain"><span>It's been a week since you last logged your weight.</span><div class="bfoot"><button type="button" class="linkbtn" id="bwBannerBtn">Log It Now</button></div></div><button type="button" class="bx" aria-label="Dismiss Body Weight Reminder"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
+      <div class="banner has-x" id="bwBanner" style="display:none"><div class="bmain"><span id="bwBannerTxt">It's been a week since you last logged your weight.</span><div class="bfoot"><button type="button" class="linkbtn" id="bwBannerBtn">Log It Now</button></div></div><button type="button" class="bx" aria-label="Dismiss Body Weight Reminder"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
       <div class="bmore-row" id="bannerMoreRow" hidden><button type="button" class="bmore" id="bannerMoreBtn" aria-expanded="false"><span id="bannerMoreTxt"></span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4.5l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
     </div>
     <span class="sr-only" id="bannerStatus" role="status" aria-live="polite" aria-atomic="true"></span>
@@ -1962,7 +1963,7 @@ function daySavedFor(dayId,name){
   const n=mine.find(x=>!x.deload&&x.ex&&x.ex[name]&&x.ex[name].some(y=>y.w&&y.r));
   return n?{open:false,sets:n.ex[name].map(x=>({w:x.w,r:x.r,done:true,rir:x.rir??null}))}:undefined; // lift has no normal session on this day: let the caller fall to lastByName's pre-deload sets
 }
-function isDeloadActive(){ return !!deloadStart && (Date.now()-deloadStart < 7*864e5); }
+function isDeloadActive(){ return !!deloadStart && !isFuture(deloadStart) && (Date.now()-deloadStart < 7*864e5); }
 // lastByName[name] is what progression starts from: the newest NORMAL session's sets. A deload session never replaces it
 // (that restarted lifters ~10% low after a deload); its sets ride along as the optional dlSets {sets,t}. An entry with
 // dl:1 exists only when the lift has never been done outside a deload. Old entries without flags read as normal.
@@ -2242,10 +2243,10 @@ function openBlockSheet(){
   blockProposals=buildBlockProposals();
   // nothing to decide: skip the empty sheet, but still advance the block and reset rotation counters so the banner stops firing
   if(!blockProposals.length){ applyBlock([]); return; }
-  const weeks=blockStart?((Date.now()-blockStart)/(7*864e5)).toFixed(1):'0';
+  const weeks=blockStart?Math.max(0,Math.round((Date.now()-blockStart)/(7*864e5))):0;
   const n=blockProposals.length;
   document.getElementById('blockTitle').textContent=`Block ${blockNum} Complete`;
-  document.getElementById('blockStats').textContent=`${weeks} weeks · ${n} change${n===1?'':'s'} proposed`;
+  document.getElementById('blockStats').textContent=`${weeks} week${weeks===1?'':'s'} · ${n} change${n===1?'':'s'} proposed`;
   document.getElementById('blockIntro').textContent=n
     ? `Untick anything you'd rather keep — everything not listed stays as it is. Primary lifts (the first two of each day) only change once they've stalled, or every other block; accessories get a fresh variation each block.`
     : `Nothing needs to change yet — primary lifts stay until they stall or two blocks pass, and accessories only rotate once they've been trained. Starting the next block just resets the clock.`;
@@ -2310,6 +2311,8 @@ function bannerDueMap(){
 }
 function applyBanners(announce){
   const slot=document.getElementById('bannerSlot'); if(!slot) return;
+  const bwT=document.getElementById('bwBannerTxt'); if(bwT&&bwDue()) bwT.textContent=bwGapText();
+  const bkT=document.getElementById('backupBannerTxt'); if(bkT&&backupDue()) bkT.textContent=backupGapText();
   const due=bannerDueMap(); bannerDismissed.forEach(id=>{ if(!due[id]) bannerDismissed.delete(id); });
   const q=bannerQueue(due), n=q.length-1;
   if(n<1) bannerOpen=false;
@@ -2366,8 +2369,8 @@ async function undoRotation(day,idx){
 // ---------- deload / periodization ----------
 function plateauCountAll(){ const seen=new Set(); let n=0; PROGRAM.forEach(day=>day.exercises.forEach(ex=>{ if(seen.has(ex.name)) return; seen.add(ex.name); if(ex.start!==0 && isPlateau(ex)) n++; })); return n; }
 function weeksSinceDeload(){
-  const base=lastDeload || (sessions.length?Math.min(...sessions.map(s=>s.t)):Date.now());
-  return (Date.now()-base)/(7*864e5);
+  const base=(lastDeload&&!isFuture(lastDeload)&&lastDeload) || (sessions.length?Math.min(...sessions.map(s=>s.t)):Date.now());
+  return Math.max(0,Date.now()-base)/(7*864e5);
 }
 const DELOAD_WEEKS=5, DELOAD_PLATEAUS=3; // the rule; the Home copy never quotes the numbers
 function deloadDue(){ return !isDeloadActive() && (weeksSinceDeload()>=DELOAD_WEEKS || plateauCountAll()>=DELOAD_PLATEAUS); }
@@ -2387,7 +2390,9 @@ function plateauBreakIdx(h){
   }
   return idx;
 }
-function fmtDate(t){ const d=new Date(t); return d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}); }
+function fmtDate(t){ const d=new Date(t); if(isNaN(d)) return 'an unknown date';
+  const far=Math.abs(Date.now()-d.getTime())>=300*864e5; // a date almost a year away or more carries its year, so "Nov 7" can't be last year's
+  return d.toLocaleDateString(undefined,far?{weekday:'short',month:'short',day:'numeric',year:'numeric'}:{weekday:'short',month:'short',day:'numeric'}); }
 // ---------- units: everything is stored in lb always; these convert only at the display boundary ----------
 const LB_PER_KG=1/0.45359237;
 // Text Size zooms the whole app rather than just the type, so every layout keeps its proportions and nothing overlaps
@@ -2607,6 +2612,7 @@ function syncTimer(saved){
   if(saved===undefined){ if(!timer.end||!document.getElementById('timer').classList.contains('on')||document.getElementById('timer').classList.contains('done')) return; }
   else if(saved&&saved.end>0&&saved.total>0&&Date.now()-saved.end<REST_MAX_AGE){ timer.end=saved.end; timer.total=saved.total; document.getElementById('timer').classList.add('on'); }
   else { if(saved) clearTimerSave(); return; }
+  { const cap=Date.now()+timer.total*1000; if(timer.end>cap){ timer.end=cap; saveTimer(); } } // clock moved back: never more rest left than the rest length
   clearInterval(timer.iv);
   if(timer.end<=Date.now()){ tick(true); return; }
   tick(); timer.iv=setInterval(tick,1000);
@@ -2718,7 +2724,7 @@ function recovGroup(m){
 }
 function recovStatusText(m){
   const p=recoveryProgress(m), sore=isSore(m)?' · marked sore':'';
-  if(p<1){ const r=effectiveRecovery(m); const left=Math.max(0,r.hours-(Date.now()-r.start)/3600000); return `${Math.round(p*100)}% · ~${fmtTimeLeft(left)} left${sore}`; }
+  if(p<1){ const r=effectiveRecovery(m); const left=Math.max(0,r.hours-Math.max(0,Date.now()-r.start)/3600000); return `${Math.round(p*100)}% · ~${fmtTimeLeft(left)} left${sore}`; }
   return 'ready'+sore;
 }
 function renderBody(){
@@ -2761,8 +2767,8 @@ function renderBody(){
   if(!active.length){
     sub.textContent='Every muscle group is fully recovered — ready for anything today.';
   } else {
-    const worst=active[0], wr=effectiveRecovery(worst), leftH=Math.max(0,wr.hours-(Date.now()-wr.start)/3600000);
-    const day=new Date(wr.start).toLocaleDateString(undefined,{weekday:'long'});
+    const worst=active[0], wr=effectiveRecovery(worst), leftH=Math.max(0,wr.hours-Math.max(0,Date.now()-wr.start)/3600000);
+    const dAgo=calDaysSince(wr.start), day=dAgo<=0?'today':dAgo===1?'yesterday':new Date(wr.start).toLocaleDateString(undefined,{weekday:'long'});
     // ready muscles by group, so chest reads once rather than as "Upper chest, Mid chest, Lower chest"
     const groups=Object.keys(MUSCLE_LABEL).filter(g=>allMuscles.some(m=>recovGroup(m)===g));
     const readyGroups=groups.filter(g=>allMuscles.filter(m=>recovGroup(m)===g).every(m=>!active.includes(m))).map(g=>MUSCLE_LABEL[g]);
@@ -2875,7 +2881,7 @@ function touchDayStart(){ if(!dayStartTimes[currentDay]){ dayStartTimes[currentD
 // in-memory only and would otherwise forget an in-progress session the moment the tab reloads.
 function sessionInProgress(){ return Object.values(todayData).some(s=>s.sets&&s.sets.some(x=>x.done||(x.w&&x.r))); }
 // started = Start was tapped on Home (or a set was touched) within the last 12 h, the window the session duration uses
-function sessionStarted(){ const t=dayStartTimes[currentDay]; return (!!t&&Date.now()-t<12*3600000)||sessionInProgress(); }
+function sessionStarted(){ const t=dayStartTimes[currentDay]; return (!!t&&!isFuture(t)&&Date.now()-t<12*3600000)||sessionInProgress(); }
 // the Log's session chrome follows what's been logged, and is re-checked on every keystroke in a set field:
 // Finish Session looks and reads disabled until a set is logged (a tap still explains why, via finishSession's toast),
 // and the progress row only appears once the session has started
@@ -2934,7 +2940,7 @@ function suggestedDay(){
   const lastDone=id=>{ const s=lifts.find(x=>x.dayId===id); return s?s.t:-Infinity; };
   const byWait=PROGRAM.map((_,k)=>PROGRAM[(idx+1+k)%PROGRAM.length]).sort((a,b)=>lastDone(a.id)-lastDone(b.id));
   const nextDay=byWait.find(dayMusclesRecovered)||byWait[0];
-  const lastCardio=recent.find(s=>s.isCardio);
+  const lastCardio=recent.find(s=>s.isCardio&&!isFuture(s.t)); // a future-dated conditioning session is not 'recent'
   const cardioStale=!!lastCardio && (Date.now()-lastCardio.t)>=7*864e5;
   const backToBack=recent.length>=2 && !recent[0].isCardio && !recent[1].isCardio && (recent[0].t-recent[1].t)<=BACK_TO_BACK_HOURS*3600000 && (Date.now()-recent[0].t)<BACK_TO_BACK_CLEAR_HOURS*3600000;
   const reason=backToBack?'backToBack':!dayMusclesRecovered(nextDay)?'recovery':cardioStale?'cardioStale':null;
@@ -2946,10 +2952,10 @@ const CARDIO_REASON_COPY={
     body:"You've done two straight lifting sessions, so conditioning work is next in the rotation — it gives your joints and nervous system a break from heavy loading while still building your aerobic base. Totally fine to lift again today if that's what you'd rather do." },
   recovery:{ sub:'Your next lift day is still recovering', home:(d)=>`${d.name} ${d.sub} is next, but its muscles aren't recovered yet — today's suggested as a conditioning day instead.`,
     body:(d)=>`The muscles ${d.name} ${d.sub} trains haven't finished recovering, so conditioning fills the gap without loading them again early. Totally fine to lift today if you feel ready — you'll get a heads-up on what's still recovering.` },
-  cardioStale:{ sub:"It's been a week since your last conditioning session", home:"It's been over a week since your last conditioning session — today's a good day to get one in.",
-    body:"Your last conditioning session was over a week ago. Two to three a week keeps the aerobic base you've built; a lighter day now also gives your joints a break. Totally fine to lift today if that's what you'd rather do." },
+  cardioStale:{ sub:(d,g)=>`It's been ${g} since your last conditioning session`, home:(d,g)=>`It's been ${g} since your last conditioning session — today's a good day to get one in.`,
+    body:(d,g)=>`Your last conditioning session was ${g} ago. Two to three a week keeps the aerobic base you've built; a lighter day now also gives your joints a break. Totally fine to lift today if that's what you'd rather do.` },
 };
-function cardioReasonCopy(){ const {reason,nextDay}=suggestedDay(); const c=CARDIO_REASON_COPY[reason]||CARDIO_REASON_COPY.backToBack; const f=v=>typeof v==='function'?v(nextDay):v; return {sub:f(c.sub),home:f(c.home),body:f(c.body)}; }
+function cardioReasonCopy(){ const {reason,nextDay}=suggestedDay(); const c=CARDIO_REASON_COPY[reason]||CARDIO_REASON_COPY.backToBack; const lc=sessions.filter(x=>x.isCardio&&!isFuture(x.t)).reduce((m,x)=>x.t>m?x.t:m,0), g=lc?gapPhrase(lc):''; const f=v=>typeof v==='function'?v(nextDay,g):v; return {sub:f(c.sub),home:f(c.home),body:f(c.body)}; }
 function renderTabs(){ const w=document.getElementById('dayTabs'); w.innerHTML='';
   const suggested=suggestedDayId();
   PROGRAM.forEach(d=>{ const el=document.createElement('div'); el.className='daytab '+dayType(d)+(d.id===currentDay?' active':'')+(d.id===suggested?' suggested':''); if(d.id===suggested) el.title='Next up in your rotation'; if(d.id===currentDay) el.setAttribute('aria-current','true'); el.innerHTML=`${d.name}<span class="dsub">${d.sub}</span>`; el.onclick=()=>attemptLoadDay(d.id); w.appendChild(el); });
@@ -2960,7 +2966,7 @@ function renderTabs(){ const w=document.getElementById('dayTabs'); w.innerHTML='
 function dayFatigueConflicts(day){
   const muscles=new Set(); day.exercises.forEach(ex=>recoveryKeysFor(ex).forEach(k=>muscles.add(k)));
   return [...muscles].filter(m=>recoveryProgress(m)<1).map(m=>{
-    const r=effectiveRecovery(m); const left=Math.max(0,r.hours-(Date.now()-r.start)/3600000);
+    const r=effectiveRecovery(m); const left=Math.max(0,r.hours-Math.max(0,Date.now()-r.start)/3600000);
     return {m,pct:Math.round(recoveryProgress(m)*100),left};
   }).sort((a,b)=>a.pct-b.pct);
 }
@@ -3508,8 +3514,8 @@ async function finishSession(){
 function celBackupMsg(){
   if(!backupNag()) return lastBackup?`Last backup: ${fmtDate(lastBackup)}.`:"You haven't backed up yet."; // reminder off or not due: plain facts, no nudge
   if(!lastBackup) return "You haven't backed up yet. Back up now to keep your history safe.";
-  const n=Math.floor((Date.now()-lastBackup)/864e5);
-  return `It's been ${n} days since your last backup. Back up now to keep your history safe.`;
+  if(isFuture(lastBackup)) return 'Your last backup is dated in the future. Back up now to keep your history safe.';
+  return `It's been ${gapPhrase(lastBackup)} since your last backup. Back up now to keep your history safe.`;
 }
 function showCelebration({day,worked,nsets,vol,durationMin,pr,rhythmCount}){
   const bg=document.getElementById('celebrateBg'), inner=document.getElementById('celebrateInner');
@@ -4022,7 +4028,7 @@ function cardioRecent(){ // the last four distinct activities, newest first
   const out=[]; [...sessions].filter(s=>s.isCardio&&s.cact&&cardioAct(s.cact)).sort((a,b)=>b.t-a.t).forEach(s=>{ if(out.length<4&&!out.some(x=>x.k===s.cact)) out.push({k:s.cact,s}); }); return out;
 }
 function cardioWhen(t){ const d0=new Date(); d0.setHours(0,0,0,0); const n=Math.round((d0-new Date(new Date(t).setHours(0,0,0,0)))/864e5);
-  return n<=0?'Today':n===1?'Yesterday':n<7?new Date(t).toLocaleDateString(undefined,{weekday:'short'}):new Date(t).toLocaleDateString(undefined,{month:'short',day:'numeric'}); }
+  return n<=0?'Today':n===1?'Yesterday':n<7?new Date(t).toLocaleDateString(undefined,{weekday:'short'}):new Date(t).toLocaleDateString(undefined,n>=300?{month:'short',day:'numeric',year:'numeric'}:{month:'short',day:'numeric'}); }
 function newCardioDraft(){ const r=cardioRecent()[0]; return {step:1,group:r?cardioAct(r.k).g:'Machine',act:null,structure:'steady',duration:'',vals:{},work:'30',rest:'90',rounds:'8',name:'',rpe:0,notes:'',more:false,effort:false,focus:null,manual:false}; }
 let cardioDraft=newCardioDraft();
 function cardioIntervalTotal(d){ const w=parseFloat(d.work)||0, r=parseFloat(d.rest)||0, n=parseInt(d.rounds)||0; const a=cardioAct(d.act);
@@ -4345,7 +4351,7 @@ async function saveLiveCardio(){
 // The goal line is the header's 4 a week; the current week is outlined, since it's still in progress.
 function renderRhythm(){
   const RHYTHM_GOAL=weeklyGoal();
-  const week=weekStart(), month=Date.now()-30*864e5;
+  const week=weekStart(), month=(()=>{ const m=new Date(); m.setDate(m.getDate()-30); return m.getTime(); })(); // 30 calendar days back
   const lifts=sessions.filter(s=>!s.isCardio), cardioWeek=sessions.filter(s=>s.isCardio&&s.t>=week);
   const cardioMin=cardioWeek.reduce((a,b)=>a+(b.duration||0),0);
   document.getElementById('rhStats').innerHTML=`<div><b>${lifts.filter(s=>s.t>=month).length}</b><span>Lifting, Last 30 Days</span></div>
@@ -4477,7 +4483,7 @@ let calSheetDate=null;
 function refreshCalDaySheet(){
   renderHistory();
   if(!calSheetDate) return;
-  const d0=new Date(calSheetDate); d0.setHours(0,0,0,0); const d1=d0.getTime()+864e5;
+  const d0=new Date(calSheetDate); d0.setHours(0,0,0,0); const d1e=new Date(d0); d1e.setDate(d1e.getDate()+1); const d1=d1e.getTime(); // next midnight, so a 23h or 25h daylight-saving day is still one day
   const ds=sessions.filter(s=>s.t>=d0.getTime()&&s.t<d1&&sessionType(s)).sort((a,b)=>a.t-b.t);
   if(!ds.length){ closeCalDaySheet(); return; }
   openCalDaySheet(calSheetDate, ds);
@@ -4822,7 +4828,7 @@ function renderSetMain(){
     sv('quiz',done?'Done':QUIZ&&QUIZ.state==='skipped'?'Skipped':'');
     row.setAttribute('aria-label',`${done?'Retake Quiz':'Take the Quiz'}, ${done?'last answers: '+sum:QUIZ&&QUIZ.state==='skipped'?'you skipped it':'not taken yet'}`); }
   const nEx=PROGRAM.reduce((a,d)=>a+d.exercises.length,0); sv('edit', `${PROGRAM.length} Days · ${nEx} Exercises`);
-  sv('data', lastBackup?`Last: ${fmtDate(lastBackup)}`:'Never Backed Up');
+  sv('data', lastBackup?`Last: ${fmtDate(lastBackup)}${isFuture(lastBackup)?'\n(dated in the future)':''}`:'Never Backed Up');
   document.getElementById('sv-data').classList.toggle('warn', backupNag() && sessions.length>0); // same condition as the Home backup banner
   document.querySelectorAll('#setMain .set-seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.u===(settings.unit||'lb')));
   // the same size options as onboarding, applied as soon as one is picked
@@ -5365,7 +5371,8 @@ async function doExport(){
   // only a tap on a Back Up Now / Export button runs this, so it records the backup (and resets the 7-day reminder)
   lastBackup=Date.now(); await sset('lastBackup',lastBackup); updateBackupUI(true); showToast('Backup downloaded'); return true;
 }
-function backupDue(){ return !lastBackup || (Date.now()-lastBackup) > 7*864e5; }
+const isFuture=t=>t>Date.now()+864e5; // a stored time more than a day ahead means the device clock was wrong or changed; never trusted as 'recent'
+function backupDue(){ return !lastBackup || isFuture(lastBackup) || (Date.now()-lastBackup) > 7*864e5; }
 // due AND the Weekly Backup Reminder is on: the only thing that may colour the celebration card, light the Settings row or show Home's banner
 function backupNag(){ return settings.autoBackup!==false && backupDue(); }
 function updateBackupUI(fade){ // fade: a backup was just taken, so Home's banner fades out once instead of vanishing
@@ -5376,7 +5383,7 @@ function updateBackupUI(fade){ // fade: a backup was just taken, so Home's banne
     backupFading=true; applyBanners(); b.classList.add('fade-out');
     setTimeout(()=>{ backupFading=false; b.classList.remove('fade-out'); applyBanners('Backup done'); },650); }
   else { backupFading=false; applyBanners(fade?'Backup done':undefined); }
-  const l=document.getElementById('lastBackup'); l.textContent = lastBackup ? `Last backup: ${fmtDate(lastBackup)}${backupDue()?' — a new one is due':''}` : 'No backup yet.';
+  const l=document.getElementById('lastBackup'); l.textContent = lastBackup ? `Last backup: ${fmtDate(lastBackup)}${isFuture(lastBackup)?' (dated in the future)':''}${backupDue()?' — a new one is due':''}` : 'No backup yet.';
 }
 function updateDeloadUI(){
   document.getElementById('deloadBannerTxt').textContent = deloadCauseCopy();
@@ -5389,12 +5396,21 @@ function placeDeloadLine(){
   const old=document.getElementById('deloadLine'); if(old) old.remove();
   if(!isDeloadActive() || needsBuild) return;
   const el=document.createElement('div'); el.className='deload-line'; el.id='deloadLine';
-  el.innerHTML=`<span><b>Deload week:</b> suggested weights are lighter through ${fmtDate(deloadStart+7*864e5)}, then go back to normal.</span><button type="button" class="linkbtn" id="endDeloadBtn">End Early</button>`;
+  el.innerHTML=`<span><b>Deload week:</b> suggested weights are lighter through ${fmtDate((()=>{ const e=new Date(deloadStart); e.setDate(e.getDate()+7); return e.getTime(); })())}, then go back to normal.</span><button type="button" class="linkbtn" id="endDeloadBtn">End Early</button>`;
   const g=panel.querySelector('.greet-wrap'); if(g) g.after(el); else panel.prepend(el);
   document.getElementById('endDeloadBtn').onclick=async()=>{ deloadEnd=Date.now(); await sset('deloadEnd',deloadEnd); deloadStart=0; await sset('deloadStart',0); updateDeloadUI(); render(); const st=document.getElementById('arrivalStart'); if(st&&view==='home') st.focus({preventScroll:true}); showToast('Deload week ended'); };
 }
 // ---------- body weight: staleness reminder + rate-of-change note ----------
-function bwDue(){ return bodyweight.length && (Date.now()-bodyweight[bodyweight.length-1].t > 7*864e5); }
+function bwLastT(){ const ok=bodyweight.filter(b=>b&&!isFuture(b.t)); return ok.reduce((m,b)=>b&&b.t>m?b.t:m,0); } // newest entry by t, whatever the array order
+function bwDue(){ const t=bwLastT(); return !!t && (Date.now()-t > 7*864e5); } // only entries not dated in the future count; none left is treated like no entries
+function calDaysSince(t){ const a=new Date(); a.setHours(0,0,0,0); const b=new Date(t); b.setHours(0,0,0,0); return Math.round((a-b)/864e5); } // calendar days, so a daylight-saving change can't move it by one
+function gapPhrase(t){ // shared wording for "how long ago" text: t = epoch ms of the last event
+  let d=calDaysSince(t); if(Date.now()-t>=7*864e5) d=Math.max(d,7); // due is judged in elapsed time, so wording never reads below 7 days when due (a fall-back daylight-saving week is 1 h short in calendar days)
+  const wk=Math.floor(d/7), mo=Math.floor(d/30.4), yr=Math.floor(d/365);
+  return d<1 ? 'less than a day' : d<14 ? (d===1?'1 day':d+' days') : yr>=1 ? 'over a year' : mo>=2 ? 'over '+mo+' months' : mo>=1 && d>=35 ? 'over a month' : 'about '+wk+' weeks';
+}
+function bwGapText(){ return `It's been ${gapPhrase(bwLastT())} since you last logged your weight.`; }
+function backupGapText(){ return isFuture(lastBackup) ? "Your last backup is dated in the future, so back up again to be safe." : lastBackup ? `It's been ${gapPhrase(lastBackup)} since your last backup.` : "You haven't backed up yet."; }
 function updateBwUI(){ applyBanners(); }
 function bwWeeklyRate(){
   if(bodyweight.length<2) return null;
@@ -5409,8 +5425,8 @@ function bwWeeklyRate(){
 document.getElementById('bwBannerBtn').onclick=()=>{ setView('strength'); document.getElementById('bwInput').focus(); };
 document.getElementById('updateBannerBtn').onclick=()=>{ reloadedForUpdate=true; location.reload(); };
 function openDeloadSheet(){
-  const wks=weeksSinceDeload().toFixed(1); const plat=plateauCountAll();
-  document.getElementById('deloadStats').textContent=`${wks} weeks since your last deload · ${plat} exercise${plat===1?'':'s'} currently plateaued`;
+  const wks=Math.max(0,Math.round(weeksSinceDeload())); const plat=plateauCountAll();
+  document.getElementById('deloadStats').textContent=`${wks} week${wks===1?'':'s'} since your last deload · ${plat} exercise${plat===1?'':'s'} currently plateaued`;
   document.getElementById('deloadBg').classList.add('on'); document.getElementById('deloadSheet').classList.add('on');
 }
 function closeDeloadSheet(){ document.getElementById('deloadBg').classList.remove('on'); document.getElementById('deloadSheet').classList.remove('on'); }
