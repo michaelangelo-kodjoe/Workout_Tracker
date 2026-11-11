@@ -27,9 +27,15 @@ self.addEventListener('install', e=>{
   // Fetch each file past the HTTP cache. index.html is required: if it cannot be fetched and stored the install
   // rejects, the browser discards this worker, and the previous worker and cache keep serving. The rest is best-effort.
   e.waitUntil(caches.open(CACHE_VERSION).then(async c=>{
-    const res=await fetch(INDEX,{cache:'reload'});
-    if(!res.ok) throw new Error('index.html '+res.status);
-    await putShell(c, INDEX, res);
+    try{
+      const res=await fetch(INDEX,{cache:'reload'});
+      if(!res.ok) throw new Error('index.html '+res.status);
+      await putShell(c, INDEX, res);
+    }catch(err){
+      // Leave no empty cache behind (but never touch one that already holds a usable index.html).
+      if(!(await c.match(INDEX))) await caches.delete(CACHE_VERSION);
+      throw err;
+    }
     await Promise.all(SHELL.map(f=>new URL(f,self.location).href).filter(u=>u!==INDEX && u!==ROOT).map(u=>
       fetch(u,{cache:'reload'}).then(r=>r.ok?putShell(c,u,r):null).catch(()=>{})
     ));
