@@ -11,7 +11,7 @@
 // installs to pick up (in practice every deploy). sw.js itself is never answered from a cache or stored by this
 // worker (no respondWith for it), so the browser's update check always reaches the network.
 // RELEASE: bump this together with BUILD_ID in index.html (they must be equal; scripts/check.sh checks it).
-const CACHE_VERSION = 'liftlog-v84';
+const CACHE_VERSION = 'liftlog-v85';
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './favicon-32.png', './apple-touch-icon.png'];
 const INDEX = new URL('./index.html', self.location).href;
 const ROOT = new URL('./', self.location).href;
