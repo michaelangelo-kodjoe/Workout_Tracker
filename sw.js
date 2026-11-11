@@ -29,7 +29,7 @@ self.addEventListener('install', e=>{
   e.waitUntil(caches.open(CACHE_VERSION).then(async c=>{
     try{
       const res=await fetch(INDEX,{cache:'reload'});
-      if(!res.ok) throw new Error('index.html '+res.status);
+      if(!res.ok || res.redirected) throw new Error('index.html '+res.status);
       await putShell(c, INDEX, res);
     }catch(err){
       // Leave no empty cache behind (but never touch one that already holds a usable index.html).
@@ -37,7 +37,7 @@ self.addEventListener('install', e=>{
       throw err;
     }
     await Promise.all(SHELL.map(f=>new URL(f,self.location).href).filter(u=>u!==INDEX && u!==ROOT).map(u=>
-      fetch(u,{cache:'reload'}).then(r=>r.ok?putShell(c,u,r):null).catch(()=>{})
+      fetch(u,{cache:'reload'}).then(r=>r.ok && !r.redirected?putShell(c,u,r):null).catch(()=>{})
     ));
   }));
 });
@@ -52,7 +52,7 @@ self.addEventListener('activate', e=>{
 
 // Silent refresh of one shell URL; stores only a good response, swallows every failure.
 const refresh = url => fetch(url,{cache:'no-cache'}).then(res=>{
-  if(!res.ok) return;
+  if(!res.ok || res.redirected) return;
   return caches.open(CACHE_VERSION).then(c=>putShell(c,url,res));
 }).catch(()=>{});
 
