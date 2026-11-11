@@ -2294,7 +2294,7 @@ function updateBlockUI(){
   applyBanners();
 }
 // ---------- Home reminders: one at a time ----------
-// bannerQueue is the only place that decides order: the due ids, highest priority first. The update banner is outside it.
+// bannerQueue is the only place that decides order: the due ids, highest priority first.
 const BANNER_ORDER=['cardioLiveBanner','backupBanner','blockBanner','deloadBanner','bwBanner'];
 function bannerQueue(due){ return BANNER_ORDER.filter(id=>due[id]&&!bannerDismissed.has(id)); }
 let bannerOpen=false, backupFading=false, bannerFocusPending=false, bannerFocusId=null;
@@ -3891,7 +3891,7 @@ async function qzRebuild(id){
 }
 // ---- the one-time sheet for someone who already uses the app ----
 // Shown at most once per open, on Home only, and only when nothing else is going on: no open workout or running timer or cardio session,
-// no other sheet or overlay, no update banner, not in the first minute. Not Now, Close, Escape and a tap outside all mean Not Now, which
+// no other sheet or overlay, not in the first minute. Not Now, Close, Escape and a tap outside all mean Not Now, which
 // is remembered (state skipped), so it never returns by itself; Settings is the only way back. Nothing else is touched.
 const QUIZ_PROMPT_DELAY_MS=60000; let quizPromptAt=Date.now(), quizPrompted=false, quizPromptBusy=false;
 async function quizPromptDue(){
