@@ -733,7 +733,6 @@
   .rt-sets div{display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:6px 0;border-bottom:1px solid var(--line);}
   .rt-sets dt{margin:0;} .rt-sets dd{margin:0;font-family:'Menlo',monospace;}
   @media (max-width:340px){ .rt-sets{grid-template-columns:1fr;} }
-  .rt-sets-note{font-size:13px;line-height:1.5;color:var(--text-dim);margin:12px 0 0;}
   .nb{white-space:nowrap;}
   .rt-chips{display:flex;gap:6px;flex:none;}
   .rt-card .rt-line.card-line{margin-top:8px;color:var(--text-dim);}
@@ -4953,13 +4952,10 @@ let rt={step:'list',to:null,backedUp:false,open:null,ctx:'settings',goal:null,on
 const rtSets=t=>parseInt((t||'').match(/^\s*(\d+)/)?.[1]||'3',10);
 const rtJoin=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];
 const rtNb=t=>esc(t).replace(/(\d-Day)/g,'<span class="nb">$1</span>'); // "3-Day" never splits across lines
-const SETS_NOTE="ACSM's 2026 guidance is about 10 direct sets per muscle each week. It is a published figure, not a target this app measures. Presses and rows add some indirect work.";
-const SETS_NOTE_PPL3="ACSM's 2026 guidance is about 10 direct sets per muscle each week. Every muscle here is below that, so this routine does not claim to match it. Presses and rows add some indirect work.";
 function rtPanel(id){
   const r=ROUTINES[id], tp=rtPreviewTpl(id), sets=routineSets(tp);
   return `<div id="rtEx-${id}" class="rt-ex">`+tp.map((d,i)=>{ const lbl=(r.days[i]||[d.name])[0], cls=dayType(d); return `<section aria-label="${esc(lbl)} day"><h4 class="rt-exh"><span class="badge ${cls}">${esc(lbl)}</span><span>${d.slots.length} Lifts · ${d.slots.reduce((a,x)=>a+rtSets(x.target),0)} Sets</span></h4><ol class="rt-exl">${d.slots.map(x=>`<li><span>${esc(x.pick)}</span><span class="rt-t">${esc(x.target)}</span></li>`).join('')}</ol></section>`; }).join('')+
-    `<h4 class="rt-exh rt-exh2">Direct Sets per Week</h4><dl class="rt-sets">${sets.map(x=>`<div><dt>${x[0]}</dt><dd>${x[1]}</dd></div>`).join('')}</dl>
-    <p class="rt-sets-note">${id==='ppl3'&&(buildLevel()==='some'||sets.every(x=>x[1]<10))?SETS_NOTE_PPL3:SETS_NOTE}</p></div>`;
+    `<h4 class="rt-exh rt-exh2">Direct Sets per Week</h4><dl class="rt-sets">${sets.map(x=>`<div><dt>${x[0]}</dt><dd>${x[1]}</dd></div>`).join('')}</dl></div>`;
 }
 // one routine card, shared by the Change Routine sheet and the quiz's Pick Another. o: {cur, sug, open, warn, label, btn}
 function rtCard(id,o){
