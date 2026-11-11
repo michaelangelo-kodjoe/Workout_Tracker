@@ -3309,7 +3309,7 @@ function render(){
 // shown instead of the arrival hero until a program is accepted. Equipment chips drive applyEquipPicks(); "change" reuses openSwap(),
 // whose doSwap() persists the program — so a reload mid-build keeps the picks made so far and lands on the normal hero.
 // a new install that took the quiz sees which routine it is building and, if equipment was answered, that the answer set the chips
-const BUILD_LINE={ul4:'Upper and lower, one heavy and one volume day each.',fb3:'Three full-body days, A, B and C.',ppl3:'One session each for push, pull and legs.',ul5:'Two heavy days, then push, pull and legs.',bro5:'One muscle group a day: chest, back, legs, shoulders and arms.',ppl6:'Push, pull and legs, each twice.'};
+const BUILD_LINE={fb2:'Two full-body days, A and B.',ul4:'Upper and lower, one heavy and one volume day each.',fb3:'Three full-body days, A, B and C.',ppl3:'One session each for push, pull and legs.',ul5:'Two heavy days, then push, pull and legs.',bro5:'One muscle group a day: chest, back, legs, shoulders and arms.',ppl6:'Push, pull and legs, each twice.'};
 function builderSub(){ const r=ROUTINES[ROUTINE_ID]||ROUTINES.ul4, w=routineWord(r.perWeek); return `${w[0].toUpperCase()+w.slice(1)} days a week. ${BUILD_LINE[r.id]} ${QUIZ&&QUIZ.equip?'Your equipment answer set the chips below. ':'Tick what your gym has and every slot gets a recommended exercise. '}Change any pick now, or swap later from the log.`; }
 function renderBuilder(panel){
   const quizBuilt=!!QUIZ&&QUIZ.state==='done';
