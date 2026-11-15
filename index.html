@@ -3149,7 +3149,7 @@ function render(){
   renderTabs(); renderBody();
   const day=PROGRAM.find(d=>d.id===currentDay);
   const list=document.getElementById('exerciseList'); list.innerHTML='';
-  let allComplete=true,lastGroup=null;
+  let lastGroup=null;
   // cards are shown grouped by muscle group (groups in order of first appearance, slot order within a group) so a
   // day laid out quads / hamstrings / quads doesn't get two "Quads" headings — the program's own slot order is
   // untouched, it only decides which slots are primary and how the editor lists them
@@ -3157,7 +3157,16 @@ function render(){
   const ordered=groupOrder.flatMap(g=>day.exercises.filter(ex=>ex.group===g));
   ordered.forEach(ex=>{
     if(ex.group!==lastGroup){ const gh=document.createElement('h3'); gh.className='groupheader'; gh.textContent=ex.group; list.appendChild(gh); lastGroup=ex.group; }
-    const state=ensureState(ex); const complete=state.sets.every(s=>s.done); if(!complete) allComplete=false;
+    list.appendChild(renderExercise(ex,day));
+  });
+  updateLogSummary(day);
+  popSet=null;
+  restoreListFocus(focusKey);
+}
+// Draws one exercise's card from the draft and returns it (not yet in the page). Everything a card shows comes from here,
+// so drawing the whole list and redrawing a single card cannot differ. The body keeps render()'s old indentation on purpose.
+function renderExercise(ex,day){
+    const state=ensureState(ex); const complete=state.sets.every(s=>s.done);
     const m=exModel(ex), {saved,sug,crossDaySub,estFrom}=m;
     // a bodyweight-loaded exercise already shows its (locked) weight in the set rows below —
     // repeating "try 110 lb bodyweight" up here just restates the same number.
@@ -3339,8 +3348,11 @@ function render(){
     // the reps-left figure uses the pills' own words rather than "RIR"
     const lastSetW=s=>bwLoaded?(parseFloat(s.add)?`BW + ${dispWeight(s.add)}`:'BW'):(s.w?Math.round(dispWeight(s.w)*10)/10:'–');
     const parts=lastToShow.filter(s=>s.w||s.r).map(s=>(timed?`${s.r||'–'}s`:`${lastSetW(s)} × ${s.r||'–'}`)+`${s.rir!=null?` (${s.rir>=4?'4+':s.rir} left)`:''}`).join(', '); if(parts){ const d=document.createElement('div'); d.className='last-time'; d.innerHTML=`<span>Last Time${crossDaySub?` (${esc(crossDaySub)} day)`:''}:</span> <span class="lt-v">${esc(parts)}</span>`; head.firstElementChild.appendChild(d); } }
-    card.appendChild(body); list.appendChild(card);
-  });
+    card.appendChild(body); return card;
+}
+// The Log's chrome that depends on the whole day: the Finish label, the progress line and Edit Day.
+function updateLogSummary(day){
+  const allComplete=day.exercises.every(ex=>ensureState(ex).sets.every(s=>s.done));
   document.getElementById('finishBtn').textContent=allComplete?'All Sets Done — Finish Session':'Finish Session';
   // the row under the day tabs shows how far through the session you are — it used to be "[Heavy] Upper Day", which
   // only repeated the selected tab; the day's name stays as the heading for screen readers. Time is Home's estimate.
@@ -3348,8 +3360,6 @@ function render(){
   document.getElementById('dayLabel').innerHTML=`<h2 class="sr-only">${day.name} ${day.sub}</h2><span class="day-prog">${nDone} of ${nEx} Done · About ${nEx*6} min</span><span class="linkbtn" id="editLink">Edit Day</span><div class="day-bar" aria-hidden="true"><i style="width:${Math.round(nDone/nEx*100)}%"></i></div>`;
   document.getElementById('editLink').onclick=()=>{ setView('more'); renderEditor(); document.getElementById('edDay').value=currentDay; openSetPage('edit'); };
   updateLogChrome();
-  popSet=null;
-  restoreListFocus(focusKey);
 }
 
 // ---------- first-launch program builder ----------
