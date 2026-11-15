@@ -2692,7 +2692,7 @@ function startHold(ex,i,s){
   if(hold.key) stopHold(true);
   try{ if(!timer.ctx) timer.ctx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
   hold={key:holdKey(ex,i),start:Date.now(),iv:null,el:null,set:s,ex,target:topRep(ex.target),beeped:false};
-  touchDayStart(); render();
+  touchDayStart(); refreshExercise(ex);
   hold.iv=setInterval(()=>{
     const sec=holdElapsed();
     if(hold.el){ hold.el.textContent=fmtHold(sec); hold.el.classList.toggle('hit',sec>=hold.target); }
@@ -2707,7 +2707,7 @@ function stopHold(markDone){
   const sec=holdElapsed(), s=hold.set, ex=hold.ex;
   hold={key:null,start:0,iv:null,el:null,set:null,ex:null,target:0,beeped:false};
   if(s){ s.r=String(sec); if(markDone){ s.done=true; popSet=s; if(settings.auto) startTimer(settings.smartRest?suggestedRest(ex):settings.rest); } }
-  sset('today:'+currentDay,todayData); render();
+  sset('today:'+currentDay,todayData); if(ex) refreshExercise(ex); else render();
 }
 document.getElementById('tSkip').onclick=stopTimer;
 document.getElementById('tPlus').onclick=()=>{ timer.end+=30000; timer.total+=30; saveTimer(); tick(); };
@@ -3149,7 +3149,7 @@ function render(){
   renderTabs(); renderBody();
   const day=PROGRAM.find(d=>d.id===currentDay);
   const list=document.getElementById('exerciseList'); list.innerHTML='';
-  let lastGroup=null;
+  let lastGroup=null; logCards=new Map(); logDirty.clear();
   // cards are shown grouped by muscle group (groups in order of first appearance, slot order within a group) so a
   // day laid out quads / hamstrings / quads doesn't get two "Quads" headings — the program's own slot order is
   // untouched, it only decides which slots are primary and how the editor lists them
@@ -3157,7 +3157,39 @@ function render(){
   const ordered=groupOrder.flatMap(g=>day.exercises.filter(ex=>ex.group===g));
   ordered.forEach(ex=>{
     if(ex.group!==lastGroup){ const gh=document.createElement('h3'); gh.className='groupheader'; gh.textContent=ex.group; list.appendChild(gh); lastGroup=ex.group; }
-    list.appendChild(renderExercise(ex,day));
+    const card=renderExercise(ex,day); logCards.set(ex,card); list.appendChild(card);
+  });
+  updateLogSummary(day);
+  popSet=null;
+  restoreListFocus(focusKey);
+}
+// ---------- Log: redraw one card ----------
+// A tap inside a card (Done, Reps Left, Add or Remove Set, plate step, a hold starting or stopping) swaps that card for a
+// freshly drawn one instead of rebuilding the list, so the other cards' elements stay where they are: a running hold keeps
+// ticking the very field it was given, and nothing in an untouched card can replay an animation.
+// The result is the same page render() would draw. Two things make that true:
+//  - typing never redraws (it edits the draft and patches the card in place), so a card that was typed in can show something a
+//    fresh draw would not (a kg weight not yet rounded, the plates text, the Same as Last chip). Those cards are remembered in
+//    logDirty by the listener below and are redrawn along with the tapped one, exactly when render() used to catch them up.
+//  - anything that changes more than cards (units, the program, deload, the day itself) still calls render().
+let logCards=new Map();  // exercise (the program's own object) -> the card element drawn for it
+const logDirty=new Set(); // exercises whose card was edited in place since it was drawn
+['input','change'].forEach(t=>document.getElementById('exerciseList').addEventListener(t,e=>{
+  const card=e.target.closest&&e.target.closest('.exercise'); if(!card) return;
+  for(const [ex,el] of logCards) if(el===card){ logDirty.add(ex); break; }
+}));
+function refreshExercise(ex){
+  const day=currentDay==='cardio'?null:PROGRAM.find(d=>d.id===currentDay), old=logCards.get(ex);
+  if(!day||!old||!old.isConnected||!day.exercises.includes(ex)){ render(); return; } // not on screen as drawn: draw everything
+  const focusKey=listFocusKey();
+  renderTabs(); renderBody();
+  // the draft is keyed by lift name, so a second slot with the same name shares it and is redrawn too
+  const names=new Set([ex.name,...[...logDirty].map(x=>x.name)]); logDirty.clear();
+  // a check that popped on an earlier tap sits in a card that may not be redrawn; only this tap's set may be marked
+  document.querySelectorAll('#exerciseList .setdone.pop').forEach(el=>el.classList.remove('pop'));
+  day.exercises.forEach(x=>{
+    const was=logCards.get(x); if(!names.has(x.name)||!was||!was.isConnected) return;
+    const card=renderExercise(x,day); was.replaceWith(card); logCards.set(x,card);
   });
   updateLogSummary(day);
   popSet=null;
@@ -3220,7 +3252,7 @@ function renderExercise(ex,day){
       const line=document.createElement('div'); line.className='side-line'; txtEl.replaceWith(line); line.append(txtEl,stepEl);
       stepEl.onclick=e=>{ const b=e.target.closest('button'); if(!b) return;
         b.focus({preventScroll:true}); // Safari doesn't focus a tapped button, and the redraw hands focus back to whatever had it last (e.g. a Done check)
-        if(actStepPlates(ex,state,parseInt(b.dataset.d),liveLb)) render(); };
+        if(actStepPlates(ex,state,parseInt(b.dataset.d),liveLb)) refreshExercise(ex); };
       const syncFixedUI=()=>{ chip.style.display=fixed?'none':''; stepEl.style.display=fixed?'none':''; capEl.textContent=fixed?'Fixed-Weight Bar':'Plates per Side'; };
       updatePlates=lb=>{
         if(lb!=null&&lb!=='') liveLb=lb;
@@ -3309,14 +3341,14 @@ function renderExercise(ex,day){
       if(bwLoaded) wI.oninput=e=>{ actSetAdded(s,e.target.value,bwTotal); };
       else wI.oninput=e=>{ actSetWeight(s,e.target.value); if(updatePlates) updatePlates(s.w); };
       rI.oninput=e=>{ actSetReps(s,e.target.value); const rr=row.nextElementSibling; if(rr&&rr.classList.contains('rir-row')){ rr.hidden=!(s.done||s.r!==''); }};
-      row.querySelector('.setdone').onclick=()=>{ if(actToggleDone(ex,s,i,m)) render(); };
+      row.querySelector('.setdone').onclick=()=>{ if(actToggleDone(ex,s,i,m)) refreshExercise(ex); };
       row.querySelector('.setrm').onclick=async()=>{
         if(state.sets.length<=1){ showToast('Keep at least one set'); return; }
         // an empty set goes in one tap; one with anything logged asks first, since ✕ sits right beside Done
         const logged=s.done||s.r!==''||(bwLoaded?!!parseFloat(s.add):(s.w!==''&&s.w!=null));
         const fk=listFocusKey();
         if(logged&&!await confirmSheet(`Remove set ${i+1} of ${ex.name}? What's logged in it will be lost.`,'Remove Set',null,true)) return;
-        actRemoveSet(state,i); render(); restoreListFocus(fk);
+        actRemoveSet(state,i); refreshExercise(ex); restoreListFocus(fk);
       };
       body.appendChild(row);
       if(timed&&!s.done){
@@ -3333,12 +3365,12 @@ function renderExercise(ex,day){
         // hidden until reps are in, then picked before the set can be checked; stays after Done so it can still be changed
         const rir=document.createElement('div'); rir.className='rir-row'; setRirA11y(rir,i); rir.hidden=!(s.done||s.r!=='');
         rir.innerHTML=`<span class="rir-lbl" aria-hidden="true">Reps Left</span>`+[0,1,2,3,4].map(v=>`<span class="rir-pill${s.rir===v?' on':''}" data-v="${v}" aria-pressed="${s.rir===v}" aria-label="${v===4?'4 or more reps':v===1?'1 rep':v+' reps'} left">${v===4?'4+':v}</span>`).join('');
-        rir.querySelectorAll('.rir-pill').forEach(p=>p.onclick=()=>{ actPickRepsLeft(s,parseInt(p.dataset.v)); render(); });
+        rir.querySelectorAll('.rir-pill').forEach(p=>p.onclick=()=>{ actPickRepsLeft(s,parseInt(p.dataset.v)); refreshExercise(ex); });
         body.appendChild(rir);
       }
     });
     const addset=document.createElement('button'); addset.type='button'; addset.className='addset'; addset.textContent='+ Add Set';
-    addset.onclick=()=>{ actAddSet(ex,state); render(); }; body.appendChild(addset);
+    addset.onclick=()=>{ actAddSet(ex,state); refreshExercise(ex); }; body.appendChild(addset);
 
     const ta=document.createElement('textarea'); ta.className='notes'; ta.placeholder='Notes — seat setting, how it felt'; ta.setAttribute('aria-label',`Notes for ${ex.name}`); ta.value=notes[histKey(ex)]||'';
     ta.oninput=e=>{ notes[histKey(ex)]=e.target.value; sset('notes',notes); }; body.appendChild(ta);
