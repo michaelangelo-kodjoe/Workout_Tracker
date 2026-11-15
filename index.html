@@ -4125,7 +4125,7 @@ function qzQuestion(key,focusSel){
   }
   const has=val!=null||skipped;
   const body=`${pr.q?`<div class="qz-eyebrow" id="qzEyebrow">${pr.q}</div>`:''}<div class="cel-h1" id="onboardTitle" tabindex="-1">${Q.t}</div>${Q.sub?`<div class="cel-sub">${Q.sub}</div>`:''}${opts}${state}`;
-  const foot=`<button class="cel-cta" id="qzNext" type="button"${has?'':' aria-disabled="true"'}>Continue</button><button class="qz-skipq" id="qzSkipQ" type="button">Skip Question</button>${key==='goal'&&qz.ctx==='fresh'?'<div class="onb-note">Skip any question you like. You can change all of this later in Settings.</div>':''}`;
+  const foot=`<button class="cel-cta" id="qzNext" type="button"${has?'':' aria-disabled="true"'}>Continue</button><button class="qz-skipq" id="qzSkipQ" type="button">Skip Question</button>${key==='goal'&&qz.ctx==='fresh'?'<div class="onb-note">Skip any question you like. You can change all of this later in Settings.</div>':''}${key==='goal'&&qz.ctx!=='fresh'?`<div class="onb-note" id="qzLast">${quizSummary()?'Last answers: '+esc(quizSummary())+'.':'Find the routine that fits your week.'}</div>`:''}`; // from Settings: the line that sat under the quiz row (hidden there in 2.0) opens with the quiz
   qzShow(qzShell(pr,{back:!(qz.ctx!=='fresh'&&key==='goal'),skip:'Skip Quiz',body,foot,top:key==='days'}),focusSel);
   const inner=document.getElementById('onboardInner');
   inner.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{
@@ -5207,6 +5207,8 @@ document.getElementById('autoTimer').onchange=e=>{ settings.auto=e.target.checke
 document.getElementById('smartRestChk').onchange=e=>{ settings.smartRest=e.target.checked; sset('settings',settings); renderSettings(); };
 // ---------- Settings: the grouped main screen and its pages ----------
 const TEXT_SIZE_LABEL={standard:'Standard',large:'Large',larger:'Larger'};
+// the finished quiz in a few words ("Build Muscle, 4 days, Full Gym"); empty until a quiz has been finished
+function quizSummary(){ return QUIZ&&QUIZ.state==='done'?([QUIZ.goal&&QUIZ_GOAL_LABEL[QUIZ.goal],QUIZ.days&&`${QUIZ.days} days`,QUIZ.equip&&QUIZ_EQUIP_LABEL[QUIZ.equip]].filter(Boolean).join(', ')||'All questions skipped'):''; }
 function renderSetMain(){
   const sv=(k,v)=>{ document.getElementById('sv-'+k).textContent=v; };
   sv('name', settings.name||'Not Set');
@@ -5219,7 +5221,7 @@ function renderSetMain(){
     row.setAttribute('aria-label',`Routine, ${r.name}, ${r.meta.toLowerCase()}`);
     note.textContent=r.note||''; note.hidden=!r.note; row.classList.toggle('has-note',!!r.note); }
   { const done=QUIZ&&QUIZ.state==='done', row=document.getElementById('quizRow');
-    const sum=done?[QUIZ.goal&&QUIZ_GOAL_LABEL[QUIZ.goal],QUIZ.days&&`${QUIZ.days} days`,QUIZ.equip&&QUIZ_EQUIP_LABEL[QUIZ.equip]].filter(Boolean).join(', ')||'All questions skipped':'';
+    const sum=quizSummary();
     document.getElementById('quizLbl').textContent=done?'Retake Quiz':'Take the Quiz';
     document.getElementById('quizCap').textContent=done?sum:'Find the routine that fits your week.';
     sv('quiz',done?'Done':QUIZ&&QUIZ.state==='skipped'?'Skipped':'');
