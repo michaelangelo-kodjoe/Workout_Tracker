@@ -1007,6 +1007,7 @@
   #remList .bfoot{justify-content:flex-start;margin-top:var(--sp-1);} #remList .bfoot>.linkbtn{margin:0;padding:0;}
   #remList .bx{margin:-10px -8px 0 0;color:var(--text-dim);border-radius:var(--r-full);}
   .greet-row{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);}
+  .greet-hi{font-size:var(--fs-body);color:var(--text-dim);line-height:1.3;margin:0 0 var(--sp-1);overflow-wrap:anywhere;}
   .greet-h1{font-size:var(--fs-hero);font-weight:700;letter-spacing:-.02em;line-height:1.1;margin:0;}
   .greet-sub{font-size:var(--fs-body);}
   .deload-line,.deload-line .linkbtn{font-size:var(--fs-body);}
@@ -3742,10 +3743,13 @@ function renderHomeBody(){
       </div>`;
     document.getElementById('firstWhySlot').replaceWith(infoBtn('firstWhyBtn','About Your First Session',()=>openInfo('Your First Session',b=>infoP(b,"No history yet — that's fine. Log one set at a time and Lift Log starts learning your numbers from today."))));
   } else {
-    // the headline is the day; "next in your rotation" is the Next tag on its card, and the last lift is on the History calendar
+    // the headline is the day; "next in your rotation" is the Next tag on its card, and the last lift is on the History calendar.
+    // The greeting by name (owner, 2026-11-15: "Keep a greeting") is v86's own line, one quiet line above the day. With no name set,
+    // v86 asked "Ready for <day>?", which the headline now says, so there is no line.
     const nEx=day.exercises.length;
     panel.innerHTML=`
       <div class="greet-wrap">
+        ${settings.name?`<div class="greet-hi">Ready to work out, ${esc(settings.name)}?</div>`:''}
         <h2 class="greet-h1">${esc(day.name)}, ${esc(day.sub)}</h2>
       </div>
       <div class="day-carousel${PROGRAM.length===3?' three':''}">
