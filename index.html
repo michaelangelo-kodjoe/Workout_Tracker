@@ -1100,8 +1100,13 @@
   /* ---------- Settings ---------- */
   .set-group-h{font-size:var(--fs-cap);font-weight:600;margin:20px 16px 8px;}
   .set-row{min-height:52px;font-size:var(--fs-lg);}
-  .set-row:not(.has-cap) .set-lbl{flex:0 0 auto;white-space:nowrap;}
-  .set-row .set-val{flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;font-size:var(--fs-body);}
+  /* a row is label, value, chevron on one line; when the value does not fit beside the label (320 px, larger text) it drops to a
+     second line in full instead of being cut to a few letters */
+  .set-row{flex-wrap:wrap;row-gap:2px;padding-top:6px;padding-bottom:6px;}
+  .set-row .set-lbl{flex:1 1 auto;min-width:0;}
+  button.set-row .set-lbl{white-space:nowrap;}
+  .set-row.static{flex-wrap:nowrap;} .set-row.static .set-lbl{flex:1 1 0;} /* a switch or the lb / kg control stays beside its label; a long label wraps instead */
+  .set-row .set-val{flex:0 1 auto;min-width:0;max-width:calc(100% - 28px);margin-left:auto;text-align:right;font-size:var(--fs-body);overflow-wrap:anywhere;} /* on its own line it stays on the right, beside the chevron */
   .set-row .set-seg,.set-row .set-chev,.set-row input.switch{margin-left:auto;}
   .set-row .set-val+.set-chev{margin-left:0;}
   /* captions are hidden (owner, 2026-11-14); the one that prevents a wrong expectation stays, and a routine's own note stays */
