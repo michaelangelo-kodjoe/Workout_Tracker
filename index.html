@@ -1122,6 +1122,9 @@
   .save-warn{font-size:var(--fs-body);border-radius:var(--r-sm);}
   .set-back{font-size:var(--fs-body);} .set-sub h2{font-weight:700;}
   .set-toggle,.field-label{font-size:var(--fs-body);}
+  /* 44 px targets on the Settings pages: a native select ignores min-height until it is drawn as a button-style menu */
+  select.in:not(:where(#logView *)){-webkit-appearance:menulist-button;appearance:menulist-button;height:44px;}
+  #edReset.set-reset{min-height:44px;}
   /* segmented control and switch: 44 px tall hit areas (were 36 and 28) */
   .onb-seg{border:0;border-radius:var(--r-sm);background:var(--panel-raised);}
   .onb-seg button{border-radius:var(--r-sm);font-size:var(--fs-body);font-weight:600;}
