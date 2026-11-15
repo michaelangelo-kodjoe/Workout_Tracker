@@ -1092,6 +1092,7 @@
   /* an exercise row shows name, change and trend; the detail line and Reset Baseline open when the row is tapped */
   .str-card-exlist .srow:not(.row-open) .sd:not([data-scrub-readout]){display:none;}
   .srow .sd .linkbtn{font-size:var(--fs-sm);display:inline-flex;align-items:center;min-height:44px;}
+  .sd-act{display:block;}
   .str-past-btn{border:0;border-radius:var(--r-sm);}
   .str-past-btn b{font-weight:600;} .str-past-btn b+span{display:none;} .str-past-act{font-size:var(--fs-body);}
   .str-hide{box-shadow:none;}
@@ -5045,7 +5046,7 @@ function renderStrength(){
     const sdTxt=isTimedTarget(ex.target)?'Timed hold — counted as sets, not scored for strength':`Best set ${bestTxt} · ${fullN?fullN+' session'+(fullN>1?'s':'')+' logged':(dlN?'no counted sessions':'your starting numbers')}${dlTxt}`;
     const pastTxt=day.past?` · last done ${fmtDate(fullH[fullH.length-1].t)}`:'';
     const k=histKey(ex);
-    const baseTxt=isTimedTarget(ex.target)?'':baselines[k]?` · <span class="linkbtn" data-act="baseline-undo">Baseline Reset ${fmtDate(baselines[k])} — Undo</span>`:(fullN>=2?` · <span class="linkbtn danger" data-act="baseline">Reset Baseline</span>`:'');
+    const baseTxt=isTimedTarget(ex.target)?'':baselines[k]?`<span class="sd-act"><span class="linkbtn" data-act="baseline-undo">Baseline Reset ${fmtDate(baselines[k])} — Undo</span></span>`:(fullN>=2?`<span class="sd-act"><span class="linkbtn danger" data-act="baseline">Reset Baseline</span></span>`:''); // on its own line under the detail (it used to follow a separator dot, which led the line when it wrapped)
     row.innerHTML=`<div><div class="sn">${esc(ex.name)}<span class="also"></span>${plat?' <span class="badge plateau">Plateau</span>':''}</div><div class="sd">${sdTxt}${shareTxt}${pastTxt}${baseTxt}</div><div class="sd" data-scrub-readout style="display:none"></div></div><div class="sp ${cls}">${p===null?'Start':firstOnly?'New':fmtPct(p)}</div>${h.length&&!firstOnly?`<div class="scrub" tabindex="0" aria-label="${esc(ex.name)} trend. Drag across it, or use the arrow keys, to see each session.">${sparkline(rowSeries.vals,cls==='down'?'var(--amber)':'var(--green)',rowSeries.mil,undefined,rowSeries.dl)}</div>`:''}`;
     const rowWrap=row.querySelector('.scrub');
     if(rowWrap){
