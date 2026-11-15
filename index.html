@@ -90,7 +90,6 @@
   .banner .linkbtn{color:var(--amber);white-space:nowrap;}
   .banner.info{background:rgba(79,163,209,.1);border-color:rgba(79,163,209,.4);color:var(--light);}
   .banner.info .linkbtn{color:var(--light);}
-  /* Home shows one reminder at a time (see bannerQueue); the rest open under an "N More" button */
   #bannerSlot[hidden]{display:none;}
   #bannerSlot .banner{flex-wrap:wrap;margin-bottom:12px;}
   #bannerSlot .banner>span:first-child{flex:1 1 110px;min-width:0;}
@@ -99,15 +98,10 @@
   .deload-line{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:0 10px;margin:2px 0 16px;font-size:13px;line-height:1.5;color:var(--text-dim);}
   .deload-line>span{flex:1 1 110px;min-width:0;} .deload-line b{font-weight:normal;color:var(--text);}
   .deload-line .linkbtn{background:none;border:0;font:inherit;font-size:13px;white-space:nowrap;margin-left:auto;}
-  .bmore-row{flex:0 0 100%;display:flex;}
-  .bmore-row[hidden]{display:none;}
   /* a dismissible banner is [message column | X]: the message, then a foot row with N More (top banner only) and the action; the X sits in the top-right corner */
-  #bannerSlot .banner.has-x{flex-wrap:nowrap;align-items:flex-start;gap:12px;}
   .bmain{flex:1 1 0;min-width:0;display:flex;flex-direction:column;}
   .bmain>span{display:block;}
   .bfoot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:28px 10px;margin-top:8px;}
-  .bfoot>.bmore-row{flex:0 0 auto;}
-  .bfoot>.bmore-row .bmore{margin:-12px 0 -12px;padding:12px 16px 12px 0;}
   .bfoot>.linkbtn{margin-left:auto;padding:12px 0;margin-top:-12px;margin-bottom:-12px;min-height:44px;box-sizing:border-box;display:flex;align-items:center;}
   .bx{flex:none;width:44px;height:44px;margin:-13px -16px 0 0;padding:0;border:0;background:none;color:inherit;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:8px;-webkit-tap-highlight-color:transparent;}
   .bx svg{width:16px;height:16px;pointer-events:none;}
@@ -119,10 +113,6 @@
   .utoast[hidden]{display:none;}
   .utoast span{padding:10px 0;line-height:1.4;}
   .utoast button{flex:none;min-width:44px;min-height:44px;padding:0 12px;background:none;border:0;font:inherit;font-size:13px;color:var(--light);cursor:pointer;border-radius:8px;}
-  .bmore{display:inline-flex;align-items:center;gap:6px;background:none;border:0;font:inherit;font-size:13px;color:inherit;cursor:pointer;padding:12px 16px 12px 0;margin:-8px 0 -14px;min-height:44px;min-width:44px;white-space:nowrap;}
-  .bmore svg{width:12px;height:12px;flex:none;transition:transform .2s ease;}
-  .bmore[aria-expanded="true"] svg{transform:rotate(180deg);}
-  @media (prefers-reduced-motion: reduce){ .bmore svg{transition:none;} }
   .bodymap{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:24px;}
   /* the readiness score heads its card rather than sitting in a second box inside it; the ring and number carry
      the red/amber/green, and a rule separates it from the body diagram */
@@ -1000,6 +990,60 @@
   .sheet-p.dim{color:var(--text-dim);}
   .sheet .plateau-tip,.sheet .empty{font-size:var(--fs-body);border-radius:var(--r-sm);}
   .alt{border:0;border-radius:var(--r-sm);background:var(--panel-raised);}
+  /* ---------- Home ---------- */
+  #bannerSlot{margin:0 0 var(--sp-4);} #bannerSlot .banner{margin-bottom:var(--sp-2);}
+  /* one quiet reminder row: the top reminder in a few words and a count; the full list opens in the Reminders sheet */
+  .remind{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;margin:0;padding:0 8px 0 14px;border:0;border-radius:var(--r-full);background:var(--panel);color:var(--text-dim);font:inherit;font-size:var(--fs-body);text-align:left;cursor:pointer;}
+  .remind[hidden]{display:none;}
+  .remind .dot{width:8px;height:8px;border-radius:var(--r-full);background:var(--amber);flex:none;}
+  .remind .txt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .remind .cnt{flex:none;font-size:var(--fs-sm);font-weight:600;color:var(--text);background:var(--panel-raised);border-radius:var(--r-full);padding:3px 9px;}
+  .remind .cnt[hidden]{display:none;}
+  .remind .ic{width:18px;height:18px;}
+  #remList .banner{flex-wrap:nowrap;align-items:flex-start;gap:var(--sp-3);background:none;border:0;border-top:1px solid var(--line);border-radius:0;margin:0;padding:var(--sp-3) 0;color:var(--text);font-size:var(--fs-body);line-height:1.4;}
+  #remList .banner:first-child{border-top:0;}
+  #remList .banner .linkbtn{color:var(--light);font-size:var(--fs-body);font-weight:600;margin-left:0;}
+  #remList .bfoot{justify-content:flex-start;margin-top:var(--sp-1);} #remList .bfoot>.linkbtn{margin:0;padding:0;}
+  #remList .bx{margin:-10px -8px 0 0;color:var(--text-dim);border-radius:var(--r-full);}
+  .greet-row{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);}
+  .greet-h1{font-size:var(--fs-hero);font-weight:700;letter-spacing:-.02em;line-height:1.1;margin:0;}
+  .greet-sub{font-size:var(--fs-body);}
+  .deload-line,.deload-line .linkbtn{font-size:var(--fs-body);}
+  .day-carousel{padding-top:var(--sp-4);gap:var(--sp-2);}
+  .day-carousel .day-card{flex:0 0 128px;border:0;border-radius:var(--r-lg);background:var(--panel);box-shadow:none;padding:12px 14px;}
+  .day-carousel.three .day-card{flex:1 0 84px;}
+  .day-carousel .day-card.today{background:var(--panel-raised);box-shadow:inset 0 0 0 1.5px var(--dc,var(--text));}
+  .day-card .ddot{display:none;}
+  .day-card .dtag{font-size:var(--fs-cap);font-weight:600;color:var(--text-dim);min-height:15px;}
+  .day-card.today .dtag{color:var(--text);}
+  .day-card .dname{font-size:var(--fs-lg);font-weight:600;display:flex;align-items:center;gap:6px;margin:2px 0;}
+  .day-card .dname::before{content:"";width:8px;height:8px;border-radius:var(--r-full);background:var(--dc,var(--text-dim));flex:none;}
+  .day-card .dsub{font-size:var(--fs-body);}
+  /* the day's exercises sit behind one row that opens in place */
+  .plan-row{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);width:100%;min-height:44px;margin:var(--sp-2) 0 0;padding:0 4px;border:0;background:none;color:var(--text-dim);font:inherit;font-size:var(--fs-body);text-align:left;cursor:pointer;border-radius:var(--r-sm);}
+  .plan-row .ic{width:18px;height:18px;}
+  .plan-row[aria-expanded="true"] .ic{transform:rotate(180deg);}
+  .preview-list{margin:0;} .preview-list[hidden]{display:none;}
+  .preview-row{font-size:var(--fs-body);padding:10px 4px;}
+  .preview-row .pt{font-size:var(--fs-sm);}
+  .preview-more{margin:var(--sp-3) 4px 0;}
+  .start-cta{min-height:52px;margin-top:var(--sp-3);padding:0 16px;border-radius:var(--r-sm);background:var(--accent);color:var(--on-accent);font-size:var(--fs-lg);font-weight:700;letter-spacing:0;}
+  .empty-h1{font-size:var(--fs-xl);font-weight:700;}
+  .empty-plan{border:0;border-radius:var(--r-sm);font-size:var(--fs-body);}
+  .empty-hero .icbtn{margin:0 auto;}
+  /* recovery: ring and number; the sentence, the hint and the colour key open from the ring row */
+  .bodymap{margin-top:var(--sp-5);padding:var(--sp-4);}
+  .recov-hero{border-bottom:0;padding:0;margin-bottom:var(--sp-2);}
+  .recov-top{width:100%;min-height:60px;margin:0;padding:0;border:0;background:none;color:inherit;font:inherit;cursor:pointer;border-radius:var(--r-sm);}
+  .recov-score{font-size:var(--fs-body);color:var(--text-dim);display:block;}
+  .recov-score b{font-size:var(--fs-hero);font-weight:700;letter-spacing:-.02em;}
+  .recov-top .ic{color:var(--text-dim);width:20px;height:20px;}
+  .recov-sub,.tap-hint,#bodymapCard>.legend{display:none;}
+  .figures .cap{font-size:var(--fs-sm);}
+  .legend{font-size:var(--fs-sm);justify-content:flex-start;flex-wrap:wrap;}
+  #recovDetailToggle{display:flex;align-items:center;justify-content:center;min-height:44px;margin:var(--sp-1) 0 0;padding:0;}
+  .recov-list{font-size:var(--fs-sm);border-top:0;}
+  .recov-area{font-size:var(--fs-body);} .recov-area-s{font-size:var(--fs-sm);}
   /* segmented control and switch: 44 px tall hit areas (were 36 and 28) */
   .onb-seg{border:0;border-radius:var(--r-sm);background:var(--panel-raised);}
   .onb-seg button{border-radius:var(--r-sm);font-size:var(--fs-body);font-weight:600;}
@@ -1028,24 +1072,21 @@
   <section id="homeView" class="view-on">
     <div id="bannerSlot" role="region" aria-label="Reminders" hidden>
       <div class="banner info" id="cardioLiveBanner" style="display:none"><span id="cardioLiveTxt"></span><button type="button" class="linkbtn" id="cardioLiveBtn">Resume</button></div>
-      <div class="banner has-x" id="backupBanner" style="display:none"><div class="bmain"><span id="backupBannerTxt">It's been a week since your last backup.</span><div class="bfoot"><button type="button" class="linkbtn" id="bannerBtn">Back Up Now</button></div></div><button type="button" class="bx" aria-label="Dismiss Backup Reminder"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
-      <div class="banner has-x" id="blockBanner" style="display:none"><div class="bmain"><span id="blockBannerTxt">Your training block is complete.</span><div class="bfoot"><button type="button" class="linkbtn" id="blockBannerBtn">Review What's Changing</button></div></div><button type="button" class="bx" aria-label="Dismiss Training Block Reminder"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
-      <div class="banner has-x" id="deloadBanner" style="display:none"><div class="bmain"><span id="deloadBannerTxt"></span><div class="bfoot"><button type="button" class="linkbtn" id="deloadBannerBtn">Plan a Deload Week</button></div></div><button type="button" class="bx" aria-label="Dismiss Deload Reminder"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
-      <div class="banner has-x" id="bwBanner" style="display:none"><div class="bmain"><span id="bwBannerTxt">It's been a week since you last logged your weight.</span><div class="bfoot"><button type="button" class="linkbtn" id="bwBannerBtn">Log It Now</button></div></div><button type="button" class="bx" aria-label="Dismiss Body Weight Reminder"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
-      <div class="bmore-row" id="bannerMoreRow" hidden><button type="button" class="bmore" id="bannerMoreBtn" aria-expanded="false"><span id="bannerMoreTxt"></span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4.5l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+      <button type="button" class="remind" id="remRow" aria-haspopup="dialog" hidden><i class="dot" aria-hidden="true"></i><span class="txt" id="remTxt"></span><span class="cnt" id="remCnt" hidden></span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
     </div>
     <span class="sr-only" id="bannerStatus" role="status" aria-live="polite" aria-atomic="true"></span>
     <div id="arrivalPanel"></div>
     <div class="bodymap" id="bodymapCard">
       <h2 class="sr-only">Recovery</h2>
       <div class="recov-hero" id="recovHero">
-        <div class="recov-top">
-          <svg class="recov-ring" width="60" height="60" viewBox="0 0 64 64">
+        <button type="button" class="recov-top" id="recovInfoBtn" aria-haspopup="dialog">
+          <svg class="recov-ring" width="60" height="60" viewBox="0 0 64 64" aria-hidden="true">
             <circle cx="32" cy="32" r="27" fill="none" stroke="var(--line)" stroke-width="5"/>
             <circle cx="32" cy="32" r="27" fill="none" stroke="var(--green)" stroke-width="5" stroke-linecap="round" stroke-dasharray="169.6" stroke-dashoffset="0" id="recovRingArc" transform="rotate(-90 32 32)"/>
           </svg>
-          <div class="recov-score"><b id="recovPct">100%</b>Ready to Train</div>
-        </div>
+          <span class="recov-score"><b id="recovPct">100%</b>Ready to Train</span>
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>
+        </button>
         <div class="recov-sub" id="recovSub">Every muscle group is fully recovered — ready for anything today.</div>
       </div>
       <div class="figures">
@@ -1292,6 +1333,13 @@
 <div class="sheet" id="sheet"><div class="sheet-head"><div><div class="sheet-title" id="sheetTitle">Swap Exercise</div><div class="sheet-sub" id="sheetSub"></div></div><span class="linkbtn" id="sheetClose">Close</span></div><input class="in" id="sheetSearch" placeholder="Search alternatives…" style="width:100%;margin-bottom:12px"><div id="sheetList"></div></div>
 <div class="sheet-bg" id="adSheetBg"></div>
 <div class="sheet" id="adSheet"><div class="sheet-head"><div><div class="sheet-title" id="adSheetTitle" tabindex="-1">Add an Exercise</div><div class="sheet-sub" id="adSheetSub"></div></div><span class="linkbtn" id="adSheetClose">Close</span></div><div id="adSheetBody"></div></div>
+<div class="sheet-bg" id="remBg"></div>
+<div class="sheet" id="remSheet"><div class="sheet-head"><h2 class="sheet-title" id="remTitle" tabindex="-1">Reminders</h2><button type="button" class="linkbtn" id="remClose">Close</button></div><div id="remList">
+      <div class="banner has-x" id="backupBanner" style="display:none"><div class="bmain"><span id="backupBannerTxt">It's been a week since your last backup.</span><div class="bfoot"><button type="button" class="linkbtn" id="bannerBtn">Back Up Now</button></div></div><button type="button" class="bx" aria-label="Dismiss Backup Reminder"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
+      <div class="banner has-x" id="blockBanner" style="display:none"><div class="bmain"><span id="blockBannerTxt">Your training block is complete.</span><div class="bfoot"><button type="button" class="linkbtn" id="blockBannerBtn">Review What's Changing</button></div></div><button type="button" class="bx" aria-label="Dismiss Training Block Reminder"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
+      <div class="banner has-x" id="deloadBanner" style="display:none"><div class="bmain"><span id="deloadBannerTxt"></span><div class="bfoot"><button type="button" class="linkbtn" id="deloadBannerBtn">Plan a Deload Week</button></div></div><button type="button" class="bx" aria-label="Dismiss Deload Reminder"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
+      <div class="banner has-x" id="bwBanner" style="display:none"><div class="bmain"><span id="bwBannerTxt">It's been a week since you last logged your weight.</span><div class="bfoot"><button type="button" class="linkbtn" id="bwBannerBtn">Log It Now</button></div></div><button type="button" class="bx" aria-label="Dismiss Body Weight Reminder"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
+</div></div>
 <div class="sheet-bg" id="infoBg"></div>
 <div class="sheet" id="infoSheet"><div class="sheet-head"><h2 class="sheet-title" id="infoTitle" tabindex="-1"></h2><button type="button" class="linkbtn" id="infoClose">Close</button></div><div id="infoBody"></div></div>
 <div class="sheet-bg" id="weekBg"></div>
@@ -2381,11 +2429,11 @@ function updateBlockUI(){
   if(blockDue()) document.getElementById('blockBannerTxt').textContent=`Your training block is complete, ${blockWeeks()} weeks in.`;
   applyBanners();
 }
-// ---------- Home reminders: one at a time ----------
+// ---------- Home reminders: one row on Home, the list in a sheet ----------
 // bannerQueue is the only place that decides order: the due ids, highest priority first.
 const BANNER_ORDER=['cardioLiveBanner','backupBanner','blockBanner','deloadBanner','bwBanner'];
 function bannerQueue(due){ return BANNER_ORDER.filter(id=>due[id]&&!bannerDismissed.has(id)); }
-let bannerOpen=false, backupFading=false, bannerFocusPending=false, bannerFocusId=null;
+let backupFading=false, bannerFocusPending=false, bannerFocusId=null;
 // X on a banner: block, deload and body weight hide for this session only (an in-memory set; an id leaves it when its condition stops being due).
 // The backup banner hides for a week through the stored backupSnoozeUntil (epoch ms, absent = 0); a value more than 7 days ahead (clock change) counts as expired.
 const bannerDismissed=new Set();
@@ -2414,41 +2462,57 @@ async function undoDismiss(){
 // Not Now on the block and deload sheets hides that banner like the X does (only when it is actually showing in the queue); Close, Escape and an outside tap stay a plain close
 function notNowDismiss(id){ if(bannerDueMap()[id] && !bannerDismissed.has(id)) dismissBanner(id); }
 document.getElementById('undoBtn').onclick=undoDismiss;
-document.querySelectorAll('#bannerSlot .bx').forEach(x=>{ x.onclick=()=>{ x.focus({preventScroll:true}); dismissBanner(x.closest('.banner').id); }; });
+document.querySelectorAll('#remList .bx').forEach(x=>{ x.onclick=()=>{ x.focus({preventScroll:true}); dismissBanner(x.closest('.banner').id); }; });
 function bannerDueMap(){
   return { cardioLiveBanner:!!cardioLive, backupBanner:!!((backupNag() && sessions.length && !backupSnoozed()) || backupFading), blockBanner:blockDue(),
            deloadBanner:!!(deloadDue() && sessions.length), bwBanner:!!bwDue() };
 }
+// the few words the Home row shows for a reminder; the full sentence, its action and its dismiss are in the Reminders sheet
+function reminderShort(id){
+  if(id==='backupBanner') return isFuture(lastBackup)?'Backup dated in the future':lastBackup?`No backup in ${gapPhrase(lastBackup)}`:'No backup yet';
+  if(id==='bwBanner') return `No weigh-in in ${gapPhrase(bwLastT())}`;
+  if(id==='blockBanner') return 'Training block complete';
+  if(id==='deloadBanner') return 'Deload week suggested';
+  return '';
+}
+function remindersOpen(){ return document.getElementById('remSheet').classList.contains('on'); }
+function openReminders(){ document.getElementById('remBg').classList.add('on'); document.getElementById('remSheet').classList.add('on'); }
+function closeReminders(){ document.getElementById('remBg').classList.remove('on'); document.getElementById('remSheet').classList.remove('on'); }
+// Home shows the cardio-live banner (a running session is state, not a reminder) and one row for everything else in the queue.
+// The row only ever opens the list (it never fires the top reminder's action); each reminder keeps its own action, X and Undo there.
 function applyBanners(announce){
   const slot=document.getElementById('bannerSlot'); if(!slot) return;
   const bwT=document.getElementById('bwBannerTxt'); if(bwT&&bwDue()) bwT.textContent=bwGapText();
   const bkT=document.getElementById('backupBannerTxt'); if(bkT&&backupDue()) bkT.textContent=backupGapText();
   const due=bannerDueMap(); bannerDismissed.forEach(id=>{ if(!due[id]) bannerDismissed.delete(id); });
-  const q=bannerQueue(due), n=q.length-1;
-  if(n<1) bannerOpen=false;
-  BANNER_ORDER.forEach(id=>{ const b=document.getElementById(id), i=q.indexOf(id); b.style.display=(i===0||(i>0&&bannerOpen))?'flex':'none'; });
+  const q=bannerQueue(due), rem=q.filter(id=>id!=='cardioLiveBanner'), n=rem.length-1;
+  BANNER_ORDER.forEach(id=>{ document.getElementById(id).style.display=q.includes(id)?'flex':'none'; });
   slot.hidden=!q.length;
-  const row=document.getElementById('bannerMoreRow'), btn=document.getElementById('bannerMoreBtn');
-  if(n>=1){
-    const top=document.getElementById(q[0]);
-    const foot=top.querySelector('.bfoot');
-    if(row.parentNode!==(foot||top)){ if(foot) foot.insertBefore(row,foot.firstChild); else top.appendChild(row); }
-    row.hidden=false;
-    document.getElementById('bannerMoreTxt').textContent=`${n} More`;
-    btn.setAttribute('aria-label',`${n} more reminder${n===1?'':'s'}`);
-    btn.setAttribute('aria-expanded',String(bannerOpen));
-    btn.setAttribute('aria-controls',q.slice(1).join(' '));
-  } else { row.hidden=true; if(row.parentNode!==slot) slot.appendChild(row); }
+  const row=document.getElementById('remRow'), cnt=document.getElementById('remCnt');
+  row.hidden=!rem.length;
+  if(rem.length){
+    const short=reminderShort(rem[0]);
+    document.getElementById('remTxt').textContent=short; cnt.hidden=n<1; cnt.textContent=n>=1?`+${n}`:'';
+    row.setAttribute('aria-label',`Reminders: ${short}${n>=1?`, and ${n} more`:''}`);
+  } else if(remindersOpen()) closeReminders();
   if(announce!==undefined){
     const next=q.length?(q[0]==='cardioLiveBanner'?'A cardio session is in progress.':document.querySelector('#'+q[0]+' span').textContent):'';
     document.getElementById('bannerStatus').textContent=`${announce}. ${q.length?'Next reminder: '+next:'No more reminders.'}`;
   }
   if(bannerFocusPending && !backupFading){
     bannerFocusPending=false;
-    if(view==='home'){ const fid=bannerFocusId&&q.includes(bannerFocusId)&&document.getElementById(bannerFocusId).style.display!=='none'?bannerFocusId:q[0]; bannerFocusId=null; const t=q.length?document.querySelector('#'+fid+' .linkbtn'):document.getElementById('arrivalStart'); if(t) t.focus({preventScroll:true}); }
+    if(view==='home'){
+      const fid=bannerFocusId&&rem.includes(bannerFocusId)?bannerFocusId:rem[0]; bannerFocusId=null;
+      // in the open list: the restored or next reminder's action; on Home: the row, else the cardio banner, else Start
+      const t=rem.length?(remindersOpen()?document.querySelector('#'+fid+' .linkbtn'):row):(q.length?document.querySelector('#'+q[0]+' .linkbtn'):document.getElementById('arrivalStart'));
+      if(t) requestAnimationFrame(()=>t.focus({preventScroll:true})); // after the sheet's own focus return, which runs first when the list just closed
+    }
   }
 }
-document.getElementById('bannerMoreBtn').onclick=()=>{ bannerOpen=!bannerOpen; document.getElementById('bannerMoreBtn').focus({preventScroll:true}); applyBanners(); };
+document.getElementById('remRow').onclick=e=>{ e.currentTarget.focus({preventScroll:true}); openReminders(); }; // Safari does not focus a tapped button; focused first, the sheet hands focus back to it on close
+document.getElementById('remClose').onclick=closeReminders; document.getElementById('remBg').onclick=closeReminders;
+// a reminder's action leaves the list first, so what it opens (a sheet, Strength, the share sheet) is not stacked on top of it
+document.getElementById('remList').addEventListener('click',e=>{ if(e.target.closest('.bfoot .linkbtn')) closeReminders(); },true);
 // "never suggest this again": the name goes on a settings list every picker honours, and the slot is refilled
 // with the next pick right away (falling back to a plain undo when nothing else fits). The pre-block exercise is
 // kept as rotPrev so an undo still returns to what was there before the block, not to the rejected pick.
@@ -2886,7 +2950,13 @@ function renderBody(){
     sub.textContent=`${readyTxt}${RECOVERY_LABEL[worst]} ${PLURAL_MUSCLES.has(worst)?'are':'is'} still coming back from ${day} — about ${fmtTimeLeft(leftH)} to go, so keep it light.`;
   }
   renderRecovList();
+  document.getElementById('recovInfoBtn').setAttribute('aria-label',`Recovery, ${pct}% Ready to Train. Details`);
 }
+// the recovery sentence, the hint and the colour key, which sat on the card, open from the ring row
+document.getElementById('recovInfoBtn').onclick=e=>{ e.currentTarget.focus({preventScroll:true}); openInfo('Recovery',b=>{
+  infoP(b,document.getElementById('recovSub').textContent); infoP(b,document.getElementById('tapHint').textContent,true);
+  const key=document.querySelector('#bodymapCard>.legend'); if(key) b.appendChild(key.cloneNode(true));
+}); };
 // shows every tracked muscle (not just currently-recovering ones) so a fully-recovered muscle can still be
 // marked sore — the app has no way to know about an injury tweak, bad sleep, or illness on its own.
 const RECOV_AREAS=[['Legs',['quads','hamstrings','glutes','calves-gastroc','calves-soleus']],['Back',['back-lats','back-traps','lowerback']],
@@ -2993,9 +3063,9 @@ function closeInfo(){ document.getElementById('infoBg').classList.remove('on'); 
 document.getElementById('infoClose').onclick=closeInfo; document.getElementById('infoBg').onclick=closeInfo;
 function infoP(body,text,dim){ if(!text||!String(text).trim()) return; const p=document.createElement('p'); p.className='sheet-p'+(dim?' dim':''); p.textContent=String(text).trim(); body.appendChild(p); }
 // an info button: icon only, so it always carries a name
-function infoBtn(id,label,onTap){ const b=document.createElement('button'); b.type='button'; b.className='icbtn'; b.id=id; b.innerHTML=IC.info; b.setAttribute('aria-label',label); b.setAttribute('aria-haspopup','dialog'); b.onclick=e=>{ e.stopPropagation(); onTap(); }; return b; }
+function infoBtn(id,label,onTap){ const b=document.createElement('button'); b.type='button'; b.className='icbtn'; b.id=id; b.innerHTML=IC.info; b.setAttribute('aria-label',label); b.setAttribute('aria-haspopup','dialog'); b.onclick=e=>{ e.stopPropagation(); b.focus({preventScroll:true}); onTap(); }; return b; }
 function closeWeek(){ document.getElementById('weekBg').classList.remove('on'); document.getElementById('weekSheet').classList.remove('on'); }
-document.getElementById('weekBtn').onclick=()=>{ document.getElementById('weekBg').classList.add('on'); document.getElementById('weekSheet').classList.add('on'); };
+document.getElementById('weekBtn').onclick=e=>{ e.currentTarget.focus({preventScroll:true}); document.getElementById('weekBg').classList.add('on'); document.getElementById('weekSheet').classList.add('on'); };
 document.getElementById('weekClose').onclick=closeWeek; document.getElementById('weekBg').onclick=closeWeek;
 async function loadDay(d){
   currentDay=d; renderHeaderStats();
@@ -3532,7 +3602,7 @@ function renderBuilder(panel){
 // ---------- home: greeting + day carousel (returning user), first-open hero (new user), program builder ----------
 // Home is the landing tab — picking a day here (or accepting a built program) hands off to the Log tab, which now
 // always shows the active day's exercise list with no arrival/dismiss state of its own.
-let homePreviewOpen=false;
+let homePreviewOpen=false, homePlanOpen=false; // the day's exercise list is closed until its row is tapped (2.0)
 // Home's day cards. A day whose sub is a single letter reads "Push, day A" to a screen reader (the card shows only the letter).
 function dayCardsHTML(){
   return PROGRAM.map(d=>{ const letter=/^[A-C]$/.test(d.sub||''), today=d.id===currentDay;
@@ -3559,9 +3629,7 @@ function renderHomeBody(){
   if(currentDay==='cardio'){
     panel.innerHTML=`
       <div class="greet-wrap">
-        <div class="greet-eyebrow">${new Date().toLocaleDateString(undefined,{weekday:'long'})}</div>
-        <h2 class="greet-h1">${cardioLive?'Your cardio session is running.':settings.name?'Ready for cardio, '+esc(settings.name)+'?':'Ready for cardio?'}</h2>
-        <div class="greet-sub">${cardioLive?'Pick it back up where you left off, or save it from there.':cardioReasonCopy().home}</div>
+        <div class="greet-row"><h2 class="greet-h1">${cardioLive?'Your cardio session is running.':settings.name?'Ready for cardio, '+esc(settings.name)+'?':'Ready for cardio?'}</h2><span id="cardioWhySlot"></span></div>
       </div>
       <button class="start-cta" id="arrivalStart">${cardioLive?'Resume Cardio Session':'Go to Cardio Log'}</button>
       <div class="greet-sub" style="margin-top:14px">Feeling fine? Tap a lift day to train it instead.</div>
@@ -3569,6 +3637,8 @@ function renderHomeBody(){
         ${dayCardsHTML()}
       </div>`;
     document.getElementById('arrivalStart').onclick=()=>setView('log');
+    // the reason sentence that sat under the headline, one tap away
+    document.getElementById('cardioWhySlot').replaceWith(infoBtn('cardioWhyBtn','Why Cardio Today',()=>openInfo('Cardio Today',b=>infoP(b,cardioLive?'Pick it back up where you left off, or save it from there.':cardioReasonCopy().home))));
     panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day, ()=>setView('log')));
     placeCarousel(panel,prevLeft);
     return;
@@ -3579,7 +3649,8 @@ function renderHomeBody(){
   const previewRows=day.exercises.slice(0,homePreviewOpen?undefined:5).map(ex=>`<div class="preview-row"><span class="pn">${esc(ex.name)}</span><span class="pt">${fmtTarget(ex.target)}</span></div>`).join('');
   const moreRow=extra>0?`<span class="linkbtn preview-more" id="previewMore" aria-expanded="${homePreviewOpen}">${homePreviewOpen?'Show Fewer':`+ ${extra} More Exercise${extra===1?'':'s'}`}</span>`:'';
   const estMin=day.exercises.length*6;
-  const ctaTxt=sessionInProgress()?'Return to Log':`Start ${day.name} — ${day.sub}`;
+  // the button says Start or Resume; the day is in the headline above it, and in the button's full name for screen readers
+  const resume=sessionInProgress(), ctaTxt=resume?'Resume':'Start', ctaName=esc(`${resume?'Resume':'Start'} ${day.name} — ${day.sub}`);
 
   if(sessionCount===0){
     const h1=settings.name?`Welcome, ${esc(settings.name)}! Your first session starts here`:'Your first session starts here';
@@ -3591,28 +3662,25 @@ function renderHomeBody(){
           <rect x="48" y="22" width="8" height="20" rx="2" fill="var(--accent)" opacity=".85"/><rect x="56" y="26" width="4" height="12" rx="1.5" fill="var(--accent)"/>
         </svg>
         <h2 class="empty-h1">${h1}</h2>
-        <div class="empty-sub">No history yet — that's fine. Log one set at a time and Lift Log starts learning your numbers from today.</div>
+        <span id="firstWhySlot"></span>
         <div class="empty-plan"><b>${day.name}, ${day.sub}</b> · ${day.exercises.length} exercises · about ${estMin} minutes.</div>
-        <button class="start-cta" id="arrivalStart">${ctaTxt}</button>
+        <button class="start-cta" id="arrivalStart" aria-label="${ctaName}">${ctaTxt}</button>
       </div>`;
+    document.getElementById('firstWhySlot').replaceWith(infoBtn('firstWhyBtn','About Your First Session',()=>openInfo('Your First Session',b=>infoP(b,"No history yet — that's fine. Log one set at a time and Lift Log starts learning your numbers from today."))));
   } else {
-    const lastLift=[...sessions].reverse().find(s=>!s.isCardio);
-    // what's next and the last lift; the recovery detail lives in the readiness card right below, not repeated here
-    const isNext=day.id===suggestedDayId();
-    const lastTxt=lastLift?`Last lift: ${lastLift.dayName} ${lastLift.sub}, ${fmtDate(lastLift.t)}.`:'';
-    const h1=settings.name?`Ready to work out, ${esc(settings.name)}?`:`Ready for ${day.name} — ${day.sub}?`;
-    const dayLine=settings.name?`${day.name} ${day.sub} ${isNext?'is next in your rotation':'is loaded for today'}. `:(isNext?'Next in your rotation. ':'');
+    // the headline is the day; "next in your rotation" is the Next tag on its card, and the last lift is on the History calendar
+    const nEx=day.exercises.length;
     panel.innerHTML=`
       <div class="greet-wrap">
-        <div class="greet-eyebrow">${new Date().toLocaleDateString(undefined,{weekday:'long'})}</div>
-        <h2 class="greet-h1">${h1}</h2>
-        <div class="greet-sub">${dayLine}${lastTxt}</div>
+        <h2 class="greet-h1">${esc(day.name)}, ${esc(day.sub)}</h2>
       </div>
       <div class="day-carousel${PROGRAM.length===3?' three':''}">
         ${dayCardsHTML()}
       </div>
-      <div class="preview-list">${previewRows}${moreRow}</div>
-      <button class="start-cta" id="arrivalStart">${ctaTxt}</button>`;
+      <button type="button" class="plan-row" id="planRow" aria-expanded="${homePlanOpen}" aria-controls="previewList"><span>${nEx} Exercise${nEx===1?'':'s'} · About ${estMin} min</span>${IC.chevD}</button>
+      <div class="preview-list" id="previewList"${homePlanOpen?'':' hidden'}>${previewRows}${moreRow}</div>
+      <button class="start-cta" id="arrivalStart" aria-label="${ctaName}">${ctaTxt}</button>`;
+    document.getElementById('planRow').onclick=()=>{ homePlanOpen=!homePlanOpen; renderHome(); document.getElementById('planRow').focus({preventScroll:true}); };
     panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day, ()=>setView('log')));
     placeCarousel(panel,prevLeft);
     const more=document.getElementById('previewMore'); if(more) more.onclick=()=>{ homePreviewOpen=!homePreviewOpen; renderHome(); document.getElementById('previewMore').focus({preventScroll:true}); };
