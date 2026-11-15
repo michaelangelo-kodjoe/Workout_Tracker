@@ -3079,6 +3079,50 @@ function salFill(m,state,j){
   if(m.bwLoaded) return {ls, w:null, add:(!t.add&&parseFloat(ls.add)>0)?ls.add:null};
   return {ls, add:null, w:((t.w===''||t.w==null)&&typeof m.sug==='number'&&m.sug>0)?m.sug:null};
 }
+// ---------- Log: set actions ----------
+// What a tap or a keystroke does to the draft, apart from drawing it. Each one changes todayData and saves today:<dayId>.
+// Those that can refuse return false (a toast has said why) and true when the draft changed, so the caller knows to redraw.
+// The order inside each (day start, rest timer, save) is the order the Log has always used; keep it.
+function saveDraft(){ return sset('today:'+currentDay,todayData); }
+function actSetWeight(s,val){ s.w=storeWeight(val); touchDayStart(); saveDraft(); }
+// bodyweight lifts: the box holds what is added on top; total(s) is body weight plus that
+function actSetAdded(s,val,total){ s.add=val===''?'':storeWeight(val); s.w=total(s); touchDayStart(); saveDraft(); }
+function actSetReps(s,val){ s.r=val; touchDayStart(); saveDraft(); }
+function actPickRepsLeft(s,v){ s.rir=(s.rir===v)?null:v; touchDayStart(); saveDraft(); }
+function actToggleDone(ex,s,i,m){
+  if(hold.key===holdKey(ex,i)) stopHold(false); // fills s.r with the elapsed seconds before the check below
+  if(!s.done && s.r===''){ showToast(m.timed?'Add the seconds first':'Add reps first'); return false; }
+  if(!s.done && !m.timed && s.rir==null){ showToast('Pick reps left first'); return false; }
+  // the grey weight in an empty box is only a suggestion — ticking used to save the set with no weight at all.
+  // A tick means "did what's shown", so it takes that number; with none to take (a new lift), it asks for one.
+  if(!s.done && !m.bwLoaded && !m.timed && (s.w===''||s.w==null)){
+    if(m.sug!=null && m.sug!==-1) s.w=storeWeight(dispWeight(m.sug)); else { showToast('Add the weight first'); return false; }
+  }
+  s.done=!s.done; popSet=s.done?s:null; touchDayStart(); if(s.done&&settings.auto) startTimer(settings.smartRest?suggestedRest(ex):settings.rest); saveDraft();
+  return true;
+}
+function actAddSet(ex,state){ const prev=state.sets[state.sets.length-1]; state.sets.push({w:ex.start===0?(latestBW()??''):'',r:'',done:false,rir:null,...(ex.start===0&&prev&&prev.add?{add:prev.add}:{})}); saveDraft(); }
+function actRemoveSet(state,i){ state.sets.splice(i,1); touchDayStart(); saveDraft(); }
+// Same as Last: copies last time's reps and reps left into set j, and the weight (or added load) only if that box is empty.
+// It never ticks Done and never starts the rest timer. False when set j has been filled or checked since the chip was drawn.
+function actFillSet(state,j,m){
+  const t=state.sets[j]; if(!t||t.done||t.r!=='') return false;
+  const f=salFill(m,state,j), ls=f.ls;
+  t.r=String(ls.r); t.rir=(ls.rir!=null&&ls.rir>=0&&ls.rir<=4)?ls.rir:null;
+  if(m.bwLoaded){ if(f.add!=null) t.add=f.add; }
+  else if(f.w!=null) t.w=storeWeight(dispWeight(f.w));
+  touchDayStart(); saveDraft();
+  return true;
+}
+// plates per side: move the first unchecked set by one smallest plate on each side (dir is -1 or 1); liveLb is the weight in play
+function actStepPlates(ex,state,dir,liveLb){
+  const target=state.sets.find(x=>!x.done); if(!target){ showToast('Every set is already logged'); return false; }
+  const inc=settings.unit==='kg'?1.25:2.5;
+  const bar=dispWeight(barWeightLb(ex)), have=liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)), cur=have?dispWeight(parseFloat(liveLb)):bar;
+  const side=Math.max(0,Math.round(((cur-bar)/2+dir*inc)*100)/100);
+  target.w=storeWeight(Math.round((bar+2*side)*100)/100); touchDayStart(); saveDraft();
+  return true;
+}
 function listFocusKey(){
   const a=document.activeElement, list=document.getElementById('exerciseList'); if(!a||a===list||!list.contains(a)) return null;
   const card=a.closest('.exercise'); if(!card) return null;
@@ -3167,10 +3211,7 @@ function render(){
       const line=document.createElement('div'); line.className='side-line'; txtEl.replaceWith(line); line.append(txtEl,stepEl);
       stepEl.onclick=e=>{ const b=e.target.closest('button'); if(!b) return;
         b.focus({preventScroll:true}); // Safari doesn't focus a tapped button, and the redraw hands focus back to whatever had it last (e.g. a Done check)
-        const target=state.sets.find(x=>!x.done); if(!target){ showToast('Every set is already logged'); return; }
-        const bar=dispWeight(barWeightLb(ex)), have=liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)), cur=have?dispWeight(parseFloat(liveLb)):bar;
-        const side=Math.max(0,Math.round(((cur-bar)/2+parseInt(b.dataset.d)*inc)*100)/100);
-        target.w=storeWeight(Math.round((bar+2*side)*100)/100); touchDayStart(); sset('today:'+currentDay,todayData); render(); };
+        if(actStepPlates(ex,state,parseInt(b.dataset.d),liveLb)) render(); };
       const syncFixedUI=()=>{ chip.style.display=fixed?'none':''; stepEl.style.display=fixed?'none':''; capEl.textContent=fixed?'Fixed-Weight Bar':'Plates per Side'; };
       updatePlates=lb=>{
         if(lb!=null&&lb!=='') liveLb=lb;
@@ -3242,11 +3283,9 @@ function render(){
       sal.innerHTML=`<button type="button" class="sal-chip" aria-label="Same as Last: ${esc(full)}" data-det="${esc(full)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 8v4l3 2"/></svg><span class="sal-lbl">Same as Last:</span><span class="sal-det">${det}</span></button>`;
       sal.querySelector('button').onclick=e=>{
         e.currentTarget.focus({preventScroll:true}); // Safari doesn't focus a tapped button; the redraw would hand focus back to whatever had it last
-        const fk=listFocusKey(), cardIdx=[...document.querySelectorAll('#exerciseList .exercise')].indexOf(e.currentTarget.closest('.exercise')), t=state.sets[j]; if(!t||t.done||t.r!=='') { render(); return; }
-        t.r=String(ls.r); t.rir=(ls.rir!=null&&ls.rir>=0&&ls.rir<=4)?ls.rir:null;
-        if(bwLoaded){ if(!t.add&&parseFloat(ls.add)>0) t.add=ls.add; }
-        else if((t.w===''||t.w==null)&&typeof sug==='number'&&sug>0) t.w=storeWeight(dispWeight(sug));
-        touchDayStart(); sset('today:'+currentDay,todayData); render();
+        const fk=listFocusKey(), cardIdx=[...document.querySelectorAll('#exerciseList .exercise')].indexOf(e.currentTarget.closest('.exercise'));
+        if(!actFillSet(state,j,m)){ render(); return; }
+        render();
         { const c0=document.querySelectorAll('#exerciseList .exercise')[cardIdx], h=c0&&c0.querySelector('.sal-row:not(.idle) .sal-chip'); salAnnounce(h?'Next: '+h.dataset.det:'Every set is filled'); }
         if(fk){ const c=document.querySelectorAll('#exerciseList .exercise')[fk.card]; const nxt=c&&(c.querySelector('.sal-row:not(.idle) .sal-chip')||c.querySelector('.setdone:not(.on)')); if(nxt){ tagClickables(c); nxt.focus({preventScroll:true}); } }
       };
@@ -3258,27 +3297,17 @@ function render(){
       const row=document.createElement('div'); row.className='setgrid';
       row.innerHTML=`<div class="setnum">${i+1}</div><input type="number" inputmode="decimal" aria-label="Set ${i+1} ${bwLoaded?'added weight':'weight'}" placeholder="${bwLoaded?'+'+dispWeight(addHint):sug===null?'bw':sug===-1?unitLabel():dispWeight(sug)}" value="${bwLoaded?(s.add?dispWeight(s.add):''):(s.w?dispWeight(s.w):s.w)}"${bwLoaded?' title="extra weight held or worn (dumbbells, a dip belt) — leave blank for bodyweight only"':''}><input type="number" inputmode="numeric" aria-label="Set ${i+1} ${timed?'seconds':'reps'}" placeholder="${timed?'Sec':'Reps'}" value="${s.r}"><div class="setdone ${s.done?'on':''}${popSet===s?' pop':''}" aria-label="set ${i+1} done" aria-pressed="${!!s.done}">${s.done?'✓':''}</div><div class="setrm" title="remove set" aria-label="remove set ${i+1}">✕</div>`;
       const [wI,rI]=row.querySelectorAll('input');
-      if(bwLoaded) wI.oninput=e=>{s.add=e.target.value===''?'':storeWeight(e.target.value); s.w=bwTotal(s); touchDayStart(); sset('today:'+currentDay,todayData);};
-      else wI.oninput=e=>{s.w=storeWeight(e.target.value); touchDayStart(); sset('today:'+currentDay,todayData); if(updatePlates) updatePlates(s.w);};
-      rI.oninput=e=>{s.r=e.target.value; touchDayStart(); sset('today:'+currentDay,todayData); const rr=row.nextElementSibling; if(rr&&rr.classList.contains('rir-row')){ rr.hidden=!(s.done||s.r!==''); }};
-      row.querySelector('.setdone').onclick=()=>{
-        if(hold.key===holdKey(ex,i)) stopHold(false); // fills s.r with the elapsed seconds before the check below
-        if(!s.done && s.r===''){ showToast(timed?'Add the seconds first':'Add reps first'); return; }
-        if(!s.done && !timed && s.rir==null){ showToast('Pick reps left first'); return; }
-        // the grey weight in an empty box is only a suggestion — ticking used to save the set with no weight at all.
-        // A tick means "did what's shown", so it takes that number; with none to take (a new lift), it asks for one.
-        if(!s.done && !bwLoaded && !timed && (s.w===''||s.w==null)){
-          if(sug!=null && sug!==-1) s.w=storeWeight(dispWeight(sug)); else { showToast('Add the weight first'); return; }
-        }
-        s.done=!s.done; popSet=s.done?s:null; touchDayStart(); if(s.done&&settings.auto) startTimer(settings.smartRest?suggestedRest(ex):settings.rest); sset('today:'+currentDay,todayData); render();
-      };
+      if(bwLoaded) wI.oninput=e=>{ actSetAdded(s,e.target.value,bwTotal); };
+      else wI.oninput=e=>{ actSetWeight(s,e.target.value); if(updatePlates) updatePlates(s.w); };
+      rI.oninput=e=>{ actSetReps(s,e.target.value); const rr=row.nextElementSibling; if(rr&&rr.classList.contains('rir-row')){ rr.hidden=!(s.done||s.r!==''); }};
+      row.querySelector('.setdone').onclick=()=>{ if(actToggleDone(ex,s,i,m)) render(); };
       row.querySelector('.setrm').onclick=async()=>{
         if(state.sets.length<=1){ showToast('Keep at least one set'); return; }
         // an empty set goes in one tap; one with anything logged asks first, since ✕ sits right beside Done
         const logged=s.done||s.r!==''||(bwLoaded?!!parseFloat(s.add):(s.w!==''&&s.w!=null));
         const fk=listFocusKey();
         if(logged&&!await confirmSheet(`Remove set ${i+1} of ${ex.name}? What's logged in it will be lost.`,'Remove Set',null,true)) return;
-        state.sets.splice(i,1); touchDayStart(); sset('today:'+currentDay,todayData); render(); restoreListFocus(fk);
+        actRemoveSet(state,i); render(); restoreListFocus(fk);
       };
       body.appendChild(row);
       if(timed&&!s.done){
@@ -3295,12 +3324,12 @@ function render(){
         // hidden until reps are in, then picked before the set can be checked; stays after Done so it can still be changed
         const rir=document.createElement('div'); rir.className='rir-row'; setRirA11y(rir,i); rir.hidden=!(s.done||s.r!=='');
         rir.innerHTML=`<span class="rir-lbl" aria-hidden="true">Reps Left</span>`+[0,1,2,3,4].map(v=>`<span class="rir-pill${s.rir===v?' on':''}" data-v="${v}" aria-pressed="${s.rir===v}" aria-label="${v===4?'4 or more reps':v===1?'1 rep':v+' reps'} left">${v===4?'4+':v}</span>`).join('');
-        rir.querySelectorAll('.rir-pill').forEach(p=>p.onclick=()=>{ const v=parseInt(p.dataset.v); s.rir=(s.rir===v)?null:v; touchDayStart(); sset('today:'+currentDay,todayData); render(); });
+        rir.querySelectorAll('.rir-pill').forEach(p=>p.onclick=()=>{ actPickRepsLeft(s,parseInt(p.dataset.v)); render(); });
         body.appendChild(rir);
       }
     });
     const addset=document.createElement('button'); addset.type='button'; addset.className='addset'; addset.textContent='+ Add Set';
-    addset.onclick=()=>{ const prev=state.sets[state.sets.length-1]; state.sets.push({w:ex.start===0?(latestBW()??''):'',r:'',done:false,rir:null,...(ex.start===0&&prev&&prev.add?{add:prev.add}:{})}); sset('today:'+currentDay,todayData); render(); }; body.appendChild(addset);
+    addset.onclick=()=>{ actAddSet(ex,state); render(); }; body.appendChild(addset);
 
     const ta=document.createElement('textarea'); ta.className='notes'; ta.placeholder='Notes — seat setting, how it felt'; ta.setAttribute('aria-label',`Notes for ${ex.name}`); ta.value=notes[histKey(ex)]||'';
     ta.oninput=e=>{ notes[histKey(ex)]=e.target.value; sset('notes',notes); }; body.appendChild(ta);
