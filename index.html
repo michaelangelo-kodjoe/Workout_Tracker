@@ -984,6 +984,7 @@
   @media (min-width:600px){ .sheet{border:0;} }
   .sheet::before{content:"";position:absolute;top:10px;left:50%;width:36px;height:5px;margin-left:-18px;border-radius:var(--r-full);background:var(--line-strong);opacity:.6;} /* decoration only: Close, the backdrop and Escape dismiss */
   .sheet-head{align-items:center;min-height:44px;margin-bottom:var(--sp-2);}
+  .sheet-head button.linkbtn{background:none;border:0;font-family:inherit;color:var(--light);cursor:pointer;} /* Close as a real button */
   .sheet-title{font-size:var(--fs-lg);font-weight:600;margin:0;}
   .sheet-sub{font-size:var(--fs-sm);color:var(--text-dim);margin-top:2px;line-height:1.45;}
   .sheet-p{font-size:var(--fs-body);color:var(--text);line-height:1.5;margin:0 0 var(--sp-3);}
@@ -1044,6 +1045,77 @@
   #recovDetailToggle{display:flex;align-items:center;justify-content:center;min-height:44px;margin:var(--sp-1) 0 0;padding:0;}
   .recov-list{font-size:var(--fs-sm);border-top:0;}
   .recov-area{font-size:var(--fs-body);} .recov-area-s{font-size:var(--fs-sm);}
+  /* ---------- History ---------- */
+  .card-titlerow{display:flex;align-items:center;justify-content:space-between;margin:-8px -8px 4px 0;}
+  .rhythm-card .heat-title{margin:0;}
+  .rh-stats b{font-size:var(--fs-xl);font-weight:700;}
+  .rh-stats b small{font-size:var(--fs-sm);} .rh-stats span{font-size:var(--fs-body);}
+  .rh-goal span{font-size:var(--fs-cap);letter-spacing:.08em;text-transform:uppercase;}
+  .rh-bars i{border-radius:var(--r-full) var(--r-full) 0 0;background:color-mix(in srgb,var(--green) 70%,transparent);}
+  .rh-bars i.now{background:color-mix(in srgb,var(--green) 30%,transparent);}
+  .rh-axis{font-size:var(--fs-cap);letter-spacing:.08em;text-transform:uppercase;border-top:0;}
+  .rh-cap,.cal-wrap>.cal-legend{display:none;} /* captions and the calendar key open from the info buttons */
+  .cal-wrap{padding:8px 10px 12px;}
+  .cal-head{margin-bottom:4px;min-height:44px;}
+  .cal-head .cal-title{margin-left:auto;font-size:var(--fs-lg);font-weight:600;}
+  .cal-head #calInfoBtn{margin-right:auto;}
+  .cal-nav{padding:13px;margin:0;}
+  .cal-dow{font-size:var(--fs-cap);letter-spacing:.08em;font-weight:600;} .cal-dow i{font-style:normal;}
+  .cal-cell{border-radius:var(--r-sm);font-size:var(--fs-body);}
+  .cal-cell.today{box-shadow:inset 0 0 0 1.5px var(--text);}
+  .cal-cell.today.dl{box-shadow:inset 0 0 0 1.5px var(--text),inset 0 -3px 0 var(--amber);}
+  .cal-tag{border-radius:var(--r-full);font-size:var(--fs-cap);padding:0 4px;color:var(--bg);}
+  .cal-legend{font-size:var(--fs-sm);justify-content:flex-start;}
+  #historyView .empty{font-size:var(--fs-body);}
+  /* ---------- Strength ---------- */
+  .str-hero{position:relative;padding:var(--sp-4);}
+  .str-hero-num{font-size:var(--fs-hero);font-weight:700;letter-spacing:-.02em;}
+  .str-hero-lbl{font-size:var(--fs-body);}
+  #strInfoBtn{position:absolute;top:6px;right:6px;}
+  .bwlb{font-size:var(--fs-sm);border:0;border-radius:var(--r-full);padding:2px 10px;background:color-mix(in srgb,var(--light) 15%,transparent);}
+  .scrub{min-height:44px;display:flex;align-items:center;} .scrub>*{flex:1;min-width:0;} /* a drag strip is a touch target too */
+  .scrub:focus-visible{outline:2px solid var(--light);border-radius:var(--r-sm);}
+  .str-split{gap:var(--sp-3);}
+  .str-split-card{position:relative;margin-bottom:var(--sp-3);}
+  .str-split-num{font-size:var(--fs-xl);font-weight:700;}
+  /* See / Hide Exercises is a chevron; the words stay for screen readers */
+  .str-card-hint{min-height:44px;padding:0;justify-content:flex-end;font-size:var(--fs-sm);}
+  .str-card-hint:not(.scrub-date){font-size:0;}
+  .str-card-hint:not(.scrub-date)::after{content:"";width:9px;height:9px;margin:0 6px 4px 0;border-right:2px solid var(--text-dim);border-bottom:2px solid var(--text-dim);transform:rotate(45deg);}
+  .str-split-card.open .str-card-hint:not(.scrub-date)::after{transform:rotate(225deg);margin-bottom:-4px;}
+  .str-grp{font-size:var(--fs-sm);} .str-grp span:first-child{font-size:var(--fs-cap);font-weight:600;}
+  .str-card-exlist .srow{border-radius:0;padding:var(--sp-3) 0;cursor:pointer;}
+  .srow{border:0;border-radius:var(--r-sm);}
+  .srow .sn,.str-card-exlist .sn{font-size:var(--fs-body);} .srow .sp,.str-card-exlist .sp{font-size:var(--fs-lg);font-weight:600;}
+  .srow .sd,.str-card-exlist .sd{font-size:var(--fs-sm);}
+  /* an exercise row shows name, change and trend; the detail line and Reset Baseline open when the row is tapped */
+  .str-card-exlist .srow:not(.row-open) .sd:not([data-scrub-readout]){display:none;}
+  .srow .sd .linkbtn{font-size:var(--fs-sm);display:inline-flex;align-items:center;min-height:44px;}
+  .str-past-btn{border:0;border-radius:var(--r-sm);}
+  .str-past-btn b{font-weight:600;} .str-past-btn b+span{display:none;} .str-past-act{font-size:var(--fs-body);}
+  .str-hide{box-shadow:none;}
+  .bw-info{font-size:var(--fs-body);color:var(--text-dim);}
+  #strengthView>.note-sm,#bwNote,.str-dlnote{display:none;} /* in About These Numbers, behind the info button */
+  /* ---------- Settings ---------- */
+  .set-group-h{font-size:var(--fs-cap);font-weight:600;margin:20px 16px 8px;}
+  .set-row{min-height:52px;font-size:var(--fs-lg);}
+  .set-row:not(.has-cap) .set-lbl{flex:0 0 auto;white-space:nowrap;}
+  .set-row .set-val{flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;font-size:var(--fs-body);}
+  .set-row .set-seg,.set-row .set-chev,.set-row input.switch{margin-left:auto;}
+  .set-row .set-val+.set-chev{margin-left:0;}
+  /* captions are hidden (owner, 2026-11-14); the one that prevents a wrong expectation stays, and a routine's own note stays */
+  .set-cap{display:none;font-size:var(--fs-sm);}
+  label[for="autoBackup"] .set-cap,.set-cap.rt-rownote:not([hidden]){display:block;}
+  .set-row.static.has-cap{padding-top:4px;padding-bottom:4px;}
+  input.switch:not(:where(#logView *)){width:52px;height:44px;background:none;border-radius:0;}
+  input.switch:not(:where(#logView *))::before{content:"";position:absolute;left:0;top:6px;width:52px;height:32px;border-radius:var(--r-full);background:var(--line-strong);}
+  input.switch:not(:where(#logView *))::after{left:3px;top:9px;width:26px;height:26px;}
+  input.switch:not(:where(#logView *)):checked{background:none;}
+  input.switch:not(:where(#logView *)):checked::before{background:var(--green);}
+  #setMain .reset-link{border:0;border-radius:var(--r-sm);background:none;color:var(--danger);font-size:var(--fs-body);font-weight:600;margin-top:var(--sp-4);}
+  .save-warn{font-size:var(--fs-body);border-radius:var(--r-sm);}
+  .set-back{font-size:var(--fs-body);} .set-sub h2{font-weight:700;}
+  .set-toggle,.field-label{font-size:var(--fs-body);}
   /* segmented control and switch: 44 px tall hit areas (were 36 and 28) */
   .onb-seg{border:0;border-radius:var(--r-sm);background:var(--panel-raised);}
   .onb-seg button{border-radius:var(--r-sm);font-size:var(--fs-body);font-weight:600;}
@@ -1141,16 +1213,15 @@
   </section>
 
   <section id="historyView" style="display:none">
-    <div class="empty" id="histEmpty" style="display:none;margin-bottom:14px">No sessions yet. Finish a workout or log a conditioning session and it will show up here.</div>
+    <div class="empty" id="histEmpty" style="display:none;margin-bottom:14px">No sessions yet. Finish a workout to see it here.</div>
     <div class="rhythm-card">
-      <h3 class="heat-title">Training Rhythm</h3>
+      <div class="card-titlerow"><h3 class="heat-title">Training Rhythm</h3><button type="button" class="icbtn" id="rhInfoBtn" aria-label="About Training Rhythm" aria-haspopup="dialog"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></button></div>
       <div class="rh-stats" id="rhStats"></div>
       <div class="rh-chart" id="rhChart" role="img"></div>
-      <div class="rh-cap">Sessions per week, last 12 weeks</div>
       <div class="rh-cap" id="rhGoalNote" hidden></div>
     </div>
     <div class="cal-wrap">
-      <div class="cal-head"><span class="cal-nav" id="calPrev" aria-label="Previous Month"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></span><h3 class="cal-title" id="calTitle" aria-live="polite">—</h3><span class="cal-nav" id="calNext" aria-label="Next Month"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></div>
+      <div class="cal-head"><span class="cal-nav" id="calPrev" aria-label="Previous Month"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></span><h3 class="cal-title" id="calTitle" aria-live="polite">—</h3><button type="button" class="icbtn" id="calInfoBtn" aria-label="Calendar Key" aria-haspopup="dialog"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></button><span class="cal-nav" id="calNext" aria-label="Next Month"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span></div>
       <div class="cal-dow"><i>S</i><i>M</i><i>T</i><i>W</i><i>T</i><i>F</i><i>S</i></div>
       <div class="cal-grid" id="calGrid"></div>
       <div class="cal-legend" id="calLegend"></div>
@@ -1159,6 +1230,7 @@
 
   <section id="strengthView" style="display:none">
     <div class="str-hero">
+      <button type="button" class="icbtn" id="strInfoBtn" aria-label="About These Numbers" aria-haspopup="dialog"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></button>
       <div class="str-hero-num" id="strHeroNum">—</div>
       <div class="str-hero-lbl"><span id="strHeroLbl">Current Baseline</span><span class="bwlb" id="strBwPill" style="display:none"></span></div>
       <div class="scrub" id="strHeroScrub" tabindex="0" aria-label="Overall strength trend. Drag across it, or use the arrow keys, to see each session."><svg class="str-spark" id="strHeroSpark" viewBox="0 0 300 56" preserveAspectRatio="none"></svg></div>
@@ -1181,7 +1253,7 @@
     </div>
     <div class="card">
       <h3>Body Weight</h3>
-      <div class="row"><input class="in" type="text" inputmode="decimal" autocomplete="off" id="bwInput" placeholder="lb" style="width:90px"><button class="btn" id="bwLog">Log Today</button><span id="bwInfo" style="font-size:12px;color:var(--text-dim)"></span></div>
+      <div class="row"><input class="in" type="text" inputmode="decimal" autocomplete="off" id="bwInput" placeholder="lb" style="width:90px"><button class="btn" id="bwLog">Log Today</button><span id="bwInfo" class="bw-info"></span></div>
       <div id="bwSpark"></div>
       <div id="bwNote"></div>
     </div>
@@ -1218,7 +1290,7 @@
       <div class="set-group">
         <button class="set-row" data-page="move"><span class="set-lbl">Move History</span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
         <button class="set-row" data-page="data"><span class="set-lbl">Back Up &amp; Restore</span><span class="set-val" id="sv-data"></span><svg class="set-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
-        <label class="set-row static has-cap" for="autoBackup"><span class="set-lbl">Weekly Backup Reminder<span class="set-cap">Highlights Back Up Now after a session once it's been 7+ days. Nothing downloads by itself.</span></span><input type="checkbox" class="switch" id="autoBackup"></label>
+        <label class="set-row static has-cap" for="autoBackup"><span class="set-lbl">Weekly Backup Reminder<span class="set-cap">Nothing downloads by itself.</span></span><input type="checkbox" class="switch" id="autoBackup"></label>
       </div>
       <button type="button" class="reset-link" id="wipeBtn">Erase Everything</button>
       <div class="save-warn" id="saveWarn" role="alert" hidden>Not saving to this device. Export a backup now.</div>
@@ -1232,7 +1304,7 @@
     <div class="set-page" id="sp-text" hidden>
       <div class="set-sub"><button class="set-back" aria-label="Back to Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Settings</button><h2 tabindex="-1">Text Size</h2></div>
       <div class="card">
-      <div class="note-sm" style="margin-bottom:4px">Everything in the app scales together, so every layout keeps its proportions.</div>
+      <div class="note-sm" style="margin-bottom:4px">Text and controls scale together. Tab bar labels stay one size.</div>
       <div class="onb-opts" role="group" aria-label="Text size" id="textSizeOpts"></div>
       </div>
     </div>
@@ -1261,6 +1333,7 @@
       <div class="row" style="margin-top:10px"><label for="restSel" style="font-size:12px;color:var(--text-dim)" id="restSelLbl">Fallback Rest</label>
         <select class="in" id="restSel"><option value="60">60s</option><option value="90">90s</option><option value="120">120s</option><option value="150">150s</option><option value="180">180s</option></select></div>
       <label class="set-toggle" for="autoTimer" style="margin-top:8px"><span>Start automatically when a set is checked</span><input type="checkbox" class="switch" id="autoTimer"></label>
+      <div class="note-sm" style="margin-top:8px">Keep Screen On, in Settings, holds the screen awake while a rest timer or cardio session runs.</div>
       </div>
     </div>
     <div class="set-page" id="sp-edit" hidden>
@@ -1311,6 +1384,7 @@
       <div class="note-sm" style="margin:0 0 10px">Your data lives only on this phone. Export a backup to keep it safe.</div>
       <div class="data-btns"><button class="btn" id="exportBtn">Export Backup</button><button class="btn" id="importBtn">Import Backup</button><button class="btn" id="mergeBtn">Merge Backup</button><input type="file" id="importFile" accept="application/json" style="display:none"></div>
       <div class="note-sm" style="margin-top:8px">Export saves a file with everything in the app. Import replaces everything on this device with a backup file. Merge combines the backup's sessions, exercise history and body weight with what's already here instead of overwriting it — use this to bring two devices' data together.</div>
+      <div class="note-sm" style="margin-top:8px">Weekly Backup Reminder highlights Back Up Now after a session once it's been 7+ days.</div>
       <div class="storage-warn ok" id="lastBackup"></div>
       </div>
     </div>
@@ -4641,15 +4715,16 @@ function renderRhythm(){
   const week=weekStart(), month=(()=>{ const m=new Date(); m.setDate(m.getDate()-30); return m.getTime(); })(); // 30 calendar days back
   const lifts=sessions.filter(s=>!s.isCardio), cardioWeek=sessions.filter(s=>s.isCardio&&s.t>=week);
   const cardioMin=cardioWeek.reduce((a,b)=>a+(b.duration||0),0);
-  document.getElementById('rhStats').innerHTML=`<div><b>${lifts.filter(s=>s.t>=month).length}</b><span>Lifting, Last 30 Days</span></div>
-    <div><b class="${cardioWeek.length>=2?'up':''}">${cardioWeek.length}<small> / 2–3</small></b><span>Conditioning This Week${cardioMin?` · ${cardioMin} min`:''}</span></div>`;
+  document.getElementById('rhStats').innerHTML=`<div><b>${lifts.filter(s=>s.t>=month).length}</b><span>30-Day Lifts</span></div>
+    <div><b class="${cardioWeek.length>=2?'up':''}">${cardioWeek.length}<small> / 2–3</small></b><span>Weekly Conditioning${cardioMin?` · ${cardioMin} min`:''}</span></div>`;
   const ranges=weekRanges(12), counts=ranges.map(([a,b])=>lifts.filter(s=>s.t>=a&&s.t<b).length);
   const top=Math.max(RHYTHM_GOAL,...counts);
   const bars=counts.map((n,i)=>{ const cur=i===counts.length-1;
     return `<i class="${cur?'now':n===0?'zero':n>=RHYTHM_GOAL?'met':''}" style="height:${n?Math.max(4,n/top*100):3}%" title="${fmtDate(ranges[i][0])}: ${n}"></i>`; }).join('');
   // a month label under the first week that starts in it
   const axis=ranges.map(([a],i)=>{ const d=new Date(a), prev=i?new Date(ranges[i-1][0]):null;
-    return `<span>${!prev||prev.getMonth()!==d.getMonth()?d.toLocaleDateString(undefined,{month:'short'}):''}</span>`; }).join('');
+    return !prev||prev.getMonth()!==d.getMonth()?d.toLocaleDateString(undefined,{month:'short'}):''; })
+    .map((m,i,all)=>{ const named=all.map((x,k)=>x?k:-1).filter(k=>k>=0); return `<span>${i===named[0]||i===named[named.length-1]?m:''}</span>`; }).join(''); // the first and last month only: the ends say what the 12 weeks span
   const chart=document.getElementById('rhChart');
   chart.innerHTML=`<div class="rh-goal" style="top:${(1-RHYTHM_GOAL/top)*72}px"><span>Goal ${RHYTHM_GOAL}</span></div><div class="rh-bars">${bars}</div><div class="rh-axis">${axis}</div>`;
   // while the 12 weeks hold sessions from another routine, say which goal the whole chart is drawn against
@@ -4658,6 +4733,20 @@ function renderRhythm(){
     note.hidden=!mixed; note.textContent=mixed?`Goal ${RHYTHM_GOAL} since you switched to ${r.name}. Earlier weeks are shown against it.`:''; }
   chart.setAttribute('aria-label',`Lifting sessions per week, last 12 weeks, oldest first: ${counts.join(', ')}. This week so far: ${counts[counts.length-1]}. Goal ${RHYTHM_GOAL} a week.`);
 }
+// what the short labels and the chart mean, the note about a routine switch, and the session total (it left the header in 2.0)
+function wireInfo(id,title,fill){ const b=document.getElementById(id); b.onclick=e=>{ e.stopPropagation(); b.focus({preventScroll:true}); openInfo(title,fill); }; } // Safari does not focus a tapped button
+wireInfo('rhInfoBtn','Training Rhythm',b=>{
+  infoP(b,'30-Day Lifts: lifting sessions in the last 30 days.');
+  infoP(b,'Weekly Conditioning: conditioning sessions this week. Two or three a week is the aim.');
+  infoP(b,'The chart shows lifting sessions per week for the last 12 weeks, against your weekly goal.',true);
+  infoP(b,document.getElementById('rhGoalNote').textContent,true);
+  infoP(b,`Sessions total: ${sessionCount}`);
+});
+wireInfo('calInfoBtn','Calendar Key',b=>{
+  const key=document.getElementById('calLegend').cloneNode(true); key.removeAttribute('id');
+  if(key.textContent.trim()) b.appendChild(key); else infoP(b,'No sessions this month.',true);
+  infoP(b,'Tap a day with a tag to see that session.',true);
+});
 let calMonthOffset=0;
 // a session logged on a day outside the built-in four (another routine) is a neutral 'other', not skipped; the built-in
 // four keep the exact Upper/Lower name test, so existing sessions read as before
@@ -4891,6 +4980,7 @@ function renderConditioning(){
     <div class="note-sm" style="margin-top:${paceHtml?'10px':'0'}">Same effort covering more distance, or the same pace feeling easier (lower RPE), is what real endurance improvement looks like — not just logging more minutes.</div>`;
 }
 let strCardOpen={upper:false,lower:false}, strPastOpen={upper:false,lower:false};
+const strRowOpen=new Set(); // exercise rows whose detail line is open (2.0), by history key; in memory only
 function renderStrength(){
   renderConditioning();
   const upperList=document.getElementById('upperStrList'), lowerList=document.getElementById('lowerStrList');
@@ -4970,6 +5060,10 @@ function renderStrength(){
     // the card itself toggles open/closed on click — keep these links from bubbling up to it
     const rb=row.querySelector('[data-act="baseline"]'); if(rb) rb.onclick=async e=>{ e.stopPropagation(); baselines[k]=noDl(fullH).slice(-1)[0].t; await sset('baselines',baselines); renderStrength(); if(view==='log') render(); showToast(`${ex.name}: progress now measured from your latest session`); };
     const ru=row.querySelector('[data-act="baseline-undo"]'); if(ru) ru.onclick=async e=>{ e.stopPropagation(); delete baselines[k]; await sset('baselines',baselines); renderStrength(); if(view==='log') render(); showToast(`${ex.name}: baseline back to your first session`); };
+    // 2.0: a row shows name, change and trend; tapping it (not its sparkline, which scrubs, nor a link) opens the detail line and Reset Baseline in place
+    { const setOpen=()=>{ const on=strRowOpen.has(k); row.classList.toggle('row-open',on); row.setAttribute('aria-expanded',String(on)); };
+      row.setAttribute('role','button'); row.tabIndex=0; setOpen();
+      row.onclick=e=>{ if(e.target.closest('.scrub,.linkbtn')) return; if(strRowOpen.has(k)) strRowOpen.delete(k); else strRowOpen.add(k); setOpen(); }; }
     if(targetList) targetList.appendChild(row);
     if(seenKey) shownRows[seenKey]=row;
     return !!targetList;
@@ -5071,6 +5165,14 @@ function renderStrength(){
 }
 // one card open at a time: opening Upper hides Lower (and vice versa) so the list you're reading has the whole
 // screen and stays put until you tap the card again. Taps inside the exercise list don't toggle the card.
+// the explanation that sat under the cards, with the body-weight and deload notes
+wireInfo('strInfoBtn','About These Numbers',b=>{
+  const n=document.querySelector('#strengthView>.note-sm'), dl=document.getElementById('strDlFoot');
+  infoP(b,[...n.childNodes].filter(x=>x!==dl).map(x=>x.textContent).join(''));
+  if(dl&&!dl.hidden) infoP(b,dl.textContent);
+  infoP(b,'Lifts no longer in your program are listed under each card and are not counted in the totals.',true);
+  infoP(b,document.getElementById('bwNote').textContent,true);
+});
 document.getElementById('upperStrCard').onclick=e=>{ if(e.target.closest('.str-card-exlist')) return; strCardOpen.upper=!strCardOpen.upper; strCardOpen.lower=false; renderStrength(); };
 document.getElementById('lowerStrCard').onclick=e=>{ if(e.target.closest('.str-card-exlist')) return; strCardOpen.lower=!strCardOpen.lower; strCardOpen.upper=false; renderStrength(); };
 document.getElementById('bwLog').onclick=async()=>{ const raw=parseNum(document.getElementById('bwInput').value); if(!raw||raw<=0){ showToast('Enter a weight like 168.5'); return; } bodyweight.push({t:Date.now(),w:storeBW(raw)}); await sset('bodyweight',bodyweight); document.getElementById('bwInput').value=''; showToast('Body weight logged'); renderStrength(); updateBwUI(); };
