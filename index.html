@@ -3717,7 +3717,7 @@ function renderHomeBody(){
       </div>`;
     document.getElementById('arrivalStart').onclick=()=>setView('log');
     // the reason sentence that sat under the headline, one tap away
-    document.getElementById('cardioWhySlot').replaceWith(infoBtn('cardioWhyBtn','Why Cardio Today',()=>openInfo('Cardio Today',b=>infoP(b,cardioLive?'Pick it back up where you left off, or save it from there.':cardioReasonCopy().home))));
+    document.getElementById('cardioWhySlot').replaceWith(infoBtn('cardioWhyBtn',cardioLive?'About Your Cardio Session':'Why Cardio Today',()=>openInfo(cardioLive?'Cardio Session':'Cardio Today',b=>infoP(b,cardioLive?'Pick it back up where you left off, or save it from there.':cardioReasonCopy().home))));
     panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day, ()=>setView('log')));
     placeCarousel(panel,prevLeft);
     return;
