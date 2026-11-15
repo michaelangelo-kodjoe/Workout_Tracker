@@ -1109,10 +1109,9 @@
   .set-row .set-val{flex:0 1 auto;min-width:0;max-width:calc(100% - 28px);margin-left:auto;text-align:right;font-size:var(--fs-body);overflow-wrap:anywhere;} /* on its own line it stays on the right, beside the chevron */
   .set-row .set-seg,.set-row .set-chev,.set-row input.switch{margin-left:auto;}
   .set-row .set-val+.set-chev{margin-left:0;}
-  /* captions are hidden (owner, 2026-11-14); the one that prevents a wrong expectation stays, and a routine's own note stays */
+  /* captions are hidden (owner, 2026-11-14: "Hide them"); each one's text is on the page or sheet its row opens. A routine's own note stays. */
   .set-cap{display:none;font-size:var(--fs-sm);}
-  label[for="autoBackup"] .set-cap,.set-cap.rt-rownote:not([hidden]){display:block;}
-  .set-row.static.has-cap{padding-top:4px;padding-bottom:4px;}
+  .set-cap.rt-rownote:not([hidden]){display:block;}
   input.switch:not(:where(#logView *)){width:52px;height:44px;background:none;border-radius:0;}
   input.switch:not(:where(#logView *))::before{content:"";position:absolute;left:0;top:6px;width:52px;height:32px;border-radius:var(--r-full);background:var(--line-strong);}
   input.switch:not(:where(#logView *))::after{left:3px;top:9px;width:26px;height:26px;}
@@ -1390,7 +1389,7 @@
       <div class="note-sm" style="margin:0 0 10px">Your data lives only on this phone. Export a backup to keep it safe.</div>
       <div class="data-btns"><button class="btn" id="exportBtn">Export Backup</button><button class="btn" id="importBtn">Import Backup</button><button class="btn" id="mergeBtn">Merge Backup</button><input type="file" id="importFile" accept="application/json" style="display:none"></div>
       <div class="note-sm" style="margin-top:8px">Export saves a file with everything in the app. Import replaces everything on this device with a backup file. Merge combines the backup's sessions, exercise history and body weight with what's already here instead of overwriting it — use this to bring two devices' data together.</div>
-      <div class="note-sm" style="margin-top:8px">Weekly Backup Reminder highlights Back Up Now after a session once it's been 7+ days.</div>
+      <div class="note-sm" style="margin-top:8px">Weekly Backup Reminder highlights Back Up Now after a session once it's been 7+ days. Nothing downloads by itself.</div>
       <div class="storage-warn ok" id="lastBackup"></div>
       </div>
     </div>
