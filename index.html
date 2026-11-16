@@ -1289,6 +1289,35 @@
   .qz-skipq,.onb-skip,.onb-back{font-size:var(--fs-body);}
   .cel-h1,.cf-h{font-weight:700;}
   .onb-note,.build-hint,.qz-state,.qz-note,.rt-honest{font-size:var(--fs-sm);}
+  /* ---------- motion (B4): three durations and one curve; transform and opacity only (the rest-timer ring is the named exception) ---------- */
+  main>section.view-enter{animation:viewin var(--dur-2) var(--ease);}
+  @keyframes viewin{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+  .sheet-bg{transition:opacity var(--dur-2) var(--ease);}
+  .sheet{transition:transform var(--dur-3) var(--ease),visibility 0s linear var(--dur-3);}
+  .sheet.on{transition:transform var(--dur-3) var(--ease);}
+  .sheet.dragging{transition:none;}
+  .celebrate-bg.on .celebrate{animation:viewin var(--dur-3) var(--ease);}
+  .celebrate-bg.on .pr-card{animation:prpop var(--dur-3) var(--ease) .25s both;} /* the one emphasis */
+  @keyframes prpop{from{opacity:0;transform:scale(.94);}to{opacity:1;transform:none;}}
+  .viewtab{transition:color var(--dur-1) var(--ease);}
+  .viewtab svg{transition:transform var(--dur-2) var(--ease);} .viewtab.active svg{transform:translateY(-1px) scale(1.06);}
+  .btn,.start-cta,.finish-btn,.pg,.cel-cta{transition:transform var(--dur-1) var(--ease),background var(--dur-2) var(--ease),color var(--dur-2) var(--ease);}
+  .setdone{transition:background var(--dur-1) var(--ease);}
+  .slast>span,.rir-pill,.daytab{transition:background var(--dur-1) var(--ease),color var(--dur-1) var(--ease);}
+  input.switch:not(:where(#logView *))::before{transition:background var(--dur-1) var(--ease);}
+  input.switch::after{transition:transform var(--dur-2) var(--ease);}
+  .plan-row .ic{transition:transform var(--dur-2) var(--ease);}
+  .preview-list:not([hidden]){animation:viewin var(--dur-2) var(--ease);}
+  .title-row{touch-action:pan-y;} /* a sideways swipe on the title row changes day (Log) */
+  @media (prefers-reduced-motion: reduce){
+    main>section.view-enter,.exercise.enter-r,.exercise.enter-l,.preview-list:not([hidden]),.celebrate-bg.on .celebrate,.celebrate-bg.on .pr-card{animation:fadein 150ms linear;}
+    .sheet{transform:none;opacity:0;transition:opacity 150ms linear,visibility 0s linear 150ms;}
+    .sheet.on{opacity:1;transition:opacity 150ms linear;}
+    .sheet-bg{transition:opacity 150ms linear;}
+    .confetti{display:none;} /* confetti is off with Reduce Motion */
+    .viewtab svg,.btn,.start-cta,.finish-btn,.pg,.cel-cta,.setdone,.plan-row .ic,input.switch::after{transition:none;transform:none;}
+    .viewtab.active svg{transform:none;}
+  }
   /* a view that is showing carries .view-on (set by setView), the hook B4 animates from */
   @media (prefers-reduced-motion: reduce){ .viewtab svg,.btn,.start-cta{transition:none;} }
 </style>
@@ -3316,7 +3345,12 @@ function closeWeek(){ document.getElementById('weekBg').classList.remove('on'); 
 document.getElementById('weekBtn').onclick=e=>{ e.currentTarget.focus({preventScroll:true}); document.getElementById('weekBg').classList.add('on'); document.getElementById('weekSheet').classList.add('on'); };
 document.getElementById('weekClose').onclick=closeWeek; document.getElementById('weekBg').onclick=closeWeek;
 async function loadDay(d){
-  if(d!==currentDay){ focusIdx=null; closeMore(); }
+  if(d!==currentDay){
+    focusIdx=null; closeMore();
+    // MO-2: the new day's exercise slides in from the side of its tab (only for a day the user chose on the Log)
+    const order=PROGRAM.map(p=>p.id).concat('cardio'), oi=order.indexOf(currentDay), ni=order.indexOf(d);
+    if(view==='log'&&!booting&&oi>=0&&ni>=0) focusDir=Math.sign(ni-oi);
+  }
   currentDay=d; renderHeaderStats();
   if(d==='cardio'){ renderTabs(); renderBody(); renderCardioForm(); return; }
   document.getElementById('finishBtn').style.display=''; document.getElementById('resetLink').style.display='';
@@ -6513,7 +6547,7 @@ async function doSwap(day, idx, alt){
 function setView(v){
   if(view==='log'&&v!=='log'&&cardioDraft&&cardioDraft.step==='intro'&&!cardioLive){ cardioDraft=newCardioDraft(); renderCardioForm(); } // leaving the Log abandons the cardio intro (nothing was saved): it returns to the picker
   const prevView=view; view=v; document.body.dataset.view=v; document.querySelectorAll('.viewtab').forEach(t=>{ t.classList.toggle('active',t.dataset.v===v); if(t.dataset.v===v) t.setAttribute('aria-current','page'); else t.removeAttribute('aria-current'); });
-  ['home','log','history','strength','more'].forEach(n=>{ const el=document.getElementById(n+'View'); el.style.display=(v===n?'':'none'); el.classList.toggle('view-on',v===n); }); // .view-on: the hook for B4's tab transition
+  ['home','log','history','strength','more'].forEach(n=>{ const el=document.getElementById(n+'View'); el.style.display=(v===n?'':'none'); el.classList.toggle('view-on',v===n); if(v===n&&prevView!==v){ el.classList.remove('view-enter'); void el.offsetWidth; el.classList.add('view-enter'); el.addEventListener('animationend',()=>el.classList.remove('view-enter'),{once:true}); } }); // the incoming view fades up (MO-1); the tab bar does not move
   document.getElementById('dayTabs').style.display=v==='log'?'':'none'; document.getElementById('logFooter').style.display=v==='log'?'':'none';
   if(v==='home'){ if(view!==prevView) homeCarKey=''; renderHome(); maybeQuizPrompt(); }
   if(v==='log' && currentDay!=='cardio') render();
@@ -6758,6 +6792,55 @@ function tagClickables(root){
   }
 }
 tagClickables(document.body);
+// ---------- gestures (B4) ----------
+// Each has a visible control that does the same: the sheet's Close and backdrop, Previous / Next and the Day List, the day tabs.
+// Swipes start at least 30 px from either screen edge (an edge swipe is the system's Back in an installed app) and never on a field.
+const GESTURE_EDGE=30;
+const zoomNow=()=>parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tz'))||1;
+let sheetDrag=null;
+function dismissSheet(s){ const b=s.previousElementSibling; if(b&&b.classList.contains('sheet-bg')) b.click(); else document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})); }
+function sheetDragStart(t,target){
+  sheetDrag=null; const s=target.closest&&target.closest('.sheet.on'); if(!s) return;
+  if(s.querySelector('.sheet-actions,.se-foot')) return;            // a sheet holding unsaved input is not drag-dismissable
+  if(target.closest('input,textarea,select,.scrub')) return;
+  const inTop=(t.clientY-s.getBoundingClientRect().top)<56*zoomNow();
+  if(!inTop&&s.scrollTop>0) return;                                  // content scrolled: the drag is a scroll
+  sheetDrag={s,y0:t.clientY,t0:Date.now(),dy:0,on:false,inTop};
+}
+function sheetDragMove(t,e){
+  const d=sheetDrag; if(!d) return; d.dy=t.clientY-d.y0;
+  if(!d.on){ if(d.dy>8&&(d.inTop||d.s.scrollTop<=0)){ d.on=true; d.s.classList.add('dragging'); } else if(d.dy<-8){ sheetDrag=null; return; } }
+  if(d.on){ if(e.cancelable) e.preventDefault(); d.s.style.transform='translateY('+(Math.max(0,d.dy)/zoomNow())+'px)'; }
+}
+function sheetDragEnd(){
+  const d=sheetDrag; sheetDrag=null; if(!d||!d.on) return;
+  const v=d.dy/Math.max(1,Date.now()-d.t0); d.s.classList.remove('dragging');
+  if(d.dy>110||v>.6){ dismissSheet(d.s); requestAnimationFrame(()=>{ d.s.style.transform=''; }); } else d.s.style.transform='';
+}
+let swipe=null;
+function swipeStart(t,target){
+  swipe=null; if(view!=='log'||!target.closest) return;
+  if(document.querySelector('.sheet.on,.celebrate-bg.on')) return;
+  if(t.clientX<GESTURE_EDGE||t.clientX>innerWidth-GESTURE_EDGE) return;
+  if(target.closest('.title-row')&&!target.closest('button')){ swipe={x:t.clientX,y:t.clientY,day:true}; return; }   // days: the plain title row
+  if(currentDay==='cardio'||!target.closest('#exerciseList')||target.closest('input,textarea,select,.scrub')) return; // exercises: the exercise area
+  swipe={x:t.clientX,y:t.clientY};
+}
+function swipeEnd(t){
+  const w=swipe; swipe=null; if(!w) return; const dx=t.clientX-w.x, dy=t.clientY-w.y;
+  if(!(Math.abs(dx)>56&&Math.abs(dx)>2*Math.abs(dy))) return;
+  if(w.day){ // taps the neighbouring day tab, so the fatigue and cardio prompts are the app's own
+    const tabs=[...document.querySelectorAll('#dayTabs .daytab')], i=tabs.findIndex(x=>x.classList.contains('active')), n=tabs[i+(dx<0?1:-1)]; if(n) n.click(); }
+  else setFocus(focusIdx+(dx<0?1:-1));
+}
+document.addEventListener('touchstart',e=>{ sheetDragStart(e.touches[0],e.target); swipeStart(e.touches[0],e.target); },{passive:true});
+document.addEventListener('touchmove',e=>sheetDragMove(e.touches[0],e),{passive:false});
+document.addEventListener('touchend',e=>{ sheetDragEnd(); if(e.changedTouches[0]) swipeEnd(e.changedTouches[0]); });
+document.addEventListener('touchcancel',()=>{ sheetDragEnd(); swipe=null; });
+document.addEventListener('mousedown',e=>{ sheetDragStart(e,e.target); swipeStart(e,e.target); });
+document.addEventListener('mousemove',e=>{ if(sheetDrag) sheetDragMove(e,e); });
+document.addEventListener('mouseup',e=>{ sheetDragEnd(); swipeEnd(e); });
+
 // ---------- sheets as dialogs ----------
 // Every bottom sheet opens by gaining .on (each opener does that its own way), so one observer per sheet gives them all
 // the same dialog behaviour: a dialog role labelled by its title, focus moved into it (the sheet itself, so a screen
@@ -6770,7 +6853,7 @@ document.querySelectorAll('.sheet').forEach(sh=>{
   const title=sh.querySelector('.sheet-head [id]'); if(title) sh.setAttribute('aria-labelledby',title.id);
   new MutationObserver(()=>{
     const on=sh.classList.contains('on');
-    if(on&&!sheetReturnFocus.has(sh)){ sheetReturnFocus.set(sh,document.activeElement); sh.scrollTop=0; requestAnimationFrame(()=>sh.focus({preventScroll:true})); }
+    if(on&&!sheetReturnFocus.has(sh)){ sheetReturnFocus.set(sh,document.activeElement); sh.scrollTop=0; requestAnimationFrame(()=>{ if(sh.classList.contains('on')) sh.focus({preventScroll:true}); }); } // not if it was already closed again: a closing sheet is still focusable while it slides away
     else if(!on&&sheetReturnFocus.has(sh)){ const back=sheetReturnFocus.get(sh); sheetReturnFocus.delete(sh); if(back&&back.focus&&document.contains(back)) back.focus({preventScroll:true}); }
     document.documentElement.classList.toggle('sheet-open',sheetReturnFocus.size>0);
   }).observe(sh,{attributes:true,attributeFilter:['class']});
