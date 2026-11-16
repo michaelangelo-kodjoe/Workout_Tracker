@@ -3387,8 +3387,6 @@ const CARDIO_REASON_COPY={
 };
 function cardioReasonCopy(){ const {reason,nextDay}=suggestedDay(); const c=CARDIO_REASON_COPY[reason]||CARDIO_REASON_COPY.backToBack; const lc=sessions.filter(x=>x.isCardio&&!isFuture(x.t)).reduce((m,x)=>x.t>m?x.t:m,0), g=lc?gapPhrase(lc):''; const f=v=>typeof v==='function'?v(nextDay,g):v; return {sub:f(c.sub),home:f(c.home),body:f(c.body)}; }
 function renderTabs(){ const w=document.getElementById('dayTabs'); w.innerHTML=''; document.body.classList.toggle('log-focus',currentDay!=='cardio');
-  // a redraw can remove the field that had focus without a focusout (stepping to another exercise with the keyboard up): drop the typing mark so the footer comes back
-  { const a=document.activeElement; if(!a||!a.matches(TYPING_SEL)) document.body.classList.remove('typing'); }
   const suggested=suggestedDayId();
   PROGRAM.forEach(d=>{ const el=document.createElement('div'); el.className='daytab '+dayType(d)+(d.id===currentDay?' active':'')+(d.id===suggested?' suggested':''); if(d.id===suggested) el.title='Next up in your rotation'; if(d.id===currentDay) el.setAttribute('aria-current','true'); el.innerHTML=`${d.name}<span class="dsub">${d.sub}</span>`; el.onclick=()=>attemptLoadDay(d.id); w.appendChild(el); });
   const c=document.createElement('div'); c.className='daytab cardio-tab t-cardio'+(currentDay==='cardio'?' active':'')+(suggested==='cardio'?' suggested':''); if(suggested==='cardio') c.title='Next up in your rotation'; if(currentDay==='cardio') c.setAttribute('aria-current','true'); if(cardioLive){ c.classList.add('live'); c.setAttribute('aria-label','Cardio, session in progress'); } c.innerHTML='Cardio<span class="dsub">'+(cardioLive?'In Progress':'Endurance')+'</span>'; c.onclick=()=>loadDay('cardio'); w.appendChild(c);
@@ -3558,7 +3556,9 @@ function orderedExercises(day){
 // It is not stored (NC-1); a reload lands on the derived exercise again.
 let focusIdx=null, focusDay=null, focusDir=0, moreOpen=false;
 function derivedFocus(ord){ const i=ord.findIndex(ex=>!ensureState(ex).sets.every(s=>s.done)); return i<0?ord.length-1:i; }
-function setFocus(i){ const day=PROGRAM.find(d=>d.id===currentDay); if(!day) return; const n=day.exercises.length; i=Math.max(0,Math.min(n-1,i)); if(i===focusIdx) return; focusDir=Math.sign(i-focusIdx); focusIdx=i; closeMore(); render(); window.scrollTo(0,0); }
+function setFocus(i){ const day=PROGRAM.find(d=>d.id===currentDay); if(!day) return; const n=day.exercises.length; i=Math.max(0,Math.min(n-1,i)); if(i===focusIdx) return; focusDir=Math.sign(i-focusIdx); focusIdx=i; closeMore();
+  { const a=document.activeElement; if(a&&a.closest&&a.closest('#exerciseList')) a.blur(); } // another exercise is another set of fields: nothing to hand focus back to (and the keyboard goes away)
+  render(); window.scrollTo(0,0); }
 function render(){
   const focusKey=listFocusKey();
   // several settings handlers (unit, auto-rotate, rotate-every, deload start/end) re-render the log after a change
@@ -3843,6 +3843,8 @@ function updateLogSummary(day){
   p.querySelector('.next').onclick=e=>{ e.currentTarget.focus({preventScroll:true}); setFocus(focusIdx+1); pagerFocus('.next'); };
   p.querySelector('.list').onclick=e=>{ e.currentTarget.focus({preventScroll:true}); openDayList(); };
   updateLogChrome();
+  // a redraw can remove the field that had focus without a focusout (stepping to another exercise with the keyboard up): drop the typing mark so the footer comes back
+  { const a=document.activeElement; if(!a||!a.matches(TYPING_SEL)) document.body.classList.remove('typing'); }
 }
 // the pager is redrawn with the card, so a tapped Previous or Next is a new element: put focus back on its successor
 function pagerFocus(sel){ const b=document.querySelector('#pager '+sel); if(b&&b.getAttribute('aria-disabled')!=='true') b.focus({preventScroll:true}); else { const l=document.querySelector('#pager .list'); if(l) l.focus({preventScroll:true}); } }
