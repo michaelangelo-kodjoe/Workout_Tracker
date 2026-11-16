@@ -1278,6 +1278,10 @@
   .onb-opt[aria-pressed="true"],.eqchip.on,.rt-card.cur,.cf-seg .on,.cf-seg [aria-pressed="true"]{border-color:var(--text);}
   .badge.heavy,.badge.light,.badge.plateau,.badge.deload,.badge[class*="t-"]{background:var(--panel-raised);}
   .pr-card{border-color:var(--amber);}
+  /* Edit Workouts: the row's four 44 px actions drop under the name when they do not fit beside it (320 px, Larger text) */
+  .edrow{display:flex;flex-wrap:wrap;align-items:center;gap:0 var(--sp-2);}
+  .edrow>:first-child{flex:1 1 130px;min-width:0;overflow-wrap:anywhere;}
+  .edrow .acts{margin-left:auto;}
   .sheet .rt-card .badge,.sheet .rt-card .rt-chip{background:var(--panel);color:var(--text);}
   /* the one big button on these screens: filled coral; the second choice is tonal */
   .cel-cta{min-height:52px;border:0;border-radius:var(--r-sm);font-size:var(--fs-lg);font-weight:700;letter-spacing:0;}
