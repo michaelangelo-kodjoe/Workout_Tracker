@@ -1263,6 +1263,7 @@
   .xt .setgrid:not(.head) .slast{grid-column:2 / 4;grid-row:2;justify-content:flex-start;}
   .xt .setgrid input{font-size:var(--fs-lg)!important;}
   .tight .xh-meta,.xt .xh-meta{font-size:var(--fs-body);}
+  .pager.narrow .segs{display:none;} .pager.narrow .pg{padding:0 8px;} .pager.narrow .pg.prev{width:44px;} .pager.narrow .pg.next{padding:0 6px 0 12px;} .pager.narrow .pg.list{justify-content:center;gap:8px;}
   @media (max-width:359px){ .timer-row{flex-wrap:wrap;gap:6px 10px;} .timer .t{flex:1 1 auto;} .timer .acts{margin-left:auto;} } /* the rest timer wraps its buttons under the clock on a 320 px screen with larger text */
   @media (prefers-reduced-motion: reduce){
     .setdone.on.pop{animation:none;} /* the Done pop stays off with Reduce Motion (QA OBS-1) */
@@ -1279,6 +1280,17 @@
   .onb-opt[aria-pressed="true"],.eqchip.on,.rt-card.cur,.cf-seg .on,.cf-seg [aria-pressed="true"]{border-color:var(--text);}
   .badge.heavy,.badge.light,.badge.plateau,.badge.deload,.badge[class*="t-"]{background:var(--panel-raised);}
   .pr-card{border-color:var(--amber);}
+  /* the Log footer reaches 16 px from each edge (4 px footer padding + 12 px inside), as in the approved mock */
+  footer{padding-left:max(4px,var(--sa-l));padding-right:max(4px,var(--sa-r));}
+  .viewtabs{margin:0;}
+  /* tonal, not outlined: cardio tiles, steppers and recent-activity chips; one segmented-control style (selected = filled light) */
+  .cf-tile,.cf-rc,.cf-stp button{border-color:transparent;}
+  .cf-tile{background:var(--panel);} .cf-rc,.cf-stp button{background:var(--panel-raised);}
+  .cf-seg{padding:0;gap:0;} .cf-seg button{font-size:var(--fs-sm);font-weight:600;min-width:0;padding:0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .cf-seg button.on{background:var(--text);color:var(--bg);box-shadow:none;}
+  .cardio-tab{border-style:solid;}
+  /* dividers, not dashes */
+  .edrow,.fat-row,.build-row{border-bottom-style:solid;} .recov-list{border-top-style:solid;} .recov-row.sub + .recov-row.sub{border-top-style:solid;}
   /* Edit Workouts: the row's four 44 px actions drop under the name when they do not fit beside it (320 px, Larger text) */
   .edrow{display:flex;flex-wrap:wrap;align-items:center;gap:0 var(--sp-2);}
   .edrow>:first-child{flex:1 1 130px;min-width:0;overflow-wrap:anywhere;}
@@ -3893,6 +3905,7 @@ function updateLogSummary(day){
   document.getElementById('dayLabel').innerHTML=`<h2 class="sr-only">${esc(day.name)} ${esc(day.sub)}</h2>`;
   // Previous, the Day List (progress segments and position), Next. Next is never in Finish's place and never finishes (LF-2).
   const n=ord.length, i=focusIdx, p=document.getElementById('pager');
+  p.classList.toggle('narrow',innerWidth/zoomNow()<300); // a 320 px screen with larger text: the progress segments drop out, Previous and Next slim down
   p.innerHTML=`<button type="button" class="pg prev" aria-label="Previous Exercise"${i===0?' aria-disabled="true"':''}>${IC.chevL}</button>
     <button type="button" class="pg list" aria-haspopup="dialog" aria-label="Day List. Exercise ${i+1} of ${n}, ${doneN} finished">${IC.list}<span class="segs" aria-hidden="true">${ord.map((ex,k)=>`<i class="${ensureState(ex).sets.every(s=>s.done)?'done':k===i?'cur':''}"></i>`).join('')}</span><span>${i+1}/${n}</span></button>
     <button type="button" class="pg next" aria-label="Next Exercise"${i===n-1?' aria-disabled="true"':''}>Next${IC.chevR}</button>`;
@@ -4245,8 +4258,8 @@ function renderOnboardStep(step){
       <div class="onb-foot">
         <div id="onboardImportError" role="alert" class="onb-note" style="display:none"></div>
         <input type="file" id="onboardImportFile" accept="application/json" style="display:none">
-        <button class="cel-cta alt" id="onboardImportBtn">Import My Data</button>
-        <button class="cel-cta" id="onboardNext">Start as New User</button>
+        <button class="cel-cta" id="onboardImportBtn">Import My Data</button>
+        <button class="cel-cta alt" id="onboardNext">Start as New User</button>
         <div class="onb-note">Used Lift Log before? Import your backup file to bring your program, history and settings with you.</div>
       </div>`;
     $('onboardImportBtn').onclick=()=>$('onboardImportFile').click();
