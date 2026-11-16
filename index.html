@@ -1263,6 +1263,7 @@
   .xt .setgrid:not(.head) .slast{grid-column:2 / 4;grid-row:2;justify-content:flex-start;}
   .xt .setgrid input{font-size:var(--fs-lg)!important;}
   .tight .xh-meta,.xt .xh-meta{font-size:var(--fs-body);}
+  @media (max-width:359px){ .timer-row{flex-wrap:wrap;gap:6px 10px;} .timer .t{flex:1 1 auto;} .timer .acts{margin-left:auto;} } /* the rest timer wraps its buttons under the clock on a 320 px screen with larger text */
   @media (prefers-reduced-motion: reduce){
     .setdone.on.pop{animation:none;} /* the Done pop stays off with Reduce Motion (QA OBS-1) */
     .exercise.enter-r,.exercise.enter-l{animation:fadein 150ms linear;}
