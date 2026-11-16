@@ -1321,6 +1321,12 @@
   input.switch::after{transition:transform var(--dur-2) var(--ease);}
   .plan-row .ic{transition:transform var(--dur-2) var(--ease);}
   .preview-list:not([hidden]){animation:viewin var(--dur-2) var(--ease);}
+  /* swipe a set row left to remove it */
+  #exerciseList{overflow-x:clip;}
+  .setgrid:not(.head){position:relative;touch-action:pan-y;transition:transform var(--dur-2) var(--ease);}
+  .setgrid.dragging{transition:none;}
+  .rm-act{display:none;position:absolute;left:100%;top:0;bottom:0;width:88px;margin:0 0 0 8px;padding:0;border:0;border-radius:var(--r-sm);background:var(--danger);color:var(--on-accent);font:inherit;font-size:var(--fs-body);font-weight:700;align-items:center;justify-content:center;cursor:pointer;}
+  .setgrid.dragging .rm-act,.setgrid.open .rm-act{display:flex;}
   .title-row{touch-action:pan-y;} /* a sideways swipe on the title row changes day (Log) */
   @media (prefers-reduced-motion: reduce){
     main>section.view-enter,.exercise.enter-r,.exercise.enter-l,.preview-list:not([hidden]),.celebrate-bg.on .celebrate,.celebrate-bg.on .pr-card{animation:fadein 150ms linear;}
@@ -1328,6 +1334,7 @@
     .sheet.on{opacity:1;transition:opacity 150ms linear;}
     .sheet-bg{transition:opacity 150ms linear;}
     .confetti{display:none;} /* confetti is off with Reduce Motion */
+    .setgrid:not(.head){transition:none;}
     .viewtab svg,.btn,.start-cta,.finish-btn,.pg,.cel-cta,.setdone,.plan-row .ic,input.switch::after{transition:none;transform:none;}
     .viewtab.active svg{transform:none;}
   }
@@ -3830,7 +3837,7 @@ function renderExercise(ex,day){
       if(bwLoaded) s.w=bwTotal(s);
       const addHint=bwLoaded?(state.sets.slice(0,i).map(x=>parseFloat(x.add)||0).filter(Boolean).pop()||lastAdd):0;
       const row=document.createElement('div'); row.className='setgrid';
-      row.innerHTML=`<button type="button" class="setnum" aria-label="Set ${i+1} options" aria-haspopup="dialog">${i+1}</button><span class="slast"></span><input type="number" inputmode="decimal" aria-label="Set ${i+1} ${bwLoaded?'added weight':'weight'}" placeholder="${bwLoaded?'+'+dispWeight(addHint):sug===null?'bw':sug===-1?unitLabel():dispWeight(sug)}" value="${bwLoaded?(s.add?dispWeight(s.add):''):(s.w?dispWeight(s.w):s.w)}"${bwLoaded?' title="extra weight held or worn (dumbbells, a dip belt) — leave blank for bodyweight only"':''}><input type="number" inputmode="numeric" aria-label="Set ${i+1} ${timed?'seconds':'reps'}" placeholder="" value="${s.r}"><div class="setdone ${s.done?'on':''}${popSet===s&&!matchMedia('(prefers-reduced-motion: reduce)').matches?' pop':''}" aria-label="set ${i+1} done" aria-pressed="${!!s.done}">${s.done?'✓':''}</div>`;
+      row.innerHTML=`<button type="button" class="setnum" aria-label="Set ${i+1} options" aria-description="Opens Remove Set. Sighted users can also swipe the row left." aria-haspopup="dialog">${i+1}</button><span class="slast"></span><input type="number" inputmode="decimal" aria-label="Set ${i+1} ${bwLoaded?'added weight':'weight'}" placeholder="${bwLoaded?'+'+dispWeight(addHint):sug===null?'bw':sug===-1?unitLabel():dispWeight(sug)}" value="${bwLoaded?(s.add?dispWeight(s.add):''):(s.w?dispWeight(s.w):s.w)}"${bwLoaded?' title="extra weight held or worn (dumbbells, a dip belt) — leave blank for bodyweight only"':''}><input type="number" inputmode="numeric" aria-label="Set ${i+1} ${timed?'seconds':'reps'}" placeholder="" value="${s.r}"><div class="setdone ${s.done?'on':''}${popSet===s&&!matchMedia('(prefers-reduced-motion: reduce)').matches?' pop':''}" aria-label="set ${i+1} done" aria-pressed="${!!s.done}">${s.done?'✓':''}</div>`;
       const [wI,rI]=row.querySelectorAll('input');
       // one-shot: the pop mark comes off when its animation ends, so it is an event on this tap, never a state a later draw could replay
       if(popSet===s){ const dn=row.querySelector('.setdone'); dn.addEventListener('animationend',()=>dn.classList.remove('pop'),{once:true}); }
@@ -3853,6 +3860,10 @@ function renderExercise(ex,day){
         ph.replaceWith(cell);
       }
       row.querySelector('.setnum').onclick=e=>{ e.currentTarget.focus({preventScroll:true}); openSetOptions(ex,state,i,s,bwLoaded); };
+      // swipe left to remove: the row slides over a pink Remove button (a visual shortcut; the set-number sheet is the keyboard and VoiceOver path)
+      row._rm={ex,state,i,s,bw:bwLoaded};
+      { const act=document.createElement('button'); act.type='button'; act.className='rm-act'; act.tabIndex=-1; act.setAttribute('aria-hidden','true'); act.textContent='Remove';
+        act.onclick=async()=>{ const ok=await removeSetFlow(ex,state,i,s,bwLoaded); if(!ok) closeOpenRow(); }; row.appendChild(act); }
       body.appendChild(row);
       if(timed&&!s.done){
         const running=hold.key===holdKey(ex,i);
@@ -3940,15 +3951,19 @@ function openDayOptions(){
     l.append(a,c); b.appendChild(l); });
 }
 // Set options: the ✕ that sat beside Done moved behind the set number (a mistaken tap is no longer one tap from Done). The confirm is unchanged.
+// Remove Set, one set of rules for the set-number sheet, the swipe and the revealed button: keep at least one set; an empty set goes at once;
+// a set with anything logged asks first. Resolves true when the set is gone.
+async function removeSetFlow(ex,state,i,s,bwLoaded){
+  if(state.sets.length<=1){ showToast('Keep at least one set'); return false; }
+  const logged=s.done||s.r!==''||(bwLoaded?!!parseFloat(s.add):(s.w!==''&&s.w!=null));
+  if(logged&&!await confirmSheet(`Remove set ${i+1} of ${ex.name}? What's logged in it will be lost.`,'Remove Set',null,true)) return false;
+  actRemoveSet(state,i); refreshExercise(ex); const sn=document.querySelectorAll('#exerciseList .setnum')[Math.min(i,state.sets.length-1)]; if(sn) sn.focus({preventScroll:true});
+  return true;
+}
 function openSetOptions(ex,state,i,s,bwLoaded){
   openInfo(`Set ${i+1}`,b=>{ const l=document.createElement('div'); l.className='sheet-list';
     const r=document.createElement('button'); r.type='button'; r.className='lrow danger'; r.textContent='Remove Set';
-    r.onclick=async()=>{ closeInfo();
-      if(state.sets.length<=1){ showToast('Keep at least one set'); return; }
-      // an empty set goes in one tap; one with anything logged asks first
-      const logged=s.done||s.r!==''||(bwLoaded?!!parseFloat(s.add):(s.w!==''&&s.w!=null));
-      if(logged&&!await confirmSheet(`Remove set ${i+1} of ${ex.name}? What's logged in it will be lost.`,'Remove Set',null,true)) return;
-      actRemoveSet(state,i); refreshExercise(ex); const sn=document.querySelectorAll('#exerciseList .setnum')[Math.min(i,state.sets.length-1)]; if(sn) sn.focus({preventScroll:true}); };
+    r.onclick=()=>{ closeInfo(); removeSetFlow(ex,state,i,s,bwLoaded); };
     l.appendChild(r); b.appendChild(l); });
 }
 
@@ -6834,6 +6849,29 @@ function sheetDragEnd(){
   const v=d.dy/Math.max(1,Date.now()-d.t0); d.s.classList.remove('dragging');
   if(d.dy>110||v>.6){ dismissSheet(d.s); requestAnimationFrame(()=>{ d.s.style.transform=''; }); } else d.s.style.transform='';
 }
+// swipe a set row left: slide it over a Remove button. Short drag: snaps back. Medium: rests open (tap Remove). Long: removes, with the usual rules.
+const ROW_OPEN=96, ROW_MAX=170, ROW_FULL=156, ROW_HALF=48;
+let rowDrag=null, openRow=null;
+function closeOpenRow(){ if(!openRow) return; openRow.classList.remove('open'); openRow.style.transform=''; openRow=null; }
+function rowSwipeStart(t,target){
+  rowDrag=null; if(view!=='log'||!target.closest) return false;
+  if(!target.closest('.rm-act')) { const row0=target.closest('#exerciseList .setgrid:not(.head)'); if(openRow&&row0!==openRow) closeOpenRow(); }
+  const row=target.closest('#exerciseList .setgrid:not(.head)'); if(!row||!row._rm||target.closest('.rm-act')) return false;
+  if(document.querySelector('.sheet.on,.celebrate-bg.on')||t.clientX<GESTURE_EDGE||t.clientX>innerWidth-GESTURE_EDGE) return false;
+  if(target.closest('input,textarea,select')) return false;     // typing and the number steppers are not a swipe
+  swipe=null; rowDrag={row,x0:t.clientX,y0:t.clientY,base:row===openRow?-ROW_OPEN:0,px:row===openRow?-ROW_OPEN:0,on:false}; return true;
+}
+function rowDragMove(t,e){
+  const d=rowDrag; if(!d) return; const dx=t.clientX-d.x0, dy=t.clientY-d.y0;
+  if(!d.on){ if(Math.abs(dx)>10&&Math.abs(dx)>1.5*Math.abs(dy)){ d.on=true; d.row.classList.add('dragging'); } else if(Math.abs(dy)>10){ rowDrag=null; return; } }
+  if(d.on){ if(e.cancelable) e.preventDefault(); d.px=Math.max(-ROW_MAX,Math.min(0,d.base+dx/zoomNow())); d.row.style.transform='translateX('+d.px+'px)'; }
+}
+async function rowDragEnd(){
+  const d=rowDrag; rowDrag=null; if(!d||!d.on) return; d.row.classList.remove('dragging');
+  if(d.px<=-ROW_FULL){ const r=d.row._rm; d.row.style.transform='translateX(-'+ROW_OPEN+'px)'; const ok=await removeSetFlow(r.ex,r.state,r.i,r.s,r.bw); if(!ok){ d.row.style.transform=''; d.row.classList.remove('open'); if(openRow===d.row) openRow=null; } }
+  else if(d.px<=-ROW_HALF){ d.row.style.transform='translateX(-'+ROW_OPEN+'px)'; d.row.classList.add('open'); openRow=d.row; }
+  else { d.row.style.transform=''; d.row.classList.remove('open'); if(openRow===d.row) openRow=null; }
+}
 let swipe=null;
 function swipeStart(t,target){
   swipe=null; if(view!=='log'||!target.closest) return;
@@ -6850,13 +6888,13 @@ function swipeEnd(t){
     const tabs=[...document.querySelectorAll('#dayTabs .daytab')], i=tabs.findIndex(x=>x.classList.contains('active')), n=tabs[i+(dx<0?1:-1)]; if(n) n.click(); }
   else setFocus(focusIdx+(dx<0?1:-1));
 }
-document.addEventListener('touchstart',e=>{ sheetDragStart(e.touches[0],e.target); swipeStart(e.touches[0],e.target); },{passive:true});
-document.addEventListener('touchmove',e=>sheetDragMove(e.touches[0],e),{passive:false});
-document.addEventListener('touchend',e=>{ sheetDragEnd(); if(e.changedTouches[0]) swipeEnd(e.changedTouches[0]); });
-document.addEventListener('touchcancel',()=>{ sheetDragEnd(); swipe=null; });
-document.addEventListener('mousedown',e=>{ sheetDragStart(e,e.target); swipeStart(e,e.target); });
-document.addEventListener('mousemove',e=>{ if(sheetDrag) sheetDragMove(e,e); });
-document.addEventListener('mouseup',e=>{ sheetDragEnd(); swipeEnd(e); });
+document.addEventListener('touchstart',e=>{ sheetDragStart(e.touches[0],e.target); if(!rowSwipeStart(e.touches[0],e.target)) swipeStart(e.touches[0],e.target); },{passive:true});
+document.addEventListener('touchmove',e=>{ sheetDragMove(e.touches[0],e); rowDragMove(e.touches[0],e); },{passive:false});
+document.addEventListener('touchend',e=>{ sheetDragEnd(); rowDragEnd(); if(e.changedTouches[0]) swipeEnd(e.changedTouches[0]); });
+document.addEventListener('touchcancel',()=>{ sheetDragEnd(); rowDragEnd(); swipe=null; });
+document.addEventListener('mousedown',e=>{ sheetDragStart(e,e.target); if(!rowSwipeStart(e,e.target)) swipeStart(e,e.target); });
+document.addEventListener('mousemove',e=>{ if(sheetDrag) sheetDragMove(e,e); if(rowDrag) rowDragMove(e,e); });
+document.addEventListener('mouseup',e=>{ sheetDragEnd(); rowDragEnd(); swipeEnd(e); });
 
 // ---------- sheets as dialogs ----------
 // Every bottom sheet opens by gaining .on (each opener does that its own way), so one observer per sheet gives them all
