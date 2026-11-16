@@ -1270,6 +1270,21 @@
     .pg,.start-cta,.finish-btn,.btn{transition:none;transform:none;}
   }
   @keyframes fadein{from{opacity:0;}to{opacity:1;}}
+  /* ---------- the screens that kept the old look until B3b: sheets, onboarding, quiz, builder, cardio, celebration, Settings pages ---------- */
+  /* DS-6: panels are separated by tone, not by outline; outlines stay for fields, focus and the selected choice */
+  .cel-list,.cf-info,.cf-seg,.cf-big,.cf-in,.cf-clock,.cf-logged,.cel-stat,.rhythm-msg,.cel-backup,.onb-ex,.onb-opt,.onb-seg,.qd-btn,.eqchip,.empty-plan,.stat,.mv-list,.rt-card,.rt-backup,.alt,.ad-eqnote.boxed,.str-past-btn,.rt-chip,.badge.heavy,.badge.light,.badge.plateau,.badge.deload,.badge[class*="t-"]{border-color:transparent;}
+  .sheet .rt-card,.sheet .alt,.sheet .rt-chip,.sheet .cf-info,.sheet .stat,.sheet .mv-list,.sheet .ad-eqnote.boxed,.sheet .rt-backup{background:var(--panel-raised);}
+  .onb-opt,.cf-info,.cf-big,.cf-in,.cf-clock,.cel-stat,.rhythm-msg,.cel-backup,.onb-ex,.empty-plan{background:var(--panel);}
+  .onb-opt[aria-pressed="true"],.eqchip.on,.rt-card.cur,.cf-seg .on,.cf-seg [aria-pressed="true"]{border-color:var(--text);}
+  .badge.heavy,.badge.light,.badge.plateau,.badge.deload,.badge[class*="t-"]{background:var(--panel-raised);}
+  .pr-card{border-color:var(--amber);}
+  .sheet .rt-card .badge,.sheet .rt-card .rt-chip{background:var(--panel);color:var(--text);}
+  /* the one big button on these screens: filled coral; the second choice is tonal */
+  .cel-cta{min-height:52px;border:0;border-radius:var(--r-sm);font-size:var(--fs-lg);font-weight:700;letter-spacing:0;}
+  .cel-cta.alt{background:var(--panel-raised);color:var(--text);border:0;}
+  .qz-skipq,.onb-skip,.onb-back{font-size:var(--fs-body);}
+  .cel-h1,.cf-h{font-weight:700;}
+  .onb-note,.build-hint,.qz-state,.qz-note,.rt-honest{font-size:var(--fs-sm);}
   /* a view that is showing carries .view-on (set by setView), the hook B4 animates from */
   @media (prefers-reduced-motion: reduce){ .viewtab svg,.btn,.start-cta{transition:none;} }
 </style>
@@ -4188,8 +4203,8 @@ function renderOnboardStep(step){
       <div class="onb-foot">
         <div id="onboardImportError" role="alert" class="onb-note" style="display:none"></div>
         <input type="file" id="onboardImportFile" accept="application/json" style="display:none">
-        <button class="cel-cta" id="onboardImportBtn">Import My Data</button>
-        <button class="cel-cta alt" id="onboardNext">Start as New User</button>
+        <button class="cel-cta alt" id="onboardImportBtn">Import My Data</button>
+        <button class="cel-cta" id="onboardNext">Start as New User</button>
         <div class="onb-note">Used Lift Log before? Import your backup file to bring your program, history and settings with you.</div>
       </div>`;
     $('onboardImportBtn').onclick=()=>$('onboardImportFile').click();
