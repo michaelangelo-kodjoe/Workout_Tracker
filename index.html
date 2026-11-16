@@ -3346,6 +3346,7 @@ document.getElementById('weekBtn').onclick=e=>{ e.currentTarget.focus({preventSc
 document.getElementById('weekClose').onclick=closeWeek; document.getElementById('weekBg').onclick=closeWeek;
 async function loadDay(d){
   if(d!==currentDay){
+    if(hold.key) stopHold(false); // a hold left running when the day changes stops with its seconds kept on the set it was timing (the draft reload below would orphan it)
     focusIdx=null; closeMore();
     // MO-2: the new day's exercise slides in from the side of its tab (only for a day the user chose on the Log)
     const order=PROGRAM.map(p=>p.id).concat('cardio'), oi=order.indexOf(currentDay), ni=order.indexOf(d);
