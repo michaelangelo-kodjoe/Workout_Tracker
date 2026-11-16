@@ -3636,6 +3636,8 @@ function fitSetGrid(card){
   if(!card||!card.isConnected) return; const body=card.querySelector('.ex-body'); if(!body) return; body.classList.remove('tight','xt');
   const hc=body.querySelector('.setgrid.head>div:nth-child(3)'); const z=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tz'))||1;
   const wrap=body.querySelector('.setgrid.head'); if(hc&&wrap){ hc.innerHTML=hc.textContent.replace(/^(.*· )/,'<span class="hw">$1</span>'); if(hc.scrollWidth>hc.clientWidth+1){ body.classList.add('tight'); if(z>1) body.classList.add('xt'); } }
+  // the Seconds head can still be too wide on a hold at 320 px with larger text: show Sec, keep the full word for screen readers
+  { const rc=body.querySelector('.setgrid.head>div:nth-child('+(body.classList.contains('xt')?4:3)+')'); const sc=body.querySelector('.setgrid.head>div:nth-child(4)'); [rc,sc].forEach(c=>{ if(c&&c.textContent==='Seconds'&&c.scrollWidth>c.clientWidth+1) c.innerHTML='Sec<span class="sr-only">onds</span>'; }); }
   const fit=i=>i.classList.toggle('long',(i.value||i.placeholder||'').length>=5);
   body.querySelectorAll('.setgrid:not(.head) input:first-of-type').forEach(i=>{ fit(i); i.addEventListener('input',()=>fit(i)); });
 }
@@ -3652,7 +3654,7 @@ function mountMore(card){
 }
 // the dot on More says a note or a tip is inside; typing a note shows it at once
 function syncMoreDot(hasNote){ const b=document.getElementById('moreBtn'); if(!b) return; const has=!!b.querySelector('.ndot'), want=hasNote||!!document.querySelector('#moreBody .plateau-tip,#moreBody .first-log-note');
-  if(want&&!has) b.insertAdjacentHTML('afterbegin','<i class="ndot" aria-hidden="true"></i>'); else if(!want&&has) b.querySelector('.ndot').remove(); }
+  if(want&&!has){ b.insertAdjacentHTML('afterbegin','<i class="ndot" aria-hidden="true"></i>'); b.setAttribute('aria-label','More, has notes or tips'); } else if(!want&&has){ b.querySelector('.ndot').remove(); b.removeAttribute('aria-label'); } }
 function openMore(){ moreOpen=true; document.getElementById('moreBg').classList.add('on'); document.getElementById('moreSheet').classList.add('on'); const b=document.getElementById('moreBtn'); if(b) b.setAttribute('aria-expanded','true'); }
 function closeMore(){ if(!moreOpen) return; moreOpen=false; document.getElementById('moreBg').classList.remove('on'); document.getElementById('moreSheet').classList.remove('on'); const b=document.getElementById('moreBtn'); if(b) b.setAttribute('aria-expanded','false');
   // the shared dialog code returns focus to the element that opened the sheet, which a redraw may have replaced: land on the current More button
@@ -3728,7 +3730,7 @@ function renderExercise(ex,day){
     const gifHtml=(exGif&&state.howto)?`<div class="exgif"><span class="exnote" role="status">Image unavailable offline</span><img src="${exGif[0]}" loading="lazy" alt="${esc(ex.name)}, start position" onerror="${GIF_ERR}"><img src="${exGif[1]}" loading="lazy" alt="${esc(ex.name)}, end position" onerror="${GIF_ERR}"></div>`:'';
     howto.innerHTML=`${toolsBar(!!state.howto, yt, true)}<div class="howto-demo">${gifHtml}<div class="cue">${ex.cue?esc(ex.cue):'No cue written yet.'}</div></div>`;
     howto.querySelector('.tool-howto').onclick=e=>{ e.currentTarget.focus({preventScroll:true}); state.howto=!state.howto; render(); }; // Safari does not focus a tapped button; the redraw would hand focus back to the sheet
-    howto.querySelector('.tool-swap').onclick=()=>{ closeMore(); openSwap(currentDay, ex); }; more.appendChild(howto); // the swap list opens on its own, not on top of More
+    howto.querySelector('.tool-swap').onclick=()=>{ closeMore(); const mb=document.getElementById('moreBtn'); if(mb) mb.focus({preventScroll:true}); /* the swap list hands focus back to what had it when it opened */ openSwap(currentDay, ex); }; more.appendChild(howto); // the swap list opens on its own, not on top of More
     let platesEl=null; // the barbell plates row sits under Add Set; the bar picker and the fixed-bar switch are in More
     let updatePlates=null;
     if(barKind(ex)){
@@ -3816,7 +3818,7 @@ function renderExercise(ex,day){
       if(bwLoaded) s.w=bwTotal(s);
       const addHint=bwLoaded?(state.sets.slice(0,i).map(x=>parseFloat(x.add)||0).filter(Boolean).pop()||lastAdd):0;
       const row=document.createElement('div'); row.className='setgrid';
-      row.innerHTML=`<button type="button" class="setnum" aria-label="Set ${i+1} options" aria-haspopup="dialog">${i+1}</button><span class="slast"></span><input type="number" inputmode="decimal" aria-label="Set ${i+1} ${bwLoaded?'added weight':'weight'}" placeholder="${bwLoaded?'+'+dispWeight(addHint):sug===null?'bw':sug===-1?unitLabel():dispWeight(sug)}" value="${bwLoaded?(s.add?dispWeight(s.add):''):(s.w?dispWeight(s.w):s.w)}"${bwLoaded?' title="extra weight held or worn (dumbbells, a dip belt) — leave blank for bodyweight only"':''}><input type="number" inputmode="numeric" aria-label="Set ${i+1} ${timed?'seconds':'reps'}" placeholder="" value="${s.r}"><div class="setdone ${s.done?'on':''}${popSet===s?' pop':''}" aria-label="set ${i+1} done" aria-pressed="${!!s.done}">${s.done?'✓':''}</div>`;
+      row.innerHTML=`<button type="button" class="setnum" aria-label="Set ${i+1} options" aria-haspopup="dialog">${i+1}</button><span class="slast"></span><input type="number" inputmode="decimal" aria-label="Set ${i+1} ${bwLoaded?'added weight':'weight'}" placeholder="${bwLoaded?'+'+dispWeight(addHint):sug===null?'bw':sug===-1?unitLabel():dispWeight(sug)}" value="${bwLoaded?(s.add?dispWeight(s.add):''):(s.w?dispWeight(s.w):s.w)}"${bwLoaded?' title="extra weight held or worn (dumbbells, a dip belt) — leave blank for bodyweight only"':''}><input type="number" inputmode="numeric" aria-label="Set ${i+1} ${timed?'seconds':'reps'}" placeholder="" value="${s.r}"><div class="setdone ${s.done?'on':''}${popSet===s&&!matchMedia('(prefers-reduced-motion: reduce)').matches?' pop':''}" aria-label="set ${i+1} done" aria-pressed="${!!s.done}">${s.done?'✓':''}</div>`;
       const [wI,rI]=row.querySelectorAll('input');
       // one-shot: the pop mark comes off when its animation ends, so it is an event on this tap, never a state a later draw could replay
       if(popSet===s){ const dn=row.querySelector('.setdone'); dn.addEventListener('animationend',()=>dn.classList.remove('pop'),{once:true}); }
@@ -3877,7 +3879,7 @@ function renderExercise(ex,day){
         if(bits.length){ const p=document.createElement('p'); p.className='sheet-p dim'; p.textContent=bits.join(' · '); more.appendChild(p); }
         if(lastTimeEl) more.appendChild(lastTimeEl); }
       const flagged=!!(notes[histKey(ex)]||'').trim()||!!more.querySelector('.plateau-tip,.first-log-note');
-      head.querySelector('#moreBtn').innerHTML=head.querySelector('#moreBtn').innerHTML.replace('NDOT',flagged?'<i class="ndot" aria-hidden="true"></i>':'');
+      head.querySelector('#moreBtn').innerHTML=head.querySelector('#moreBtn').innerHTML.replace('NDOT',flagged?'<i class="ndot" aria-hidden="true"></i>':''); if(flagged) head.querySelector('#moreBtn').setAttribute('aria-label','More, has notes or tips');
     }
     card.appendChild(body); return card;
 }
