@@ -1129,6 +1129,147 @@
   .onb-seg{border:0;border-radius:var(--r-sm);background:var(--panel-raised);}
   .onb-seg button{border-radius:var(--r-sm);font-size:var(--fs-body);font-weight:600;}
   .set-seg{padding:0;gap:0;} .set-seg button{height:44px;min-width:52px;padding:0 14px;}
+  /* ---------- Log: one exercise in focus (B3) ---------- */
+  body.log-focus #logView .daylabel,body.log-focus #resetLink{display:none;} /* Edit Day and Clear Today's Entries are in Day Options */
+  .daytabs{margin-top:0;gap:6px;padding-bottom:4px;scrollbar-width:none;}
+  .daytabs::-webkit-scrollbar{display:none;}
+  .daytab{min-height:44px;padding:6px 10px;border:0;border-radius:var(--r-sm);background:var(--panel);box-shadow:none;font-size:var(--fs-body);font-weight:600;color:var(--text-dim);line-height:1.2;}
+  .daytab .dsub{font-size:var(--fs-sm);font-weight:400;margin-top:0;opacity:1;}
+  .daytab.suggested{background:var(--panel);color:var(--text-dim);}
+  .daytab.suggested::after{content:"";position:absolute;top:6px;right:6px;width:6px;height:6px;border-radius:var(--r-full);background:var(--dc,var(--text));}
+  .daytab.active{background:var(--panel-raised);color:var(--text);box-shadow:inset 0 0 0 1.5px var(--dc,var(--text));}
+  .daytab.t-upper,.daytab.t-lower,.daytab.t-cardio,.daytab.t-push,.daytab.t-pull,.daytab.t-legs,.daytab.t-full{box-shadow:none;}
+  .daytab.active.t-upper,.daytab.active.t-lower,.daytab.active.t-cardio,.daytab.active.t-push,.daytab.active.t-pull,.daytab.active.t-legs,.daytab.active.t-full{box-shadow:inset 0 0 0 1.5px var(--dc,var(--text));}
+  .daytab.cardio-tab{border:0;}
+  body.log-focus .exercise{background:none;border:0;border-radius:0;margin:0;overflow:visible;}
+  body.log-focus .exercise.complete{background:none;}
+  body.log-focus .ex-body{display:block;padding:0;}
+  .exercise.enter-r{animation:enterr var(--dur-2) var(--ease);} .exercise.enter-l{animation:enterl var(--dur-2) var(--ease);}
+  @keyframes enterr{from{opacity:0;transform:translateX(32px);}to{opacity:1;transform:none;}}
+  @keyframes enterl{from{opacity:0;transform:translateX(-32px);}to{opacity:1;transform:none;}}
+  .xh{margin:0 0 var(--sp-3);}
+  .xh-row{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);min-height:44px;}
+  .xh-eyebrow{font-size:var(--fs-cap);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);font-weight:600;display:flex;align-items:center;gap:var(--sp-2);}
+  .xh-eyebrow .badge{font-size:var(--fs-cap);letter-spacing:.08em;margin:0;background:none;padding:0;color:var(--amber);}
+  .xh-eyebrow .badge::before{content:"";display:inline-block;width:8px;height:8px;border-radius:var(--r-full);background:var(--amber);margin-right:5px;}
+  .xh-name{font-size:var(--fs-xl);font-weight:700;letter-spacing:-.01em;line-height:1.15;margin:-4px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .xh-sub{align-items:flex-start;}
+  .xh-meta{display:flex;flex-wrap:wrap;align-items:center;gap:0 var(--sp-2);font-size:var(--fs-lg);color:var(--text-dim);min-width:0;min-height:44px;align-content:center;margin-left:-16px;overflow:hidden;clip-path:inset(0 0 0 16px);}
+  .xh-meta>span{white-space:nowrap;margin-left:16px;position:relative;}
+  .xh-meta .xh-w{color:var(--text);font-weight:600;}
+  .xh-meta .xh-w::before{content:"";position:absolute;left:-10px;top:50%;width:4px;height:4px;margin-top:-2px;border-radius:var(--r-full);background:var(--line-strong);} /* the dot belongs to the weight, so a wrap never leaves it dangling (clipped away) */
+  .xh-meta .xh-ck{display:inline-flex;margin-left:var(--sp-2);color:var(--on-green);background:var(--green);border-radius:var(--r-full);width:24px;height:24px;align-items:center;justify-content:center;}
+  .xh-ck .ic{width:14px;height:14px;stroke-width:3;}
+  .xh-more{display:inline-flex;align-items:center;gap:2px;min-height:44px;margin:0;padding:0 0 0 var(--sp-2);border:0;background:none;color:var(--light);font:inherit;font-size:var(--fs-body);font-weight:600;cursor:pointer;flex:none;}
+  .xh-more .ic{width:18px;height:18px;}
+  .ndot{width:6px;height:6px;border-radius:var(--r-full);background:var(--light);margin-right:4px;}
+  .bw-line{font-size:var(--fs-sm);margin:0 0 var(--sp-2);}
+  /* set rows: Set | Last | Weight | Reps | Done */
+  body.log-focus .setgrid{grid-template-columns:36px minmax(60px,auto) 1fr 1fr 48px;gap:6px;margin-bottom:6px;font-size:var(--fs-body);}
+  body.log-focus .setgrid.head{font-size:var(--fs-cap);letter-spacing:.08em;font-weight:600;margin-bottom:var(--sp-1);}
+  body.log-focus .setgrid.head>div{white-space:nowrap;text-overflow:clip;}
+  .tight .setgrid.head .hw{display:none;}
+  .setnum{display:flex;align-items:center;justify-content:center;align-self:stretch;min-height:48px;margin:0 -4px;padding:0 4px;border:0;background:none;font:inherit;font-size:var(--fs-lg);font-weight:600;color:var(--text-dim);cursor:pointer;border-radius:var(--r-sm);}
+  body.log-focus .setgrid input{height:48px;border-radius:var(--r-sm);border:1px solid var(--line-strong);background:var(--panel-raised);padding:0 6px;font-size:var(--fs-xl)!important;font-weight:600;min-width:0;}
+  body.log-focus .setgrid input::placeholder{color:var(--text-dim);opacity:.55;font-weight:400;}
+  body.log-focus .setgrid:has(.setdone.on) input{background:var(--done-bg);border-color:var(--done-line);}
+  .setdone{width:48px;height:48px;border-radius:var(--r-full);border:0;background:var(--panel-raised);box-shadow:inset 0 0 0 1.5px var(--line-strong);font-size:var(--fs-xl);font-weight:700;color:transparent;}
+  .setdone.on{background:var(--green);color:var(--on-green);box-shadow:none;}
+  .setdone.on.pop{animation:popdone var(--dur-3) var(--ease);}
+  @keyframes popdone{0%{transform:scale(.6);}60%{transform:scale(1.12);}100%{transform:scale(1);}}
+  .slast{display:flex;align-items:center;justify-content:center;min-height:44px;min-width:60px;margin:0;padding:0;border:0;background:none;color:var(--text-dim);font:inherit;font-size:var(--fs-sm);white-space:nowrap;cursor:pointer;}
+  .slast>span{display:inline-flex;align-items:center;min-height:30px;padding:0 9px;border-radius:var(--r-full);background:var(--panel);}
+  .slast.used{cursor:default;} .slast.used>span{background:none;}
+  span.slast{color:var(--line-strong);}
+  .rir-row{margin:0 0 10px 42px;gap:6px;}
+  .rir-lbl{font-size:var(--fs-sm);margin-right:4px;}
+  .rir-pill{font-size:var(--fs-body);font-weight:600;border:0;border-radius:var(--r-full);background:var(--panel);padding:0;height:44px;display:flex;align-items:center;justify-content:center;color:var(--text-dim);}
+  .rir-pill.on{background:var(--light);color:var(--on-light);}
+  .rir-pill::after{inset:0 -3px;}
+  .hold-row{margin:0 0 10px 42px;font-size:var(--fs-sm);gap:10px;}
+  .hold-t{font-size:var(--fs-xl);font-weight:600;} .hold-target{font-size:var(--fs-sm);}
+  .hold-row .btn.primary{background:var(--light);color:var(--on-light);}
+  .addset{height:44px;border:0;border-radius:var(--r-sm);background:var(--panel);color:var(--text-dim);font-size:var(--fs-body);font-weight:600;}
+  .plates{font-size:var(--fs-sm);margin:var(--sp-2) 0 0;background:var(--panel);border-radius:var(--r-sm);padding:4px 4px 4px 14px;}
+  .plates-row{flex:1;min-height:48px;flex-wrap:nowrap;}
+  .plates-info{flex-direction:row;align-items:center;justify-content:space-between;gap:var(--sp-2);flex:1;}
+  .plates-cap,.plates-note{font-size:var(--fs-sm);}
+  .plates b{font-size:var(--fs-lg);font-weight:600;}
+  .side-step button{font-size:var(--fs-xl);margin:0;border-radius:var(--r-full);}
+  /* the More sheet's content */
+  .more-body .howto{margin:0 0 var(--sp-3);}
+  .ex-tools{border:0;border-radius:var(--r-sm);background:var(--panel-raised);}
+  .ex-tools>*{min-height:52px;font-size:var(--fs-body);font-weight:600;}
+  .ex-tools>*+*{border-left:1px solid var(--line);}
+  .ex-tools svg{width:18px;height:18px;} .ex-tools .ext{font-size:var(--fs-sm);}
+  .howto .cue{font-size:var(--fs-body);line-height:1.5;}
+  .more-body .bar-chip{min-height:44px;border:0;border-radius:var(--r-sm);font-size:var(--fs-body);}
+  .more-body .fixed-chk,.more-body .mach-plate-chk{font-size:var(--fs-body);color:var(--text);min-height:52px;display:flex;justify-content:space-between;align-items:center;margin:0;gap:var(--sp-3);}
+  .more-row{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);min-height:52px;border-top:1px solid var(--line);font-size:var(--fs-lg);}
+  .more-body .plates{background:none;padding:0;margin:0;font-size:var(--fs-body);}
+  .more-body .last-time{font-size:var(--fs-sm);display:block;-webkit-line-clamp:unset;}
+  .more-body .plateau-tip,.more-body .first-log-note{font-size:var(--fs-body);border-radius:var(--r-sm);margin:0 0 var(--sp-3);}
+  .more-body .notes{border-radius:var(--r-sm);border:1px solid var(--line-strong);min-height:48px;font-size:var(--fs-lg);}
+  /* sheet lists: Day List, Day Options, Set options */
+  .sheet-list{display:flex;flex-direction:column;}
+  .lgh{font-size:var(--fs-cap);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);font-weight:600;margin:var(--sp-4) 0 var(--sp-1);}
+  .sheet-list>.lgh:first-child,.more-body>.lgh:first-child{margin-top:0;}
+  .lrow{display:flex;align-items:center;gap:var(--sp-3);width:100%;min-height:52px;margin:0;padding:6px 0;background:none;border:0;border-top:1px solid var(--line);color:var(--text);font:inherit;font-size:var(--fs-lg);text-align:left;cursor:pointer;}
+  .sheet-list>.lrow:first-child{border-top:0;}
+  .lrow .grow{flex:1;min-width:0;} .lrow .sub{display:block;font-size:var(--fs-body);color:var(--text-dim);margin-top:2px;}
+  .lrow.danger{color:var(--danger);font-weight:600;}
+  .lrow.cur .lck{box-shadow:0 0 0 2px var(--text);}
+  .lck{width:24px;height:24px;border-radius:var(--r-full);box-shadow:inset 0 0 0 1.5px var(--line-strong);flex:none;display:flex;align-items:center;justify-content:center;color:transparent;}
+  .lck.on{background:var(--green);box-shadow:none;color:var(--on-green);}
+  .lck .ic{width:14px;height:14px;stroke-width:3;}
+  /* footer: pager, rest timer, Finish */
+  #logFooter{border-bottom:0;padding:var(--sp-2) 12px 6px;margin:0;}
+  .pager{display:none;gap:var(--sp-2);margin-bottom:var(--sp-2);}
+  body.log-focus .pager{display:flex;}
+  .pg{display:inline-flex;align-items:center;justify-content:center;gap:4px;height:44px;margin:0;padding:0 12px;border:0;border-radius:var(--r-sm);background:var(--panel-raised);color:var(--text);font:inherit;font-size:var(--fs-body);font-weight:600;cursor:pointer;}
+  .pg.prev{width:48px;padding:0;flex:none;} .pg.next{flex:none;padding:0 10px 0 16px;}
+  .pg.list{flex:1;min-width:0;gap:10px;color:var(--text-dim);}
+  .pg[aria-disabled="true"]{opacity:.35;}
+  .pg .ic{width:18px;height:18px;}
+  .segs{display:flex;gap:3px;flex:1;min-width:0;overflow:hidden;}
+  .segs i{flex:1;height:5px;border-radius:var(--r-full);background:var(--line);}
+  .segs i.done{background:var(--green);} .segs i.cur{background:var(--text);}
+  body.log-focus:not(.all-done) .pg.next:not([aria-disabled="true"]){background:var(--text);color:var(--bg);} /* Next leads while sets remain and never takes Finish's colour */
+  .timer{flex-direction:row;align-items:center;border:0;border-radius:var(--r-sm);background:var(--panel-raised);padding:6px 6px 6px 10px;margin-bottom:var(--sp-2);}
+  .timer::before,.timer .tbar{display:none;}
+  .timer-row{flex:1;gap:10px;justify-content:flex-start;}
+  .ring{width:40px;height:40px;flex:none;transform:rotate(-90deg);}
+  .ring circle{fill:none;stroke-width:4;stroke:var(--line);}
+  .ring #ringArc{stroke:var(--accent);stroke-linecap:round;transition:stroke-dashoffset 1s linear;} /* a stroke animation (spec exception E-1), not transform or opacity */
+  .timer.done #ringArc{stroke:var(--green);}
+  .timer .t{font-size:var(--fs-xl);font-weight:700;color:var(--text);flex:1;} .timer .t.over{color:var(--green);}
+  .timer .acts{gap:6px;}
+  .timer .acts button{border:0;border-radius:var(--r-sm);background:var(--panel);font-size:var(--fs-body);font-weight:600;padding:0 14px;}
+  /* Finish: quiet (grey, coral label) until every set is done, then the one coral action; still tappable throughout */
+  .finish-btn{display:flex;align-items:center;justify-content:center;min-height:44px;margin:0;padding:6px 16px;border:0;border-radius:var(--r-sm);background:var(--panel-raised);color:var(--accent);font:inherit;font-size:var(--fs-body);font-weight:700;letter-spacing:0;line-height:1.2;text-wrap:balance;}
+  .finish-btn.all-done{min-height:52px;background:var(--accent);color:var(--on-accent);font-size:var(--fs-lg);}
+  .finish-btn.is-off{color:var(--text-dim);opacity:1;}
+  .start-cta:active,.finish-btn:active,.btn:active,.pg:active{transform:scale(.97);}
+  /* narrow rows: 320 px wide, or larger text. The head keeps the unit; the weight steps down for five characters; at Larger the last value drops under the fields */
+  body.log-focus .tight .setgrid{grid-template-columns:36px minmax(48px,auto) 1.25fr 1fr 44px;gap:4px;}
+  .tight .slast{min-width:48px;} .tight .slast>span{padding:0 5px;}
+  .tight .setdone{width:44px;height:44px;}
+  .tight .rir-row{flex-wrap:wrap;margin-left:0;} .tight .rir-lbl{flex:0 0 100%;}
+  .tight .hold-row{margin-left:0;}
+  .tight .setgrid input{padding:0 4px;}
+  .tight .setgrid input.long{font-size:var(--fs-lg)!important;}
+  body.log-focus .xt .setgrid{grid-template-columns:36px 1.3fr 1fr 44px;}
+  .xt .setgrid.head>div:nth-child(2){display:none;}
+  .xt .setgrid:not(.head) .slast{grid-column:2 / 4;grid-row:2;justify-content:flex-start;}
+  .xt .setgrid input{font-size:var(--fs-lg)!important;}
+  .tight .xh-meta,.xt .xh-meta{font-size:var(--fs-body);}
+  @media (prefers-reduced-motion: reduce){
+    .setdone.on.pop{animation:none;} /* the Done pop stays off with Reduce Motion (QA OBS-1) */
+    .exercise.enter-r,.exercise.enter-l{animation:fadein 150ms linear;}
+    .ring #ringArc{transition:none;}
+    .pg,.start-cta,.finish-btn,.btn{transition:none;transform:none;}
+  }
+  @keyframes fadein{from{opacity:0;}to{opacity:1;}}
   /* a view that is showing carries .view-on (set by setView), the hook B4 animates from */
   @media (prefers-reduced-motion: reduce){ .viewtab svg,.btn,.start-cta{transition:none;} }
 </style>
@@ -1401,7 +1542,8 @@
 
 <footer><div class="footer-inner">
   <div id="logFooter" style="display:none">
-  <div class="timer" id="timer"><div class="timer-row"><div class="t" id="timerT">1:30</div><div class="acts"><button type="button" id="tPlus">+30s</button><button type="button" id="tSkip">Skip</button></div></div><div class="tbar"><i id="timerBar" style="width:100%"></i></div></div>
+  <div id="pager" class="pager"></div>
+  <div class="timer" id="timer"><div class="timer-row"><svg class="ring" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="18"/><circle id="ringArc" cx="22" cy="22" r="18" stroke-dasharray="113.1" stroke-dashoffset="0"/></svg><div class="t" id="timerT">1:30</div><div class="acts"><button type="button" id="tPlus">+30s</button><button type="button" id="tSkip">Skip</button></div></div><div class="tbar"><i id="timerBar" style="width:100%"></i></div></div>
   <button class="finish-btn" id="finishBtn">Finish Session</button>
   </div>
   <nav class="viewtabs" aria-label="Sections">
@@ -1423,6 +1565,8 @@
       <div class="banner has-x" id="deloadBanner" style="display:none"><div class="bmain"><span id="deloadBannerTxt"></span><div class="bfoot"><button type="button" class="linkbtn" id="deloadBannerBtn">Plan a Deload Week</button></div></div><button type="button" class="bx" aria-label="Dismiss Deload Reminder"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
       <div class="banner has-x" id="bwBanner" style="display:none"><div class="bmain"><span id="bwBannerTxt">It's been a week since you last logged your weight.</span><div class="bfoot"><button type="button" class="linkbtn" id="bwBannerBtn">Log It Now</button></div></div><button type="button" class="bx" aria-label="Dismiss Body Weight Reminder"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
 </div></div>
+<div class="sheet-bg" id="moreBg"></div>
+<div class="sheet" id="moreSheet"><div class="sheet-head"><h2 class="sheet-title" id="moreTitle" tabindex="-1">More</h2><button type="button" class="linkbtn" id="moreClose">Close</button></div><div id="moreBody"></div></div>
 <div class="sheet-bg" id="infoBg"></div>
 <div class="sheet" id="infoSheet"><div class="sheet-head"><h2 class="sheet-title" id="infoTitle" tabindex="-1"></h2><button type="button" class="linkbtn" id="infoClose">Close</button></div><div id="infoBody"></div></div>
 <div class="sheet-bg" id="weekBg"></div>
@@ -2851,16 +2995,16 @@ function startTimer(sec){
   tick(); timer.iv=setInterval(tick,1000);
 }
 // timer runs cool blue while there's plenty of rest left, then fades to the accent color over the final quarter of the rest as a "time's almost up" cue
-const TIMER_BLUE=[79,163,209], TIMER_ACCENT=[255,93,59], TIMER_FADE_WINDOW=0.25;
-function lerpColor(a,b,t){ return `rgb(${Math.round(a[0]+(b[0]-a[0])*t)},${Math.round(a[1]+(b[1]-a[1])*t)},${Math.round(a[2]+(b[2]-a[2])*t)})`; }
+// the rest timer's ring empties as the rest runs out (the bar behind it stays for the clock logic)
+const RING_C=2*Math.PI*18;
+function setRing(p){ const a=document.getElementById('ringArc'); if(a) a.style.strokeDashoffset=(RING_C*(1-Math.max(0,Math.min(1,p)))).toFixed(1); }
 function tick(late){ // late: the countdown finished while the page was away, so the beep only plays if the audio context is already running
   const left=Math.ceil((timer.end-Date.now())/1000);
   const t=document.getElementById('timerT'), bar=document.getElementById('timerBar'), el=document.getElementById('timer');
-  if(left<=0){ t.textContent='Go'; t.classList.add('over'); t.style.color=''; bar.style.width='0%'; bar.style.background=''; el.classList.add('done'); clearInterval(timer.iv); clearTimerSave(); beep(late||Date.now()-timer.end>2500); document.getElementById('timerLive').textContent='Rest over — next set'; clearTimeout(timer.hide); timer.hide=setTimeout(stopTimer,4000); return; }
+  if(left<=0){ t.textContent='Go'; t.classList.add('over'); bar.style.width='0%'; setRing(0); el.classList.add('done'); clearInterval(timer.iv); clearTimerSave(); beep(late||Date.now()-timer.end>2500); document.getElementById('timerLive').textContent='Rest over — next set'; clearTimeout(timer.hide); timer.hide=setTimeout(stopTimer,4000); return; }
   t.classList.remove('over'); t.textContent=`${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}`;
   const pct=left/timer.total; bar.style.width=(pct*100)+'%';
-  const fadeT=Math.min(1,pct/TIMER_FADE_WINDOW); const col=lerpColor(TIMER_ACCENT,TIMER_BLUE,fadeT);
-  t.style.color=col; bar.style.background=col;
+  setRing(pct);
 }
 function stopTimer(){ clearInterval(timer.iv); clearTimeout(timer.hide); document.getElementById('timer').classList.remove('on'); clearTimerSave(); }
 // Recompute from the clock on return (visible, pageshow) and at boot. Past end: show Go at once; still running: carry on with the real time left.
@@ -3135,7 +3279,9 @@ function renderHeaderStats(){
   document.getElementById('headWd').textContent=new Date().toLocaleDateString(undefined,{weekday:'long'});
 }
 // ---------- info sheets (2.0): text that used to sit on the page, one tap away ----------
-const IC={ info:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>',
+const IC={ dots:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg>',
+  check:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>', chevL:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
+  list:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>', info:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>',
   chevR:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>', chevD:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>' };
 // fill(body) draws the content; the shared dialog code (see "sheets as dialogs") gives it focus, Escape and focus return
 function openInfo(title,fill){
@@ -3151,6 +3297,7 @@ function closeWeek(){ document.getElementById('weekBg').classList.remove('on'); 
 document.getElementById('weekBtn').onclick=e=>{ e.currentTarget.focus({preventScroll:true}); document.getElementById('weekBg').classList.add('on'); document.getElementById('weekSheet').classList.add('on'); };
 document.getElementById('weekClose').onclick=closeWeek; document.getElementById('weekBg').onclick=closeWeek;
 async function loadDay(d){
+  if(d!==currentDay){ focusIdx=null; closeMore(); }
   currentDay=d; renderHeaderStats();
   if(d==='cardio'){ renderTabs(); renderBody(); renderCardioForm(); return; }
   document.getElementById('finishBtn').style.display=''; document.getElementById('resetLink').style.display='';
@@ -3239,7 +3386,9 @@ const CARDIO_REASON_COPY={
     body:(d,g)=>`Your last conditioning session was ${g} ago. Two to three a week keeps the aerobic base you've built; a lighter day now also gives your joints a break. Totally fine to lift today if that's what you'd rather do.` },
 };
 function cardioReasonCopy(){ const {reason,nextDay}=suggestedDay(); const c=CARDIO_REASON_COPY[reason]||CARDIO_REASON_COPY.backToBack; const lc=sessions.filter(x=>x.isCardio&&!isFuture(x.t)).reduce((m,x)=>x.t>m?x.t:m,0), g=lc?gapPhrase(lc):''; const f=v=>typeof v==='function'?v(nextDay,g):v; return {sub:f(c.sub),home:f(c.home),body:f(c.body)}; }
-function renderTabs(){ const w=document.getElementById('dayTabs'); w.innerHTML='';
+function renderTabs(){ const w=document.getElementById('dayTabs'); w.innerHTML=''; document.body.classList.toggle('log-focus',currentDay!=='cardio');
+  // a redraw can remove the field that had focus without a focusout (stepping to another exercise with the keyboard up): drop the typing mark so the footer comes back
+  { const a=document.activeElement; if(!a||!a.matches(TYPING_SEL)) document.body.classList.remove('typing'); }
   const suggested=suggestedDayId();
   PROGRAM.forEach(d=>{ const el=document.createElement('div'); el.className='daytab '+dayType(d)+(d.id===currentDay?' active':'')+(d.id===suggested?' suggested':''); if(d.id===suggested) el.title='Next up in your rotation'; if(d.id===currentDay) el.setAttribute('aria-current','true'); el.innerHTML=`${d.name}<span class="dsub">${d.sub}</span>`; el.onclick=()=>attemptLoadDay(d.id); w.appendChild(el); });
   const c=document.createElement('div'); c.className='daytab cardio-tab t-cardio'+(currentDay==='cardio'?' active':'')+(suggested==='cardio'?' suggested':''); if(suggested==='cardio') c.title='Next up in your rotation'; if(currentDay==='cardio') c.setAttribute('aria-current','true'); if(cardioLive){ c.classList.add('live'); c.setAttribute('aria-label','Cardio, session in progress'); } c.innerHTML='Cardio<span class="dsub">'+(cardioLive?'In Progress':'Endurance')+'</span>'; c.onclick=()=>loadDay('cardio'); w.appendChild(c);
@@ -3378,15 +3527,19 @@ function actStepPlates(ex,state,dir,liveLb){
   return true;
 }
 function listFocusKey(){
-  const a=document.activeElement, list=document.getElementById('exerciseList'); if(!a||a===list||!list.contains(a)) return null;
-  const card=a.closest('.exercise'); if(!card) return null;
+  const a=document.activeElement, list=document.getElementById('exerciseList'), mb=document.getElementById('moreBody'); if(!a||a===list) return null;
+  const inMore=mb&&mb.contains(a); if(!inMore&&!list.contains(a)) return null;
   const cls=[...a.classList].find(c=>!FOCUS_STATE_CLASSES.includes(c)); const sig=a.tagName.toLowerCase()+(cls?'.'+cls:'');
+  if(inMore) return {more:true, sig, i:[...mb.querySelectorAll(sig)].indexOf(a)};
+  const card=a.closest('.exercise'); if(!card) return null;
   return {card:[...list.querySelectorAll('.exercise')].indexOf(card), sig, i:[...card.querySelectorAll(sig)].indexOf(a)};
 }
 function restoreListFocus(k){
-  if(!k) return; const card=document.querySelectorAll('#exerciseList .exercise')[k.card]; if(!card) return;
+  if(!k) return;
+  if(k.more){ const mb=document.getElementById('moreBody'), same=mb.querySelectorAll(k.sig), el=same[Math.min(k.i,same.length-1)]; if(el) el.focus({preventScroll:true}); return; }
+  const card=document.querySelectorAll('#exerciseList .exercise')[k.card]; if(!card) return;
   tagClickables(card); // the observer that makes divs focusable runs after this, too late for focus()
-  const same=card.querySelectorAll(k.sig); const el=same[Math.min(k.i,same.length-1)]||card.querySelector('.ex-head');
+  const same=card.querySelectorAll(k.sig); const el=same[Math.min(k.i,same.length-1)]||card.querySelector('.xh-more');
   if(el) el.focus({preventScroll:true});
 }
 // the Reps Left row is hidden (no space) until reps are typed or the set is done
@@ -3394,6 +3547,18 @@ function setRirA11y(r,i){ r.setAttribute('role','group'); r.setAttribute('aria-l
 let popSet=null;
 // the Same as Last hint is rebuilt on every render, so a live region inside it is not reliably announced; this one persists
 function salAnnounce(msg){ let el=document.getElementById('salLive'); if(!el){ el=document.createElement('div'); el.id='salLive'; el.className='sr-only'; el.setAttribute('role','status'); el.setAttribute('aria-live','polite'); document.body.appendChild(el); } el.textContent=''; setTimeout(()=>{ el.textContent=msg; },60); } // the set whose check was just ticked, so only its check plays the pop
+// ---------- Log: one exercise in focus (2.0) ----------
+// The day's exercises in today's grouped order (groups in order of first appearance, slot order within a group, so a day laid out
+// quads / hamstrings / quads doesn't get two "Quads" groups). This order is the Next and Previous order and the Day List's.
+function orderedExercises(day){
+  const groups=[]; day.exercises.forEach(ex=>{ if(!groups.includes(ex.group)) groups.push(ex.group); });
+  return groups.flatMap(g=>day.exercises.filter(ex=>ex.group===g));
+}
+// which exercise is showing: derived when a day loads (the first with an unchecked set, else the last), then moved by Next, Previous, a swipe or the Day List.
+// It is not stored (NC-1); a reload lands on the derived exercise again.
+let focusIdx=null, focusDay=null, focusDir=0, moreOpen=false;
+function derivedFocus(ord){ const i=ord.findIndex(ex=>!ensureState(ex).sets.every(s=>s.done)); return i<0?ord.length-1:i; }
+function setFocus(i){ const day=PROGRAM.find(d=>d.id===currentDay); if(!day) return; const n=day.exercises.length; i=Math.max(0,Math.min(n-1,i)); if(i===focusIdx) return; focusDir=Math.sign(i-focusIdx); focusIdx=i; closeMore(); render(); window.scrollTo(0,0); }
 function render(){
   const focusKey=listFocusKey();
   // several settings handlers (unit, auto-rotate, rotate-every, deload start/end) re-render the log after a change
@@ -3401,22 +3566,43 @@ function render(){
   // the cardio form instead of crashing on day.badge below.
   if(currentDay==='cardio'){ renderTabs(); renderBody(); renderCardioForm(); return; }
   renderTabs(); renderBody();
-  const day=PROGRAM.find(d=>d.id===currentDay);
-  const list=document.getElementById('exerciseList'); list.innerHTML='';
-  let lastGroup=null; logCards=new Map(); logDirty.clear();
-  // cards are shown grouped by muscle group (groups in order of first appearance, slot order within a group) so a
-  // day laid out quads / hamstrings / quads doesn't get two "Quads" headings — the program's own slot order is
-  // untouched, it only decides which slots are primary and how the editor lists them
-  const groupOrder=[]; day.exercises.forEach(ex=>{ if(!groupOrder.includes(ex.group)) groupOrder.push(ex.group); });
-  const ordered=groupOrder.flatMap(g=>day.exercises.filter(ex=>ex.group===g));
-  ordered.forEach(ex=>{
-    if(ex.group!==lastGroup){ const gh=document.createElement('h3'); gh.className='groupheader'; gh.textContent=ex.group; list.appendChild(gh); lastGroup=ex.group; }
-    const card=renderExercise(ex,day); logCards.set(ex,card); list.appendChild(card);
-  });
+  const day=PROGRAM.find(d=>d.id===currentDay), ord=orderedExercises(day);
+  if(focusDay!==currentDay||focusIdx==null||focusIdx>=ord.length){ focusDay=currentDay; focusIdx=derivedFocus(ord); }
+  const list=document.getElementById('exerciseList'); list.innerHTML=''; logCards=new Map(); logDirty.clear();
+  const ex=ord[focusIdx], card=renderExercise(ex,day); logCards.set(ex,card); list.appendChild(card);
+  if(focusDir){ card.classList.add(focusDir>0?'enter-r':'enter-l'); card.addEventListener('animationend',()=>card.classList.remove('enter-r','enter-l'),{once:true}); focusDir=0; }
+  mountMore(card); fitSetGrid(card);
   updateLogSummary(day);
   popSet=null;
   restoreListFocus(focusKey);
 }
+// 2.0 narrow rows: when the Weight head no longer fits (320 px, larger text) the head keeps the unit and the grid tightens; a five-character weight steps down a size
+function fitSetGrid(card){
+  if(!card||!card.isConnected) return; const body=card.querySelector('.ex-body'); if(!body) return; body.classList.remove('tight','xt');
+  const hc=body.querySelector('.setgrid.head>div:nth-child(3)'); const z=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tz'))||1;
+  const wrap=body.querySelector('.setgrid.head'); if(hc&&wrap){ hc.innerHTML=hc.textContent.replace(/^(.*· )/,'<span class="hw">$1</span>'); if(hc.scrollWidth>hc.clientWidth+1){ body.classList.add('tight'); if(z>1) body.classList.add('xt'); } }
+  const fit=i=>i.classList.toggle('long',(i.value||i.placeholder||'').length>=5);
+  body.querySelectorAll('.setgrid:not(.head) input:first-of-type').forEach(i=>{ fit(i); i.addEventListener('input',()=>fit(i)); });
+}
+window.addEventListener('resize',()=>{ const c=document.querySelector('#exerciseList .exercise'); if(c) fitSetGrid(c); });
+// ---------- Log: the More sheet ----------
+// One static sheet (so it gets the shared dialog code: focus trap, Escape, focus return). Its content is built with the card, so a redraw while
+// it is open (How To, the plate step, the fixed-bar switch) re-mounts the new content and the sheet stays where it is.
+function mountMore(card){
+  const mb=document.getElementById('moreBody'); if(!mb) return; mb.innerHTML='';
+  if(card&&card._more) while(card._more.firstChild) mb.appendChild(card._more.firstChild);
+  const name=card&&card.querySelector('.xh-name'); document.getElementById('moreTitle').textContent=name?name.textContent:'More';
+  const mbtn=card&&card.querySelector('#moreBtn'); if(mbtn){ mbtn.onclick=e=>{ e.currentTarget.focus({preventScroll:true}); openMore(); }; mbtn.setAttribute('aria-expanded',String(moreOpen)); }
+  const dob=card&&card.querySelector('#dayOptBtn'); if(dob) dob.onclick=e=>{ e.currentTarget.focus({preventScroll:true}); openDayOptions(); };
+}
+// the dot on More says a note or a tip is inside; typing a note shows it at once
+function syncMoreDot(hasNote){ const b=document.getElementById('moreBtn'); if(!b) return; const has=!!b.querySelector('.ndot'), want=hasNote||!!document.querySelector('#moreBody .plateau-tip,#moreBody .first-log-note');
+  if(want&&!has) b.insertAdjacentHTML('afterbegin','<i class="ndot" aria-hidden="true"></i>'); else if(!want&&has) b.querySelector('.ndot').remove(); }
+function openMore(){ moreOpen=true; document.getElementById('moreBg').classList.add('on'); document.getElementById('moreSheet').classList.add('on'); const b=document.getElementById('moreBtn'); if(b) b.setAttribute('aria-expanded','true'); }
+function closeMore(){ if(!moreOpen) return; moreOpen=false; document.getElementById('moreBg').classList.remove('on'); document.getElementById('moreSheet').classList.remove('on'); const b=document.getElementById('moreBtn'); if(b) b.setAttribute('aria-expanded','false');
+  // the shared dialog code returns focus to the element that opened the sheet, which a redraw may have replaced: land on the current More button
+  requestAnimationFrame(()=>{ const m=document.getElementById('moreBtn'), a=document.activeElement; if(m&&(!a||a===document.body||a.id==='moreSheet')) m.focus({preventScroll:true}); }); }
+document.getElementById('moreClose').onclick=closeMore; document.getElementById('moreBg').onclick=closeMore;
 // ---------- Log: redraw one card ----------
 // A tap inside a card (Done, Reps Left, Add or Remove Set, plate step, a hold starting or stopping) swaps that card for a
 // freshly drawn one instead of rebuilding the list, so the other cards' elements stay where they are: a running hold keeps
@@ -3443,7 +3629,7 @@ function refreshExercise(ex){
   document.querySelectorAll('#exerciseList .setdone.pop').forEach(el=>el.classList.remove('pop'));
   day.exercises.forEach(x=>{
     const was=logCards.get(x); if(!names.has(x.name)||!was||!was.isConnected) return;
-    const card=renderExercise(x,day); was.replaceWith(card); logCards.set(x,card);
+    const card=renderExercise(x,day); was.replaceWith(card); logCards.set(x,card); mountMore(card); fitSetGrid(card);
   });
   updateLogSummary(day);
   popSet=null;
@@ -3459,18 +3645,22 @@ function renderExercise(ex,day){
     const sugTxt=(ex.start===0&&typeof sug==='number')?'':(sug===null?'log body weight in Strength to use here':sug===-1?'find a weight for the rep range':estFrom?`~${dispWeight(sug)} ${unitLabel()} · estimate from ${estFrom}`:(dispWeight(sug)+' '+unitLabel()+(isDeloadActive()?' · deload':'')+(crossDaySub?` · from ${crossDaySub} day`:'')));
     const cur=currentFor(ex), base=baselineFor(ex);
     // the same ± change from the baseline the Strength tab shows ("+10%"), not the old ratio ("110%")
-    const chg=pct(base,cur); const lvlTxt=chg!==null&&Math.round(chg*10)!==0?` <span class="e1rm">· strength ${fmtPct(chg)}</span>`:'';
+    const chg=pct(base,cur); const lvlTxt=chg!==null&&Math.round(chg*10)!==0?`Strength ${fmtPct(chg)}`:'';
     const plat=isPlateau(ex);
-    let deltaTxt=''; // the jump over last time's top weight, as a small green ↑ beside the suggestion (was a row of its own)
+    let upTxt=''; // the jump over last time's top weight, in the More sheet's details
     if(!crossDaySub && ex.start!==0 && typeof sug==='number' && saved && saved.sets){
       const loggedLast=saved.sets.filter(s=>s.w!==''&&s.r!=='');
-      if(loggedLast.length){ const lastW=Math.max(...loggedLast.map(s=>parseFloat(s.w)||0)); if(lastW && sug>lastW){ const up=Math.round((dispWeight(sug)-dispWeight(lastW))*10)/10; deltaTxt=` <span class="delta-up" aria-hidden="true">↑${up}</span><span class="sr-only">, up ${up} ${unitLabel()} from last time</span>`; } }
+      if(loggedLast.length){ const lastW=Math.max(...loggedLast.map(s=>parseFloat(s.w)||0)); if(lastW && sug>lastW){ const up=Math.round((dispWeight(sug)-dispWeight(lastW))*10)/10; upTxt=`Up ${up} ${unitLabel()} from last time`; } }
     }
-    const card=document.createElement('div'); card.className='exercise'+(state.open?' open':'')+(complete?' complete':'');
-    const head=document.createElement('div'); head.className='ex-head';
-    head.innerHTML=`<div><div class="ex-name">${esc(ex.name)}${plat?'<span class="badge plateau">Plateau</span>':''}</div><div class="ex-target">${fmtTarget(ex.target)}${sugTxt?` <span class="sug">· ${typeof sug==='number'&&sug!==-1?'try ':''}${sugTxt}</span>${deltaTxt}`:''}${lvlTxt}</div></div><div class="ex-check" role="img" aria-label="${complete?'finished':'not finished'}">${complete?'✓':''}</div>`;
-    head.setAttribute('aria-expanded',String(!!state.open));
-    head.onclick=()=>{ state.open=!state.open; render(); }; card.appendChild(head);
+    // the focus layout draws one exercise at a time, always open (the stored `open` flag stays in the draft and is ignored, LF-6)
+    const card=document.createElement('div'); card.className='exercise open'+(complete?' complete':'');
+    const more=document.createElement('div'); more.className='more-body'; card._more=more; // what the More sheet shows: tools, tips, bar, notes, details
+    const short=(ex.start===0&&typeof sug==='number')?'':sug===null?'Add Body Weight':sug===-1?'Find a Weight':`${dispWeight(sug)} ${unitLabel()}`;
+    const head=document.createElement('div'); head.className='xh';
+    head.innerHTML=`<div class="xh-row"><div class="xh-eyebrow">${esc(ex.group)}${plat?'<span class="badge plateau">Plateau</span>':''}</div><button type="button" class="icbtn" id="dayOptBtn" aria-label="Day Options" aria-haspopup="dialog">${IC.dots}</button></div>
+      <h3 class="xh-name">${esc(ex.name)}</h3>
+      <div class="xh-row xh-sub"><div class="xh-meta"><span>${fmtTarget(ex.target)}</span>${short?`<span class="xh-w">${esc(short)}</span>`:''}${complete?`<span class="xh-ck" role="img" aria-label="finished">${IC.check}</span>`:''}</div><button type="button" class="xh-more" id="moreBtn" aria-haspopup="dialog">NDOT More${IC.chevR}</button></div>`;
+    card.appendChild(head);
 
     const body=document.createElement('div'); body.className='ex-body';
     const yt='https://www.youtube.com/results?search_query='+encodeURIComponent(ex.name.replace('/',' ')+' exercise form');
@@ -3482,8 +3672,9 @@ function renderExercise(ex,day){
     // only creates the two image tags once state.howto is true, never just from the card being open.
     const gifHtml=(exGif&&state.howto)?`<div class="exgif"><span class="exnote" role="status">Image unavailable offline</span><img src="${exGif[0]}" loading="lazy" alt="${esc(ex.name)}, start position" onerror="${GIF_ERR}"><img src="${exGif[1]}" loading="lazy" alt="${esc(ex.name)}, end position" onerror="${GIF_ERR}"></div>`:'';
     howto.innerHTML=`${toolsBar(!!state.howto, yt, true)}<div class="howto-demo">${gifHtml}<div class="cue">${ex.cue?esc(ex.cue):'No cue written yet.'}</div></div>`;
-    howto.querySelector('.tool-howto').onclick=()=>{ state.howto=!state.howto; render(); };
-    howto.querySelector('.tool-swap').onclick=()=>openSwap(currentDay, ex); body.appendChild(howto);
+    howto.querySelector('.tool-howto').onclick=e=>{ e.currentTarget.focus({preventScroll:true}); state.howto=!state.howto; render(); }; // Safari does not focus a tapped button; the redraw would hand focus back to the sheet
+    howto.querySelector('.tool-swap').onclick=()=>openSwap(currentDay, ex); more.appendChild(howto);
+    let platesEl=null; // the barbell plates row sits under Add Set; the bar picker and the fixed-bar switch are in More
     let updatePlates=null;
     if(barKind(ex)){
       // some gyms rack pre-loaded fixed-weight barbells (curl bars, EZ bars) instead of a loadable bar and plates —
@@ -3515,9 +3706,10 @@ function renderExercise(ex,day){
         const tot=dispWeight(parseFloat(liveLb)), bar=dispWeight(barWeightLb(ex));
         txtEl.innerHTML=tot<bar?`${tot} ${unitLabel()} is under the ${bar} ${unitLabel()} bar`:`<b>${Math.round((tot-bar)/2*100)/100} ${unitLabel()}</b>`;
       };
-      barSel.onchange=e=>{ settings.barWeights=settings.barWeights||{}; settings.barWeights[ex.name]=storeWeight(e.target.value); sset('settings',settings); pl.querySelector('.bar-chip-txt').textContent=e.target.selectedOptions[0].textContent; updatePlates(); };
+      barSel.onchange=e=>{ settings.barWeights=settings.barWeights||{}; settings.barWeights[ex.name]=storeWeight(e.target.value); sset('settings',settings); chip.querySelector('.bar-chip-txt').textContent=e.target.selectedOptions[0].textContent; updatePlates(); };
       pl.querySelector('.fixed-chk input').onchange=e=>{ fixed=e.target.checked; settings.fixedBar=settings.fixedBar||{}; settings.fixedBar[ex.name]=fixed; sset('settings',settings); syncFixedUI(); updatePlates(); };
-      syncFixedUI(); updatePlates(); body.appendChild(pl);
+      syncFixedUI(); updatePlates(); platesEl=pl;
+      { const r1=document.createElement('div'); r1.className='more-row'; r1.innerHTML='<span>Bar</span>'; r1.appendChild(pl.querySelector('.bar-chip')); more.appendChild(r1); more.appendChild(pl.querySelector('.fixed-chk')); }
     } else if(ex.equip==='machine'){
       // plate-loaded machines (leg press, some lever/row/press/curl machines, hack squat sleds) exist alongside
       // plain pin-stack machines under the same generic equip type, and it's purely gym-specific which one you
@@ -3541,15 +3733,15 @@ function renderExercise(ex,day){
       };
       pl.querySelector('.mach-plate-chk input').onchange=e=>{ on=e.target.checked; settings.machinePlates=settings.machinePlates||{}; settings.machinePlates[ex.name]=on; sset('settings',settings); txtEl.style.display=on?'':'none'; baseIn.style.display=on?'':'none'; updatePlates(); };
       baseIn.oninput=e=>{ settings.machineBase=settings.machineBase||{}; settings.machineBase[ex.name]=storeWeight(e.target.value); sset('settings',settings); updatePlates(); };
-      updatePlates(); body.appendChild(pl);
+      updatePlates(); const r2=document.createElement('div'); r2.className='more-row'; r2.appendChild(pl); more.appendChild(r2);
     }
-    if(plat){ const pt=document.createElement('div'); pt.className='plateau-tip'; pt.innerHTML=`No progress in 3 sessions. <span class="linkbtn" style="color:var(--amber)" data-act="variation">Try a variation</span>, take a lighter week (about 10% less, same reps), or switch the rep range for a few weeks. If several lifts feel stuck at once, <span class="linkbtn" style="color:var(--amber)" data-act="deload">consider a full deload week</span>.`; pt.querySelector('[data-act="variation"]').onclick=()=>openSwap(currentDay, ex); pt.querySelector('[data-act="deload"]').onclick=openDeloadSheet; body.appendChild(pt); }
-    if(ex.rotPrev){ const idx=day.exercises.indexOf(ex); const rt=document.createElement('div'); rt.className='plateau-tip'; rt.innerHTML=`Swapped in at the start of this block (was ${esc(ex.rotPrev.name)}). <span class="linkbtn" style="color:var(--amber)" data-act="undo">Undo</span> · <span class="linkbtn" style="color:var(--amber)" data-act="never">Never Suggest This</span>`; rt.querySelector('[data-act="undo"]').onclick=()=>undoRotation(day,idx); rt.querySelector('[data-act="never"]').onclick=()=>rejectRotation(day,idx); body.appendChild(rt); }
-    if(sug===-1){ const fn=document.createElement('div'); fn.className='first-log-note'; fn.textContent='New lift — no history yet. Log a comfortable first set below; Lift Log will suggest a weight next time from what you log now.'; body.appendChild(fn); }
-    else if(estFrom){ const fn=document.createElement('div'); fn.className='first-log-note'; fn.textContent=`New lift — the weight is a conservative estimate from ${estFrom} (same muscle group, adjusted for the implement and rep range). Adjust it to what feels right; Lift Log learns from what you log.`; body.appendChild(fn); }
+    if(plat){ const pt=document.createElement('div'); pt.className='plateau-tip'; pt.innerHTML=`No progress in 3 sessions. <span class="linkbtn" style="color:var(--amber)" data-act="variation">Try a variation</span>, take a lighter week (about 10% less, same reps), or switch the rep range for a few weeks. If several lifts feel stuck at once, <span class="linkbtn" style="color:var(--amber)" data-act="deload">consider a full deload week</span>.`; pt.querySelector('[data-act="variation"]').onclick=()=>openSwap(currentDay, ex); pt.querySelector('[data-act="deload"]').onclick=openDeloadSheet; more.appendChild(pt); }
+    if(ex.rotPrev){ const idx=day.exercises.indexOf(ex); const rt=document.createElement('div'); rt.className='plateau-tip'; rt.innerHTML=`Swapped in at the start of this block (was ${esc(ex.rotPrev.name)}). <span class="linkbtn" style="color:var(--amber)" data-act="undo">Undo</span> · <span class="linkbtn" style="color:var(--amber)" data-act="never">Never Suggest This</span>`; rt.querySelector('[data-act="undo"]').onclick=()=>undoRotation(day,idx); rt.querySelector('[data-act="never"]').onclick=()=>rejectRotation(day,idx); more.appendChild(rt); }
+    if(sug===-1){ const fn=document.createElement('div'); fn.className='first-log-note'; fn.textContent='New lift — no history yet. Log a comfortable first set below; Lift Log will suggest a weight next time from what you log now.'; more.appendChild(fn); }
+    else if(estFrom){ const fn=document.createElement('div'); fn.className='first-log-note'; fn.textContent=`New lift — the weight is a conservative estimate from ${estFrom} (same muscle group, adjusted for the implement and rep range). Adjust it to what feels right; Lift Log learns from what you log.`; more.appendChild(fn); }
     // first-session effort cue for a New or Experienced build: only on a rep-based, loadable lift with no history anywhere; it never writes or changes anything
     if((day.lvl==='new'||day.lvl==='exp')&&!isTimedTarget(ex.target)&&ex.start!==0&&ex.step!==0&&!(hist[ex.name]||[]).length&&!lastByName[ex.name]){
-      const cu=document.createElement('div'); cu.className='first-log-note'; cu.textContent=day.lvl==='new'?'Start light and leave 3 or more Reps Left.':'Work up to a weight that leaves about 2 Reps Left.'; body.appendChild(cu); }
+      const cu=document.createElement('div'); cu.className='first-log-note'; cu.textContent=day.lvl==='new'?'Start light and leave 3 or more Reps Left.':'Work up to a weight that leaves about 2 Reps Left.'; more.appendChild(cu); }
 
     const timed=m.timed;
     // bodyweight lifts (split squats, dips, pull-ups…) log bodyweight plus whatever is held or worn: s.add is that
@@ -3558,39 +3750,18 @@ function renderExercise(ex,day){
     const lastAdd=bwLoaded?Math.max(0,...((lastByName[ex.name]||{}).sets||[]).map(x=>parseFloat(x.add)||0)):0;
     // bodyweight lifts: the body weight gets its own line (it made the column head wrap as "+ Added / BW 168"),
     // and says what the column is for, which only a hover tooltip explained before
-    if(bwLoaded&&bwNow!=null){ const bl=document.createElement('div'); bl.className='bw-line'; bl.textContent=`Body weight ${dispBW(bwNow)} ${unitLabel()} — log only what you add on top`; body.appendChild(bl); }
-    const hr=document.createElement('div'); hr.className='setgrid head'; hr.innerHTML=`<div>Set</div><div>${bwLoaded?`+ Added · ${unitLabel()}`:`Weight · ${unitLabel()}`}</div><div>${timed?'Seconds':'Reps'}</div><div>Done</div><div></div>`; body.appendChild(hr);
+    if(bwLoaded&&bwNow!=null){ const bl=document.createElement('div'); bl.className='bw-line'; bl.textContent=`BW ${dispBW(bwNow)} ${unitLabel()} + added`; body.appendChild(bl); }
+    const hr=document.createElement('div'); hr.className='setgrid head'; hr.innerHTML=`<div>Set</div><div>Last</div><div>${bwLoaded?`+ Added · ${unitLabel()}`:`Weight · ${unitLabel()}`}</div><div>${timed?'Seconds':'Reps'}</div><div>Done</div>`; body.appendChild(hr);
     const bwTotal=s=>bwNow==null?'':Math.round((bwNow+(parseFloat(s.add)||0))*10)/10;
-    // "Same as Last": copies what the previous session did for the next empty set (reps, reps left, and the weight only
-    // if that box is empty). It never ticks Done and never starts the rest timer. Not for timed holds, a first-ever use or a seed.
-    const lastSets=m.lastSets;
-    const salTargets=lastSets.length?state.sets.map((x,j)=>j).filter(j=>!state.sets[j].done&&state.sets[j].r===''):[];
-    if(lastSets.length&&!salTargets.length){
-      const sal=document.createElement('div'); sal.className='sal-row idle'; sal.setAttribute('aria-hidden','true');
-      sal.innerHTML=`<button type="button" class="sal-chip" tabindex="-1">Same as Last</button>`; body.insertBefore(sal,hr);
-    }
-    if(salTargets.length){
-      const j=salTargets[0], fill=salFill(m,state,j), ls=fill.ls, leftTxt=ls.rir!=null?` · ${ls.rir>=4?'4+':ls.rir} left`:'';
-      const addTxt=fill.add!=null?` · +${dispWeight(parseFloat(ls.add))} ${unitLabel()}`:fill.w!=null?` · ${dispWeight(sug)} ${unitLabel()}`:''; // exactly what the next tap will fill
-      const full=`Set ${j+1}${addTxt} · ${ls.r} reps${leftTxt}`, wTxt=addTxt.replace(/^ · /,'');
-      const det=`Set ${j+1} · ${wTxt?wTxt+' × '+esc(String(ls.r)):esc(String(ls.r))+' reps'}`; // short form on the chip; the full text (with reps left) is the label
-      const sal=document.createElement('div'); sal.className='sal-row';
-      sal.innerHTML=`<button type="button" class="sal-chip" aria-label="Same as Last: ${esc(full)}" data-det="${esc(full)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 8v4l3 2"/></svg><span class="sal-lbl">Same as Last:</span><span class="sal-det">${det}</span></button>`;
-      sal.querySelector('button').onclick=e=>{
-        e.currentTarget.focus({preventScroll:true}); // Safari doesn't focus a tapped button; the redraw would hand focus back to whatever had it last
-        const fk=listFocusKey(), cardIdx=[...document.querySelectorAll('#exerciseList .exercise')].indexOf(e.currentTarget.closest('.exercise'));
-        if(!actFillSet(state,j,m)){ render(); return; }
-        render();
-        { const c0=document.querySelectorAll('#exerciseList .exercise')[cardIdx], h=c0&&c0.querySelector('.sal-row:not(.idle) .sal-chip'); salAnnounce(h?'Next: '+h.dataset.det:'Every set is filled'); }
-        if(fk){ const c=document.querySelectorAll('#exerciseList .exercise')[fk.card]; const nxt=c&&(c.querySelector('.sal-row:not(.idle) .sal-chip')||c.querySelector('.setdone:not(.on)')); if(nxt){ tagClickables(c); nxt.focus({preventScroll:true}); } }
-      };
-      body.insertBefore(sal,hr);
-    }
+    // last time, set by set (2.0): each row shows what that set was last time; a tap fills the row (reps, Reps Left and today's suggested
+    // weight, only into an empty row). A timed hold shows last time's seconds and nothing fills. The Same as Last chip is gone (owner, 2026-11-14).
+    const lastAll=(saved&&saved.sets)?saved.sets.filter(x=>x&&x.r!==''&&x.r!=null):[];
+    const lastW=x=>bwLoaded?(parseFloat(x.add)?`BW+${dispWeight(x.add)}`:'BW'):(x.w?Math.round(dispWeight(x.w)*10)/10:'–');
     state.sets.forEach((s,i)=>{
       if(bwLoaded) s.w=bwTotal(s);
       const addHint=bwLoaded?(state.sets.slice(0,i).map(x=>parseFloat(x.add)||0).filter(Boolean).pop()||lastAdd):0;
       const row=document.createElement('div'); row.className='setgrid';
-      row.innerHTML=`<div class="setnum">${i+1}</div><input type="number" inputmode="decimal" aria-label="Set ${i+1} ${bwLoaded?'added weight':'weight'}" placeholder="${bwLoaded?'+'+dispWeight(addHint):sug===null?'bw':sug===-1?unitLabel():dispWeight(sug)}" value="${bwLoaded?(s.add?dispWeight(s.add):''):(s.w?dispWeight(s.w):s.w)}"${bwLoaded?' title="extra weight held or worn (dumbbells, a dip belt) — leave blank for bodyweight only"':''}><input type="number" inputmode="numeric" aria-label="Set ${i+1} ${timed?'seconds':'reps'}" placeholder="${timed?'Sec':'Reps'}" value="${s.r}"><div class="setdone ${s.done?'on':''}${popSet===s?' pop':''}" aria-label="set ${i+1} done" aria-pressed="${!!s.done}">${s.done?'✓':''}</div><div class="setrm" title="remove set" aria-label="remove set ${i+1}">✕</div>`;
+      row.innerHTML=`<button type="button" class="setnum" aria-label="Set ${i+1} options" aria-haspopup="dialog">${i+1}</button><span class="slast"></span><input type="number" inputmode="decimal" aria-label="Set ${i+1} ${bwLoaded?'added weight':'weight'}" placeholder="${bwLoaded?'+'+dispWeight(addHint):sug===null?'bw':sug===-1?unitLabel():dispWeight(sug)}" value="${bwLoaded?(s.add?dispWeight(s.add):''):(s.w?dispWeight(s.w):s.w)}"${bwLoaded?' title="extra weight held or worn (dumbbells, a dip belt) — leave blank for bodyweight only"':''}><input type="number" inputmode="numeric" aria-label="Set ${i+1} ${timed?'seconds':'reps'}" placeholder="" value="${s.r}"><div class="setdone ${s.done?'on':''}${popSet===s?' pop':''}" aria-label="set ${i+1} done" aria-pressed="${!!s.done}">${s.done?'✓':''}</div>`;
       const [wI,rI]=row.querySelectorAll('input');
       // one-shot: the pop mark comes off when its animation ends, so it is an event on this tap, never a state a later draw could replay
       if(popSet===s){ const dn=row.querySelector('.setdone'); dn.addEventListener('animationend',()=>dn.classList.remove('pop'),{once:true}); }
@@ -3598,14 +3769,21 @@ function renderExercise(ex,day){
       else wI.oninput=e=>{ actSetWeight(s,e.target.value); if(updatePlates) updatePlates(s.w); };
       rI.oninput=e=>{ actSetReps(s,e.target.value); const rr=row.nextElementSibling; if(rr&&rr.classList.contains('rir-row')){ rr.hidden=!(s.done||s.r!==''); }};
       row.querySelector('.setdone').onclick=()=>{ if(actToggleDone(ex,s,i,m)) refreshExercise(ex); };
-      row.querySelector('.setrm').onclick=async()=>{
-        if(state.sets.length<=1){ showToast('Keep at least one set'); return; }
-        // an empty set goes in one tap; one with anything logged asks first, since ✕ sits right beside Done
-        const logged=s.done||s.r!==''||(bwLoaded?!!parseFloat(s.add):(s.w!==''&&s.w!=null));
-        const fk=listFocusKey();
-        if(logged&&!await confirmSheet(`Remove set ${i+1} of ${ex.name}? What's logged in it will be lost.`,'Remove Set',null,true)) return;
-        actRemoveSet(state,i); refreshExercise(ex); restoreListFocus(fk);
-      };
+      { // the last-time cell
+        const ls=lastAll.length?lastAll[Math.min(i,lastAll.length-1)]:null, ph=row.querySelector('.slast'); let cell;
+        if(ls&&timed){ cell=document.createElement('span'); cell.className='slast used'; cell.setAttribute('role','img'); cell.setAttribute('aria-label',`Last time ${ls.r} seconds`); cell.innerHTML=`<span>${esc(String(ls.r))}s</span>`; }
+        else if(ls){
+          const can=!s.done&&s.r==='', f=salFill(m,state,i), wShown=bwLoaded?(f.add!=null?`+${dispWeight(parseFloat(f.add))}`:''):(f.w!=null?dispWeight(f.w):''), leftTxt=ls.rir!=null?`, ${ls.rir>=4?'4 or more':ls.rir} left`:'';
+          cell=document.createElement('button'); cell.type='button'; cell.className='slast'+(can?'':' used'); cell.innerHTML=`<span>${esc(`${lastW(ls)} × ${ls.r}`)}</span>`;
+          cell.setAttribute('aria-label',can?`Fill set ${i+1}: ${wShown?wShown+' '+unitLabel()+', ':''}${ls.r} reps${leftTxt}`:`Set ${i+1}, last time ${lastW(ls)} by ${ls.r}`);
+          if(!can) cell.setAttribute('aria-disabled','true');
+          cell.onclick=()=>{ cell.focus({preventScroll:true}); if(!actFillSet(state,i,m)) return; refreshExercise(ex);
+            salAnnounce(`Set ${i+1} filled`);
+            const c=document.querySelector('#exerciseList .exercise'), nxt=c&&(c.querySelector('button.slast:not(.used)')||c.querySelectorAll('.setdone')[i]); if(nxt){ tagClickables(c); nxt.focus({preventScroll:true}); } };
+        } else { cell=document.createElement('span'); cell.className='slast'; cell.innerHTML='<span aria-hidden="true">–</span>'; }
+        ph.replaceWith(cell);
+      }
+      row.querySelector('.setnum').onclick=e=>{ e.currentTarget.focus({preventScroll:true}); openSetOptions(ex,state,i,s,bwLoaded); };
       body.appendChild(row);
       if(timed&&!s.done){
         const running=hold.key===holdKey(ex,i);
@@ -3627,27 +3805,79 @@ function renderExercise(ex,day){
     });
     const addset=document.createElement('button'); addset.type='button'; addset.className='addset'; addset.textContent='+ Add Set';
     addset.onclick=()=>{ actAddSet(ex,state); refreshExercise(ex); }; body.appendChild(addset);
+    if(platesEl) body.appendChild(platesEl);
 
     const ta=document.createElement('textarea'); ta.className='notes'; ta.placeholder='Notes — seat setting, how it felt'; ta.setAttribute('aria-label',`Notes for ${ex.name}`); ta.value=notes[histKey(ex)]||'';
-    ta.oninput=e=>{ notes[histKey(ex)]=e.target.value; sset('notes',notes); }; body.appendChild(ta);
+    ta.oninput=e=>{ notes[histKey(ex)]=e.target.value; sset('notes',notes); syncMoreDot(!!e.target.value.trim()); }; more.appendChild(ta);
+    let lastTimeEl=null;
 
     const lastToShow=saved?saved.sets:ex.seed;
     if(lastToShow){ // bodyweight lifts show what was added ("BW + 20 × 10"), not a bodyweight total with float noise ("170.02x10");
     // the reps-left figure uses the pills' own words rather than "RIR"
     const lastSetW=s=>bwLoaded?(parseFloat(s.add)?`BW + ${dispWeight(s.add)}`:'BW'):(s.w?Math.round(dispWeight(s.w)*10)/10:'–');
-    const parts=lastToShow.filter(s=>s.w||s.r).map(s=>(timed?`${s.r||'–'}s`:`${lastSetW(s)} × ${s.r||'–'}`)+`${s.rir!=null?` (${s.rir>=4?'4+':s.rir} left)`:''}`).join(', '); if(parts){ const d=document.createElement('div'); d.className='last-time'; d.innerHTML=`<span>Last Time${crossDaySub?` (${esc(crossDaySub)} day)`:''}:</span> <span class="lt-v">${esc(parts)}</span>`; head.firstElementChild.appendChild(d); } }
+    const parts=lastToShow.filter(s=>s.w||s.r).map(s=>(timed?`${s.r||'–'}s`:`${lastSetW(s)} × ${s.r||'–'}`)+`${s.rir!=null?` (${s.rir>=4?'4+':s.rir} left)`:''}`).join(', '); if(parts){ const d=document.createElement('div'); d.className='last-time'; d.innerHTML=`<span>Last Time${crossDaySub?` (${esc(crossDaySub)} day)`:''}:</span> <span class="lt-v">${esc(parts)}</span>`; lastTimeEl=d; } }
+    { // Details: why this weight, strength change, last time (what the exercise heading used to carry)
+      const bits=[(typeof sug==='number'&&sug!==-1&&ex.start!==0)?`Suggested ${short}${estFrom?` · estimate from ${estFrom}`:''}${isDeloadActive()?' · deload':''}${crossDaySub?` · from ${crossDaySub} day`:''}`:'',lvlTxt,upTxt].filter(Boolean);
+      if(bits.length||lastTimeEl){ const gh=document.createElement('div'); gh.className='lgh'; gh.textContent='Details'; more.appendChild(gh);
+        if(bits.length){ const p=document.createElement('p'); p.className='sheet-p dim'; p.textContent=bits.join(' · '); more.appendChild(p); }
+        if(lastTimeEl) more.appendChild(lastTimeEl); }
+      const flagged=!!(notes[histKey(ex)]||'').trim()||!!more.querySelector('.plateau-tip,.first-log-note');
+      head.querySelector('#moreBtn').innerHTML=head.querySelector('#moreBtn').innerHTML.replace('NDOT',flagged?'<i class="ndot" aria-hidden="true"></i>':'');
+    }
     card.appendChild(body); return card;
 }
 // The Log's chrome that depends on the whole day: the Finish label, the progress line and Edit Day.
 function updateLogSummary(day){
-  const allComplete=day.exercises.every(ex=>ensureState(ex).sets.every(s=>s.done));
-  document.getElementById('finishBtn').textContent=allComplete?'All Sets Done — Finish Session':'Finish Session';
-  // the row under the day tabs shows how far through the session you are — it used to be "[Heavy] Upper Day", which
-  // only repeated the selected tab; the day's name stays as the heading for screen readers. Time is Home's estimate.
-  const nEx=day.exercises.length, nDone=day.exercises.filter(ex=>ensureState(ex).sets.every(s=>s.done)).length;
-  document.getElementById('dayLabel').innerHTML=`<h2 class="sr-only">${day.name} ${day.sub}</h2><span class="day-prog">${nDone} of ${nEx} Done · About ${nEx*6} min</span><span class="linkbtn" id="editLink">Edit Day</span><div class="day-bar" aria-hidden="true"><i style="width:${Math.round(nDone/nEx*100)}%"></i></div>`;
-  document.getElementById('editLink').onclick=()=>{ setView('more'); renderEditor(); document.getElementById('edDay').value=currentDay; openSetPage('edit'); };
+  const ord=orderedExercises(day), doneN=ord.filter(ex=>ensureState(ex).sets.every(s=>s.done)).length, allComplete=doneN===ord.length;
+  const fb=document.getElementById('finishBtn');
+  fb.textContent=allComplete?'All Sets Done — Finish Session':'Finish Session';
+  fb.classList.toggle('all-done',allComplete); // quiet until every set is done, then the one coral action (owner, 2026-11-14)
+  document.body.classList.toggle('all-done',allComplete);
+  document.getElementById('dayLabel').innerHTML=`<h2 class="sr-only">${esc(day.name)} ${esc(day.sub)}</h2>`;
+  // Previous, the Day List (progress segments and position), Next. Next is never in Finish's place and never finishes (LF-2).
+  const n=ord.length, i=focusIdx, p=document.getElementById('pager');
+  p.innerHTML=`<button type="button" class="pg prev" aria-label="Previous Exercise"${i===0?' aria-disabled="true"':''}>${IC.chevL}</button>
+    <button type="button" class="pg list" aria-haspopup="dialog" aria-label="Day List. Exercise ${i+1} of ${n}, ${doneN} finished">${IC.list}<span class="segs" aria-hidden="true">${ord.map((ex,k)=>`<i class="${ensureState(ex).sets.every(s=>s.done)?'done':k===i?'cur':''}"></i>`).join('')}</span><span>${i+1}/${n}</span></button>
+    <button type="button" class="pg next" aria-label="Next Exercise"${i===n-1?' aria-disabled="true"':''}>Next${IC.chevR}</button>`;
+  p.querySelector('.prev').onclick=e=>{ e.currentTarget.focus({preventScroll:true}); setFocus(focusIdx-1); pagerFocus('.prev'); };
+  p.querySelector('.next').onclick=e=>{ e.currentTarget.focus({preventScroll:true}); setFocus(focusIdx+1); pagerFocus('.next'); };
+  p.querySelector('.list').onclick=e=>{ e.currentTarget.focus({preventScroll:true}); openDayList(); };
   updateLogChrome();
+}
+// the pager is redrawn with the card, so a tapped Previous or Next is a new element: put focus back on its successor
+function pagerFocus(sel){ const b=document.querySelector('#pager '+sel); if(b&&b.getAttribute('aria-disabled')!=='true') b.focus({preventScroll:true}); else { const l=document.querySelector('#pager .list'); if(l) l.focus({preventScroll:true}); } }
+// Day List: every exercise with its group, target, weight and check; a tap puts it in focus
+function openDayList(){
+  const day=PROGRAM.find(d=>d.id===currentDay), ord=orderedExercises(day);
+  openInfo(`${day.name}${day.sub?', '+day.sub:''}`,b=>{
+    const l=document.createElement('div'); l.className='sheet-list'; let g=null;
+    ord.forEach((ex,i)=>{ if(ex.group!==g){ g=ex.group; const gh=document.createElement('div'); gh.className='lgh'; gh.textContent=g; l.appendChild(gh); }
+      const m=exModel(ex), dn=ensureState(ex).sets.every(s=>s.done), w=(ex.start===0&&typeof m.sug==='number')?'':m.sug===null?'Add Body Weight':m.sug===-1?'Find a Weight':`${dispWeight(m.sug)} ${unitLabel()}`;
+      const r=document.createElement('button'); r.type='button'; r.className='lrow'+(i===focusIdx?' cur':'');
+      r.innerHTML=`<span class="lck${dn?' on':''}" role="img" aria-label="${dn?'finished':'not finished'}">${IC.check}</span><span class="grow">${esc(ex.name)}<span class="sub">${fmtTarget(ex.target)}${w?' · '+esc(w):''}${isPlateau(ex)?' · Plateau':''}</span></span>`;
+      if(i===focusIdx) r.setAttribute('aria-current','true');
+      r.onclick=()=>{ closeInfo(); setFocus(i); const mb=document.getElementById('moreBtn'); if(mb) mb.focus({preventScroll:true}); }; l.appendChild(r); });
+    b.appendChild(l); });
+}
+// Day Options: the two things that used to be links on the Log page. Each fires the app's own handler.
+function openEditDay(){ setView('more'); renderEditor(); document.getElementById('edDay').value=currentDay; openSetPage('edit'); }
+function openDayOptions(){
+  openInfo('Day Options',b=>{ const l=document.createElement('div'); l.className='sheet-list';
+    const a=document.createElement('button'); a.type='button'; a.className='lrow'; a.innerHTML=`<span class="grow">Edit Day</span>${IC.chevR}`; a.onclick=()=>{ closeInfo(); openEditDay(); };
+    const c=document.createElement('button'); c.type='button'; c.className='lrow danger'; c.textContent="Clear Today's Entries"; c.onclick=()=>{ closeInfo(); document.getElementById('resetLink').click(); };
+    l.append(a,c); b.appendChild(l); });
+}
+// Set options: the ✕ that sat beside Done moved behind the set number (a mistaken tap is no longer one tap from Done). The confirm is unchanged.
+function openSetOptions(ex,state,i,s,bwLoaded){
+  openInfo(`Set ${i+1}`,b=>{ const l=document.createElement('div'); l.className='sheet-list';
+    const r=document.createElement('button'); r.type='button'; r.className='lrow danger'; r.textContent='Remove Set';
+    r.onclick=async()=>{ closeInfo();
+      if(state.sets.length<=1){ showToast('Keep at least one set'); return; }
+      // an empty set goes in one tap; one with anything logged asks first
+      const logged=s.done||s.r!==''||(bwLoaded?!!parseFloat(s.add):(s.w!==''&&s.w!=null));
+      if(logged&&!await confirmSheet(`Remove set ${i+1} of ${ex.name}? What's logged in it will be lost.`,'Remove Set',null,true)) return;
+      actRemoveSet(state,i); refreshExercise(ex); const sn=document.querySelectorAll('#exerciseList .setnum')[Math.min(i,state.sets.length-1)]; if(sn) sn.focus({preventScroll:true}); };
+    l.appendChild(r); b.appendChild(l); });
 }
 
 // ---------- first-launch program builder ----------
@@ -6498,7 +6728,7 @@ document.addEventListener('focusout',e=>{
 // Nearly every tappable control is a div/span wired with onclick, which a keyboard or screen reader can't reach.
 // Tag them as buttons as they're rendered (render() rebuilds cards constantly, hence the observer) and let
 // Enter/Space fire the same click a tap would.
-const KB_CLICKABLE='.viewtab,.daytab,.day-card,.ex-head,.linkbtn,.addset,.setdone,.setrm,.rpe-dot,.rir-pill,.eqchip,.cal-nav,.cal-cell.has-session,.str-split-card,.edrow .acts span,.reset-link';
+const KB_CLICKABLE='.viewtab,.daytab,.day-card,.xh-more,.linkbtn,.addset,.setdone,.rpe-dot,.rir-pill,.eqchip,.cal-nav,.cal-cell.has-session,.str-split-card,.edrow .acts span,.reset-link';
 function tagClickables(root){
   const els=[...(root.matches(KB_CLICKABLE)?[root]:[]),...root.querySelectorAll(KB_CLICKABLE)];
   for(const el of els){
