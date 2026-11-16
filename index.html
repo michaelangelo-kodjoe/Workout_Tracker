@@ -3601,7 +3601,7 @@ function syncMoreDot(hasNote){ const b=document.getElementById('moreBtn'); if(!b
 function openMore(){ moreOpen=true; document.getElementById('moreBg').classList.add('on'); document.getElementById('moreSheet').classList.add('on'); const b=document.getElementById('moreBtn'); if(b) b.setAttribute('aria-expanded','true'); }
 function closeMore(){ if(!moreOpen) return; moreOpen=false; document.getElementById('moreBg').classList.remove('on'); document.getElementById('moreSheet').classList.remove('on'); const b=document.getElementById('moreBtn'); if(b) b.setAttribute('aria-expanded','false');
   // the shared dialog code returns focus to the element that opened the sheet, which a redraw may have replaced: land on the current More button
-  requestAnimationFrame(()=>{ const m=document.getElementById('moreBtn'), a=document.activeElement; if(m&&(!a||a===document.body||a.id==='moreSheet')) m.focus({preventScroll:true}); }); }
+  requestAnimationFrame(()=>{ const m=document.getElementById('moreBtn'), a=document.activeElement; if(m&&(!a||a===document.body||a.closest('#moreSheet'))) m.focus({preventScroll:true}); }); }
 document.getElementById('moreClose').onclick=closeMore; document.getElementById('moreBg').onclick=closeMore;
 // ---------- Log: redraw one card ----------
 // A tap inside a card (Done, Reps Left, Add or Remove Set, plate step, a hold starting or stopping) swaps that card for a
