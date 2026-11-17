@@ -1329,7 +1329,7 @@
   .setgrid.dragging .rm-act,.setgrid.open .rm-act{display:flex;}
   .title-row{touch-action:pan-y;} /* a sideways swipe on the title row changes day (Log) */
   @media (prefers-reduced-motion: reduce){
-    main>section.view-enter,.exercise.enter-r,.exercise.enter-l,.preview-list:not([hidden]),.celebrate-bg.on .celebrate,.celebrate-bg.on .pr-card{animation:fadein 150ms linear;}
+    main>section.view-enter,.exercise.enter-r,.exercise.enter-l,.exlist.enter-r,.exlist.enter-l,.preview-list:not([hidden]),.celebrate-bg.on .celebrate,.celebrate-bg.on .pr-card{animation:fadein 150ms linear;}
     .sheet{transform:none;opacity:0;transition:opacity 150ms linear,visibility 0s linear 150ms;}
     .sheet.on{opacity:1;transition:opacity 150ms linear;}
     .sheet-bg{transition:opacity 150ms linear;}
@@ -1338,6 +1338,49 @@
     .viewtab svg,.btn,.start-cta,.finish-btn,.pg,.cel-cta,.setdone,.plan-row .ic,input.switch::after{transition:none;transform:none;}
     .viewtab.active svg{transform:none;}
   }
+  /* ---------- Log: the exercise list first, then one exercise (list-first, B5) ---------- */
+  .icbtn{position:relative;}
+  .icbtn .ndot{position:absolute;top:9px;right:9px;margin:0;}
+  .exlist.enter-r,.exlist.enter-l{animation-duration:var(--dur-2);animation-timing-function:var(--ease);}
+  .exlist.enter-r{animation-name:enterr;} .exlist.enter-l{animation-name:enterl;}
+  .exl-head{display:flex;align-items:center;justify-content:space-between;min-height:44px;margin:0 0 var(--sp-2);padding:0 0 0 var(--sp-1);}
+  .exl-prog{margin:0;font-size:var(--fs-xl);font-weight:700;letter-spacing:-.01em;}
+  .exl-head .icbtn{margin-right:-10px;}
+  .exl-rows{background:var(--panel);border-radius:var(--r-lg);overflow:hidden;}
+  .exl-row{display:flex;align-items:center;min-height:72px;border-top:1px solid var(--line);}
+  .exl-row:first-child{border-top:0;}
+  .exl-open{flex:1;min-width:0;display:flex;align-items:center;gap:var(--sp-3);min-height:72px;margin:0;padding:var(--sp-2) 0 var(--sp-2) var(--sp-4);border:0;background:none;color:var(--text);text-align:left;font:inherit;cursor:pointer;transition:background var(--dur-1) var(--ease);}
+  .exl-open:active{background:var(--panel-raised);}
+  .exl-menu{margin-right:var(--sp-1);}
+  .exl-tile{position:relative;flex:none;width:52px;height:52px;border-radius:var(--r-sm);background:var(--panel-raised);overflow:hidden;display:block;}
+  .exl-row.next .exl-tile{box-shadow:inset 0 0 0 1.5px var(--accent);} /* the next exercise */
+  .tile-fig{display:block;width:100%;height:100%;}
+  .exl-row.done .tile-fig{opacity:.4;}
+  .exl-ck{position:absolute;right:3px;bottom:3px;width:20px;height:20px;border-radius:var(--r-full);background:var(--green);color:var(--on-green);display:flex;align-items:center;justify-content:center;}
+  .exl-ck .ic{width:12px;height:12px;stroke-width:3.2;}
+  .exl-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+  .exl-nm{font-size:var(--fs-lg);font-weight:600;line-height:1.2;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+  .exl-row.done .exl-nm{color:var(--text-dim);}
+  .exl-sm{display:block;font-size:var(--fs-body);color:var(--text-dim);line-height:1.25;}
+  .exl-pl{display:inline-block;width:8px;height:8px;margin-left:8px;border-radius:var(--r-full);background:var(--amber);vertical-align:middle;}
+  .exlist.narrow .exl-tile{display:none;} .exlist.narrow .exl-open{padding-left:var(--sp-4);} .exlist.narrow .exl-nm{-webkit-line-clamp:3;}
+  @media (max-width:339px){ .exl-tile{width:44px;height:44px;} .exl-open{gap:10px;padding-left:12px;} .exl-sm{font-size:var(--fs-sm);} }
+  /* inside an exercise: no day tabs (they live on the list), Back to the list, one "..." */
+  body.log-ex #dayTabs{display:none;}
+  .xtop{display:flex;align-items:center;justify-content:space-between;min-height:44px;margin:-8px 0 0;}
+  .xback{display:inline-flex;align-items:center;gap:2px;min-height:44px;margin:0 0 0 -10px;padding:0 12px 0 6px;border:0;background:none;color:var(--light);font:inherit;font-size:var(--fs-lg);cursor:pointer;}
+  .xtop .icbtn{margin-right:-10px;}
+  body.log-ex .xh-name{margin-top:0;}
+  body.log-ex .xh-meta{min-height:0;margin-left:0;overflow:visible;clip-path:none;gap:0;font-size:var(--fs-body);}
+  body.log-ex .xh-meta>span{margin-left:0;white-space:normal;}
+  .xh-side::before{content:"•";margin:0 6px;} .xh-side:empty{display:none;}
+  body.log-ex .xh-meta .xh-ck{margin-left:var(--sp-2);}
+  body.log-ex .setgrid.head>div:nth-child(1),body.log-ex .setgrid.head>div:nth-child(5){visibility:hidden;}
+  /* Reps Left: dots under the set being entered; a finished set shows "Left: n"; later sets show nothing */
+  .rir-row:not(.entering){display:none;}
+  .rir-done{font-size:var(--fs-sm);color:var(--text-dim);margin:-2px 0 var(--sp-2) 42px;}
+  .tight .rir-done{margin-left:0;}
+  .next-ex{display:flex;align-items:center;justify-content:center;width:100%;min-height:52px;margin:var(--sp-3) 0 0;border:0;border-radius:var(--r-sm);background:var(--text);color:var(--bg);font:inherit;font-size:var(--fs-lg);font-weight:700;cursor:pointer;}
   /* a view that is showing carries .view-on (set by setView), the hook B4 animates from */
   @media (prefers-reduced-motion: reduce){ .viewtab svg,.btn,.start-cta{transition:none;} }
 </style>
@@ -1610,7 +1653,6 @@
 
 <footer><div class="footer-inner">
   <div id="logFooter" style="display:none">
-  <div id="pager" class="pager"></div>
   <div class="timer" id="timer"><div class="timer-row"><svg class="ring" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="18"/><circle id="ringArc" cx="22" cy="22" r="18" stroke-dasharray="113.1" stroke-dashoffset="0"/></svg><div class="t" id="timerT">1:30</div><div class="acts"><button type="button" id="tPlus">+30s</button><button type="button" id="tSkip">Skip</button></div></div><div class="tbar"><i id="timerBar" style="width:100%"></i></div></div>
   <button class="finish-btn" id="finishBtn">Finish Session</button>
   </div>
@@ -3367,7 +3409,7 @@ document.getElementById('weekClose').onclick=closeWeek; document.getElementById(
 async function loadDay(d){
   if(d!==currentDay){
     if(hold.key) stopHold(false); // a hold left running when the day changes stops with its seconds kept on the set it was timing (the draft reload below would orphan it)
-    focusIdx=null; closeMore();
+    focusIdx=null; logScreen='list'; enterSet=null; closeMore();
     // MO-2: the new day's exercise slides in from the side of its tab (only for a day the user chose on the Log)
     const order=PROGRAM.map(p=>p.id).concat('cardio'), oi=order.indexOf(currentDay), ni=order.indexOf(d);
     if(view==='log'&&!booting&&oi>=0&&ni>=0) focusDir=Math.sign(ni-oi);
@@ -3630,9 +3672,85 @@ function orderedExercises(day){
 // It is not stored (NC-1); a reload lands on the derived exercise again.
 let focusIdx=null, focusDay=null, focusDir=0, moreOpen=false;
 function derivedFocus(ord){ const i=ord.findIndex(ex=>!ensureState(ex).sets.every(s=>s.done)); return i<0?ord.length-1:i; }
-function setFocus(i){ const day=PROGRAM.find(d=>d.id===currentDay); if(!day) return; const n=day.exercises.length; i=Math.max(0,Math.min(n-1,i)); if(i===focusIdx) return; focusDir=Math.sign(i-focusIdx); focusIdx=i; closeMore();
+function setFocus(i){ const day=PROGRAM.find(d=>d.id===currentDay); if(!day) return; const n=day.exercises.length; i=Math.max(0,Math.min(n-1,i)); if(i===focusIdx) return; focusDir=Math.sign(i-focusIdx); focusIdx=i; enterSet=null; closeMore();
   { const a=document.activeElement; if(a&&a.closest&&a.closest('#exerciseList')) a.blur(); } // another exercise is another set of fields: nothing to hand focus back to (and the keyboard goes away)
   render(); window.scrollTo(0,0); }
+// ---------- Log: the exercise list, then one exercise (list-first, owner 2026-11-16) ----------
+// The Log opens on the day's exercises as a list (Start on Home and a day change land here, with the next exercise ringed). A row opens that
+// exercise; "Exercises" (or Next Exercise, or a swipe) moves on. The Log tab keeps wherever you were.
+let logScreen='list', enterSet=null; // enterSet: the set whose Reps Left dots are showing, when the user moved to a set other than the first unchecked one
+function goLog(){ logScreen='list'; setView('log'); }
+function showList(){
+  closeMore(); logScreen='list'; focusDir=-1; enterSet=null;
+  { const a=document.activeElement; if(a&&a.closest&&a.closest('#exerciseList')) a.blur(); }
+  render(); window.scrollTo(0,0);
+  const cur=document.querySelector('#exerciseList .exl-open[data-i="'+focusIdx+'"]'); if(cur) cur.focus({preventScroll:true});
+}
+function openExercise(i){
+  const day=PROGRAM.find(d=>d.id===currentDay); if(!day) return; i=Math.max(0,Math.min(day.exercises.length-1,i));
+  closeMore(); { const a=document.activeElement; if(a&&a.closest&&a.closest('#exerciseList')) a.blur(); }
+  logScreen='exercise'; focusDir=1; focusIdx=i; enterSet=null; render(); window.scrollTo(0,0);
+  const nm=document.querySelector('#exerciseList .xh-name'); if(nm) nm.focus({preventScroll:true});
+}
+// the first exercise after this one with an unchecked set (wrapping round), else back to the list
+function nextExercise(){
+  const day=PROGRAM.find(d=>d.id===currentDay), ord=orderedExercises(day), un=k=>!ensureState(ord[k]).sets.every(s=>s.done); let k=-1;
+  for(let j=focusIdx+1;j<ord.length;j++) if(un(j)){ k=j; break; }
+  if(k<0) for(let j=0;j<focusIdx;j++) if(un(j)){ k=j; break; }
+  if(k<0) showList(); else openExercise(k);
+}
+// the muscle art on a list row: the Home body map, cropped to the lift's area and tinted (target muscles coral, helpers dimmer)
+const TILE_GRP={Chest:{v:0,p:['chest-upper','chest-mid','chest-lower'],box:'25 150 400 400'},Back:{v:1,p:['back-lats','back-traps','lowerback'],box:'25 150 400 400'},
+  Shoulders:{v:0,p:['delt-front','delt-lateral'],box:'25 150 400 400'},Arms:{v:0,p:['biceps'],box:'25 190 400 400'},Forearms:{v:0,p:['forearm-flexor','forearm-extensor'],box:'25 230 400 400'},
+  Quads:{v:0,p:['quads'],box:'60 430 330 330'},Hamstrings:{v:1,p:['hamstrings','glutes'],box:'60 430 330 330'},Calves:{v:1,p:['calves-gastroc','calves-soleus'],box:'60 560 330 330'},
+  Core:{v:0,p:['abs-upper','abs-lower','abs-obliques'],box:'25 220 400 400'}};
+const TILE_SEC={chest:['chest-upper','chest-mid','chest-lower'],shoulders:['delt-front','delt-lateral','delt-rear'],biceps:['biceps'],triceps:['triceps-lateral','triceps-long'],back:['back-lats','back-traps'],quads:['quads'],glutes:['glutes'],forearms:['forearm-flexor','forearm-extensor']};
+const tileCache={};
+function muscleTile(ex){
+  const g=TILE_GRP[ex.group]||TILE_GRP.Chest, trib=ex.group==='Arms'&&(ex.m||[])[0]==='triceps', v=trib?1:g.v, prim=trib?['triceps-lateral','triceps-long']:g.p, box=trib?'25 190 400 400':g.box, key=ex.group+'|'+v+'|'+(ex.m||[]).join();
+  if(tileCache[key]) return tileCache[key]; const src=document.querySelectorAll('#bodymapCard .fig svg')[v]; if(!src) return '';
+  const sec=new Set((ex.m||[]).flatMap(k=>TILE_SEC[k]||[])), c=src.cloneNode(true); c.setAttribute('viewBox',box); c.removeAttribute('width'); c.removeAttribute('height'); c.setAttribute('aria-hidden','true'); c.setAttribute('class','tile-fig');
+  c.querySelectorAll('defs,.muscle-glow').forEach(n=>n.remove());
+  c.querySelectorAll('path').forEach(p=>{ const m=p.getAttribute('data-m'); let f='color-mix(in srgb,var(--text) 10%,transparent)';
+    if(m&&prim.includes(m)) f='var(--accent)'; else if(m&&sec.has(m)) f='color-mix(in srgb,var(--accent) 38%,transparent)'; else if(m) f='color-mix(in srgb,var(--text) 16%,transparent)';
+    p.setAttribute('style','fill:'+f+';stroke:none;filter:none;opacity:1;animation:none'); p.removeAttribute('class'); });
+  return tileCache[key]=c.outerHTML;
+}
+// "3 sets • 6–10 reps • 115 lb" (a hold reads seconds, a bodyweight lift "Bodyweight"); partway through the list reads "1/3 sets"
+function repsText(ex){ const m=String(ex.target||'').match(/\d+\s*x\s*([\d\-–]+)\s*(s)?/i), r=m?m[1].replace('-','–'):''; return isTimedTarget(ex.target)?r+' sec':r+' reps'; }
+function weightText(ex,m){ if(ex.start===0) return 'Bodyweight'; const w=m.sug; if(typeof w==='number'&&w!==-1) return dispWeight(w)+' '+unitLabel(); return w===-1?'Find a Weight':'Add Body Weight'; }
+function exSummary(ex,m,state,partial){ const n=state.sets.length, d=state.sets.filter(x=>x.done).length; return `${partial&&d&&d<n?d+'/'+n:n} sets • ${repsText(ex)} • ${weightText(ex,m)}`; }
+// a note or a tip is waiting behind the "..." (the dot on the button): same cases the More sheet's content comes from
+function hasNoteOrTip(ex,day,m){
+  return !!(notes[histKey(ex)]||'').trim()||isPlateau(ex)||!!ex.rotPrev||m.sug===-1||!!m.estFrom||
+    ((day.lvl==='new'||day.lvl==='exp')&&!m.timed&&ex.start!==0&&ex.step!==0&&!(hist[ex.name]||[]).length&&!lastByName[ex.name]);
+}
+function renderList(day,ord){
+  const wrap=document.createElement('div'); wrap.className='exlist'; const done=k=>ensureState(ord[k]).sets.every(s=>s.done), nDone=ord.filter((e,k)=>done(k)).length, nxt=ord.findIndex((e,k)=>!done(k));
+  wrap.innerHTML=`<div class="exl-head"><h2 class="exl-prog">${nDone} of ${ord.length} Done</h2><button type="button" class="icbtn" id="dayOptBtn" aria-label="Day Options" aria-haspopup="dialog">${IC.dots}</button></div><div class="exl-rows" role="list"></div>`;
+  const rows=wrap.querySelector('.exl-rows');
+  ord.forEach((ex,i)=>{
+    const st=ensureState(ex), m=exModel(ex), dn=done(i), part=!dn&&st.sets.some(s=>s.done), sum=exSummary(ex,m,st,true), flag=hasNoteOrTip(ex,day,m);
+    const row=document.createElement('div'); row.className='exl-row'+(dn?' done':'')+(i===nxt?' next':''); row.setAttribute('role','listitem');
+    row.innerHTML=`<button type="button" class="exl-open" data-i="${i}" aria-label="${esc(ex.name)}, ${esc(sum)}, ${dn?'finished':part?'in progress':'not started'}"><span class="exl-tile">${muscleTile(ex)}${dn?`<i class="exl-ck" aria-hidden="true">${IC.check}</i>`:''}</span><span class="exl-txt"><span class="exl-nm">${esc(ex.name)}${isPlateau(ex)?'<i class="exl-pl" role="img" aria-label="Plateau"></i>':''}</span><span class="exl-sm">${esc(sum)}</span></span></button><button type="button" class="icbtn exl-menu" data-i="${i}" aria-label="${esc(ex.name)} options${flag?', has notes or tips':''}" aria-haspopup="dialog">${flag?'<i class="ndot" aria-hidden="true"></i>':''}${IC.dots}</button>`;
+    rows.appendChild(row);
+  });
+  wrap.querySelectorAll('.exl-open').forEach(b=>b.onclick=()=>openExercise(+b.dataset.i));
+  wrap.querySelectorAll('.exl-menu').forEach(b=>b.onclick=e=>{ e.currentTarget.focus({preventScroll:true}); openRowMenu(ord[+b.dataset.i]); });
+  wrap.querySelector('#dayOptBtn').onclick=e=>{ e.currentTarget.focus({preventScroll:true}); openDayOptions(); };
+  wrap.classList.toggle('narrow',innerWidth/zoomNow()<300); // a 320 px screen at Larger text: names and summaries get the room, the tile goes
+  return wrap;
+}
+// the "..." on a row: How To (the cue), Swap Exercise, Demo. Its own small sheet, so the exercise screen's More content is not touched.
+function openRowMenu(ex){
+  openInfo(ex.name,b=>{
+    const yt='https://www.youtube.com/results?search_query='+encodeURIComponent(ex.name.replace('/',' ')+' exercise form'), l=document.createElement('div'); l.className='sheet-list';
+    const how=document.createElement('button'); how.type='button'; how.className='lrow'; how.innerHTML=`<span class="grow">How To</span>${IC.chevR}`;
+    how.onclick=()=>{ b.innerHTML=''; const p=document.createElement('p'); p.className='sheet-p'; p.textContent=ex.cue||'No cue written yet.'; b.appendChild(p); };
+    const sw=document.createElement('button'); sw.type='button'; sw.className='lrow'; sw.innerHTML=`<span class="grow">Swap Exercise</span>${IC.chevR}`; sw.onclick=()=>{ closeInfo(); openSwap(currentDay,ex); };
+    const dm=document.createElement('a'); dm.className='lrow'; dm.href=yt; dm.target='_blank'; dm.rel='noopener'; dm.innerHTML='<span class="grow">Demo<span class="sub">Opens YouTube</span></span>';
+    l.append(how,sw,dm); b.appendChild(l); });
+}
 function render(){
   const focusKey=listFocusKey();
   // several settings handlers (unit, auto-rotate, rotate-every, deload start/end) re-render the log after a change
@@ -3642,14 +3760,22 @@ function render(){
   renderTabs(); renderBody();
   const day=PROGRAM.find(d=>d.id===currentDay), ord=orderedExercises(day);
   if(focusDay!==currentDay||focusIdx==null||focusIdx>=ord.length){ focusDay=currentDay; focusIdx=derivedFocus(ord); }
+  const inList=logScreen==='list'; document.body.classList.toggle('log-list',inList); document.body.classList.toggle('log-ex',!inList);
   const list=document.getElementById('exerciseList'); list.innerHTML=''; logCards=new Map(); logDirty.clear();
-  const ex=ord[focusIdx], card=renderExercise(ex,day); logCards.set(ex,card); list.appendChild(card);
-  if(focusDir){ card.classList.add(focusDir>0?'enter-r':'enter-l'); card.addEventListener('animationend',()=>card.classList.remove('enter-r','enter-l'),{once:true}); focusDir=0; }
-  mountMore(card); fitSetGrid(card);
+  let el, card=null;
+  if(inList){ el=renderList(day,ord); list.appendChild(el); mountMore(null); }
+  else{ const ex=ord[focusIdx]; card=renderExercise(ex,day); logCards.set(ex,card); el=card; list.appendChild(card); }
+  if(focusDir){ el.classList.add(focusDir>0?'enter-r':'enter-l'); el.addEventListener('animationend',()=>el.classList.remove('enter-r','enter-l'),{once:true}); focusDir=0; }
+  if(card){ mountMore(card); fitSetGrid(card); }
   updateLogSummary(day);
   popSet=null;
   restoreListFocus(focusKey);
 }
+// Reps Left dots follow the set being entered: moving into another set's fields (without a redraw) moves the dots there
+document.getElementById('exerciseList').addEventListener('focusin',e=>{
+  const row=e.target.closest&&e.target.closest('.setgrid:not(.head)'); if(!row||row.dataset.i==null) return;
+  const i=+row.dataset.i; enterSet=i; document.querySelectorAll('#exerciseList .rir-row').forEach(r=>r.classList.toggle('entering',+r.dataset.i===i));
+});
 // 2.0 narrow rows: when the Weight head no longer fits (320 px, larger text) the head keeps the unit and the grid tightens; a five-character weight steps down a size
 function fitSetGrid(card){
   if(!card||!card.isConnected) return; const body=card.querySelector('.ex-body'); if(!body) return; body.classList.remove('tight','xt');
@@ -3660,7 +3786,7 @@ function fitSetGrid(card){
   const fit=i=>i.classList.toggle('long',(i.value||i.placeholder||'').length>=5);
   body.querySelectorAll('.setgrid:not(.head) input:first-of-type').forEach(i=>{ fit(i); i.addEventListener('input',()=>fit(i)); });
 }
-window.addEventListener('resize',()=>{ const c=document.querySelector('#exerciseList .exercise'); if(c) fitSetGrid(c); });
+window.addEventListener('resize',()=>{ const c=document.querySelector('#exerciseList .exercise'); if(c) fitSetGrid(c); const l=document.querySelector('#exerciseList .exlist'); if(l) l.classList.toggle('narrow',innerWidth/zoomNow()<300); });
 // ---------- Log: the More sheet ----------
 // One static sheet (so it gets the shared dialog code: focus trap, Escape, focus return). Its content is built with the card, so a redraw while
 // it is open (How To, the plate step, the fixed-bar switch) re-mounts the new content and the sheet stays where it is.
@@ -3673,7 +3799,7 @@ function mountMore(card){
 }
 // the dot on More says a note or a tip is inside; typing a note shows it at once
 function syncMoreDot(hasNote){ const b=document.getElementById('moreBtn'); if(!b) return; const has=!!b.querySelector('.ndot'), want=hasNote||!!document.querySelector('#moreBody .plateau-tip,#moreBody .first-log-note');
-  if(want&&!has){ b.insertAdjacentHTML('afterbegin','<i class="ndot" aria-hidden="true"></i>'); b.setAttribute('aria-label','More, has notes or tips'); } else if(!want&&has){ b.querySelector('.ndot').remove(); b.removeAttribute('aria-label'); } }
+  if(want&&!has){ b.insertAdjacentHTML('afterbegin','<i class="ndot" aria-hidden="true"></i>'); b.setAttribute('aria-label','More About This Exercise, has notes or tips'); } else if(!want&&has){ b.querySelector('.ndot').remove(); b.setAttribute('aria-label','More About This Exercise'); } }
 function openMore(){ moreOpen=true; document.getElementById('moreBg').classList.add('on'); document.getElementById('moreSheet').classList.add('on'); const b=document.getElementById('moreBtn'); if(b) b.setAttribute('aria-expanded','true'); }
 function closeMore(){ if(!moreOpen) return; moreOpen=false; document.getElementById('moreBg').classList.remove('on'); document.getElementById('moreSheet').classList.remove('on'); const b=document.getElementById('moreBtn'); if(b) b.setAttribute('aria-expanded','false');
   // the shared dialog code returns focus to the element that opened the sheet, which a redraw may have replaced: land on the current More button
@@ -3733,9 +3859,10 @@ function renderExercise(ex,day){
     const more=document.createElement('div'); more.className='more-body'; card._more=more; // what the More sheet shows: tools, tips, bar, notes, details
     const short=(ex.start===0&&typeof sug==='number')?'':sug===null?'Add Body Weight':sug===-1?'Find a Weight':`${dispWeight(sug)} ${unitLabel()}`;
     const head=document.createElement('div'); head.className='xh';
-    head.innerHTML=`<div class="xh-row"><div class="xh-eyebrow">${esc(ex.group)}${plat?'<span class="badge plateau">Plateau</span>':''}</div><button type="button" class="icbtn" id="dayOptBtn" aria-label="Day Options" aria-haspopup="dialog">${IC.dots}</button></div>
-      <h3 class="xh-name">${esc(ex.name)}</h3>
-      <div class="xh-row xh-sub"><div class="xh-meta"><span>${fmtTarget(ex.target)}</span>${short?`<span class="xh-w">${esc(short)}</span>`:''}${complete?`<span class="xh-ck" role="img" aria-label="finished">${IC.check}</span>`:''}</div><button type="button" class="xh-more" id="moreBtn" aria-haspopup="dialog">NDOT More${IC.chevR}</button></div>`;
+    head.innerHTML=`<div class="xtop"><button type="button" class="xback" id="backBtn">${IC.chevL}<span>Exercises</span></button><button type="button" class="icbtn" id="moreBtn" aria-label="More About This Exercise" aria-haspopup="dialog">${IC.dots}</button></div>
+      <h3 class="xh-name" tabindex="-1">${esc(ex.name)}</h3>
+      <div class="xh-meta"><span class="xh-sum">${esc(exSummary(ex,m,state,false))}</span>${barKind(ex)?'<span class="xh-side"></span>':''}${complete?`<span class="xh-ck" role="img" aria-label="finished">${IC.check}</span>`:''}</div>`;
+    head.querySelector('#backBtn').onclick=e=>{ e.currentTarget.focus({preventScroll:true}); showList(); };
     card.appendChild(head);
 
     const body=document.createElement('div'); body.className='ex-body';
@@ -3782,6 +3909,9 @@ function renderExercise(ex,day){
         const tot=dispWeight(parseFloat(liveLb)), bar=dispWeight(barWeightLb(ex));
         txtEl.innerHTML=tot<bar?`${tot} ${unitLabel()} is under the ${bar} ${unitLabel()} bar`:`<b>${Math.round((tot-bar)/2*100)/100} ${unitLabel()}</b>`;
       };
+      { const inner=updatePlates, sideEl=head.querySelector('.xh-side'); // the one-line caption "10 lb a side" under the title (the stepper is in More)
+        updatePlates=lb=>{ inner(lb); if(!sideEl) return; const ok=!fixed&&liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)), tot=ok?dispWeight(parseFloat(liveLb)):0, bar=dispWeight(barWeightLb(ex));
+          sideEl.textContent=(ok&&tot>=bar)?`${Math.round((tot-bar)/2*100)/100} ${unitLabel()} a side`:''; }; }
       barSel.onchange=e=>{ settings.barWeights=settings.barWeights||{}; settings.barWeights[ex.name]=storeWeight(e.target.value); sset('settings',settings); chip.querySelector('.bar-chip-txt').textContent=e.target.selectedOptions[0].textContent; updatePlates(); };
       pl.querySelector('.fixed-chk input').onchange=e=>{ fixed=e.target.checked; settings.fixedBar=settings.fixedBar||{}; settings.fixedBar[ex.name]=fixed; sset('settings',settings); syncFixedUI(); updatePlates(); };
       syncFixedUI(); updatePlates(); platesEl=pl;
@@ -3833,10 +3963,11 @@ function renderExercise(ex,day){
     // weight, only into an empty row). A timed hold shows last time's seconds and nothing fills. The Same as Last chip is gone (owner, 2026-11-14).
     const lastAll=(saved&&saved.sets)?saved.sets.filter(x=>x&&x.r!==''&&x.r!=null):[];
     const lastW=x=>bwLoaded?(parseFloat(x.add)?`BW+${dispWeight(x.add)}`:'BW'):(x.w?Math.round(dispWeight(x.w)*10)/10:'–');
+    const firstOpen=state.sets.findIndex(x=>!x.done), entering=(enterSet!=null&&enterSet<state.sets.length&&!state.sets[enterSet].done)?enterSet:firstOpen;
     state.sets.forEach((s,i)=>{
       if(bwLoaded) s.w=bwTotal(s);
       const addHint=bwLoaded?(state.sets.slice(0,i).map(x=>parseFloat(x.add)||0).filter(Boolean).pop()||lastAdd):0;
-      const row=document.createElement('div'); row.className='setgrid';
+      const row=document.createElement('div'); row.className='setgrid'; row.dataset.i=i;
       row.innerHTML=`<button type="button" class="setnum" aria-label="Set ${i+1} options" aria-description="Opens Remove Set. Sighted users can also swipe the row left." aria-haspopup="dialog">${i+1}</button><span class="slast"></span><input type="number" inputmode="decimal" aria-label="Set ${i+1} ${bwLoaded?'added weight':'weight'}" placeholder="${bwLoaded?'+'+dispWeight(addHint):sug===null?'bw':sug===-1?unitLabel():dispWeight(sug)}" value="${bwLoaded?(s.add?dispWeight(s.add):''):(s.w?dispWeight(s.w):s.w)}"${bwLoaded?' title="extra weight held or worn (dumbbells, a dip belt) — leave blank for bodyweight only"':''}><input type="number" inputmode="numeric" aria-label="Set ${i+1} ${timed?'seconds':'reps'}" placeholder="" value="${s.r}"><div class="setdone ${s.done?'on':''}${popSet===s&&!matchMedia('(prefers-reduced-motion: reduce)').matches?' pop':''}" aria-label="set ${i+1} done" aria-pressed="${!!s.done}">${s.done?'✓':''}</div>`;
       const [wI,rI]=row.querySelectorAll('input');
       // one-shot: the pop mark comes off when its animation ends, so it is an event on this tap, never a state a later draw could replay
@@ -3876,16 +4007,24 @@ function renderExercise(ex,day){
         body.appendChild(hrow);
       }
       if(!timed){
-        // hidden until reps are in, then picked before the set can be checked; stays after Done so it can still be changed
-        const rir=document.createElement('div'); rir.className='rir-row'; setRirA11y(rir,i); rir.hidden=!(s.done||s.r!=='');
-        rir.innerHTML=`<span class="rir-lbl" aria-hidden="true">Reps Left</span>`+[0,1,2,3,4].map(v=>`<span class="rir-pill${s.rir===v?' on':''}" data-v="${v}" aria-pressed="${s.rir===v}" aria-label="${v===4?'4 or more reps':v===1?'1 rep':v+' reps'} left">${v===4?'4+':v}</span>`).join('');
-        rir.querySelectorAll('.rir-pill').forEach(p=>p.onclick=()=>{ actPickRepsLeft(s,parseInt(p.dataset.v)); refreshExercise(ex); });
-        body.appendChild(rir);
+        // Reps Left (2.0): the dots show only under the set being entered, once reps are typed; a finished set shows what was picked; later sets show nothing.
+        // The order is unchanged: reps, then Reps Left, then Done checks the set.
+        if(s.done){ if(s.rir!=null){ const lf=document.createElement('div'); lf.className='rir-done'; lf.textContent=`Left: ${s.rir>=4?'4+':s.rir}`; body.appendChild(lf); } }
+        else{
+          const rir=document.createElement('div'); rir.className='rir-row'+(i===entering?' entering':''); rir.dataset.i=i; setRirA11y(rir,i); rir.hidden=s.r==='';
+          rir.innerHTML=`<span class="rir-lbl" aria-hidden="true">Reps Left</span>`+[0,1,2,3,4].map(v=>`<span class="rir-pill${s.rir===v?' on':''}" data-v="${v}" aria-pressed="${s.rir===v}" aria-label="${v===4?'4 or more reps':v===1?'1 rep':v+' reps'} left">${v===4?'4+':v}</span>`).join('');
+          rir.querySelectorAll('.rir-pill').forEach(p=>p.onclick=()=>{ actPickRepsLeft(s,parseInt(p.dataset.v)); refreshExercise(ex); });
+          body.appendChild(rir);
+        }
       }
     });
     const addset=document.createElement('button'); addset.type='button'; addset.className='addset'; addset.textContent='+ Add Set';
     addset.onclick=()=>{ actAddSet(ex,state); refreshExercise(ex); }; body.appendChild(addset);
-    if(platesEl) body.appendChild(platesEl);
+    if(complete){ // every set is checked: the way on
+      const ordAll=orderedExercises(day), me=ordAll.indexOf(ex), more1=ordAll.some((e2,k)=>k!==me&&!ensureState(e2).sets.every(x=>x.done));
+      const nb=document.createElement('button'); nb.type='button'; nb.className='next-ex'; nb.textContent=more1?'Next Exercise':'Back to Exercises'; nb.onclick=e=>{ e.currentTarget.blur(); nextExercise(); }; body.appendChild(nb); }
+    // the plates row (stepper, caption text) is the first thing in More
+    if(platesEl) more.insertBefore(platesEl,more.firstChild);
 
     const ta=document.createElement('textarea'); ta.className='notes'; ta.placeholder='Notes — seat setting, how it felt'; ta.setAttribute('aria-label',`Notes for ${ex.name}`); ta.value=notes[histKey(ex)]||'';
     ta.oninput=e=>{ notes[histKey(ex)]=e.target.value; sset('notes',notes); syncMoreDot(!!e.target.value.trim()); }; more.appendChild(ta);
@@ -3902,7 +4041,7 @@ function renderExercise(ex,day){
         if(bits.length){ const p=document.createElement('p'); p.className='sheet-p dim'; p.textContent=bits.join(' · '); more.appendChild(p); }
         if(lastTimeEl) more.appendChild(lastTimeEl); }
       const flagged=!!(notes[histKey(ex)]||'').trim()||!!more.querySelector('.plateau-tip,.first-log-note');
-      head.querySelector('#moreBtn').innerHTML=head.querySelector('#moreBtn').innerHTML.replace('NDOT',flagged?'<i class="ndot" aria-hidden="true"></i>':''); if(flagged) head.querySelector('#moreBtn').setAttribute('aria-label','More, has notes or tips');
+      if(flagged){ const mb=head.querySelector('#moreBtn'); mb.insertAdjacentHTML('afterbegin','<i class="ndot" aria-hidden="true"></i>'); mb.setAttribute('aria-label','More About This Exercise, has notes or tips'); }
     }
     card.appendChild(body); return card;
 }
@@ -3914,33 +4053,9 @@ function updateLogSummary(day){
   fb.classList.toggle('all-done',allComplete); // quiet until every set is done, then the one coral action (owner, 2026-11-14)
   document.body.classList.toggle('all-done',allComplete);
   document.getElementById('dayLabel').innerHTML=`<h2 class="sr-only">${esc(day.name)} ${esc(day.sub)}</h2>`;
-  // Previous, the Day List (progress segments and position), Next. Next is never in Finish's place and never finishes (LF-2).
-  const n=ord.length, i=focusIdx, p=document.getElementById('pager');
-  p.classList.toggle('narrow',innerWidth/zoomNow()<300); // a 320 px screen with larger text: the progress segments drop out, Previous and Next slim down
-  p.innerHTML=`<button type="button" class="pg prev" aria-label="Previous Exercise"${i===0?' aria-disabled="true"':''}>${IC.chevL}</button>
-    <button type="button" class="pg list" aria-haspopup="dialog" aria-label="Day List. Exercise ${i+1} of ${n}, ${doneN} finished">${IC.list}<span class="segs" aria-hidden="true">${ord.map((ex,k)=>`<i class="${ensureState(ex).sets.every(s=>s.done)?'done':k===i?'cur':''}"></i>`).join('')}</span><span>${i+1}/${n}</span></button>
-    <button type="button" class="pg next" aria-label="Next Exercise"${i===n-1?' aria-disabled="true"':''}>Next${IC.chevR}</button>`;
-  p.querySelector('.prev').onclick=e=>{ e.currentTarget.focus({preventScroll:true}); setFocus(focusIdx-1); pagerFocus('.prev'); };
-  p.querySelector('.next').onclick=e=>{ e.currentTarget.focus({preventScroll:true}); setFocus(focusIdx+1); pagerFocus('.next'); };
-  p.querySelector('.list').onclick=e=>{ e.currentTarget.focus({preventScroll:true}); openDayList(); };
   updateLogChrome();
   // a redraw can remove the field that had focus without a focusout (stepping to another exercise with the keyboard up): drop the typing mark so the footer comes back
   { const a=document.activeElement; if(!a||!a.matches(TYPING_SEL)) document.body.classList.remove('typing'); }
-}
-// the pager is redrawn with the card, so a tapped Previous or Next is a new element: put focus back on its successor
-function pagerFocus(sel){ const b=document.querySelector('#pager '+sel); if(b&&b.getAttribute('aria-disabled')!=='true') b.focus({preventScroll:true}); else { const l=document.querySelector('#pager .list'); if(l) l.focus({preventScroll:true}); } }
-// Day List: every exercise with its group, target, weight and check; a tap puts it in focus
-function openDayList(){
-  const day=PROGRAM.find(d=>d.id===currentDay), ord=orderedExercises(day);
-  openInfo(`${day.name}${day.sub?', '+day.sub:''}`,b=>{
-    const l=document.createElement('div'); l.className='sheet-list'; let g=null;
-    ord.forEach((ex,i)=>{ if(ex.group!==g){ g=ex.group; const gh=document.createElement('div'); gh.className='lgh'; gh.textContent=g; l.appendChild(gh); }
-      const m=exModel(ex), dn=ensureState(ex).sets.every(s=>s.done), w=(ex.start===0&&typeof m.sug==='number')?'':m.sug===null?'Add Body Weight':m.sug===-1?'Find a Weight':`${dispWeight(m.sug)} ${unitLabel()}`;
-      const r=document.createElement('button'); r.type='button'; r.className='lrow'+(i===focusIdx?' cur':'');
-      r.innerHTML=`<span class="lck${dn?' on':''}" role="img" aria-label="${dn?'finished':'not finished'}">${IC.check}</span><span class="grow">${esc(ex.name)}<span class="sub">${fmtTarget(ex.target)}${w?' · '+esc(w):''}${isPlateau(ex)?' · Plateau':''}</span></span>`;
-      if(i===focusIdx) r.setAttribute('aria-current','true');
-      r.onclick=()=>{ closeInfo(); setFocus(i); const mb=document.getElementById('moreBtn'); if(mb) mb.focus({preventScroll:true}); }; l.appendChild(r); });
-    b.appendChild(l); });
 }
 // Day Options: the two things that used to be links on the Log page. Each fires the app's own handler.
 function openEditDay(){ setView('more'); renderEditor(); document.getElementById('edDay').value=currentDay; openSetPage('edit'); }
@@ -4039,7 +4154,7 @@ function renderHomeBody(){
     document.getElementById('arrivalStart').onclick=()=>setView('log');
     // the reason sentence that sat under the headline, one tap away
     document.getElementById('cardioWhySlot').replaceWith(infoBtn('cardioWhyBtn',cardioLive?'About Your Cardio Session':'Why Cardio Today',()=>openInfo(cardioLive?'Cardio Session':'Cardio Today',b=>infoP(b,cardioLive?'Pick it back up where you left off, or save it from there.':cardioReasonCopy().home))));
-    panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day, ()=>setView('log')));
+    panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day, ()=>goLog()));
     placeCarousel(panel,prevLeft);
     return;
   }
@@ -4084,11 +4199,11 @@ function renderHomeBody(){
       <div class="preview-list" id="previewList"${homePlanOpen?'':' hidden'}>${previewRows}${moreRow}</div>
       <button class="start-cta" id="arrivalStart" aria-label="${ctaName}">${ctaTxt}</button>`;
     document.getElementById('planRow').onclick=()=>{ homePlanOpen=!homePlanOpen; renderHome(); document.getElementById('planRow').focus({preventScroll:true}); };
-    panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day, ()=>setView('log')));
+    panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day, ()=>goLog()));
     placeCarousel(panel,prevLeft);
     const more=document.getElementById('previewMore'); if(more) more.onclick=()=>{ homePreviewOpen=!homePreviewOpen; renderHome(); document.getElementById('previewMore').focus({preventScroll:true}); };
   }
-  document.getElementById('arrivalStart').onclick=()=>{ touchDayStart(); setView('log'); };
+  document.getElementById('arrivalStart').onclick=()=>{ touchDayStart(); goLog(); };
 }
 
 async function finishSession(){
@@ -6878,7 +6993,7 @@ function swipeStart(t,target){
   if(document.querySelector('.sheet.on,.celebrate-bg.on')) return;
   if(t.clientX<GESTURE_EDGE||t.clientX>innerWidth-GESTURE_EDGE) return;
   if(target.closest('.title-row')&&!target.closest('button')){ swipe={x:t.clientX,y:t.clientY,day:true}; return; }   // days: the plain title row
-  if(currentDay==='cardio'||!target.closest('#exerciseList')||target.closest('input,textarea,select,.scrub')) return; // exercises: the exercise area
+  if(currentDay==='cardio'||logScreen!=='exercise'||!target.closest('#exerciseList')||target.closest('input,textarea,select,.scrub')) return; // exercises: the exercise area (not the list)
   swipe={x:t.clientX,y:t.clientY};
 }
 function swipeEnd(t){
