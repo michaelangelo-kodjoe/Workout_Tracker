@@ -986,7 +986,7 @@
   @media (min-width:600px){ .sheet{border:0;} }
   .sheet::before{content:"";position:absolute;top:10px;left:50%;width:36px;height:5px;margin-left:-18px;border-radius:var(--r-full);background:var(--line-strong);opacity:.6;} /* decoration only: Close, the backdrop and Escape dismiss */
   .sheet-head{align-items:center;min-height:var(--t44);margin-bottom:var(--sp-2);}
-  .sheet-head button.linkbtn{background:none;border:0;font-family:inherit;color:var(--light);cursor:pointer;} /* Close as a real button */
+  .sheet-head button.linkbtn{background:none;border:0;font-family:inherit;color:var(--light);cursor:pointer;display:inline-flex;align-items:center;min-height:var(--t44);} /* Close as a real button */
   .sheet-title{font-size:var(--fs-lg);font-weight:600;margin:0;}
   .sheet-sub{font-size:var(--fs-sm);color:var(--text-dim);margin-top:2px;line-height:1.45;}
   .sheet-p{font-size:var(--fs-body);color:var(--text);line-height:1.5;margin:0 0 var(--sp-3);}
@@ -1167,7 +1167,7 @@
   .ndot{width:6px;height:6px;border-radius:var(--r-full);background:var(--light);margin-right:4px;}
   .bw-line{font-size:var(--fs-sm);margin:0 0 var(--sp-2);}
   /* set rows: Set | Last | Weight | Reps | Done */
-  body.log-focus .setgrid{grid-template-columns:calc(var(--t44) - 8px) minmax(60px,auto) 1fr 1fr 48px;gap:6px;margin-bottom:6px;font-size:var(--fs-body);}
+  body.log-focus .setgrid{grid-template-columns:calc(var(--t44) - 8px) minmax(60px,auto) minmax(0,1fr) minmax(0,1fr) var(--t48);gap:6px;margin-bottom:6px;font-size:var(--fs-body);}
   body.log-focus .setgrid.head{font-size:var(--fs-cap);letter-spacing:.08em;font-weight:600;margin-bottom:var(--sp-1);}
   body.log-focus .setgrid.head>div{white-space:nowrap;text-overflow:clip;}
   .tight .setgrid.head .hw{display:none;}
@@ -1253,14 +1253,14 @@
   .finish-btn.is-off{color:var(--text-dim);opacity:1;}
   .start-cta:active,.finish-btn:active,.btn:active,.pg:active{transform:scale(.97);}
   /* narrow rows: 320 px wide, or larger text. The head keeps the unit; the weight steps down for five characters; at Larger the last value drops under the fields */
-  body.log-focus .tight .setgrid{grid-template-columns:calc(var(--t44) - 8px) minmax(48px,auto) 1.25fr 1fr 44px;gap:4px;}
+  body.log-focus .tight .setgrid{grid-template-columns:calc(var(--t44) - 8px) minmax(48px,auto) minmax(0,1.25fr) minmax(0,1fr) var(--t44);gap:4px;}
   .tight .slast{min-width:var(--t48);} .tight .slast>span{padding:0 5px;}
   .tight .setdone{width:var(--t44);height:var(--t44);}
   .tight .rir-row{flex-wrap:wrap;margin-left:0;} .tight .rir-lbl{flex:0 0 100%;}
   .tight .hold-row{margin-left:0;}
   .tight .setgrid input{padding:0 4px;}
   .tight .setgrid input.long{font-size:var(--fs-lg)!important;}
-  body.log-focus .xt .setgrid{grid-template-columns:calc(var(--t44) - 8px) 1.3fr 1fr 44px;}
+  body.log-focus .xt .setgrid{grid-template-columns:calc(var(--t44) - 8px) minmax(0,1.3fr) minmax(0,1fr) var(--t44);}
   .xt .setgrid.head>div:nth-child(2){display:none;}
   .xt .setgrid:not(.head) .slast{grid-column:2 / 4;grid-row:2;justify-content:flex-start;}
   .xt .setgrid input{font-size:var(--fs-lg)!important;}
@@ -6995,7 +6995,7 @@ function swipeStart(t,target){
   if(document.querySelector('.sheet.on,.celebrate-bg.on')) return;
   if(t.clientX<GESTURE_EDGE||t.clientX>innerWidth-GESTURE_EDGE) return;
   if(target.closest('.title-row')&&!target.closest('button')){ swipe={x:t.clientX,y:t.clientY,day:true}; return; }   // days: the plain title row
-  if(currentDay==='cardio'||logScreen!=='exercise'||!target.closest('#exerciseList')||target.closest('input,textarea,select,.scrub')) return; // exercises: the exercise area (not the list)
+  if(currentDay==='cardio'||logScreen!=='exercise'||target.closest('header,footer,.sheet,.sheet-bg,input,textarea,select,.scrub,button,a,[role=button],.setgrid:not(.head),.rir-row,.hold-row')) return; // exercises: anywhere on the exercise screen that is not a field, a set row (it swipes to delete), Reps Left or a button (not the list)
   swipe={x:t.clientX,y:t.clientY};
 }
 function swipeEnd(t){
