@@ -35,7 +35,7 @@
     --on-accent:#1a0d08;--on-green:#06170c;--on-light:#071a26;--scrim:rgba(0,0,0,.6); /* text on a filled colour; the sheet backdrop */
     /* type: one family, six sizes (11 only for letter-spaced uppercase labels) */
     --font:-apple-system,BlinkMacSystemFont,system-ui,"Helvetica Neue",sans-serif;
-    --fs-cap:11px;--fs-sm:13px;--fs-body:15px;--fs-lg:17px;--fs-xl:22px;--fs-hero:32px;
+    --fs-cap:max(11px,calc(11px / var(--tz,1)));--fs-sm:13px;--fs-body:15px;--fs-lg:17px;--fs-xl:22px;--fs-hero:32px;
     /* shape: two radii plus full-round */
     --r-sm:12px;--r-lg:20px;--r-full:999px;
     /* spacing */
@@ -220,7 +220,7 @@
   .setgrid{display:grid;grid-template-columns:28px 1fr 1fr 30px 20px;gap:8px;align-items:center;margin-bottom:6px;font-size:13px;}
   .setrm{color:var(--text-dim);cursor:pointer;font-size:13px;text-align:center;}
   .setrm:hover{color:var(--danger);}
-  .setgrid.head{color:var(--text-dim);font-size:11px;letter-spacing:.06em;text-transform:uppercase;text-align:center;}
+  .setgrid.head{color:var(--text-dim);font-size:var(--fs-cap);letter-spacing:.06em;text-transform:uppercase;text-align:center;}
   .setgrid.head>div{min-width:0;overflow:hidden;text-overflow:ellipsis;} /* at large text a head shortens rather than running into its neighbour */
   .setnum{color:var(--text-dim);text-align:center;font-family:var(--font);}
   .bw-line{font-size:var(--fs-sm);color:var(--text-dim);margin:0 0 10px;}
@@ -293,7 +293,7 @@
   /* recovery warning: one tall sheet that lists every recovering muscle. It grows with the list up to nearly the full
      screen; past that only the list scrolls, so the two choices stay in view however many muscles a day hits. */
   #fatigueSheet.on{display:flex;flex-direction:column;max-height:calc(100% - 40px - var(--sa-t));overflow:hidden;}
-  .fat-head{display:flex;justify-content:space-between;font-family:var(--font);font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:var(--text-dim);margin-top:6px;padding-bottom:5px;border-bottom:1px solid var(--line);}
+  .fat-head{display:flex;justify-content:space-between;font-family:var(--font);font-size:var(--fs-cap);letter-spacing:.4px;text-transform:uppercase;color:var(--text-dim);margin-top:6px;padding-bottom:5px;border-bottom:1px solid var(--line);}
   .fat-list{flex:0 1 auto;min-height:0;overflow-y:auto;margin-bottom:12px;}
   .fat-row{display:grid;grid-template-columns:minmax(0,1fr) 72px 64px;gap:10px;align-items:center;padding:9px 6px 9px 0;border-bottom:1px dashed var(--line);font-size:13px;}
   .fat-row:last-child{border-bottom:none;}
@@ -374,7 +374,7 @@
   .str-card-exlist .sp{font-size:15px;}
   .str-card-exlist .also{font-size:var(--fs-sm);color:var(--text-dim);white-space:nowrap;}
   .str-grp{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:16px 0 4px;font-size:var(--fs-sm);color:var(--text-dim);}
-  .str-grp span:first-child{font-size:11px;letter-spacing:.08em;text-transform:uppercase;}
+  .str-grp span:first-child{font-size:var(--fs-cap);letter-spacing:.08em;text-transform:uppercase;}
   .str-past{margin-top:16px;}
   .str-past.out{margin:12px 0;} .str-one{flex-basis:100%;}
   .str-past-btn{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:52px;padding:8px 12px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--panel-raised);color:var(--text);text-align:left;font-family:var(--font);cursor:pointer;}
@@ -432,7 +432,7 @@
   .cf-flow{padding:4px 0 0;}
   /* several cardio sessions in one day: the Logged Today card, the Complete button, the Session Saved sheet's stacked buttons and the celebration's list */
   .cf-logged{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 16px;margin-bottom:16px;}
-  .cf-logged .lb{font:11px var(--font);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;}
+  .cf-logged .lb{font:var(--fs-cap) var(--font);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;}
   .cf-logged ul{list-style:none;margin:0;padding:0;}
   .cf-logged li{display:flex;align-items:baseline;justify-content:space-between;gap:12px;min-height:32px;padding:6px 0;font-size:15px;border-top:1px solid var(--line);} .cf-logged li:first-of-type{border-top:0;}
   .cf-logged li span{font-size:13px;color:var(--text-dim);text-align:right;} .cf-logged li b{font-weight:normal;display:flex;align-items:center;gap:8px;}
@@ -447,13 +447,13 @@
   .cf-back{display:inline-flex;align-items:center;gap:2px;min-height:var(--t44);margin:-8px 0 0 -4px;padding:0 10px 0 0;background:none;border:0;color:var(--light);font:15px var(--font);cursor:pointer;}
   .cf-h:focus{outline:none;}
   .cf-info{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 16px;margin:0 0 16px;}
-  .cf-info .lb{font:11px var(--font);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;}
+  .cf-info .lb{font:var(--fs-cap) var(--font);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;}
   .cf-info dl{margin:0;} .cf-info .r{display:flex;justify-content:space-between;align-items:baseline;gap:16px;min-height:32px;padding:7px 0;border-top:1px solid var(--line);font-size:15px;} .cf-info .r:first-of-type{border-top:0;}
   .cf-info dt{color:var(--text);flex:none;} .cf-info dd{margin:0;font-size:13px;color:var(--text-dim);text-align:right;min-width:0;}
   .cf-start{margin-top:20px;} .cf-start .btn{width:100%;min-height:52px;font-size:15px;font-weight:bold;}
   .cf-startnote{font-size:var(--fs-sm);color:var(--text-dim);text-align:center;margin-top:8px;line-height:1.5;}
   .cf-h{font-size:22px;font-weight:normal;margin:0 0 4px;} .cf-lede{font-size:13px;color:var(--text-dim);margin:0 0 16px;line-height:1.5;} .cf-lede .linkbtn{white-space:nowrap;}
-  .cf-sub{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin:20px 0 8px;font-family:var(--font);}
+  .cf-sub{font-size:var(--fs-cap);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin:20px 0 8px;font-family:var(--font);}
   .cf-scroll{display:flex;gap:8px;overflow-x:auto;margin:0 -16px;padding:0 16px 4px;scrollbar-width:none;} .cf-scroll::-webkit-scrollbar{display:none;}
   .cf-rc{flex:none;min-height:56px;min-width:116px;padding:8px 14px;border-radius:var(--r-sm);background:var(--panel-raised);border:1px solid var(--line);color:var(--text);font:15px var(--font);text-align:left;cursor:pointer;} .cf-rc small{display:block;font-size:var(--fs-sm);color:var(--text-dim);margin-top:2px;}
   .cf-seg{display:flex;background:var(--panel-raised);border:1px solid var(--line);border-radius:var(--r-sm);padding:3px;gap:3px;margin-bottom:16px;}
@@ -475,7 +475,7 @@
   .cf-phase{display:inline-block;font:var(--fs-sm) var(--font);letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:var(--r-sm);margin-bottom:8px;} .cf-phase.work{background:rgba(255,93,59,.14);color:var(--accent);border:1px solid var(--accent);} .cf-phase.rest{background:rgba(95,168,224,.14);color:var(--cardio);border:1px solid var(--cardio);}
   .cf-bar{height:4px;border-radius:var(--r-sm);background:var(--line);margin:14px 0 0;overflow:hidden;} .cf-bar i{display:block;height:100%;background:var(--cardio);}
   .cf-ctrl{display:flex;gap:8px;margin:12px 0;} .cf-ctrl .btn{flex:1;min-height:52px;font-size:15px;}
-  .cf-now{font:11px var(--font);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin:20px 0 8px;}
+  .cf-now{font:var(--fs-cap) var(--font);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin:20px 0 8px;}
   .cf-dots{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px;} .cf-dots i{width:10px;height:10px;border-radius:50%;background:var(--line);} .cf-dots i.d{background:var(--cardio);} .cf-dots i.c{background:var(--accent);}
   .cf-clock .ms{font-size:var(--fs-xl);color:var(--text-dim);} .cf-clock .t.big{font-size:96px;line-height:1.1;margin-top:8px;}
   .cf-past{text-align:center;margin-top:16px;}
@@ -504,7 +504,7 @@
   .mv-clear{position:absolute;right:0;top:0;width:var(--t44);height:var(--t44);display:flex;align-items:center;justify-content:center;background:none;border:0;color:var(--text-dim);cursor:pointer;} .mv-clear[hidden]{display:none;}
   .mv-clear svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;}
   .mv-list{list-style:none;margin:4px 0 0;padding:0;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--panel-raised);max-height:264px;overflow-y:auto;overscroll-behavior:contain;} .mv-list[hidden]{display:none;}
-  .mv-grp{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);padding:10px 12px 4px;}
+  .mv-grp{font-size:var(--fs-cap);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);padding:10px 12px 4px;}
   .mv-opt{color:var(--text);min-height:var(--t44);padding:6px 12px;display:flex;flex-direction:column;justify-content:center;font-size:15px;line-height:1.3;border-top:1px solid var(--line);cursor:pointer;overflow-wrap:anywhere;}
   .mv-opt .m{font-size:var(--fs-sm);color:var(--text-dim);}
   .mv-opt[aria-selected=true]{background:var(--panel);box-shadow:inset 3px 0 0 var(--accent);}
@@ -546,7 +546,7 @@
   .onb-back,.onb-skip{min-width:var(--t44);height:var(--t44);padding:0 4px;background:none;border:0;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;}
   .onb-skip{color:var(--text-dim);font:13px var(--font);}
   .onb-back svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
-  .onb-prog{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;}
+  .onb-prog{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:var(--fs-cap);color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;}
   .onb-bars{display:flex;gap:4px;width:140px;} .onb-bars i{flex:1;height:4px;border-radius:var(--r-sm);background:var(--line);} .onb-bars i.on{background:var(--accent);}
   .onb-body{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px;padding:24px 8px;}
   .onb-body .cel-h1,.onb-body .cel-sub{margin:0;max-width:320px;} .onb-body .cel-sub{line-height:1.5;}
@@ -564,7 +564,7 @@
   /* the recovery-map step shows a sample day, since a new user's own map is all green and can't show the colours it explains */
   .onb-ex{width:100%;max-width:360px;margin-top:8px;padding:16px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);text-align:left;}
   .onb-ex-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:var(--fs-sm);color:var(--text-dim);}
-  .onb-ex-h span:first-child{font-size:11px;letter-spacing:.08em;text-transform:uppercase;} .onb-ex-h span:last-child{text-align:right;}
+  .onb-ex-h span:first-child{font-size:var(--fs-cap);letter-spacing:.08em;text-transform:uppercase;} .onb-ex-h span:last-child{text-align:right;}
   .onb-ex .figures{margin:12px 0 8px;} .onb-ex .figures svg{max-height:200px;}
   .muscle-ex{stroke:#101216;stroke-width:1.6;stroke-linejoin:round;}
   .onb-ex-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);font-size:15px;}
@@ -573,7 +573,7 @@
   .onb-foot{position:sticky;bottom:0;z-index:2;display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 0 calc(24px + var(--sa-b));background:var(--bg);box-shadow:0 -16px 16px -4px var(--bg);}
   .cel-cta.alt{background:none;color:var(--text);border:1px solid var(--line-strong);}
   /* ---------- onboarding quiz (v83) ---------- */
-  .qz-eyebrow{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);}
+  .qz-eyebrow{font-size:var(--fs-cap);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);}
   .onb-body.qz-top{justify-content:flex-start;padding-top:16px;}
   .qz-cap{font-size:13px;color:var(--text-dim);min-height:20px;margin-top:4px;text-align:center;}
   .onb-opt.qz-opt{gap:12px;padding:10px 16px;min-height:60px;text-align:left;}
@@ -619,10 +619,10 @@
   .cel-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;width:100%;max-width:320px;position:relative;z-index:2;margin-bottom:20px;}
   .cel-stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);padding:14px 6px;}
   .cel-stat b{display:block;font-family:var(--font);font-size:22px;color:var(--text);}
-  .cel-stat span{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.3px;}
+  .cel-stat span{font-size:var(--fs-cap);color:var(--text-dim);text-transform:uppercase;letter-spacing:.3px;}
   .cel-stat b span{text-transform:none;letter-spacing:0;} /* the minutes unit inside the number: "52m", not "52M" */
   .pr-card{width:100%;max-width:320px;background:linear-gradient(135deg,rgba(232,178,61,.15),rgba(232,178,61,.03));border:1px solid rgba(232,178,61,.5);border-radius:var(--r-sm);padding:14px 16px;text-align:left;position:relative;z-index:2;margin-bottom:16px;}
-  .pr-eyebrow{font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--gold);font-weight:bold;font-family:var(--font);}
+  .pr-eyebrow{font-size:var(--fs-cap);letter-spacing:.5px;text-transform:uppercase;color:var(--gold);font-weight:bold;font-family:var(--font);}
   .pr-name{font-size:15px;margin:4px 0 2px;}
   .pr-detail{font-family:var(--font);font-size:var(--fs-sm);color:var(--text-dim);}
   .pr-detail b{color:var(--gold);}
@@ -662,7 +662,7 @@
   .day-carousel.three .day-card{flex:1 0 84px;padding-left:10px;padding-right:10px;} /* exactly three days (Push/Pull/Legs) share the row, so the whole week shows without scrolling at 375 px or 320 px */
   .day-card{flex:0 0 124px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px;position:relative;cursor:pointer;}
   .day-card.today{border-color:var(--accent);background:linear-gradient(160deg,var(--panel-raised),rgba(255,93,59,.1));}
-  .day-card .dtag{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);min-height:14px;}
+  .day-card .dtag{font-size:var(--fs-cap);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);min-height:14px;}
   .day-card.today .dtag{color:var(--accent);}
   .day-card .dname{font-size:17px;margin:2px 0;}
   .day-card .dsub{font-size:var(--fs-sm);color:var(--text-dim);line-height:1.4;}
@@ -681,7 +681,7 @@
   .build-eq{display:flex;flex-wrap:wrap;gap:6px;margin:14px 2px 2px;}
   .chip-set{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
   /* Settings main screen: grouped rows, each showing its current value and opening its own page */
-  .set-group-h{font-size:11px;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;margin:16px 4px 8px;}
+  .set-group-h{font-size:var(--fs-cap);color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;margin:16px 4px 8px;}
   .set-group-h:first-child{margin-top:0;}
   .set-group{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);}
   .set-row{display:flex;align-items:center;gap:12px;width:100%;min-height:52px;margin:0;padding:0 16px;background:none;border:0;border-top:1px solid var(--line);color:var(--text);text-align:left;font:15px var(--font);cursor:pointer;}
@@ -705,7 +705,7 @@
   .rt-line.dim{color:var(--text-dim);}
   .rt-card .btn.rt-go{display:block;width:100%;min-height:var(--t48);font-size:15px;margin-top:16px;}
   .rt-foot{font-size:13px;line-height:1.5;color:var(--text-dim);margin:4px 0 0;}
-  .rt-sec{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin:16px 0 8px;}
+  .rt-sec{font-size:var(--fs-cap);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin:16px 0 8px;}
   .rt-sec.first{margin-top:4px;}
   .rt-list{list-style:none;margin:0;padding:0;}
   .rt-list li{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.5;margin-bottom:8px;}
@@ -731,7 +731,7 @@
   .rt-ex{border-top:1px solid var(--line);margin-top:4px;padding-top:12px;}
   .rt-exh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0 4px;font-size:var(--fs-sm);font-weight:400;color:var(--text-dim);}
   .rt-exh .badge{margin:0;}
-  .rt-exh2{font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-top:20px;display:block;}
+  .rt-exh2{font-size:var(--fs-cap);letter-spacing:.08em;text-transform:uppercase;margin-top:20px;display:block;}
   .rt-exl{list-style:none;margin:0;padding:0;}
   .rt-exl li{display:flex;justify-content:space-between;gap:12px;font-size:13px;line-height:1.4;padding:8px 0;border-bottom:1px solid var(--line);}
   .rt-exl li:last-child{border-bottom:0;}
@@ -760,7 +760,7 @@
   .set-back svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
   .set-sub h2{margin:0;font-size:22px;font-weight:normal;} .set-sub h2:focus{outline:none;}
   .set-days{width:100%;max-width:none;margin:0 0 12px;} .set-days button{font-family:var(--font);font-size:var(--fs-sm);}
-  .set-day-h{font-size:11px;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;margin:4px 0;}
+  .set-day-h{font-size:var(--fs-cap);color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;margin:4px 0;}
   #edReset.set-reset{display:block;margin:24px auto 0;padding:12px 8px;background:none;border:0;font-family:var(--font);} /* beats .linkbtn's negative tap-area margin */
   #adOpen{margin-top:12px;} #adOpen[hidden]{display:none;}
   #textSizeOpts{max-width:none;}
@@ -802,7 +802,7 @@
   .rh-bars i{flex:1;min-height:2px;border-radius:var(--r-sm) var(--r-sm) 0 0;background:rgba(92,187,111,.7);}
   .rh-bars i.zero{background:var(--line);} .rh-bars i.met{background:var(--green);}
   .rh-bars i.now{background:rgba(92,187,111,.3);box-shadow:inset 0 0 0 1px var(--green);}
-  .rh-axis{display:flex;gap:4px;margin-top:6px;padding-top:4px;border-top:1px solid var(--line);font-size:11px;color:var(--text-dim);}
+  .rh-axis{display:flex;gap:4px;margin-top:6px;padding-top:4px;border-top:1px solid var(--line);font-size:var(--fs-cap);color:var(--text-dim);}
   .rh-axis span{flex:1;white-space:nowrap;overflow:visible;}
   .rh-cap{font-size:var(--fs-sm);color:var(--text-dim);margin-top:8px;} .rh-cap[hidden]{display:none;}
 
@@ -831,7 +831,7 @@
   .cal-dots{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;max-width:100%;}
   /* two sessions in one cell would not fit the cell on a 320 px screen: show them as colour dots there (the title, aria-label and day sheet still name them) */
   @media (max-width:359px){ .cal-dots.multi .cal-tag{font-size:0;line-height:0;width:8px;height:8px;padding:0;border-radius:50%;} }
-  .cal-tag{font-style:normal;font-family:var(--font);font-size:11px;font-weight:bold;line-height:13px;padding:0 2px;border-radius:var(--r-sm);background:var(--dc);color:#12141a;}
+  .cal-tag{font-style:normal;font-family:var(--font);font-size:var(--fs-cap);font-weight:bold;line-height:13px;padding:0 2px;border-radius:var(--r-sm);background:var(--dc);color:#12141a;}
   .cal-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 14px;margin-top:10px;font-size:var(--fs-sm);color:var(--text-dim);}
   .cal-legend span{display:inline-flex;align-items:center;gap:4px;}
 
@@ -935,7 +935,7 @@
   .boot .status{font-size:13px;color:var(--text-dim);line-height:1.5;margin:0;}
   .boot .done{border-color:var(--done-line);background:var(--done-bg);margin:0;}
   .boot .done.fail .status{color:var(--danger);}
-  .boot .cap{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin:0 0 8px;}
+  .boot .cap{font-size:var(--fs-cap);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin:0 0 8px;}
 
   /* ================= Lift Log 2.0 design system (B2) =================
      Tokens are in :root at the top. This section restyles the shared chrome and the Home, History, Strength and Settings tabs.
@@ -4343,7 +4343,7 @@ function showCelebration({day,worked,nsets,vol,durationMin,pr,rhythmCount}){
     <div class="cel-stats">
       <div class="cel-stat"><b>${dispVol(vol).toLocaleString()}</b><span>${unitLabel()} moved</span></div>
       <div class="cel-stat"><b>${nsets}</b><span>Sets Done</span></div>
-      <div class="cel-stat"><b>${durationMin}<span style="font-size:11px">m</span></b><span>Duration</span></div>
+      <div class="cel-stat"><b>${durationMin}<span style="font-size:var(--fs-cap)">m</span></b><span>Duration</span></div>
     </div>
     ${prHtml}
     <div class="rhythm-msg"><b>${ord(rhythmCount)} session this week</b> — ${rhythmRest}
