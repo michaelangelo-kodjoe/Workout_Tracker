@@ -4153,8 +4153,17 @@ function dayCardsHTML(){
 let homeCarKey='';
 function placeCarousel(panel,prevLeft){
   const car=panel.querySelector('.day-carousel'); if(!car) return;
-  const key=ROUTINE_ID+':'+currentDay;
-  if(PROGRAM.length>=5&&homeCarKey!==key){ const t=car.querySelector('.day-card.today'); if(t) car.scrollLeft=Math.max(0,t.offsetLeft-2); homeCarKey=key; }
+  // Next Session is marked on one card: when Home opens, and after a day change, scroll the strip just far enough that card is wholly in view
+  // (an instant jump set before the page paints: no animation, no layout shift, no page scroll). A redraw while the user is looking keeps their scroll.
+  const nx=car.querySelector('.day-card.next'), key=ROUTINE_ID+':'+currentDay+':'+(nx?nx.dataset.day:'');
+  if(homeCarKey!==key){
+    homeCarKey=key;
+    if(nx){ // all in the strip's own (CSS) pixels, so the Text Size zoom does not matter
+      const off=c=>c.offsetLeft-car.offsetLeft, left=off(nx), w=nx.offsetWidth, vis=left-car.scrollLeft>=-0.5&&left+w-car.scrollLeft<=car.clientWidth+0.5;
+      if(!vis){ // not wholly visible: start the strip at the earliest card that shows it in full
+        let to=left; for(const c of car.querySelectorAll('.day-card')){ if(left+w-off(c)<=car.clientWidth+0.5){ to=off(c); break; } }
+        car.scrollLeft=Math.max(0,to); } }
+  }
   else if(prevLeft) car.scrollLeft=prevLeft;
   edgeFade(car);
 }
