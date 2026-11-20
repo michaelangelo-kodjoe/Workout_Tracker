@@ -2692,7 +2692,7 @@ function startHold(ex,i,s){
   if(hold.key) stopHold(true);
   try{ if(!timer.ctx) timer.ctx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
   hold={key:holdKey(ex,i),start:Date.now(),iv:null,el:null,set:s,ex,target:topRep(ex.target),beeped:false};
-  touchDayStart(); render();
+  touchDayStart(); refreshExercise(ex);
   hold.iv=setInterval(()=>{
     const sec=holdElapsed();
     if(hold.el){ hold.el.textContent=fmtHold(sec); hold.el.classList.toggle('hit',sec>=hold.target); }
@@ -2707,7 +2707,7 @@ function stopHold(markDone){
   const sec=holdElapsed(), s=hold.set, ex=hold.ex;
   hold={key:null,start:0,iv:null,el:null,set:null,ex:null,target:0,beeped:false};
   if(s){ s.r=String(sec); if(markDone){ s.done=true; popSet=s; if(settings.auto) startTimer(settings.smartRest?suggestedRest(ex):settings.rest); } }
-  sset('today:'+currentDay,todayData); render();
+  sset('today:'+currentDay,todayData); if(ex) refreshExercise(ex); else render();
 }
 document.getElementById('tSkip').onclick=stopTimer;
 document.getElementById('tPlus').onclick=()=>{ timer.end+=30000; timer.total+=30; saveTimer(); tick(); };
@@ -3051,6 +3051,78 @@ document.getElementById('fatigueClose').onclick=closeFatigue; document.getElemen
 // Remember the focused control as (card, kind, position) and focus its replacement once the list is redrawn;
 // a set that was removed hands focus to the one before it, a vanished control to its card's header.
 const FOCUS_STATE_CLASSES=['on','open','active','complete'];
+// ---------- Log: one exercise's numbers ----------
+// Everything the Log needs to know about a lift before drawing it, in one place: last time's sets (saved), the weight to
+// suggest (sug: a number in lb, null = no body weight logged yet, -1 = no history to go on), and where a borrowed number came
+// from (crossDaySub: another day's slot; estFrom: a related lift). Reads state only; draws and saves nothing.
+function exModel(ex){
+  const daySaved=daySavedFor(currentDay,ex.name);
+  let sug=suggestWeight(ex,daySaved);
+  let saved=daySaved, crossDaySub=null, estFrom=null;
+  if(sug===-1){
+    const cw=crossDaySuggestedWeight(ex);
+    // only label this "from X day" when the source is actually a different slot — the same exercise's own
+    // older session (found here because the most recent same-day one had no weight logged) isn't a cross-day
+    // borrow and would misleadingly read as if the exercise had rotated away and back.
+    if(cw){ sug=cw; const cs=lastByName[ex.name]; if(cs){ saved=cs; if(cs.d!==currentDay){ const cd=PROGRAM.find(d=>d.id===cs.d); crossDaySub=cd?cd.sub:null; } } }
+    else { const est=estimateFromRelated(ex); if(est){ sug=est.w; estFrom=est.from; } }
+  }
+  const timed=isTimedTarget(ex.target), bwLoaded=ex.start===0;
+  // what Same as Last copies from: last time's sets that had reps. Not for timed holds, a first-ever use or a seed.
+  const lastSets=(!timed&&saved&&saved.sets)?saved.sets.filter(x=>x&&x.r!==''&&x.r!=null):[];
+  return {saved,sug,crossDaySub,estFrom,timed,bwLoaded,lastSets};
+}
+// What a Same as Last tap would put in set j right now: last time's matching set (ls), plus the weight (lb) or the added load,
+// each only if that box is still empty (null = leave it alone). The chip's label and the tap both read this, so they cannot disagree.
+function salFill(m,state,j){
+  const ls=m.lastSets[Math.min(j,m.lastSets.length-1)], t=state.sets[j];
+  if(m.bwLoaded) return {ls, w:null, add:(!t.add&&parseFloat(ls.add)>0)?ls.add:null};
+  return {ls, add:null, w:((t.w===''||t.w==null)&&typeof m.sug==='number'&&m.sug>0)?m.sug:null};
+}
+// ---------- Log: set actions ----------
+// What a tap or a keystroke does to the draft, apart from drawing it. Each one changes todayData and saves today:<dayId>.
+// Those that can refuse return false (a toast has said why) and true when the draft changed, so the caller knows to redraw.
+// The order inside each (day start, rest timer, save) is the order the Log has always used; keep it.
+function saveDraft(){ return sset('today:'+currentDay,todayData); }
+function actSetWeight(s,val){ s.w=storeWeight(val); touchDayStart(); saveDraft(); }
+// bodyweight lifts: the box holds what is added on top; total(s) is body weight plus that
+function actSetAdded(s,val,total){ s.add=val===''?'':storeWeight(val); s.w=total(s); touchDayStart(); saveDraft(); }
+function actSetReps(s,val){ s.r=val; touchDayStart(); saveDraft(); }
+function actPickRepsLeft(s,v){ s.rir=(s.rir===v)?null:v; touchDayStart(); saveDraft(); }
+function actToggleDone(ex,s,i,m){
+  if(hold.key===holdKey(ex,i)) stopHold(false); // fills s.r with the elapsed seconds before the check below
+  if(!s.done && s.r===''){ showToast(m.timed?'Add the seconds first':'Add reps first'); return false; }
+  if(!s.done && !m.timed && s.rir==null){ showToast('Pick reps left first'); return false; }
+  // the grey weight in an empty box is only a suggestion — ticking used to save the set with no weight at all.
+  // A tick means "did what's shown", so it takes that number; with none to take (a new lift), it asks for one.
+  if(!s.done && !m.bwLoaded && !m.timed && (s.w===''||s.w==null)){
+    if(m.sug!=null && m.sug!==-1) s.w=storeWeight(dispWeight(m.sug)); else { showToast('Add the weight first'); return false; }
+  }
+  s.done=!s.done; popSet=s.done?s:null; touchDayStart(); if(s.done&&settings.auto) startTimer(settings.smartRest?suggestedRest(ex):settings.rest); saveDraft();
+  return true;
+}
+function actAddSet(ex,state){ const prev=state.sets[state.sets.length-1]; state.sets.push({w:ex.start===0?(latestBW()??''):'',r:'',done:false,rir:null,...(ex.start===0&&prev&&prev.add?{add:prev.add}:{})}); saveDraft(); }
+function actRemoveSet(state,i){ state.sets.splice(i,1); touchDayStart(); saveDraft(); }
+// Same as Last: copies last time's reps and reps left into set j, and the weight (or added load) only if that box is empty.
+// It never ticks Done and never starts the rest timer. False when set j has been filled or checked since the chip was drawn.
+function actFillSet(state,j,m){
+  const t=state.sets[j]; if(!t||t.done||t.r!=='') return false;
+  const f=salFill(m,state,j), ls=f.ls;
+  t.r=String(ls.r); t.rir=(ls.rir!=null&&ls.rir>=0&&ls.rir<=4)?ls.rir:null;
+  if(m.bwLoaded){ if(f.add!=null) t.add=f.add; }
+  else if(f.w!=null) t.w=storeWeight(dispWeight(f.w));
+  touchDayStart(); saveDraft();
+  return true;
+}
+// plates per side: move the first unchecked set by one smallest plate on each side (dir is -1 or 1); liveLb is the weight in play
+function actStepPlates(ex,state,dir,liveLb){
+  const target=state.sets.find(x=>!x.done); if(!target){ showToast('Every set is already logged'); return false; }
+  const inc=settings.unit==='kg'?1.25:2.5;
+  const bar=dispWeight(barWeightLb(ex)), have=liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)), cur=have?dispWeight(parseFloat(liveLb)):bar;
+  const side=Math.max(0,Math.round(((cur-bar)/2+dir*inc)*100)/100);
+  target.w=storeWeight(Math.round((bar+2*side)*100)/100); touchDayStart(); saveDraft();
+  return true;
+}
 function listFocusKey(){
   const a=document.activeElement, list=document.getElementById('exerciseList'); if(!a||a===list||!list.contains(a)) return null;
   const card=a.closest('.exercise'); if(!card) return null;
@@ -3077,7 +3149,7 @@ function render(){
   renderTabs(); renderBody();
   const day=PROGRAM.find(d=>d.id===currentDay);
   const list=document.getElementById('exerciseList'); list.innerHTML='';
-  let allComplete=true,lastGroup=null;
+  let lastGroup=null; logCards=new Map(); logDirty.clear();
   // cards are shown grouped by muscle group (groups in order of first appearance, slot order within a group) so a
   // day laid out quads / hamstrings / quads doesn't get two "Quads" headings — the program's own slot order is
   // untouched, it only decides which slots are primary and how the editor lists them
@@ -3085,18 +3157,49 @@ function render(){
   const ordered=groupOrder.flatMap(g=>day.exercises.filter(ex=>ex.group===g));
   ordered.forEach(ex=>{
     if(ex.group!==lastGroup){ const gh=document.createElement('h3'); gh.className='groupheader'; gh.textContent=ex.group; list.appendChild(gh); lastGroup=ex.group; }
-    const state=ensureState(ex); const complete=state.sets.every(s=>s.done); if(!complete) allComplete=false;
-    const daySaved=daySavedFor(currentDay,ex.name);
-    let sug=suggestWeight(ex,daySaved);
-    let saved=daySaved, crossDaySub=null, estFrom=null;
-    if(sug===-1){
-      const cw=crossDaySuggestedWeight(ex);
-      // only label this "from X day" when the source is actually a different slot — the same exercise's own
-      // older session (found here because the most recent same-day one had no weight logged) isn't a cross-day
-      // borrow and would misleadingly read as if the exercise had rotated away and back.
-      if(cw){ sug=cw; const cs=lastByName[ex.name]; if(cs){ saved=cs; if(cs.d!==currentDay){ const cd=PROGRAM.find(d=>d.id===cs.d); crossDaySub=cd?cd.sub:null; } } }
-      else { const est=estimateFromRelated(ex); if(est){ sug=est.w; estFrom=est.from; } }
-    }
+    const card=renderExercise(ex,day); logCards.set(ex,card); list.appendChild(card);
+  });
+  updateLogSummary(day);
+  popSet=null;
+  restoreListFocus(focusKey);
+}
+// ---------- Log: redraw one card ----------
+// A tap inside a card (Done, Reps Left, Add or Remove Set, plate step, a hold starting or stopping) swaps that card for a
+// freshly drawn one instead of rebuilding the list, so the other cards' elements stay where they are: a running hold keeps
+// ticking the very field it was given, and nothing in an untouched card can replay an animation.
+// The result is the same page render() would draw. Two things make that true:
+//  - typing never redraws (it edits the draft and patches the card in place), so a card that was typed in can show something a
+//    fresh draw would not (a kg weight not yet rounded, the plates text, the Same as Last chip). Those cards are remembered in
+//    logDirty by the listener below and are redrawn along with the tapped one, exactly when render() used to catch them up.
+//  - anything that changes more than cards (units, the program, deload, the day itself) still calls render().
+let logCards=new Map();  // exercise (the program's own object) -> the card element drawn for it
+const logDirty=new Set(); // exercises whose card was edited in place since it was drawn
+['input','change'].forEach(t=>document.getElementById('exerciseList').addEventListener(t,e=>{
+  const card=e.target.closest&&e.target.closest('.exercise'); if(!card) return;
+  for(const [ex,el] of logCards) if(el===card){ logDirty.add(ex); break; }
+}));
+function refreshExercise(ex){
+  const day=currentDay==='cardio'?null:PROGRAM.find(d=>d.id===currentDay), old=logCards.get(ex);
+  if(!day||!old||!old.isConnected||!day.exercises.includes(ex)){ render(); return; } // not on screen as drawn: draw everything
+  const focusKey=listFocusKey();
+  renderTabs(); renderBody();
+  // the draft is keyed by lift name, so a second slot with the same name shares it and is redrawn too
+  const names=new Set([ex.name,...[...logDirty].map(x=>x.name)]); logDirty.clear();
+  // a check that popped on an earlier tap sits in a card that may not be redrawn; only this tap's set may be marked
+  document.querySelectorAll('#exerciseList .setdone.pop').forEach(el=>el.classList.remove('pop'));
+  day.exercises.forEach(x=>{
+    const was=logCards.get(x); if(!names.has(x.name)||!was||!was.isConnected) return;
+    const card=renderExercise(x,day); was.replaceWith(card); logCards.set(x,card);
+  });
+  updateLogSummary(day);
+  popSet=null;
+  restoreListFocus(focusKey);
+}
+// Draws one exercise's card from the draft and returns it (not yet in the page). Everything a card shows comes from here,
+// so drawing the whole list and redrawing a single card cannot differ. The body keeps render()'s old indentation on purpose.
+function renderExercise(ex,day){
+    const state=ensureState(ex); const complete=state.sets.every(s=>s.done);
+    const m=exModel(ex), {saved,sug,crossDaySub,estFrom}=m;
     // a bodyweight-loaded exercise already shows its (locked) weight in the set rows below —
     // repeating "try 110 lb bodyweight" up here just restates the same number.
     const sugTxt=(ex.start===0&&typeof sug==='number')?'':(sug===null?'log body weight in Strength to use here':sug===-1?'find a weight for the rep range':estFrom?`~${dispWeight(sug)} ${unitLabel()} · estimate from ${estFrom}`:(dispWeight(sug)+' '+unitLabel()+(isDeloadActive()?' · deload':'')+(crossDaySub?` · from ${crossDaySub} day`:'')));
@@ -3149,10 +3252,7 @@ function render(){
       const line=document.createElement('div'); line.className='side-line'; txtEl.replaceWith(line); line.append(txtEl,stepEl);
       stepEl.onclick=e=>{ const b=e.target.closest('button'); if(!b) return;
         b.focus({preventScroll:true}); // Safari doesn't focus a tapped button, and the redraw hands focus back to whatever had it last (e.g. a Done check)
-        const target=state.sets.find(x=>!x.done); if(!target){ showToast('Every set is already logged'); return; }
-        const bar=dispWeight(barWeightLb(ex)), have=liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)), cur=have?dispWeight(parseFloat(liveLb)):bar;
-        const side=Math.max(0,Math.round(((cur-bar)/2+parseInt(b.dataset.d)*inc)*100)/100);
-        target.w=storeWeight(Math.round((bar+2*side)*100)/100); touchDayStart(); sset('today:'+currentDay,todayData); render(); };
+        if(actStepPlates(ex,state,parseInt(b.dataset.d),liveLb)) refreshExercise(ex); };
       const syncFixedUI=()=>{ chip.style.display=fixed?'none':''; stepEl.style.display=fixed?'none':''; capEl.textContent=fixed?'Fixed-Weight Bar':'Plates per Side'; };
       updatePlates=lb=>{
         if(lb!=null&&lb!=='') liveLb=lb;
@@ -3197,10 +3297,10 @@ function render(){
     if((day.lvl==='new'||day.lvl==='exp')&&!isTimedTarget(ex.target)&&ex.start!==0&&ex.step!==0&&!(hist[ex.name]||[]).length&&!lastByName[ex.name]){
       const cu=document.createElement('div'); cu.className='first-log-note'; cu.textContent=day.lvl==='new'?'Start light and leave 3 or more Reps Left.':'Work up to a weight that leaves about 2 Reps Left.'; body.appendChild(cu); }
 
-    const timed=isTimedTarget(ex.target);
+    const timed=m.timed;
     // bodyweight lifts (split squats, dips, pull-ups…) log bodyweight plus whatever is held or worn: s.add is that
     // extra load, s.w the total, so every weight-based calculation — and the lift's bodyweight-only history — carries on
-    const bwLoaded=ex.start===0, bwNow=bwLoaded?latestBW():null;
+    const bwLoaded=m.bwLoaded, bwNow=bwLoaded?latestBW():null;
     const lastAdd=bwLoaded?Math.max(0,...((lastByName[ex.name]||{}).sets||[]).map(x=>parseFloat(x.add)||0)):0;
     // bodyweight lifts: the body weight gets its own line (it made the column head wrap as "+ Added / BW 168"),
     // and says what the column is for, which only a hover tooltip explained before
@@ -3209,26 +3309,24 @@ function render(){
     const bwTotal=s=>bwNow==null?'':Math.round((bwNow+(parseFloat(s.add)||0))*10)/10;
     // "Same as Last": copies what the previous session did for the next empty set (reps, reps left, and the weight only
     // if that box is empty). It never ticks Done and never starts the rest timer. Not for timed holds, a first-ever use or a seed.
-    const lastSets=(!timed&&saved&&saved.sets)?saved.sets.filter(x=>x&&x.r!==''&&x.r!=null):[];
+    const lastSets=m.lastSets;
     const salTargets=lastSets.length?state.sets.map((x,j)=>j).filter(j=>!state.sets[j].done&&state.sets[j].r===''):[];
     if(lastSets.length&&!salTargets.length){
       const sal=document.createElement('div'); sal.className='sal-row idle'; sal.setAttribute('aria-hidden','true');
       sal.innerHTML=`<button type="button" class="sal-chip" tabindex="-1">Same as Last</button>`; body.insertBefore(sal,hr);
     }
     if(salTargets.length){
-      const j=salTargets[0], ls=lastSets[Math.min(j,lastSets.length-1)], leftTxt=ls.rir!=null?` · ${ls.rir>=4?'4+':ls.rir} left`:'';
-      const tw=state.sets[j].w, addTxt=bwLoaded?((!state.sets[j].add&&parseFloat(ls.add)>0)?` · +${dispWeight(parseFloat(ls.add))} ${unitLabel()}`:''):((tw===''||tw==null)&&typeof sug==='number'&&sug>0?` · ${dispWeight(sug)} ${unitLabel()}`:''); // exactly what the next tap will fill
+      const j=salTargets[0], fill=salFill(m,state,j), ls=fill.ls, leftTxt=ls.rir!=null?` · ${ls.rir>=4?'4+':ls.rir} left`:'';
+      const addTxt=fill.add!=null?` · +${dispWeight(parseFloat(ls.add))} ${unitLabel()}`:fill.w!=null?` · ${dispWeight(sug)} ${unitLabel()}`:''; // exactly what the next tap will fill
       const full=`Set ${j+1}${addTxt} · ${ls.r} reps${leftTxt}`, wTxt=addTxt.replace(/^ · /,'');
       const det=`Set ${j+1} · ${wTxt?wTxt+' × '+esc(String(ls.r)):esc(String(ls.r))+' reps'}`; // short form on the chip; the full text (with reps left) is the label
       const sal=document.createElement('div'); sal.className='sal-row';
       sal.innerHTML=`<button type="button" class="sal-chip" aria-label="Same as Last: ${esc(full)}" data-det="${esc(full)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 8v4l3 2"/></svg><span class="sal-lbl">Same as Last:</span><span class="sal-det">${det}</span></button>`;
       sal.querySelector('button').onclick=e=>{
         e.currentTarget.focus({preventScroll:true}); // Safari doesn't focus a tapped button; the redraw would hand focus back to whatever had it last
-        const fk=listFocusKey(), cardIdx=[...document.querySelectorAll('#exerciseList .exercise')].indexOf(e.currentTarget.closest('.exercise')), t=state.sets[j]; if(!t||t.done||t.r!=='') { render(); return; }
-        t.r=String(ls.r); t.rir=(ls.rir!=null&&ls.rir>=0&&ls.rir<=4)?ls.rir:null;
-        if(bwLoaded){ if(!t.add&&parseFloat(ls.add)>0) t.add=ls.add; }
-        else if((t.w===''||t.w==null)&&typeof sug==='number'&&sug>0) t.w=storeWeight(dispWeight(sug));
-        touchDayStart(); sset('today:'+currentDay,todayData); render();
+        const fk=listFocusKey(), cardIdx=[...document.querySelectorAll('#exerciseList .exercise')].indexOf(e.currentTarget.closest('.exercise'));
+        if(!actFillSet(state,j,m)){ render(); return; }
+        render();
         { const c0=document.querySelectorAll('#exerciseList .exercise')[cardIdx], h=c0&&c0.querySelector('.sal-row:not(.idle) .sal-chip'); salAnnounce(h?'Next: '+h.dataset.det:'Every set is filled'); }
         if(fk){ const c=document.querySelectorAll('#exerciseList .exercise')[fk.card]; const nxt=c&&(c.querySelector('.sal-row:not(.idle) .sal-chip')||c.querySelector('.setdone:not(.on)')); if(nxt){ tagClickables(c); nxt.focus({preventScroll:true}); } }
       };
@@ -3240,27 +3338,19 @@ function render(){
       const row=document.createElement('div'); row.className='setgrid';
       row.innerHTML=`<div class="setnum">${i+1}</div><input type="number" inputmode="decimal" aria-label="Set ${i+1} ${bwLoaded?'added weight':'weight'}" placeholder="${bwLoaded?'+'+dispWeight(addHint):sug===null?'bw':sug===-1?unitLabel():dispWeight(sug)}" value="${bwLoaded?(s.add?dispWeight(s.add):''):(s.w?dispWeight(s.w):s.w)}"${bwLoaded?' title="extra weight held or worn (dumbbells, a dip belt) — leave blank for bodyweight only"':''}><input type="number" inputmode="numeric" aria-label="Set ${i+1} ${timed?'seconds':'reps'}" placeholder="${timed?'Sec':'Reps'}" value="${s.r}"><div class="setdone ${s.done?'on':''}${popSet===s?' pop':''}" aria-label="set ${i+1} done" aria-pressed="${!!s.done}">${s.done?'✓':''}</div><div class="setrm" title="remove set" aria-label="remove set ${i+1}">✕</div>`;
       const [wI,rI]=row.querySelectorAll('input');
-      if(bwLoaded) wI.oninput=e=>{s.add=e.target.value===''?'':storeWeight(e.target.value); s.w=bwTotal(s); touchDayStart(); sset('today:'+currentDay,todayData);};
-      else wI.oninput=e=>{s.w=storeWeight(e.target.value); touchDayStart(); sset('today:'+currentDay,todayData); if(updatePlates) updatePlates(s.w);};
-      rI.oninput=e=>{s.r=e.target.value; touchDayStart(); sset('today:'+currentDay,todayData); const rr=row.nextElementSibling; if(rr&&rr.classList.contains('rir-row')){ rr.hidden=!(s.done||s.r!==''); }};
-      row.querySelector('.setdone').onclick=()=>{
-        if(hold.key===holdKey(ex,i)) stopHold(false); // fills s.r with the elapsed seconds before the check below
-        if(!s.done && s.r===''){ showToast(timed?'Add the seconds first':'Add reps first'); return; }
-        if(!s.done && !timed && s.rir==null){ showToast('Pick reps left first'); return; }
-        // the grey weight in an empty box is only a suggestion — ticking used to save the set with no weight at all.
-        // A tick means "did what's shown", so it takes that number; with none to take (a new lift), it asks for one.
-        if(!s.done && !bwLoaded && !timed && (s.w===''||s.w==null)){
-          if(sug!=null && sug!==-1) s.w=storeWeight(dispWeight(sug)); else { showToast('Add the weight first'); return; }
-        }
-        s.done=!s.done; popSet=s.done?s:null; touchDayStart(); if(s.done&&settings.auto) startTimer(settings.smartRest?suggestedRest(ex):settings.rest); sset('today:'+currentDay,todayData); render();
-      };
+      // one-shot: the pop mark comes off when its animation ends, so it is an event on this tap, never a state a later draw could replay
+      if(popSet===s){ const dn=row.querySelector('.setdone'); dn.addEventListener('animationend',()=>dn.classList.remove('pop'),{once:true}); }
+      if(bwLoaded) wI.oninput=e=>{ actSetAdded(s,e.target.value,bwTotal); };
+      else wI.oninput=e=>{ actSetWeight(s,e.target.value); if(updatePlates) updatePlates(s.w); };
+      rI.oninput=e=>{ actSetReps(s,e.target.value); const rr=row.nextElementSibling; if(rr&&rr.classList.contains('rir-row')){ rr.hidden=!(s.done||s.r!==''); }};
+      row.querySelector('.setdone').onclick=()=>{ if(actToggleDone(ex,s,i,m)) refreshExercise(ex); };
       row.querySelector('.setrm').onclick=async()=>{
         if(state.sets.length<=1){ showToast('Keep at least one set'); return; }
         // an empty set goes in one tap; one with anything logged asks first, since ✕ sits right beside Done
         const logged=s.done||s.r!==''||(bwLoaded?!!parseFloat(s.add):(s.w!==''&&s.w!=null));
         const fk=listFocusKey();
         if(logged&&!await confirmSheet(`Remove set ${i+1} of ${ex.name}? What's logged in it will be lost.`,'Remove Set',null,true)) return;
-        state.sets.splice(i,1); touchDayStart(); sset('today:'+currentDay,todayData); render(); restoreListFocus(fk);
+        actRemoveSet(state,i); refreshExercise(ex); restoreListFocus(fk);
       };
       body.appendChild(row);
       if(timed&&!s.done){
@@ -3277,12 +3367,12 @@ function render(){
         // hidden until reps are in, then picked before the set can be checked; stays after Done so it can still be changed
         const rir=document.createElement('div'); rir.className='rir-row'; setRirA11y(rir,i); rir.hidden=!(s.done||s.r!=='');
         rir.innerHTML=`<span class="rir-lbl" aria-hidden="true">Reps Left</span>`+[0,1,2,3,4].map(v=>`<span class="rir-pill${s.rir===v?' on':''}" data-v="${v}" aria-pressed="${s.rir===v}" aria-label="${v===4?'4 or more reps':v===1?'1 rep':v+' reps'} left">${v===4?'4+':v}</span>`).join('');
-        rir.querySelectorAll('.rir-pill').forEach(p=>p.onclick=()=>{ const v=parseInt(p.dataset.v); s.rir=(s.rir===v)?null:v; touchDayStart(); sset('today:'+currentDay,todayData); render(); });
+        rir.querySelectorAll('.rir-pill').forEach(p=>p.onclick=()=>{ actPickRepsLeft(s,parseInt(p.dataset.v)); refreshExercise(ex); });
         body.appendChild(rir);
       }
     });
     const addset=document.createElement('button'); addset.type='button'; addset.className='addset'; addset.textContent='+ Add Set';
-    addset.onclick=()=>{ const prev=state.sets[state.sets.length-1]; state.sets.push({w:ex.start===0?(latestBW()??''):'',r:'',done:false,rir:null,...(ex.start===0&&prev&&prev.add?{add:prev.add}:{})}); sset('today:'+currentDay,todayData); render(); }; body.appendChild(addset);
+    addset.onclick=()=>{ actAddSet(ex,state); refreshExercise(ex); }; body.appendChild(addset);
 
     const ta=document.createElement('textarea'); ta.className='notes'; ta.placeholder='Notes — seat setting, how it felt'; ta.setAttribute('aria-label',`Notes for ${ex.name}`); ta.value=notes[histKey(ex)]||'';
     ta.oninput=e=>{ notes[histKey(ex)]=e.target.value; sset('notes',notes); }; body.appendChild(ta);
@@ -3292,8 +3382,11 @@ function render(){
     // the reps-left figure uses the pills' own words rather than "RIR"
     const lastSetW=s=>bwLoaded?(parseFloat(s.add)?`BW + ${dispWeight(s.add)}`:'BW'):(s.w?Math.round(dispWeight(s.w)*10)/10:'–');
     const parts=lastToShow.filter(s=>s.w||s.r).map(s=>(timed?`${s.r||'–'}s`:`${lastSetW(s)} × ${s.r||'–'}`)+`${s.rir!=null?` (${s.rir>=4?'4+':s.rir} left)`:''}`).join(', '); if(parts){ const d=document.createElement('div'); d.className='last-time'; d.innerHTML=`<span>Last Time${crossDaySub?` (${esc(crossDaySub)} day)`:''}:</span> <span class="lt-v">${esc(parts)}</span>`; head.firstElementChild.appendChild(d); } }
-    card.appendChild(body); list.appendChild(card);
-  });
+    card.appendChild(body); return card;
+}
+// The Log's chrome that depends on the whole day: the Finish label, the progress line and Edit Day.
+function updateLogSummary(day){
+  const allComplete=day.exercises.every(ex=>ensureState(ex).sets.every(s=>s.done));
   document.getElementById('finishBtn').textContent=allComplete?'All Sets Done — Finish Session':'Finish Session';
   // the row under the day tabs shows how far through the session you are — it used to be "[Heavy] Upper Day", which
   // only repeated the selected tab; the day's name stays as the heading for screen readers. Time is Home's estimate.
@@ -3301,8 +3394,6 @@ function render(){
   document.getElementById('dayLabel').innerHTML=`<h2 class="sr-only">${day.name} ${day.sub}</h2><span class="day-prog">${nDone} of ${nEx} Done · About ${nEx*6} min</span><span class="linkbtn" id="editLink">Edit Day</span><div class="day-bar" aria-hidden="true"><i style="width:${Math.round(nDone/nEx*100)}%"></i></div>`;
   document.getElementById('editLink').onclick=()=>{ setView('more'); renderEditor(); document.getElementById('edDay').value=currentDay; openSetPage('edit'); };
   updateLogChrome();
-  popSet=null;
-  restoreListFocus(focusKey);
 }
 
 // ---------- first-launch program builder ----------
