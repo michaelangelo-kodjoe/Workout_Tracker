@@ -35,18 +35,20 @@
     --on-accent:#1a0d08;--on-green:#06170c;--on-light:#071a26;--scrim:rgba(0,0,0,.6); /* text on a filled colour; the sheet backdrop */
     /* type: one family, six sizes (11 only for letter-spaced uppercase labels) */
     --font:-apple-system,BlinkMacSystemFont,system-ui,"Helvetica Neue",sans-serif;
-    --fs-cap:11px;--fs-sm:13px;--fs-body:15px;--fs-lg:17px;--fs-xl:22px;--fs-hero:32px;
+    --fs-cap:max(11px,calc(11px / var(--tz,1)));--fs-sm:13px;--fs-body:15px;--fs-lg:17px;--fs-xl:22px;--fs-hero:32px;
     /* shape: two radii plus full-round */
     --r-sm:12px;--r-lg:20px;--r-full:999px;
     /* spacing */
     --sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-5:24px;
     /* motion: three durations and one curve (Lift Log's own numbers); B4 uses them */
+    /* touch targets: 44 px on screen at every Text Size (a size below Standard zooms the app out, so the CSS size grows to match) */
+    --t44:max(44px,calc(44px / var(--tz,1)));--t48:max(48px,calc(44px / var(--tz,1)));
     --dur-1:120ms;--dur-2:240ms;--dur-3:380ms;--ease:cubic-bezier(.22,1,.36,1);}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--font);min-height:100%;}
   /* every tab at least as tall as the screen with Safari's toolbar tucked away (lvh), plus 1px, so every tab can scroll:
      a tab too short to scroll (Strength, cards closed) made Safari bring its full toolbar back, resizing the whole page */
-  body{min-height:calc(100lvh + 1px);}
+  body{min-height:calc((100lvh + 1px) / var(--tz,1));} /* the page is a pixel taller than the screen at every Text Size (the zoom scales the length) */
   button,input,textarea,select{font-family:var(--font);}
   html,body,button,.btn,[role=button]{touch-action:manipulation;} /* no double-tap zoom on controls (two quick taps used to zoom and drop one); pinch zoom still works */
   /* iOS Safari zooms the page in on focus of any field under 16px. Pinch-zoom is allowed (the viewport no longer
@@ -70,7 +72,7 @@
      timer and finish button sit just above it (#logFooter). */
   .viewtabs{display:flex;justify-content:space-around;margin:0 -16px;padding-top:4px;}
   #logFooter{margin:0 -16px;padding:10px 16px;border-bottom:1px solid var(--line);}
-  .viewtab{flex:1 1 0;display:flex;flex-direction:column;align-items:center;gap:3px;min-height:48px;justify-content:center;font-size:var(--fs-sm);color:var(--text-dim);cursor:pointer;}
+  .viewtab{flex:1 1 0;display:flex;flex-direction:column;align-items:center;gap:3px;min-height:var(--t48);justify-content:center;font-size:var(--fs-sm);color:var(--text-dim);cursor:pointer;}
   .viewtab svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
   .viewtab.active{color:var(--text);}
   .viewtab{min-width:0;} .vt-l{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;} /* large text shortens a label, it never runs into the next one */ .viewtab.active svg{stroke:var(--accent);}
@@ -102,17 +104,17 @@
   .bmain{flex:1 1 0;min-width:0;display:flex;flex-direction:column;}
   .bmain>span{display:block;}
   .bfoot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:28px 10px;margin-top:8px;}
-  .bfoot>.linkbtn{margin-left:auto;padding:12px 0;margin-top:-12px;margin-bottom:-12px;min-height:44px;box-sizing:border-box;display:flex;align-items:center;}
-  .bx{flex:none;width:44px;height:44px;margin:-13px -16px 0 0;padding:0;border:0;background:none;color:inherit;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:var(--r-sm);-webkit-tap-highlight-color:transparent;}
+  .bfoot>.linkbtn{margin-left:auto;padding:12px 0;margin-top:-12px;margin-bottom:-12px;min-height:var(--t44);box-sizing:border-box;display:flex;align-items:center;}
+  .bx{flex:none;width:var(--t44);height:var(--t44);margin:-13px -16px 0 0;padding:0;border:0;background:none;color:inherit;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:var(--r-sm);-webkit-tap-highlight-color:transparent;}
   .bx svg{width:16px;height:16px;pointer-events:none;}
   .bx:active{background:rgba(255,255,255,.08);}
   .bx:focus-visible,.utoast button:focus-visible{outline:2px solid var(--light);outline-offset:-4px;}
   #backupBanner.fade-out .bx{pointer-events:none;}
   /* Undo toast: the .toast look, but tappable and held for 6 s */
-  .utoast{position:fixed;left:50%;bottom:calc(var(--foot-h,80px) + 16px);transform:translateX(-50%);z-index:48;display:flex;align-items:center;gap:4px;max-width:calc(100% - 32px);width:max-content;background:var(--panel-raised);border:1px solid var(--done-line);color:var(--text);padding:0 4px 0 16px;border-radius:var(--r-sm);font-size:13px;min-height:48px;}
+  .utoast{position:fixed;left:50%;bottom:calc(var(--foot-h,80px) + 16px);transform:translateX(-50%);z-index:48;display:flex;align-items:center;gap:4px;max-width:calc(100% - 32px);width:max-content;background:var(--panel-raised);border:1px solid var(--done-line);color:var(--text);padding:0 4px 0 16px;border-radius:var(--r-sm);font-size:13px;min-height:var(--t48);}
   .utoast[hidden]{display:none;}
   .utoast span{padding:10px 0;line-height:1.4;}
-  .utoast button{flex:none;min-width:44px;min-height:44px;padding:0 12px;background:none;border:0;font:inherit;font-size:13px;color:var(--light);cursor:pointer;border-radius:var(--r-sm);}
+  .utoast button{flex:none;min-width:var(--t44);min-height:var(--t44);padding:0 12px;background:none;border:0;font:inherit;font-size:13px;color:var(--light);cursor:pointer;border-radius:var(--r-sm);}
   .bodymap{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);padding:16px;margin-bottom:24px;}
   /* the readiness score heads its card rather than sitting in a second box inside it; the ring and number carry
      the red/amber/green, and a rule separates it from the body diagram */
@@ -145,7 +147,7 @@
   .recov-list{margin-top:8px;font-size:var(--fs-sm);color:var(--text-dim);line-height:1.6;border-top:1px dashed var(--line);padding-top:8px;}
   /* 44 px rows, and each Mark Sore / Clear fills its own row's height and no more — at 27 px apart their tap areas
      overlapped, so a tap near a row's edge could mark the muscle next to it sore */
-  .recov-row{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:44px;padding:0;}
+  .recov-row{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:var(--t44);padding:0;}
   .recov-row + .recov-row{border-top:1px solid var(--line);}
   .recov-row .linkbtn{white-space:nowrap;flex-shrink:0;align-self:stretch;display:flex;align-items:center;padding:0 0 0 12px;margin:0;}
   .recov-list b{color:var(--text);font-weight:normal;}
@@ -189,7 +191,7 @@
   .howto{margin:0 0 12px;}
   /* the card's tools: How to · Swap · Demo as one segmented bar (see toolsBar()) */
   .ex-tools{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;background:var(--panel-raised);}
-  .ex-tools>*{min-height:44px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px 6px;margin:0;padding:4px 6px;background:none;border:0;color:var(--text);font:13px/1.2 var(--font);text-decoration:none;cursor:pointer;text-align:center;min-width:0;} /* at large text sizes a label wraps inside its segment */
+  .ex-tools>*{min-height:var(--t44);display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px 6px;margin:0;padding:4px 6px;background:none;border:0;color:var(--text);font:13px/1.2 var(--font);text-decoration:none;cursor:pointer;text-align:center;min-width:0;} /* at large text sizes a label wraps inside its segment */
   .ex-tools>*+*{border-left:1px solid var(--line);}
   .ex-tools svg{width:16px;height:16px;flex-shrink:0;fill:none;stroke:var(--light);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
   .ex-tools .ext{color:var(--text-dim);font-size:var(--fs-sm);}
@@ -218,7 +220,7 @@
   .setgrid{display:grid;grid-template-columns:28px 1fr 1fr 30px 20px;gap:8px;align-items:center;margin-bottom:6px;font-size:13px;}
   .setrm{color:var(--text-dim);cursor:pointer;font-size:13px;text-align:center;}
   .setrm:hover{color:var(--danger);}
-  .setgrid.head{color:var(--text-dim);font-size:11px;letter-spacing:.06em;text-transform:uppercase;text-align:center;}
+  .setgrid.head{color:var(--text-dim);font-size:var(--fs-cap);letter-spacing:.06em;text-transform:uppercase;text-align:center;}
   .setgrid.head>div{min-width:0;overflow:hidden;text-overflow:ellipsis;} /* at large text a head shortens rather than running into its neighbour */
   .setnum{color:var(--text-dim);text-align:center;font-family:var(--font);}
   .bw-line{font-size:var(--fs-sm);color:var(--text-dim);margin:0 0 10px;}
@@ -236,7 +238,7 @@
   @keyframes popcheck{0%{transform:scale(.7);}55%{transform:scale(1.18);}100%{transform:scale(1);}}
   .delta-up{font-family:var(--font);font-size:var(--fs-sm);color:var(--green);white-space:nowrap;}
   .first-log-note{font-size:var(--fs-sm);line-height:1.55;color:var(--light);background:rgba(79,163,209,.08);border-left:2px solid var(--light);padding:9px 11px;border-radius:var(--r-sm);margin:0 0 10px;}
-  .addset{display:block;width:100%;height:44px;margin:4px 0 0;padding:0;border:1px dashed var(--line-strong);border-radius:var(--r-sm);background:none;color:var(--text-dim);font:13px var(--font);cursor:pointer;}
+  .addset{display:block;width:100%;height:var(--t44);margin:4px 0 0;padding:0;border:1px dashed var(--line-strong);border-radius:var(--r-sm);background:none;color:var(--text-dim);font:13px var(--font);cursor:pointer;}
   .notes{width:100%;margin-top:12px;background:var(--panel-raised);border:1px solid var(--line);border-radius:var(--r-sm);color:var(--text);padding:12px;font-size:var(--fs-sm);font-family:var(--font);resize:vertical;min-height:34px;}
   .ex-head>div:first-child{min-width:0;}
   .last-time{font-size:var(--fs-sm);line-height:1.4;color:var(--text-dim);margin:4px 0 0;padding:0;border:0;}
@@ -247,7 +249,7 @@
   .plates b{color:var(--text);font-weight:normal;font-family:var(--font);}
   /* bar-loaded lifts: "Plates per side" and its value on the left, the bar chip on the right, fixed-bar toggle below */
   .bar-plates{display:flex;flex-direction:column;align-items:stretch;gap:0;margin:0 0 4px;}
-  .plates-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px;min-height:44px;}
+  .plates-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px;min-height:var(--t44);}
   .plates-info{display:flex;flex-direction:column;gap:2px;min-width:0;}
   .plates-cap{font-size:var(--fs-sm);color:var(--text-dim);}
   .bar-plates .plates-txt{font-size:13px;color:var(--text-dim);}
@@ -256,7 +258,7 @@
   /* per-side weight with a − / + beside it, one smallest plate per tap */
   .side-line{display:flex;align-items:center;gap:4px;}
   .side-step{display:inline-flex;}
-  .side-step button{width:44px;height:44px;margin:-6px 0;border:0;background:none;color:var(--text);font-size:var(--fs-xl);padding:0;cursor:pointer;}
+  .side-step button{width:var(--t44);height:var(--t44);margin:-6px 0;border:0;background:none;color:var(--text);font-size:var(--fs-xl);padding:0;cursor:pointer;}
   .bar-chip{position:relative;display:inline-flex;align-items:center;gap:6px;flex-shrink:0;min-height:36px;white-space:nowrap;padding:0 10px 0 12px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--panel-raised);color:var(--text);font:13px var(--font);cursor:pointer;}
   .bar-chip svg{width:14px;height:14px;fill:none;stroke:var(--text-dim);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
   .bar-chip select{position:absolute;left:0;right:0;top:-5px;bottom:-5px;width:100%;opacity:0;font-size:var(--fs-lg);cursor:pointer;}
@@ -275,11 +277,11 @@
   .timer .t{font-family:var(--font);font-size:22px;color:var(--accent);} .timer .t.over{color:var(--green);}
   /* +30s / skip are tapped between sets with a sweaty thumb: real bordered buttons, not underlined text links */
   .timer .acts{display:flex;gap:8px;}
-  .timer .acts button{display:inline-flex;align-items:center;min-height:44px;margin:0;padding:0 14px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--panel);color:var(--text);font-family:var(--font);font-size:13px;cursor:pointer;}
+  .timer .acts button{display:inline-flex;align-items:center;min-height:var(--t44);margin:0;padding:0 14px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--panel);color:var(--text);font-family:var(--font);font-size:13px;cursor:pointer;}
   .tbar{height:6px;background:var(--line);border-radius:var(--r-sm);margin-top:8px;overflow:hidden;}
   .tbar i{display:block;height:100%;background:var(--accent);transition:width 1s linear,background 1s linear;}
   /* destructive, so it's an outlined button in the danger colour — same shape as + Add Set, and it asks first */
-  .reset-link{display:block;width:100%;height:44px;margin-top:24px;padding:0;border:1px solid var(--line);border-radius:var(--r-sm);background:none;color:var(--danger);font:13px var(--font);cursor:pointer;}
+  .reset-link{display:block;width:100%;height:var(--t44);margin-top:24px;padding:0;border:1px solid var(--line);border-radius:var(--r-sm);background:none;color:var(--danger);font:13px var(--font);cursor:pointer;}
   /* sheets open from something the user just tapped, so they sit above the full-screen onboarding and celebration
      overlays (40) — a muscle tapped on onboarding's recovery-map step used to open its sheet invisibly underneath */
   .sheet-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:45;}
@@ -291,7 +293,7 @@
   /* recovery warning: one tall sheet that lists every recovering muscle. It grows with the list up to nearly the full
      screen; past that only the list scrolls, so the two choices stay in view however many muscles a day hits. */
   #fatigueSheet.on{display:flex;flex-direction:column;max-height:calc(100% - 40px - var(--sa-t));overflow:hidden;}
-  .fat-head{display:flex;justify-content:space-between;font-family:var(--font);font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:var(--text-dim);margin-top:6px;padding-bottom:5px;border-bottom:1px solid var(--line);}
+  .fat-head{display:flex;justify-content:space-between;font-family:var(--font);font-size:var(--fs-cap);letter-spacing:.4px;text-transform:uppercase;color:var(--text-dim);margin-top:6px;padding-bottom:5px;border-bottom:1px solid var(--line);}
   .fat-list{flex:0 1 auto;min-height:0;overflow-y:auto;margin-bottom:12px;}
   .fat-row{display:grid;grid-template-columns:minmax(0,1fr) 72px 64px;gap:10px;align-items:center;padding:9px 6px 9px 0;border-bottom:1px dashed var(--line);font-size:13px;}
   .fat-row:last-child{border-bottom:none;}
@@ -300,7 +302,7 @@
   .fat-bar i.recovering{background:var(--amber);}
   .fat-left{font-family:var(--font);font-size:var(--fs-sm);color:var(--text-dim);text-align:right;white-space:nowrap;}
   .fat-btns{display:flex;flex-direction:column;gap:8px;margin-top:auto;padding-top:14px;}
-  .fat-btns .btn{min-height:48px;font-size:13px;}
+  .fat-btns .btn{min-height:var(--t48);font-size:13px;}
   .sheet{display:none;position:fixed;left:0;right:0;bottom:0;max-height:78%;overflow-y:auto;background:var(--panel);border-top:1px solid var(--line);border-radius:var(--r-lg) var(--r-lg) 0 0;padding:16px var(--safe-r) calc(16px + var(--sa-b)) var(--safe-l);z-index:46;}
   .sheet.on,.sheet-bg.on{display:block;}
   .sheet{overscroll-behavior:contain;max-width:560px;margin:0 auto;} .sheet:focus{outline:none;}
@@ -316,7 +318,7 @@
   .ad-chips{display:flex;gap:8px;overflow-x:auto;margin:0 -16px 12px;padding:0 16px 4px;scrollbar-width:none;} .ad-chips::-webkit-scrollbar{display:none;}
   .ad-chips .eqchip{flex:none;}
   .alt .ac.clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-  .alt.dim .an{color:var(--text-dim);} .alt .tag-on{font-size:var(--fs-sm);color:var(--text-dim);display:inline-flex;align-items:center;min-height:44px;}
+  .alt.dim .an{color:var(--text-dim);} .alt .tag-on{font-size:var(--fs-sm);color:var(--text-dim);display:inline-flex;align-items:center;min-height:var(--t44);}
   .alt .ab .btn{min-width:96px;}
   .ad-note{font-size:13px;color:var(--text-dim);line-height:1.5;margin:0 0 12px;} .ad-note b{color:var(--text);font-weight:normal;}
   .ad-eqnote{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;color:var(--text-dim);line-height:1.5;padding:8px 0;} .ad-eqnote .btn{flex:none;}
@@ -324,8 +326,8 @@
   .ad-sel{border:1px solid var(--line);border-radius:var(--r-sm);background:var(--panel-raised);padding:12px 16px;margin-bottom:12px;}
   .ad-sel .an{font-size:15px;} .ad-sel .am{font-size:var(--fs-sm);color:var(--text-dim);margin-top:2px;} .ad-sel .ac{font-size:var(--fs-sm);line-height:1.5;color:var(--text);opacity:.85;margin-top:6px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
   .ad-static{font-size:13px;color:var(--text-dim);line-height:1.5;padding:12px 0;border-top:1px solid var(--line);margin-top:12px;}
-  .ad-foot{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;} .ad-foot .btn{flex:1 1 auto;min-width:0;min-height:48px;font-size:15px;} .ad-foot .btn.primary{flex:2 1 auto;}
-  .ad-nf .btn{width:100%;min-height:48px;font-size:15px;margin-top:12px;}
+  .ad-foot{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;} .ad-foot .btn{flex:1 1 auto;min-width:0;min-height:var(--t48);font-size:15px;} .ad-foot .btn.primary{flex:2 1 auto;}
+  .ad-nf .btn{width:100%;min-height:var(--t48);font-size:15px;margin-top:12px;}
   #adSheetTitle:focus{outline:none;}
   .toast{position:fixed;bottom:calc(var(--foot-h,80px) + 16px);left:50%;transform:translateX(-50%);background:var(--panel-raised);border:1px solid var(--done-line);color:var(--text);padding:10px 18px;border-radius:var(--r-sm);font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:48;max-width:88%;text-align:center;}
   .toast.show{opacity:1;}
@@ -356,7 +358,7 @@
   .str-split-num.down{color:var(--amber);}
   .str-hero-num.flat,.str-split-num.flat{color:var(--text-dim);}
   .str-split-card{cursor:pointer;}
-  .str-card-hint{font-size:var(--fs-sm);color:var(--light);margin-top:0;padding:14px 0 12px;min-height:44px;box-sizing:border-box;display:flex;align-items:center;}
+  .str-card-hint{font-size:var(--fs-sm);color:var(--light);margin-top:0;padding:14px 0 12px;min-height:var(--t44);box-sizing:border-box;display:flex;align-items:center;}
   .str-card-hint.scrub-date{color:var(--text-dim);}
   /* pan-y: vertical drags still scroll the page, horizontal drags scrub the chart */
   .scrub{position:relative;touch-action:pan-y;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;outline:none;}
@@ -372,7 +374,7 @@
   .str-card-exlist .sp{font-size:15px;}
   .str-card-exlist .also{font-size:var(--fs-sm);color:var(--text-dim);white-space:nowrap;}
   .str-grp{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:16px 0 4px;font-size:var(--fs-sm);color:var(--text-dim);}
-  .str-grp span:first-child{font-size:11px;letter-spacing:.08em;text-transform:uppercase;}
+  .str-grp span:first-child{font-size:var(--fs-cap);letter-spacing:.08em;text-transform:uppercase;}
   .str-past{margin-top:16px;}
   .str-past.out{margin:12px 0;} .str-one{flex-basis:100%;}
   .str-past-btn{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:52px;padding:8px 12px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--panel-raised);color:var(--text);text-align:left;font-family:var(--font);cursor:pointer;}
@@ -380,7 +382,7 @@
   .str-past-act{font-size:13px;color:var(--light);}
   .str-past-list{margin-top:4px;}
   /* pinned to the bottom of the screen while the open list scrolls past, so closing it doesn't mean scrolling back up */
-  .str-hide{position:sticky;bottom:calc(var(--foot-h,80px) + 12px);display:block;width:100%;min-height:44px;margin-top:16px;box-shadow:0 12px 0 0 var(--panel),0 -12px 16px -4px var(--panel);}
+  .str-hide{position:sticky;bottom:calc(var(--foot-h,80px) + 12px);display:block;width:100%;min-height:var(--t44);margin-top:16px;box-shadow:0 12px 0 0 var(--panel),0 -12px 16px -4px var(--panel);}
   .bwlb{display:inline-block;font-size:var(--fs-sm);background:rgba(79,163,209,.15);color:var(--light);border:1px solid rgba(79,163,209,.4);padding:1px 8px;border-radius:var(--r-sm);} /* spaced by its row's gap, so it lines up whether it fits beside the label or wraps under it */
   .note-sm{font-size:var(--fs-sm);color:var(--text-dim);line-height:1.5;margin-top:14px;}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);padding:16px;margin-bottom:12px;}
@@ -408,9 +410,9 @@
   /* session edit form: grid columns must be allowed to shrink (minmax(0,…)) — number inputs otherwise keep an
      intrinsic width on iOS and push the RIR column off the edge of the sheet */
   .se-row{display:grid;grid-template-columns:18px minmax(0,1fr) minmax(0,1fr) 62px;gap:6px;margin-top:4px;align-items:center;}
-  .se-row .in{width:100%;min-width:0;box-sizing:border-box;min-height:44px;padding:7px 4px;font-size:var(--fs-body);text-align:center;font-family:var(--font);}
+  .se-row .in{width:100%;min-width:0;box-sizing:border-box;min-height:var(--t44);padding:7px 4px;font-size:var(--fs-body);text-align:center;font-family:var(--font);}
   .se-row .n{color:var(--text-dim);font-size:var(--fs-sm);text-align:center;}
-  .se-head{display:flex;justify-content:space-between;align-items:center;min-height:44px;margin-top:4px;}
+  .se-head{display:flex;justify-content:space-between;align-items:center;min-height:var(--t44);margin-top:4px;}
   /* an action bar pinned to the bottom of a scrolling sheet: it sits over the sheet's own bottom padding (not above
      it), so nothing scrolls through underneath, and a hairline separates it from the content */
   .sheet-actions,.se-foot{position:sticky;bottom:calc(-16px - var(--sa-b));z-index:1;background:var(--panel);box-shadow:0 -1px 0 var(--line);padding:12px 0 calc(16px + var(--sa-b));margin:12px 0 calc(-16px - var(--sa-b));display:flex;gap:8px;}
@@ -430,50 +432,50 @@
   .cf-flow{padding:4px 0 0;}
   /* several cardio sessions in one day: the Logged Today card, the Complete button, the Session Saved sheet's stacked buttons and the celebration's list */
   .cf-logged{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 16px;margin-bottom:16px;}
-  .cf-logged .lb{font:11px var(--font);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;}
+  .cf-logged .lb{font:var(--fs-cap) var(--font);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;}
   .cf-logged ul{list-style:none;margin:0;padding:0;}
   .cf-logged li{display:flex;align-items:baseline;justify-content:space-between;gap:12px;min-height:32px;padding:6px 0;font-size:15px;border-top:1px solid var(--line);} .cf-logged li:first-of-type{border-top:0;}
   .cf-logged li span{font-size:13px;color:var(--text-dim);text-align:right;} .cf-logged li b{font-weight:normal;display:flex;align-items:center;gap:8px;}
   .cf-logged li i{width:8px;height:8px;border-radius:50%;background:var(--green);flex:none;}
-  .cf-complete{margin-top:20px;} .cf-complete .btn,.cf-stack .btn{width:100%;min-height:48px;font-size:15px;}
+  .cf-complete{margin-top:20px;} .cf-complete .btn,.cf-stack .btn{width:100%;min-height:var(--t48);font-size:15px;}
   .cf-stack{display:flex;flex-direction:column;gap:10px;}
   .cel-list{width:100%;max-width:320px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);padding:4px 16px;margin-bottom:16px;position:relative;z-index:2;}
   .cel-list div{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line);font-size:15px;text-align:left;} .cel-list div:first-child{border-top:0;}
   .cel-list span{font-size:13px;color:var(--text-dim);text-align:right;}
   .cf-steps{display:flex;align-items:center;gap:8px;margin:4px 0 16px;font-size:var(--fs-sm);color:var(--text-dim);} .cf-steps i{flex:1;height:3px;border-radius:var(--r-sm);background:var(--line);} .cf-steps i.on{background:var(--cardio);} .cf-steps b{font-weight:normal;color:var(--text);white-space:nowrap;}
   .cf-ico{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;}
-  .cf-back{display:inline-flex;align-items:center;gap:2px;min-height:44px;margin:-8px 0 0 -4px;padding:0 10px 0 0;background:none;border:0;color:var(--light);font:15px var(--font);cursor:pointer;}
+  .cf-back{display:inline-flex;align-items:center;gap:2px;min-height:var(--t44);margin:-8px 0 0 -4px;padding:0 10px 0 0;background:none;border:0;color:var(--light);font:15px var(--font);cursor:pointer;}
   .cf-h:focus{outline:none;}
   .cf-info{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 16px;margin:0 0 16px;}
-  .cf-info .lb{font:11px var(--font);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;}
+  .cf-info .lb{font:var(--fs-cap) var(--font);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;}
   .cf-info dl{margin:0;} .cf-info .r{display:flex;justify-content:space-between;align-items:baseline;gap:16px;min-height:32px;padding:7px 0;border-top:1px solid var(--line);font-size:15px;} .cf-info .r:first-of-type{border-top:0;}
   .cf-info dt{color:var(--text);flex:none;} .cf-info dd{margin:0;font-size:13px;color:var(--text-dim);text-align:right;min-width:0;}
   .cf-start{margin-top:20px;} .cf-start .btn{width:100%;min-height:52px;font-size:15px;font-weight:bold;}
   .cf-startnote{font-size:var(--fs-sm);color:var(--text-dim);text-align:center;margin-top:8px;line-height:1.5;}
   .cf-h{font-size:22px;font-weight:normal;margin:0 0 4px;} .cf-lede{font-size:13px;color:var(--text-dim);margin:0 0 16px;line-height:1.5;} .cf-lede .linkbtn{white-space:nowrap;}
-  .cf-sub{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin:20px 0 8px;font-family:var(--font);}
+  .cf-sub{font-size:var(--fs-cap);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin:20px 0 8px;font-family:var(--font);}
   .cf-scroll{display:flex;gap:8px;overflow-x:auto;margin:0 -16px;padding:0 16px 4px;scrollbar-width:none;} .cf-scroll::-webkit-scrollbar{display:none;}
   .cf-rc{flex:none;min-height:56px;min-width:116px;padding:8px 14px;border-radius:var(--r-sm);background:var(--panel-raised);border:1px solid var(--line);color:var(--text);font:15px var(--font);text-align:left;cursor:pointer;} .cf-rc small{display:block;font-size:var(--fs-sm);color:var(--text-dim);margin-top:2px;}
   .cf-seg{display:flex;background:var(--panel-raised);border:1px solid var(--line);border-radius:var(--r-sm);padding:3px;gap:3px;margin-bottom:16px;}
-  .cf-seg button{flex:1;min-height:44px;border:0;border-radius:var(--r-sm);background:none;font:13px var(--font);color:var(--text-dim);cursor:pointer;} .cf-seg button.on{background:rgba(95,168,224,.16);color:var(--text);box-shadow:inset 0 0 0 1px var(--cardio);}
+  .cf-seg button{flex:1;min-height:var(--t44);border:0;border-radius:var(--r-sm);background:none;font:13px var(--font);color:var(--text-dim);cursor:pointer;} .cf-seg button.on{background:rgba(95,168,224,.16);color:var(--text);box-shadow:inset 0 0 0 1px var(--cardio);}
   .cf-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
   .cf-tile{display:flex;flex-direction:column;align-items:flex-start;min-height:84px;padding:12px;border-radius:var(--r-sm);background:var(--panel);border:1px solid var(--line);color:var(--text);font:15px var(--font);text-align:left;cursor:pointer;} .cf-tile .cf-ico{color:var(--cardio);margin-bottom:8px;} .cf-tile small{font-size:var(--fs-sm);color:var(--text-dim);margin-top:2px;}
   .cf-big{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);margin-bottom:12px;}
   .cf-big .lb{display:block;font-size:13px;color:var(--text-dim);} .cf-big .v{font:32px var(--font);color:var(--text);display:flex;align-items:baseline;} .cf-big .v small{font-size:13px;color:var(--text-dim);margin-left:4px;}
   .cf-big input{width:4ch;min-width:0;background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;color:var(--text);font:inherit;padding:0;} .cf-big input:focus{border-bottom-color:var(--cardio);outline:none;}
   .cf-math{font-size:var(--fs-sm);color:var(--text-dim);text-align:right;line-height:1.4;}
-  .cf-stp{display:flex;gap:8px;} .cf-stp button{width:44px;height:44px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--panel-raised);color:var(--text);font-size:22px;cursor:pointer;}
+  .cf-stp{display:flex;gap:8px;} .cf-stp button{width:var(--t44);height:var(--t44);border-radius:var(--r-sm);border:1px solid var(--line);background:var(--panel-raised);color:var(--text);font-size:22px;cursor:pointer;}
   .cf-fld{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;} .cf-fld.cf-3{grid-template-columns:1fr 1fr 1fr;} .cf-fld .field-label{margin-top:0;}
-  .cf-in{width:100%;height:44px;background:var(--panel-raised);border:1px solid var(--line);border-radius:var(--r-sm);color:var(--text);text-align:center;font-size:15px;padding:0 8px;}
-  .cf-disc{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:48px;padding:0;background:none;border:0;border-top:1px solid var(--line);color:var(--light);font:13px var(--font);text-align:left;cursor:pointer;}
+  .cf-in{width:100%;height:var(--t44);background:var(--panel-raised);border:1px solid var(--line);border-radius:var(--r-sm);color:var(--text);text-align:center;font-size:15px;padding:0 8px;}
+  .cf-disc{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:var(--t48);padding:0;background:none;border:0;border-top:1px solid var(--line);color:var(--light);font:13px var(--font);text-align:left;cursor:pointer;}
   .cf-rpe{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:6px;} .cf-rpe button{min-height:56px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--panel-raised);font:17px var(--font);color:var(--text-dim);cursor:pointer;} .cf-rpe button.on{background:var(--light);border-color:var(--light);color:var(--on-light);}
-  .cf-top{display:flex;align-items:center;justify-content:space-between;min-height:44px;margin-top:-4px;}
+  .cf-top{display:flex;align-items:center;justify-content:space-between;min-height:var(--t44);margin-top:-4px;}
   .cf-live{display:flex;align-items:center;gap:8px;font:var(--fs-sm) var(--font);letter-spacing:.08em;text-transform:uppercase;color:var(--green);} .cf-live i{width:8px;height:8px;border-radius:50%;background:var(--green);} .cf-live.pause{color:var(--amber);} .cf-live.pause i{background:var(--amber);}
   .cf-clock{text-align:center;padding:24px 16px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);margin:12px 0;} .cf-clock .t{font:48px var(--font);letter-spacing:.02em;color:var(--text);line-height:1.1;} .cf-clock .s{font-size:13px;color:var(--text-dim);margin-top:6px;}
   .cf-phase{display:inline-block;font:var(--fs-sm) var(--font);letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:var(--r-sm);margin-bottom:8px;} .cf-phase.work{background:rgba(255,93,59,.14);color:var(--accent);border:1px solid var(--accent);} .cf-phase.rest{background:rgba(95,168,224,.14);color:var(--cardio);border:1px solid var(--cardio);}
   .cf-bar{height:4px;border-radius:var(--r-sm);background:var(--line);margin:14px 0 0;overflow:hidden;} .cf-bar i{display:block;height:100%;background:var(--cardio);}
   .cf-ctrl{display:flex;gap:8px;margin:12px 0;} .cf-ctrl .btn{flex:1;min-height:52px;font-size:15px;}
-  .cf-now{font:11px var(--font);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin:20px 0 8px;}
+  .cf-now{font:var(--fs-cap) var(--font);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin:20px 0 8px;}
   .cf-dots{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px;} .cf-dots i{width:10px;height:10px;border-radius:50%;background:var(--line);} .cf-dots i.d{background:var(--cardio);} .cf-dots i.c{background:var(--accent);}
   .cf-clock .ms{font-size:var(--fs-xl);color:var(--text-dim);} .cf-clock .t.big{font-size:96px;line-height:1.1;margin-top:8px;}
   .cf-past{text-align:center;margin-top:16px;}
@@ -485,7 +487,7 @@
   .rir-row{display:flex;align-items:center;gap:5px;margin:-2px 0 8px;flex-wrap:wrap;}
   .rir-row[hidden]{display:none;}
   .sal-row{display:flex;align-items:center;margin:0 0 8px;}
-  .sal-chip{display:inline-flex;align-items:center;gap:6px;min-width:0;max-width:100%;min-height:44px;padding:0 14px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--panel-raised);color:var(--text);font:13px var(--font);cursor:pointer;white-space:nowrap;}
+  .sal-chip{display:inline-flex;align-items:center;gap:6px;min-width:0;max-width:100%;min-height:var(--t44);padding:0 14px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--panel-raised);color:var(--text);font:13px var(--font);cursor:pointer;white-space:nowrap;}
   .sal-row.idle{visibility:hidden;pointer-events:none;} /* nothing left to fill: the row keeps its height so the sets below stay put */
   .sal-chip svg{width:16px;height:16px;fill:none;stroke:var(--light);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;}
   .sal-chip:focus-visible{outline:2px solid var(--light);outline-offset:2px;}
@@ -499,16 +501,16 @@
   .ad-h{font-size:15px;font-weight:normal;margin:24px 0 0;padding-top:16px;border-top:1px solid var(--line);}
   .ad-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;}
   .mv-box{position:relative;} .mv-box .in{width:100%;padding-right:48px;font-size:15px;}
-  .mv-clear{position:absolute;right:0;top:0;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:none;border:0;color:var(--text-dim);cursor:pointer;} .mv-clear[hidden]{display:none;}
+  .mv-clear{position:absolute;right:0;top:0;width:var(--t44);height:var(--t44);display:flex;align-items:center;justify-content:center;background:none;border:0;color:var(--text-dim);cursor:pointer;} .mv-clear[hidden]{display:none;}
   .mv-clear svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;}
   .mv-list{list-style:none;margin:4px 0 0;padding:0;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--panel-raised);max-height:264px;overflow-y:auto;overscroll-behavior:contain;} .mv-list[hidden]{display:none;}
-  .mv-grp{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);padding:10px 12px 4px;}
-  .mv-opt{color:var(--text);min-height:44px;padding:6px 12px;display:flex;flex-direction:column;justify-content:center;font-size:15px;line-height:1.3;border-top:1px solid var(--line);cursor:pointer;overflow-wrap:anywhere;}
+  .mv-grp{font-size:var(--fs-cap);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);padding:10px 12px 4px;}
+  .mv-opt{color:var(--text);min-height:var(--t44);padding:6px 12px;display:flex;flex-direction:column;justify-content:center;font-size:15px;line-height:1.3;border-top:1px solid var(--line);cursor:pointer;overflow-wrap:anywhere;}
   .mv-opt .m{font-size:var(--fs-sm);color:var(--text-dim);}
   .mv-opt[aria-selected=true]{background:var(--panel);box-shadow:inset 3px 0 0 var(--accent);}
   .mv-grp + .mv-opt{border-top:0;}
   .mv-note{font-size:13px;color:var(--text-dim);line-height:1.5;padding:10px 12px;}
-  .mv-new{position:sticky;bottom:0;background:var(--panel-raised);flex-direction:row;justify-content:flex-start;align-items:center;gap:10px;min-height:48px;}
+  .mv-new{position:sticky;bottom:0;background:var(--panel-raised);flex-direction:row;justify-content:flex-start;align-items:center;gap:10px;min-height:var(--t48);}
   .mv-new svg{width:18px;height:18px;flex:none;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;}
   .mv-new .t{display:flex;flex-direction:column;min-width:0;}
   .mv-help{font-size:var(--fs-sm);color:var(--text-dim);line-height:1.5;margin-top:2px;} .mv-help:empty{display:none;}
@@ -540,11 +542,11 @@
   #onboardTitle:focus{outline:none;} /* focused so a screen reader starts at each step's question, not to show a ring */
   /* onboarding: back, progress and skip on top, the question centred, the action pinned low where a thumb rests */
   .celebrate.onb{align-items:stretch;overflow:visible;padding:calc(8px + var(--sa-t) + var(--edge)) 16px 0;}
-  .onb-top{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;}
-  .onb-back,.onb-skip{min-width:44px;height:44px;padding:0 4px;background:none;border:0;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .onb-top{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:var(--t44);}
+  .onb-back,.onb-skip{min-width:var(--t44);height:var(--t44);padding:0 4px;background:none;border:0;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;}
   .onb-skip{color:var(--text-dim);font:13px var(--font);}
   .onb-back svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
-  .onb-prog{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;}
+  .onb-prog{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:var(--fs-cap);color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;}
   .onb-bars{display:flex;gap:4px;width:140px;} .onb-bars i{flex:1;height:4px;border-radius:var(--r-sm);background:var(--line);} .onb-bars i.on{background:var(--accent);}
   .onb-body{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px;padding:24px 8px;}
   .onb-body .cel-h1,.onb-body .cel-sub{margin:0;max-width:320px;} .onb-body .cel-sub{line-height:1.5;}
@@ -552,7 +554,7 @@
   .onb-field{display:flex;flex-direction:column;gap:6px;width:100%;max-width:300px;margin-top:12px;text-align:left;font-size:var(--fs-sm);color:var(--text-dim);}
   .onb-field .in{width:100%;min-height:52px;text-align:center;font-size:17px;}
   .onb-seg{display:flex;gap:4px;padding:4px;width:100%;max-width:300px;margin-top:12px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--panel);}
-  .onb-seg button{flex:1;height:44px;border:0;border-radius:var(--r-sm);background:none;color:var(--text-dim);font-size:13px;cursor:pointer;}
+  .onb-seg button{flex:1;height:var(--t44);border:0;border-radius:var(--r-sm);background:none;color:var(--text-dim);font-size:13px;cursor:pointer;}
   .onb-seg button[aria-pressed="true"]{background:var(--text);color:var(--bg);}
   .onb-seg+.onb-field{margin-top:0;}
   .onb-opts{display:flex;flex-direction:column;gap:8px;width:100%;max-width:300px;margin-top:12px;}
@@ -562,7 +564,7 @@
   /* the recovery-map step shows a sample day, since a new user's own map is all green and can't show the colours it explains */
   .onb-ex{width:100%;max-width:360px;margin-top:8px;padding:16px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);text-align:left;}
   .onb-ex-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:var(--fs-sm);color:var(--text-dim);}
-  .onb-ex-h span:first-child{font-size:11px;letter-spacing:.08em;text-transform:uppercase;} .onb-ex-h span:last-child{text-align:right;}
+  .onb-ex-h span:first-child{font-size:var(--fs-cap);letter-spacing:.08em;text-transform:uppercase;} .onb-ex-h span:last-child{text-align:right;}
   .onb-ex .figures{margin:12px 0 8px;} .onb-ex .figures svg{max-height:200px;}
   .muscle-ex{stroke:#101216;stroke-width:1.6;stroke-linejoin:round;}
   .onb-ex-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);font-size:15px;}
@@ -571,7 +573,7 @@
   .onb-foot{position:sticky;bottom:0;z-index:2;display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 0 calc(24px + var(--sa-b));background:var(--bg);box-shadow:0 -16px 16px -4px var(--bg);}
   .cel-cta.alt{background:none;color:var(--text);border:1px solid var(--line-strong);}
   /* ---------- onboarding quiz (v83) ---------- */
-  .qz-eyebrow{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);}
+  .qz-eyebrow{font-size:var(--fs-cap);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);}
   .onb-body.qz-top{justify-content:flex-start;padding-top:16px;}
   .qz-cap{font-size:13px;color:var(--text-dim);min-height:20px;margin-top:4px;text-align:center;}
   .onb-opt.qz-opt{gap:12px;padding:10px 16px;min-height:60px;text-align:left;}
@@ -583,7 +585,7 @@
   .qz-state.skipped{color:var(--text);}
   .cel-cta[aria-disabled="true"]{opacity:.4;cursor:default;}
   .qz-links{display:flex;justify-content:center;gap:8px;width:100%;max-width:320px;}
-  .qz-links .linkbtn,.qz-skipq{flex:1;min-height:44px;background:none;border:0;font:inherit;font-size:13px;color:var(--light);cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;}
+  .qz-links .linkbtn,.qz-skipq{flex:1;min-height:var(--t44);background:none;border:0;font:inherit;font-size:13px;color:var(--light);cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;}
   .qz-skipq{flex:none;width:100%;max-width:320px;color:var(--text-dim);}
   .qz-res{width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px;text-align:left;}
   .qz-res .rt-card{margin:0;} .qz-res .rt-honest,.qz-res .qz-note{margin:0;}
@@ -599,7 +601,7 @@
   .rt-card .rt-ex .rt-exh{margin-top:12px;}
   /* the days question: five large buttons */
   .qd-row{display:flex;flex-wrap:wrap;gap:8px;width:100%;max-width:327px;margin-top:12px;} /* wraps to two rows only when text is enlarged on a very narrow phone */
-  .qd-btn{flex:1 1 52px;min-width:44px;min-height:76px;padding:0;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--panel);color:var(--text);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+  .qd-btn{flex:1 1 52px;min-width:var(--t44);min-height:76px;padding:0;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--panel);color:var(--text);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
   .qd-btn b{font:32px var(--font);font-weight:normal;line-height:1.1;}
   .qd-btn small{font-size:var(--fs-sm);color:var(--text-dim);}
   .qd-btn[aria-pressed="true"]{background:var(--text);color:var(--bg);border-color:var(--text);}
@@ -617,10 +619,10 @@
   .cel-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;width:100%;max-width:320px;position:relative;z-index:2;margin-bottom:20px;}
   .cel-stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);padding:14px 6px;}
   .cel-stat b{display:block;font-family:var(--font);font-size:22px;color:var(--text);}
-  .cel-stat span{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.3px;}
+  .cel-stat span{font-size:var(--fs-cap);color:var(--text-dim);text-transform:uppercase;letter-spacing:.3px;}
   .cel-stat b span{text-transform:none;letter-spacing:0;} /* the minutes unit inside the number: "52m", not "52M" */
   .pr-card{width:100%;max-width:320px;background:linear-gradient(135deg,rgba(232,178,61,.15),rgba(232,178,61,.03));border:1px solid rgba(232,178,61,.5);border-radius:var(--r-sm);padding:14px 16px;text-align:left;position:relative;z-index:2;margin-bottom:16px;}
-  .pr-eyebrow{font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--gold);font-weight:bold;font-family:var(--font);}
+  .pr-eyebrow{font-size:var(--fs-cap);letter-spacing:.5px;text-transform:uppercase;color:var(--gold);font-weight:bold;font-family:var(--font);}
   .pr-name{font-size:15px;margin:4px 0 2px;}
   .pr-detail{font-family:var(--font);font-size:var(--fs-sm);color:var(--text-dim);}
   .pr-detail b{color:var(--gold);}
@@ -635,14 +637,14 @@
   .cel-backup.done{background:var(--done-bg);border-color:var(--done-line);}
   #backupBanner.fade-out{opacity:0;transition:opacity .6s ease;}
   @media (prefers-reduced-motion: reduce){ .cel-backup.leaving,#backupBanner.fade-out{transition:none;} }
-  .cel-backup .btn{display:block;width:100%;min-height:44px;margin-top:12px;font-size:15px;}
+  .cel-backup .btn{display:block;width:100%;min-height:var(--t44);margin-top:12px;font-size:15px;}
   .cel-backup.due .btn{border-color:var(--amber);color:var(--amber);}
   .cel-backup .cel-bmsg.err{color:var(--danger);}
   .cel-cta{width:100%;max-width:320px;background:var(--accent);color:var(--on-accent);border:none;border-radius:var(--r-sm);padding:14px;font-size:13px;font-family:var(--font);letter-spacing:.3px;cursor:pointer;position:relative;z-index:2;}
   /* a short (landscape) screen: tighter spacing so Return to Home fits without scrolling */
   @media (max-height:500px){
     .celebrate{padding-top:calc(16px + var(--sa-t));padding-bottom:16px;}
-    .cel-badge{width:48px;height:48px;margin-bottom:8px;} .cel-badge svg{width:26px;height:26px;}
+    .cel-badge{width:var(--t48);height:var(--t48);margin-bottom:8px;} .cel-badge svg{width:26px;height:26px;}
     .cel-sub{margin-bottom:12px;} .cel-stats{margin-bottom:12px;} .cel-stat{padding:8px 6px;}
     .rhythm-msg,.pr-card{margin-bottom:12px;}
   }
@@ -660,7 +662,7 @@
   .day-carousel.three .day-card{flex:1 0 84px;padding-left:10px;padding-right:10px;} /* exactly three days (Push/Pull/Legs) share the row, so the whole week shows without scrolling at 375 px or 320 px */
   .day-card{flex:0 0 124px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px;position:relative;cursor:pointer;}
   .day-card.today{border-color:var(--accent);background:linear-gradient(160deg,var(--panel-raised),rgba(255,93,59,.1));}
-  .day-card .dtag{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);min-height:14px;}
+  .day-card .dtag{font-size:var(--fs-cap);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);min-height:14px;}
   .day-card.today .dtag{color:var(--accent);}
   .day-card .dname{font-size:17px;margin:2px 0;}
   .day-card .dsub{font-size:var(--fs-sm);color:var(--text-dim);line-height:1.4;}
@@ -679,7 +681,7 @@
   .build-eq{display:flex;flex-wrap:wrap;gap:6px;margin:14px 2px 2px;}
   .chip-set{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
   /* Settings main screen: grouped rows, each showing its current value and opening its own page */
-  .set-group-h{font-size:11px;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;margin:16px 4px 8px;}
+  .set-group-h{font-size:var(--fs-cap);color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;margin:16px 4px 8px;}
   .set-group-h:first-child{margin-top:0;}
   .set-group{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);}
   .set-row{display:flex;align-items:center;gap:12px;width:100%;min-height:52px;margin:0;padding:0 16px;background:none;border:0;border-top:1px solid var(--line);color:var(--text);text-align:left;font:15px var(--font);cursor:pointer;}
@@ -701,35 +703,35 @@
   .rt-days .badge{margin:0;}
   .rt-line{font-size:13px;line-height:1.5;margin-top:12px;color:var(--text);}
   .rt-line.dim{color:var(--text-dim);}
-  .rt-card .btn.rt-go{display:block;width:100%;min-height:48px;font-size:15px;margin-top:16px;}
+  .rt-card .btn.rt-go{display:block;width:100%;min-height:var(--t48);font-size:15px;margin-top:16px;}
   .rt-foot{font-size:13px;line-height:1.5;color:var(--text-dim);margin:4px 0 0;}
-  .rt-sec{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin:16px 0 8px;}
+  .rt-sec{font-size:var(--fs-cap);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin:16px 0 8px;}
   .rt-sec.first{margin-top:4px;}
   .rt-list{list-style:none;margin:0;padding:0;}
   .rt-list li{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.5;margin-bottom:8px;}
   .rt-list svg{flex:none;width:16px;height:16px;margin-top:3px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
   .rt-list .keep svg{color:var(--green);} .rt-list .chg svg{color:var(--accent);}
   .rt-backup{border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 16px;margin:16px 0 0;background:var(--panel-raised);font-size:13px;line-height:1.5;}
-  .rt-backup .btn{display:block;width:100%;min-height:48px;font-size:15px;margin-top:12px;}
+  .rt-backup .btn{display:block;width:100%;min-height:var(--t48);font-size:15px;margin-top:12px;}
   .rt-ok{display:flex;gap:8px;align-items:flex-start;color:var(--green);margin-top:12px;}
   .rt-ok svg{flex:none;width:16px;height:16px;margin-top:2px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
   .rt-note{font-size:13px;line-height:1.5;margin:12px 0 0;padding:10px 12px;border-left:2px solid var(--amber);background:var(--panel-raised);border-radius:var(--r-sm);}
   .rt-sheet-sub{font-size:var(--fs-sm);color:var(--text-dim);margin-top:2px;}
   #routineTitle:focus{outline:none;}
-  .rt-blocked .rt-btns{display:flex;flex-direction:column;gap:8px;} .rt-blocked .rt-btns .btn{min-height:48px;font-size:15px;}
+  .rt-blocked .rt-btns{display:flex;flex-direction:column;gap:8px;} .rt-blocked .rt-btns .btn{min-height:var(--t48);font-size:15px;}
   .rt-blocked .linkbtn.danger{display:block;width:100%;background:none;border:0;font:inherit;font-size:13px;text-align:center;margin-top:8px;padding:15px 0;}
   .rt-honest{font-size:13px;line-height:1.5;margin:12px 0 0;padding:10px 12px;border-left:2px solid var(--accent);background:var(--panel);border-radius:var(--r-sm);color:var(--text);}
   .rt-honest-top{margin:4px 0 0;}
   .rt-rownote{margin-top:6px;font-size:var(--fs-sm);line-height:1.45;white-space:normal;} .rt-rownote[hidden]{display:none;}
   #routineRow.has-note{flex-wrap:wrap;padding-top:12px;padding-bottom:12px;}
   #routineRow .rt-rownote{flex:0 0 100%;order:9;margin-top:4px;text-align:left;}
-  .rt-see{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:44px;margin-top:8px;padding:0;background:none;border:0;color:var(--accent);font:inherit;font-size:15px;text-align:left;cursor:pointer;}
+  .rt-see{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:var(--t44);margin-top:8px;padding:0;background:none;border:0;color:var(--accent);font:inherit;font-size:15px;text-align:left;cursor:pointer;}
   .rt-see-chev{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
   .rt-see[aria-expanded=true] .rt-see-chev{transform:rotate(180deg);}
   .rt-ex{border-top:1px solid var(--line);margin-top:4px;padding-top:12px;}
   .rt-exh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0 4px;font-size:var(--fs-sm);font-weight:400;color:var(--text-dim);}
   .rt-exh .badge{margin:0;}
-  .rt-exh2{font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-top:20px;display:block;}
+  .rt-exh2{font-size:var(--fs-cap);letter-spacing:.08em;text-transform:uppercase;margin-top:20px;display:block;}
   .rt-exl{list-style:none;margin:0;padding:0;}
   .rt-exl li{display:flex;justify-content:space-between;gap:12px;font-size:13px;line-height:1.4;padding:8px 0;border-bottom:1px solid var(--line);}
   .rt-exl li:last-child{border-bottom:0;}
@@ -749,16 +751,16 @@
   .set-seg{width:auto;max-width:none;margin:0;padding:2px;gap:2px;} .set-seg button{flex:none;height:36px;padding:0 14px;}
   #setMain .reset-link{margin-top:24px;}
   /* an on/off switch for a single yes/no setting */
-  input.switch{appearance:none;-webkit-appearance:none;flex-shrink:0;width:48px;height:28px;margin:0;border-radius:var(--r-sm);background:var(--line);position:relative;cursor:pointer;transition:background .15s;}
+  input.switch{appearance:none;-webkit-appearance:none;flex-shrink:0;width:var(--t48);height:28px;margin:0;border-radius:var(--r-sm);background:var(--line);position:relative;cursor:pointer;transition:background .15s;}
   input.switch::after{content:"";position:absolute;left:3px;top:3px;width:22px;height:22px;border-radius:50%;background:var(--text);transition:transform .15s;}
   input.switch:checked{background:var(--green);} input.switch:checked::after{transform:translateX(20px);}
   /* a Settings page: Back to Settings, then its title */
   .set-sub{display:flex;flex-direction:column;align-items:flex-start;gap:4px;margin-bottom:12px;}
-  .set-back{display:inline-flex;align-items:center;gap:2px;min-height:44px;margin:-8px 0 0 -10px;padding:0 10px 0 4px;background:none;border:0;color:var(--light);font:15px var(--font);cursor:pointer;}
+  .set-back{display:inline-flex;align-items:center;gap:2px;min-height:var(--t44);margin:-8px 0 0 -10px;padding:0 10px 0 4px;background:none;border:0;color:var(--light);font:15px var(--font);cursor:pointer;}
   .set-back svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
   .set-sub h2{margin:0;font-size:22px;font-weight:normal;} .set-sub h2:focus{outline:none;}
   .set-days{width:100%;max-width:none;margin:0 0 12px;} .set-days button{font-family:var(--font);font-size:var(--fs-sm);}
-  .set-day-h{font-size:11px;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;margin:4px 0;}
+  .set-day-h{font-size:var(--fs-cap);color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;margin:4px 0;}
   #edReset.set-reset{display:block;margin:24px auto 0;padding:12px 8px;background:none;border:0;font-family:var(--font);} /* beats .linkbtn's negative tap-area margin */
   #adOpen{margin-top:12px;} #adOpen[hidden]{display:none;}
   #textSizeOpts{max-width:none;}
@@ -800,7 +802,7 @@
   .rh-bars i{flex:1;min-height:2px;border-radius:var(--r-sm) var(--r-sm) 0 0;background:rgba(92,187,111,.7);}
   .rh-bars i.zero{background:var(--line);} .rh-bars i.met{background:var(--green);}
   .rh-bars i.now{background:rgba(92,187,111,.3);box-shadow:inset 0 0 0 1px var(--green);}
-  .rh-axis{display:flex;gap:4px;margin-top:6px;padding-top:4px;border-top:1px solid var(--line);font-size:11px;color:var(--text-dim);}
+  .rh-axis{display:flex;gap:4px;margin-top:6px;padding-top:4px;border-top:1px solid var(--line);font-size:var(--fs-cap);color:var(--text-dim);}
   .rh-axis span{flex:1;white-space:nowrap;overflow:visible;}
   .rh-cap{font-size:var(--fs-sm);color:var(--text-dim);margin-top:8px;} .rh-cap[hidden]{display:none;}
 
@@ -829,7 +831,7 @@
   .cal-dots{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;max-width:100%;}
   /* two sessions in one cell would not fit the cell on a 320 px screen: show them as colour dots there (the title, aria-label and day sheet still name them) */
   @media (max-width:359px){ .cal-dots.multi .cal-tag{font-size:0;line-height:0;width:8px;height:8px;padding:0;border-radius:50%;} }
-  .cal-tag{font-style:normal;font-family:var(--font);font-size:11px;font-weight:bold;line-height:13px;padding:0 2px;border-radius:var(--r-sm);background:var(--dc);color:#12141a;}
+  .cal-tag{font-style:normal;font-family:var(--font);font-size:var(--fs-cap);font-weight:bold;line-height:13px;padding:0 2px;border-radius:var(--r-sm);background:var(--dc);color:#12141a;}
   .cal-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 14px;margin-top:10px;font-size:var(--fs-sm);color:var(--text-dim);}
   .cal-legend span{display:inline-flex;align-items:center;gap:4px;}
 
@@ -837,9 +839,9 @@
   /* everything here is tapped mid-set, often one-handed — aim for ~44px hit areas. Text links get padding cancelled
      by an equal negative margin, which grows the tappable box without moving anything on screen. */
   .setgrid{grid-template-columns:28px 1fr 1fr 44px 44px;}
-  .setgrid input{height:44px;}
-  .setdone{width:44px;height:44px;border-radius:var(--r-sm);font-size:var(--fs-lg);}
-  .setrm{display:flex;align-items:center;justify-content:center;height:44px;font-size:15px;}
+  .setgrid input{height:var(--t44);}
+  .setdone{width:var(--t44);height:var(--t44);border-radius:var(--r-sm);font-size:var(--fs-lg);}
+  .setrm{display:flex;align-items:center;justify-content:center;height:var(--t44);font-size:15px;}
   .linkbtn{padding:15px 0;margin:-15px 0;}
   /* sheets: Close takes a 44 px square in the corner; the session card's Edit / Delete sit 20 px apart so each can
      reach 44 px wide; the fatigue sheet's toggle gets real height rather than overlapping the list above it */
@@ -854,14 +856,14 @@
   #editLink,#cardioHistLink{padding:15px 12px;margin:-15px -12px;}
   /* "+ add a set" sits right under the last set row: its box starts below that row instead of reaching into it */
   .cal-nav{padding:18px 19px;margin:-18px -11px;}
-  .btn{min-height:44px;}
-  .rpe-dot{padding:13px 0;min-height:44px;} /* ten across a phone can't each be 44 wide; they reach 44 tall and 26 wide */
-  .in{min-height:44px;}
-  .chk{min-height:44px;gap:8px;}
+  .btn{min-height:var(--t44);}
+  .rpe-dot{padding:13px 0;min-height:var(--t44);} /* ten across a phone can't each be 44 wide; they reach 44 tall and 26 wide */
+  .in{min-height:var(--t44);}
+  .chk{min-height:var(--t44);gap:8px;}
   .chk input{margin:0;} /* the browser's default 3-4 px checkbox margin set every box 4 px in from the text edge */
   /* the editor's ↔ ↑ ↓ ✕ were bare glyphs, 7–15 px wide */
   .edrow .acts{display:flex;}
-  .edrow .acts span{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;margin-left:0;}
+  .edrow .acts span{display:inline-flex;align-items:center;justify-content:center;min-width:var(--t44);min-height:var(--t44);margin-left:0;}
   /* reps-left pills share the row's width and stay compact to look at; an invisible ::after takes the tappable area
      to 44 px tall, into spacing the row keeps clear above and below */
   .rir-row{margin:2px 0 6px;flex-wrap:nowrap;}
@@ -869,7 +871,7 @@
   .rir-pill::after{content:'';position:absolute;inset:-6px -2px;}
   /* 44 px day cells: a slimmer card inset and gap leave the 7 columns room at phone width */
   .cal-wrap{padding:16px 10px;} .cal-grid,.cal-dow{gap:2px;}
-  .eqchip{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:var(--r-lg);}
+  .eqchip{display:inline-flex;align-items:center;min-height:var(--t44);padding:0 14px;border-radius:var(--r-lg);}
   /* the builder's one action stays in reach while the 29 picks scroll under it */
   #buildDone{position:sticky;bottom:calc(var(--foot-h,80px) + 12px);z-index:3;box-shadow:0 -16px 16px -4px var(--bg),0 12px 0 0 var(--bg);}
   /* tap feedback: the system tap highlight is off (it flashed a grey box over whole cards). Only the bottom tabs dim while
@@ -906,21 +908,21 @@
     .title-row{display:contents;}
     h1{font-size:22px;white-space:nowrap;}
     .daytabs{order:2;flex:1 1 0;min-width:0;margin-top:0;padding-bottom:0;}
-    .daytab{display:flex;align-items:center;justify-content:center;gap:4px;min-height:44px;padding:0 10px;border-radius:var(--r-sm);}
+    .daytab{display:flex;align-items:center;justify-content:center;gap:4px;min-height:var(--t44);padding:0 10px;border-radius:var(--r-sm);}
     .daytab .dsub{display:inline;margin-top:0;}
     .rhythm{order:3;margin-left:auto;}
     /* the ring stays; its words stay for screen readers only */
     .rhythm-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
     #logFooter{display:flex;gap:8px;padding-top:8px;}
-    #logFooter .timer{flex:1 1 0;min-width:0;margin:0;padding:0 6px 0 12px;min-height:44px;flex-direction:row;align-items:center;overflow:visible;}
+    #logFooter .timer{flex:1 1 0;min-width:0;margin:0;padding:0 6px 0 12px;min-height:var(--t44);flex-direction:row;align-items:center;overflow:visible;}
     #logFooter .timer-row{flex:1 1 auto;gap:8px;}
     #logFooter .timer .t{font-size:17px;}
     #logFooter .timer .acts button{position:relative;min-height:32px;padding:0 10px;font-size:var(--fs-sm);}
     #logFooter .timer .acts button::after{content:'';position:absolute;inset:-7px 0;} /* 44 px to tap in the 44 px row */
     #logFooter .tbar{position:absolute;left:0;right:0;bottom:0;height:3px;margin:0;border-radius:0 0 var(--r-sm) var(--r-sm);pointer-events:none;} /* follows the box's corners itself, so the box needn't clip, and never takes a tap */
-    #logFooter .finish-btn{flex:1 1 0;min-height:44px;margin:0;padding:0 12px;}
+    #logFooter .finish-btn{flex:1 1 0;min-height:var(--t44);margin:0;padding:0 12px;}
     .viewtabs{padding-top:0;}
-    .viewtab{flex-direction:row;gap:6px;min-height:44px;}
+    .viewtab{flex-direction:row;gap:6px;min-height:var(--t44);}
     .viewtab svg{width:18px;height:18px;}
   }
   /* boot recovery screen: shown instead of the app when starting fails (see showBootFailure) */
@@ -933,7 +935,7 @@
   .boot .status{font-size:13px;color:var(--text-dim);line-height:1.5;margin:0;}
   .boot .done{border-color:var(--done-line);background:var(--done-bg);margin:0;}
   .boot .done.fail .status{color:var(--danger);}
-  .boot .cap{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin:0 0 8px;}
+  .boot .cap{font-size:var(--fs-cap);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin:0 0 8px;}
 
   /* ================= Lift Log 2.0 design system (B2) =================
      Tokens are in :root at the top. This section restyles the shared chrome and the Home, History, Strength and Settings tabs.
@@ -942,13 +944,13 @@
   body{font-size:var(--fs-body);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;}
   :focus-visible{outline:2px solid var(--light);outline-offset:2px;}
   .ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;}
-  .icbtn{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;margin:0;padding:0;border:0;border-radius:var(--r-full);background:none;color:var(--text-dim);cursor:pointer;flex:none;}
+  .icbtn{display:inline-flex;align-items:center;justify-content:center;width:var(--t44);height:var(--t44);margin:0;padding:0;border:0;border-radius:var(--r-full);background:none;color:var(--text-dim);cursor:pointer;flex:none;}
   /* header: the title sits on the screen's centre line on every tab; Home adds the weekday (left) and the week ring (right) */
   header{border-bottom:0;padding:calc(8px + var(--sa-t) + var(--edge)) var(--safe-r) 4px var(--safe-l);}
-  .title-row{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:var(--sp-2);min-height:44px;}
+  .title-row{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:var(--sp-2);min-height:var(--t44);}
   h1{grid-column:2;font-size:var(--fs-lg);font-weight:700;letter-spacing:0;text-align:center;}
   .head-wd{grid-column:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:var(--fs-cap);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);font-weight:600;}
-  .rhythm{grid-column:3;justify-self:end;min-height:44px;min-width:44px;justify-content:flex-end;margin:0;padding:0;border:0;background:none;color:inherit;font:inherit;cursor:pointer;border-radius:var(--r-sm);}
+  .rhythm{grid-column:3;justify-self:end;min-height:var(--t44);min-width:var(--t44);justify-content:flex-end;margin:0;padding:0;border:0;background:none;color:inherit;font:inherit;cursor:pointer;border-radius:var(--r-sm);}
   .rhythm-label{font-size:var(--fs-body);font-weight:600;color:var(--text-dim);line-height:1;}
   .rhythm-label b{font-size:var(--fs-body);font-weight:600;}
   body[data-view]:not([data-view="home"]) .head-wd,body[data-view]:not([data-view="home"]) .rhythm,body.building .head-wd,body.building .rhythm{display:none;}
@@ -962,17 +964,17 @@
   /* surfaces: filled panels separated by tone, no outlines */
   .card,.bodymap,.rhythm-card,.cal-wrap,.str-hero,.set-group{background:var(--panel);border:0;border-radius:var(--r-lg);}
   .card h3,.rhythm-card .heat-title{font-size:var(--fs-lg);font-weight:600;}
-  .btn:not(:where(#logView *,#logFooter *)){min-height:44px;border:0;border-radius:var(--r-sm);background:var(--panel-raised);font-size:var(--fs-body);font-weight:600;padding:0 16px;}
+  .btn:not(:where(#logView *,#logFooter *)){min-height:var(--t44);border:0;border-radius:var(--r-sm);background:var(--panel-raised);font-size:var(--fs-body);font-weight:600;padding:0 16px;}
   .btn.primary:not(:where(#logView *,#logFooter *)){background:var(--accent);color:var(--on-accent);}
   .btn.danger:not(:where(#logView *,#logFooter *)),.btn.primary.danger:not(:where(#logView *,#logFooter *)){background:var(--panel-raised);color:var(--danger);border:0;}
-  .in:not(:where(#logView *)){min-height:44px;border-radius:var(--r-sm);border:1px solid var(--line-strong);background:var(--panel-raised);padding:0 12px;font-size:var(--fs-lg);}
+  .in:not(:where(#logView *)){min-height:var(--t44);border-radius:var(--r-sm);border:1px solid var(--line-strong);background:var(--panel-raised);padding:0 12px;font-size:var(--fs-lg);}
   @media (pointer:coarse){ input:not(:where(#logView *)),textarea:not(:where(#logView *)),select:not(:where(#logView *)){font-size:var(--fs-lg)!important;} }
   .linkbtn:not(:where(#logView *,#logFooter *)){font-size:var(--fs-body);}
   .badge:not(:where(#logView *)){font-size:var(--fs-sm);border-radius:var(--r-full);border:0;padding:2px 10px;}
   .toast,.utoast{border:1px solid transparent;border-radius:var(--r-sm);font-size:var(--fs-body);color:var(--text);background:var(--panel-raised);box-shadow:0 8px 24px var(--scrim);}
   .toast{padding:12px 18px;} .toast.err{border-color:var(--danger);}
   .utoast button{font-size:var(--fs-body);font-weight:600;border-radius:var(--r-sm);}
-  .banner.info{border:0;border-radius:var(--r-sm);background:var(--panel-raised);font-size:var(--fs-body);min-height:44px;color:var(--text);}
+  .banner.info{border:0;border-radius:var(--r-sm);background:var(--panel-raised);font-size:var(--fs-body);min-height:var(--t44);color:var(--text);}
   .banner.info .linkbtn{font-size:var(--fs-body);font-weight:600;}
   .note-sm:not(:where(#logView *)),.empty{font-size:var(--fs-sm);}
   /* sheets: one shell for every sheet. Closed sheets stay in the page (visibility, not display) so open and close can be
@@ -983,8 +985,9 @@
   .sheet.on{visibility:visible;transform:none;}
   @media (min-width:600px){ .sheet{border:0;} }
   .sheet::before{content:"";position:absolute;top:10px;left:50%;width:36px;height:5px;margin-left:-18px;border-radius:var(--r-full);background:var(--line-strong);opacity:.6;} /* decoration only: Close, the backdrop and Escape dismiss */
-  .sheet-head{align-items:center;min-height:44px;margin-bottom:var(--sp-2);}
-  .sheet-head button.linkbtn{background:none;border:0;font-family:inherit;color:var(--light);cursor:pointer;} /* Close as a real button */
+  .sheet-head{align-items:center;min-height:var(--t44);margin-bottom:var(--sp-2);}
+  .sheet-head button.linkbtn{background:none;border:0;font-family:inherit;color:var(--light);cursor:pointer;}
+  .sheet-head .linkbtn{display:inline-flex;align-items:center;min-height:var(--t44);padding:0 12px;margin:0 -12px 0 0;} /* Close as a real button */
   .sheet-title{font-size:var(--fs-lg);font-weight:600;margin:0;}
   .sheet-sub{font-size:var(--fs-sm);color:var(--text-dim);margin-top:2px;line-height:1.45;}
   .sheet-p{font-size:var(--fs-body);color:var(--text);line-height:1.5;margin:0 0 var(--sp-3);}
@@ -994,7 +997,7 @@
   /* ---------- Home ---------- */
   #bannerSlot{margin:0 0 var(--sp-4);} #bannerSlot .banner{margin-bottom:var(--sp-2);}
   /* one quiet reminder row: the top reminder in a few words and a count; the full list opens in the Reminders sheet */
-  .remind{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;margin:0;padding:0 8px 0 14px;border:0;border-radius:var(--r-full);background:var(--panel);color:var(--text-dim);font:inherit;font-size:var(--fs-body);text-align:left;cursor:pointer;}
+  .remind{display:flex;align-items:center;gap:10px;width:100%;min-height:var(--t44);margin:0;padding:0 8px 0 14px;border:0;border-radius:var(--r-full);background:var(--panel);color:var(--text-dim);font:inherit;font-size:var(--fs-body);text-align:left;cursor:pointer;}
   .remind[hidden]{display:none;}
   .remind .dot{width:8px;height:8px;border-radius:var(--r-full);background:var(--amber);flex:none;}
   .remind .txt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -1007,8 +1010,9 @@
   #remList .bfoot{justify-content:flex-start;margin-top:var(--sp-1);} #remList .bfoot>.linkbtn{margin:0;padding:0;}
   #remList .bx{margin:-10px -8px 0 0;color:var(--text-dim);border-radius:var(--r-full);}
   .greet-row{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);}
-  .greet-hi{font-size:var(--fs-body);color:var(--text-dim);line-height:1.3;margin:0 0 var(--sp-1);overflow-wrap:anywhere;}
+  .greet-hi{font-size:var(--fs-hero);font-weight:700;letter-spacing:-.02em;color:var(--text);line-height:1.15;margin:var(--sp-1) 0 0;overflow-wrap:anywhere;} /* the greeting leads at 32 px; the session name above it drops to 22 px (owner, 2026-11-20) */
   .greet-h1{font-size:var(--fs-hero);font-weight:700;letter-spacing:-.02em;line-height:1.1;margin:0;}
+  .greet-h1.sess{font-size:var(--fs-xl);letter-spacing:-.01em;line-height:1.2;} /* Home and Cardio Home: the session name sits under the 32 px greeting's weight (owner, 2026-11-20) */
   .greet-sub{font-size:var(--fs-body);}
   .deload-line,.deload-line .linkbtn{font-size:var(--fs-body);}
   .day-carousel{padding-top:var(--sp-4);gap:var(--sp-2);}
@@ -1022,7 +1026,7 @@
   .day-card .dname::before{content:"";width:8px;height:8px;border-radius:var(--r-full);background:var(--dc,var(--text-dim));flex:none;}
   .day-card .dsub{font-size:var(--fs-body);}
   /* the day's exercises sit behind one row that opens in place */
-  .plan-row{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);width:100%;min-height:44px;margin:var(--sp-2) 0 0;padding:0 4px;border:0;background:none;color:var(--text-dim);font:inherit;font-size:var(--fs-body);text-align:left;cursor:pointer;border-radius:var(--r-sm);}
+  .plan-row{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);width:100%;min-height:var(--t44);margin:var(--sp-2) 0 0;padding:0 4px;border:0;background:none;color:var(--text-dim);font:inherit;font-size:var(--fs-body);text-align:left;cursor:pointer;border-radius:var(--r-sm);}
   .plan-row .ic{width:18px;height:18px;}
   .plan-row[aria-expanded="true"] .ic{transform:rotate(180deg);}
   .preview-list{margin:0;} .preview-list[hidden]{display:none;}
@@ -1043,7 +1047,7 @@
   .recov-sub,.tap-hint,#bodymapCard>.legend{display:none;}
   .figures .cap{font-size:var(--fs-sm);}
   .legend{font-size:var(--fs-sm);justify-content:flex-start;flex-wrap:wrap;}
-  #recovDetailToggle{display:flex;align-items:center;justify-content:center;min-height:44px;margin:var(--sp-1) 0 0;padding:0;}
+  #recovDetailToggle{display:flex;align-items:center;justify-content:center;min-height:var(--t44);margin:var(--sp-1) 0 0;padding:0;}
   .recov-list{font-size:var(--fs-sm);border-top:0;}
   .recov-area{font-size:var(--fs-body);} .recov-area-s{font-size:var(--fs-sm);}
   /* ---------- History ---------- */
@@ -1056,11 +1060,12 @@
   .rh-bars i.now{background:color-mix(in srgb,var(--green) 30%,transparent);}
   .rh-axis{font-size:var(--fs-cap);letter-spacing:.08em;text-transform:uppercase;border-top:0;}
   .rh-cap,.cal-wrap>.cal-legend{display:none;} /* captions and the calendar key open from the info buttons */
-  .cal-wrap{padding:8px 10px 12px;}
-  .cal-head{margin-bottom:4px;min-height:44px;}
+  .cal-wrap{padding:8px 16px 12px;}
+  .cal-cell.has-session{position:relative;overflow:visible;} .cal-cell.has-session::after{content:"";position:absolute;inset:-1.5px;} /* the grid sits on the card's inner edge; the hit area still reaches 44 px */
+  .cal-head{margin-bottom:4px;min-height:var(--t44);}
   .cal-head .cal-title{margin-left:auto;font-size:var(--fs-lg);font-weight:600;}
   .cal-head #calInfoBtn{margin-right:auto;}
-  .cal-nav{padding:13px;margin:0;}
+  .cal-nav{padding:calc((var(--t44) - 18px) / 2);margin:0;}
   .cal-dow{font-size:var(--fs-cap);letter-spacing:.08em;font-weight:600;} .cal-dow i{font-style:normal;}
   .cal-cell{border-radius:var(--r-sm);font-size:var(--fs-body);}
   .cal-cell.today{box-shadow:inset 0 0 0 1.5px var(--text);}
@@ -1074,13 +1079,13 @@
   .str-hero-lbl{font-size:var(--fs-body);}
   #strInfoBtn{position:absolute;top:6px;right:6px;}
   .bwlb{font-size:var(--fs-sm);border:0;border-radius:var(--r-full);padding:2px 10px;background:color-mix(in srgb,var(--light) 15%,transparent);}
-  .scrub{min-height:44px;display:flex;align-items:center;} .scrub>*{flex:1;min-width:0;} /* a drag strip is a touch target too */
+  .scrub{min-height:var(--t44);display:flex;align-items:center;} .scrub>*{flex:1;min-width:0;} /* a drag strip is a touch target too */
   .scrub:focus-visible{outline:2px solid var(--light);border-radius:var(--r-sm);}
   .str-split{gap:var(--sp-3);}
   .str-split-card{position:relative;margin-bottom:var(--sp-3);}
   .str-split-num{font-size:var(--fs-xl);font-weight:700;}
   /* See / Hide Exercises is a chevron; the words stay for screen readers */
-  .str-card-hint{min-height:44px;padding:0;justify-content:flex-end;font-size:var(--fs-sm);}
+  .str-card-hint{min-height:var(--t44);padding:0;justify-content:flex-end;font-size:var(--fs-sm);}
   .str-card-hint:not(.scrub-date){font-size:0;}
   .str-card-hint:not(.scrub-date)::after{content:"";width:9px;height:9px;margin:0 6px 4px 0;border-right:2px solid var(--text-dim);border-bottom:2px solid var(--text-dim);transform:rotate(45deg);}
   .str-split-card.open .str-card-hint:not(.scrub-date)::after{transform:rotate(225deg);margin-bottom:-4px;}
@@ -1091,7 +1096,7 @@
   .srow .sd,.str-card-exlist .sd{font-size:var(--fs-sm);}
   /* an exercise row shows name, change and trend; the detail line and Reset Baseline open when the row is tapped */
   .str-card-exlist .srow:not(.row-open) .sd:not([data-scrub-readout]){display:none;}
-  .srow .sd .linkbtn{font-size:var(--fs-sm);display:inline-flex;align-items:center;min-height:44px;}
+  .srow .sd .linkbtn{font-size:var(--fs-sm);display:inline-flex;align-items:center;min-height:var(--t44);}
   .sd-act{display:block;}
   .str-past-btn{border:0;border-radius:var(--r-sm);}
   .str-past-btn b{font-weight:600;} .str-past-btn b+span{display:none;} .str-past-act{font-size:var(--fs-body);}
@@ -1113,7 +1118,7 @@
   /* captions are hidden (owner, 2026-11-14: "Hide them"); each one's text is on the page or sheet its row opens. A routine's own note stays. */
   .set-cap{display:none;font-size:var(--fs-sm);}
   .set-cap.rt-rownote:not([hidden]){display:block;}
-  input.switch:not(:where(#logView *)){width:52px;height:44px;background:none;border-radius:0;}
+  input.switch:not(:where(#logView *)){width:52px;height:var(--t44);background:none;border-radius:0;}
   input.switch:not(:where(#logView *))::before{content:"";position:absolute;left:0;top:6px;width:52px;height:32px;border-radius:var(--r-full);background:var(--line-strong);}
   input.switch:not(:where(#logView *))::after{left:3px;top:9px;width:26px;height:26px;}
   input.switch:not(:where(#logView *)):checked{background:none;}
@@ -1123,17 +1128,18 @@
   .set-back{font-size:var(--fs-body);} .set-sub h2{font-weight:700;}
   .set-toggle,.field-label{font-size:var(--fs-body);}
   /* 44 px targets on the Settings pages: a native select ignores min-height until it is drawn as a button-style menu */
-  select.in:not(:where(#logView *)){-webkit-appearance:none;appearance:none;height:44px;padding:0 36px 0 12px;border-radius:var(--r-sm);background:var(--panel-raised) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a6abb6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center/14px;} /* a drawn menu button (the native one has its own radius); the picker still opens natively */
-  #edReset.set-reset{min-height:44px;}
+  select.in:not(:where(#logView *)){-webkit-appearance:none;appearance:none;height:var(--t44);padding:0 36px 0 12px;border-radius:var(--r-sm);background:var(--panel-raised) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a6abb6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center/14px;} /* a drawn menu button (the native one has its own radius); the picker still opens natively */
+  #edReset.set-reset{min-height:var(--t44);}
   /* segmented control and switch: 44 px tall hit areas (were 36 and 28) */
   .onb-seg{border:0;border-radius:var(--r-sm);background:var(--panel-raised);}
   .onb-seg button{border-radius:var(--r-sm);font-size:var(--fs-body);font-weight:600;}
-  .set-seg{padding:0;gap:0;} .set-seg button{height:44px;min-width:52px;padding:0 14px;}
+  .set-seg{padding:0;gap:0;} .set-seg button{height:var(--t44);min-width:52px;padding:0 14px;}
+  #mvWhich button{flex:1 1 0;min-width:0;} .set-days button{flex:1 1 0;min-width:auto;} /* a segmented control that spans its row shares it out; it no longer leaves an empty stretch */
   /* ---------- Log: one exercise in focus (B3) ---------- */
   body.log-focus #logView .daylabel,body.log-focus #resetLink{display:none;} /* Edit Day and Clear Today's Entries are in Day Options */
   .daytabs{margin-top:0;gap:6px;padding-bottom:4px;scrollbar-width:none;}
   .daytabs::-webkit-scrollbar{display:none;}
-  .daytab{min-height:44px;padding:6px 10px;border:0;border-radius:var(--r-sm);background:var(--panel);box-shadow:none;font-size:var(--fs-body);font-weight:600;color:var(--text-dim);line-height:1.2;}
+  .daytab{min-height:var(--t44);padding:6px 10px;border:0;border-radius:var(--r-sm);background:var(--panel);box-shadow:none;font-size:var(--fs-body);font-weight:600;color:var(--text-dim);line-height:1.2;}
   .daytab .dsub{font-size:var(--fs-sm);font-weight:400;margin-top:0;opacity:1;}
   .daytab.suggested{background:var(--panel);color:var(--text-dim);}
   .daytab.suggested::after{content:"";position:absolute;top:6px;right:6px;width:6px;height:6px;border-radius:var(--r-full);background:var(--dc,var(--text));}
@@ -1148,50 +1154,50 @@
   @keyframes enterr{from{opacity:0;transform:translateX(32px);}to{opacity:1;transform:none;}}
   @keyframes enterl{from{opacity:0;transform:translateX(-32px);}to{opacity:1;transform:none;}}
   .xh{margin:0 0 var(--sp-3);}
-  .xh-row{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);min-height:44px;}
+  .xh-row{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);min-height:var(--t44);}
   .xh-eyebrow{font-size:var(--fs-cap);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);font-weight:600;display:flex;align-items:center;gap:var(--sp-2);}
   .xh-eyebrow .badge{font-size:var(--fs-cap);letter-spacing:.08em;margin:0;background:none;padding:0;color:var(--amber);}
   .xh-eyebrow .badge::before{content:"";display:inline-block;width:8px;height:8px;border-radius:var(--r-full);background:var(--amber);margin-right:5px;}
   .xh-name{font-size:var(--fs-xl);font-weight:700;letter-spacing:-.01em;line-height:1.15;margin:-4px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
   .xh-sub{align-items:flex-start;}
-  .xh-meta{display:flex;flex-wrap:wrap;align-items:center;gap:0 var(--sp-2);font-size:var(--fs-lg);color:var(--text-dim);min-width:0;min-height:44px;align-content:center;margin-left:-16px;overflow:hidden;clip-path:inset(0 0 0 16px);}
+  .xh-meta{display:flex;flex-wrap:wrap;align-items:center;gap:0 var(--sp-2);font-size:var(--fs-lg);color:var(--text-dim);min-width:0;min-height:var(--t44);align-content:center;margin-left:-16px;overflow:hidden;clip-path:inset(0 0 0 16px);}
   .xh-meta>span{white-space:nowrap;margin-left:16px;position:relative;}
   .xh-meta .xh-w{color:var(--text);font-weight:600;}
   .xh-meta .xh-w::before{content:"";position:absolute;left:-10px;top:50%;width:4px;height:4px;margin-top:-2px;border-radius:var(--r-full);background:var(--line-strong);} /* the dot belongs to the weight, so a wrap never leaves it dangling (clipped away) */
   .xh-meta .xh-ck{display:inline-flex;margin-left:var(--sp-2);color:var(--on-green);background:var(--green);border-radius:var(--r-full);width:24px;height:24px;align-items:center;justify-content:center;}
   .xh-ck .ic{width:14px;height:14px;stroke-width:3;}
-  .xh-more{display:inline-flex;align-items:center;gap:2px;min-height:44px;margin:0;padding:0 0 0 var(--sp-2);border:0;background:none;color:var(--light);font:inherit;font-size:var(--fs-body);font-weight:600;cursor:pointer;flex:none;}
+  .xh-more{display:inline-flex;align-items:center;gap:2px;min-height:var(--t44);margin:0;padding:0 0 0 var(--sp-2);border:0;background:none;color:var(--light);font:inherit;font-size:var(--fs-body);font-weight:600;cursor:pointer;flex:none;}
   .xh-more .ic{width:18px;height:18px;}
   .ndot{width:6px;height:6px;border-radius:var(--r-full);background:var(--light);margin-right:4px;}
   .bw-line{font-size:var(--fs-sm);margin:0 0 var(--sp-2);}
   /* set rows: Set | Last | Weight | Reps | Done */
-  body.log-focus .setgrid{grid-template-columns:36px minmax(60px,auto) 1fr 1fr 48px;gap:6px;margin-bottom:6px;font-size:var(--fs-body);}
+  body.log-focus .setgrid{grid-template-columns:calc(var(--t44) - 8px) minmax(60px,auto) minmax(0,1fr) minmax(0,1fr) var(--t48);gap:6px;margin-bottom:6px;font-size:var(--fs-body);}
   body.log-focus .setgrid.head{font-size:var(--fs-cap);letter-spacing:.08em;font-weight:600;margin-bottom:var(--sp-1);}
   body.log-focus .setgrid.head>div{white-space:nowrap;text-overflow:clip;}
   .tight .setgrid.head .hw{display:none;}
-  .setnum{display:flex;align-items:center;justify-content:center;align-self:stretch;min-height:48px;margin:0 -4px;padding:0 4px;border:0;background:none;font:inherit;font-size:var(--fs-lg);font-weight:600;color:var(--text-dim);cursor:pointer;border-radius:var(--r-sm);}
-  body.log-focus .setgrid input{height:48px;border-radius:var(--r-sm);border:1px solid var(--line-strong);background:var(--panel-raised);padding:0 6px;font-size:var(--fs-xl)!important;font-weight:600;min-width:0;}
+  .setnum{display:flex;align-items:center;justify-content:center;align-self:stretch;min-height:var(--t48);margin:0 -4px;padding:0 4px;border:0;background:none;font:inherit;font-size:var(--fs-lg);font-weight:600;color:var(--text-dim);cursor:pointer;border-radius:var(--r-sm);}
+  body.log-focus .setgrid input{height:var(--t48);border-radius:var(--r-sm);border:1px solid var(--line-strong);background:var(--panel-raised);padding:0 6px;font-size:var(--fs-xl)!important;font-weight:600;min-width:0;}
   body.log-focus .setgrid input::placeholder{color:var(--text-dim);opacity:.55;font-weight:400;}
   body.log-focus .setgrid:has(.setdone.on) input{background:var(--done-bg);border-color:var(--done-line);}
-  .setdone{width:48px;height:48px;border-radius:var(--r-full);border:0;background:var(--panel-raised);box-shadow:inset 0 0 0 1.5px var(--line-strong);font-size:var(--fs-xl);font-weight:700;color:transparent;}
+  .setdone{width:var(--t48);height:var(--t48);border-radius:var(--r-full);border:0;background:var(--panel-raised);box-shadow:inset 0 0 0 1.5px var(--line-strong);font-size:var(--fs-xl);font-weight:700;color:transparent;}
   .setdone.on{background:var(--green);color:var(--on-green);box-shadow:none;}
   .setdone.on.pop{animation:popdone var(--dur-3) var(--ease);}
   @keyframes popdone{0%{transform:scale(.6);}60%{transform:scale(1.12);}100%{transform:scale(1);}}
-  .slast{display:flex;align-items:center;justify-content:center;min-height:44px;min-width:60px;margin:0;padding:0;border:0;background:none;color:var(--text-dim);font:inherit;font-size:var(--fs-sm);white-space:nowrap;cursor:pointer;}
+  .slast{display:flex;align-items:center;justify-content:center;min-height:var(--t44);min-width:60px;margin:0;padding:0;border:0;background:none;color:var(--text-dim);font:inherit;font-size:var(--fs-sm);white-space:nowrap;cursor:pointer;}
   .slast>span{display:inline-flex;align-items:center;min-height:30px;padding:0 9px;border-radius:var(--r-full);background:var(--panel);}
   .slast.used{cursor:default;} .slast.used>span{background:none;}
   span.slast{color:var(--line-strong);}
   .rir-row{margin:0 0 10px 42px;gap:6px;}
   .rir-lbl{font-size:var(--fs-sm);margin-right:4px;}
-  .rir-pill{font-size:var(--fs-body);font-weight:600;border:0;border-radius:var(--r-full);background:var(--panel);padding:0;height:44px;display:flex;align-items:center;justify-content:center;color:var(--text-dim);}
+  .rir-pill{font-size:var(--fs-body);font-weight:600;border:0;border-radius:var(--r-full);background:var(--panel);padding:0;height:var(--t44);display:flex;align-items:center;justify-content:center;color:var(--text-dim);}
   .rir-pill.on{background:var(--light);color:var(--on-light);}
   .rir-pill::after{inset:0 -3px;}
   .hold-row{margin:0 0 10px 42px;font-size:var(--fs-sm);gap:10px;}
   .hold-t{font-size:var(--fs-xl);font-weight:600;} .hold-target{font-size:var(--fs-sm);}
   .hold-row .btn.primary{background:var(--light);color:var(--on-light);}
-  .addset{height:44px;border:0;border-radius:var(--r-sm);background:var(--panel);color:var(--text-dim);font-size:var(--fs-body);font-weight:600;}
+  .addset{height:var(--t44);border:0;border-radius:var(--r-sm);background:var(--panel);color:var(--text-dim);font-size:var(--fs-body);font-weight:600;}
   .plates{font-size:var(--fs-sm);margin:var(--sp-2) 0 0;background:var(--panel);border-radius:var(--r-sm);padding:4px 4px 4px 14px;}
-  .plates-row{flex:1;min-height:48px;flex-wrap:nowrap;}
+  .plates-row{flex:1;min-height:var(--t48);flex-wrap:nowrap;}
   .plates-info{flex-direction:row;align-items:center;justify-content:space-between;gap:var(--sp-2);flex:1;}
   .plates-cap,.plates-note{font-size:var(--fs-sm);}
   .plates b{font-size:var(--fs-lg);font-weight:600;}
@@ -1203,13 +1209,13 @@
   .ex-tools>*+*{border-left:1px solid var(--line);}
   .ex-tools svg{width:18px;height:18px;} .ex-tools .ext{font-size:var(--fs-sm);}
   .howto .cue{font-size:var(--fs-body);line-height:1.5;}
-  .more-body .bar-chip{min-height:44px;border:0;border-radius:var(--r-sm);font-size:var(--fs-body);}
+  .more-body .bar-chip{min-height:var(--t44);border:0;border-radius:var(--r-sm);font-size:var(--fs-body);}
   .more-body .fixed-chk,.more-body .mach-plate-chk{font-size:var(--fs-body);color:var(--text);min-height:52px;display:flex;justify-content:space-between;align-items:center;margin:0;gap:var(--sp-3);}
   .more-row{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);min-height:52px;border-top:1px solid var(--line);font-size:var(--fs-lg);}
   .more-body .plates{background:none;padding:0;margin:0;font-size:var(--fs-body);}
   .more-body .last-time{font-size:var(--fs-sm);display:block;-webkit-line-clamp:unset;}
   .more-body .plateau-tip,.more-body .first-log-note{font-size:var(--fs-body);border-radius:var(--r-sm);margin:0 0 var(--sp-3);}
-  .more-body .notes{border-radius:var(--r-sm);border:1px solid var(--line-strong);min-height:48px;font-size:var(--fs-lg);}
+  .more-body .notes{border-radius:var(--r-sm);border:1px solid var(--line-strong);min-height:var(--t48);font-size:var(--fs-lg);}
   /* sheet lists: Day List, Day Options, Set options */
   .sheet-list{display:flex;flex-direction:column;}
   .lgh{font-size:var(--fs-cap);letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);font-weight:600;margin:var(--sp-4) 0 var(--sp-1);}
@@ -1226,8 +1232,8 @@
   #logFooter{border-bottom:0;padding:var(--sp-2) 12px 6px;margin:0;}
   .pager{display:none;gap:var(--sp-2);margin-bottom:var(--sp-2);}
   body.log-focus .pager{display:flex;}
-  .pg{display:inline-flex;align-items:center;justify-content:center;gap:4px;height:44px;margin:0;padding:0 12px;border:0;border-radius:var(--r-sm);background:var(--panel-raised);color:var(--text);font:inherit;font-size:var(--fs-body);font-weight:600;cursor:pointer;}
-  .pg.prev{width:48px;padding:0;flex:none;} .pg.next{flex:none;padding:0 10px 0 16px;}
+  .pg{display:inline-flex;align-items:center;justify-content:center;gap:4px;height:var(--t44);margin:0;padding:0 12px;border:0;border-radius:var(--r-sm);background:var(--panel-raised);color:var(--text);font:inherit;font-size:var(--fs-body);font-weight:600;cursor:pointer;}
+  .pg.prev{width:var(--t48);padding:0;flex:none;} .pg.next{flex:none;padding:0 10px 0 16px;}
   .pg.list{flex:1;min-width:0;gap:10px;color:var(--text-dim);}
   .pg[aria-disabled="true"]{opacity:.35;}
   .pg .ic{width:18px;height:18px;}
@@ -1246,24 +1252,26 @@
   .timer .acts{gap:6px;}
   .timer .acts button{border:0;border-radius:var(--r-sm);background:var(--panel);font-size:var(--fs-body);font-weight:600;padding:0 14px;}
   /* Finish: quiet (grey, coral label) until every set is done, then the one coral action; still tappable throughout */
-  .finish-btn{display:flex;align-items:center;justify-content:center;min-height:44px;margin:0;padding:6px 16px;border:0;border-radius:var(--r-sm);background:var(--panel-raised);color:var(--accent);font:inherit;font-size:var(--fs-body);font-weight:700;letter-spacing:0;line-height:1.2;text-wrap:balance;}
+  .finish-btn{display:flex;align-items:center;justify-content:center;min-height:var(--t44);margin:0;padding:6px 16px;border:0;border-radius:var(--r-sm);background:var(--panel-raised);color:var(--accent);font:inherit;font-size:var(--fs-body);font-weight:700;letter-spacing:0;line-height:1.2;text-wrap:balance;}
   .finish-btn.all-done{min-height:52px;background:var(--accent);color:var(--on-accent);font-size:var(--fs-lg);}
   .finish-btn.is-off{color:var(--text-dim);opacity:1;}
+  .finish-btn.is-hidden{display:none;}
+  #logFooter:has(#finishBtn.is-hidden):not(:has(#timer.on)){display:none;} /* nothing in the footer but the tab bar */
   .start-cta:active,.finish-btn:active,.btn:active,.pg:active{transform:scale(.97);}
   /* narrow rows: 320 px wide, or larger text. The head keeps the unit; the weight steps down for five characters; at Larger the last value drops under the fields */
-  body.log-focus .tight .setgrid{grid-template-columns:36px minmax(48px,auto) 1.25fr 1fr 44px;gap:4px;}
-  .tight .slast{min-width:48px;} .tight .slast>span{padding:0 5px;}
-  .tight .setdone{width:44px;height:44px;}
+  body.log-focus .tight .setgrid{grid-template-columns:calc(var(--t44) - 8px) minmax(48px,auto) minmax(0,1.25fr) minmax(0,1fr) var(--t44);gap:4px;}
+  .tight .slast{min-width:var(--t48);} .tight .slast>span{padding:0 5px;}
+  .tight .setdone{width:var(--t44);height:var(--t44);}
   .tight .rir-row{flex-wrap:wrap;margin-left:0;} .tight .rir-lbl{flex:0 0 100%;}
   .tight .hold-row{margin-left:0;}
   .tight .setgrid input{padding:0 4px;}
   .tight .setgrid input.long{font-size:var(--fs-lg)!important;}
-  body.log-focus .xt .setgrid{grid-template-columns:36px 1.3fr 1fr 44px;}
+  body.log-focus .xt .setgrid{grid-template-columns:calc(var(--t44) - 8px) minmax(0,1.3fr) minmax(0,1fr) var(--t44);}
   .xt .setgrid.head>div:nth-child(2){display:none;}
   .xt .setgrid:not(.head) .slast{grid-column:2 / 4;grid-row:2;justify-content:flex-start;}
   .xt .setgrid input{font-size:var(--fs-lg)!important;}
   .tight .xh-meta,.xt .xh-meta{font-size:var(--fs-body);}
-  .pager.narrow .segs{display:none;} .pager.narrow .pg{padding:0 8px;} .pager.narrow .pg.prev{width:44px;} .pager.narrow .pg.next{padding:0 6px 0 12px;} .pager.narrow .pg.list{justify-content:center;gap:8px;}
+  .pager.narrow .segs{display:none;} .pager.narrow .pg{padding:0 8px;} .pager.narrow .pg.prev{width:var(--t44);} .pager.narrow .pg.next{padding:0 6px 0 12px;} .pager.narrow .pg.list{justify-content:center;gap:8px;}
   @media (max-width:359px){ .timer-row{flex-wrap:wrap;gap:6px 10px;} .timer .t{flex:1 1 auto;} .timer .acts{margin-left:auto;} } /* the rest timer wraps its buttons under the clock on a 320 px screen with larger text */
   @media (prefers-reduced-motion: reduce){
     .setdone.on.pop{animation:none;} /* the Done pop stays off with Reduce Motion (QA OBS-1) */
@@ -1286,7 +1294,7 @@
   /* tonal, not outlined: cardio tiles, steppers and recent-activity chips; one segmented-control style (selected = filled light) */
   .cf-tile,.cf-rc,.cf-stp button{border-color:transparent;}
   .cf-tile{background:var(--panel);} .cf-rc,.cf-stp button{background:var(--panel-raised);}
-  .cf-seg{padding:0;gap:0;} .cf-seg button{font-size:var(--fs-sm);font-weight:600;min-width:0;padding:0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .cf-seg{padding:0;gap:0;} .cf-seg button{flex:1 1 0;font-size:var(--fs-sm);font-weight:600;min-width:auto;padding:0 4px;white-space:nowrap;} /* equal thirds; a word wider than a third (Conditioning at 320 Larger) takes what it needs */
   .cf-seg button.on{background:var(--text);color:var(--bg);box-shadow:none;}
   .cardio-tab{border-style:solid;}
   /* dividers, not dashes */
@@ -1329,7 +1337,7 @@
   .setgrid.dragging .rm-act,.setgrid.open .rm-act{display:flex;}
   .title-row{touch-action:pan-y;} /* a sideways swipe on the title row changes day (Log) */
   @media (prefers-reduced-motion: reduce){
-    main>section.view-enter,.exercise.enter-r,.exercise.enter-l,.preview-list:not([hidden]),.celebrate-bg.on .celebrate,.celebrate-bg.on .pr-card{animation:fadein 150ms linear;}
+    main>section.view-enter,.exercise.enter-r,.exercise.enter-l,.exlist.enter-r,.exlist.enter-l,.preview-list:not([hidden]),.celebrate-bg.on .celebrate,.celebrate-bg.on .pr-card{animation:fadein 150ms linear;}
     .sheet{transform:none;opacity:0;transition:opacity 150ms linear,visibility 0s linear 150ms;}
     .sheet.on{opacity:1;transition:opacity 150ms linear;}
     .sheet-bg{transition:opacity 150ms linear;}
@@ -1338,6 +1346,64 @@
     .viewtab svg,.btn,.start-cta,.finish-btn,.pg,.cel-cta,.setdone,.plan-row .ic,input.switch::after{transition:none;transform:none;}
     .viewtab.active svg{transform:none;}
   }
+  /* ---------- Log: the exercise list first, then one exercise (list-first, B5) ---------- */
+  .icbtn{position:relative;}
+  .icbtn .ndot{position:absolute;top:9px;right:9px;margin:0;}
+  .exlist.enter-r,.exlist.enter-l{animation-duration:var(--dur-2);animation-timing-function:var(--ease);}
+  .exlist.enter-r{animation-name:enterr;} .exlist.enter-l{animation-name:enterl;}
+  .exl-head{display:flex;align-items:center;justify-content:space-between;min-height:var(--t44);margin:0 0 var(--sp-2);padding:0 0 0 var(--sp-1);}
+  .exl-prog{margin:0;font-size:var(--fs-xl);font-weight:700;letter-spacing:-.01em;}
+  .exl-head .icbtn{margin-right:-10px;}
+  .exl-rows{background:var(--panel);border-radius:var(--r-lg);overflow:hidden;}
+  .exl-row{display:flex;align-items:center;min-height:72px;border-top:1px solid var(--line);}
+  .exl-row:first-child{border-top:0;}
+  .exl-open{flex:1;min-width:0;display:flex;align-items:center;gap:var(--sp-3);min-height:72px;margin:0;padding:var(--sp-2) 0 var(--sp-2) var(--sp-4);border:0;background:none;color:var(--text);text-align:left;font:inherit;cursor:pointer;transition:background var(--dur-1) var(--ease);}
+  .exl-open:active{background:var(--panel-raised);}
+  .exl-menu{margin-right:var(--sp-1);}
+  .exl-tile{position:relative;flex:none;width:52px;height:52px;border-radius:var(--r-sm);background:var(--panel-raised);overflow:hidden;display:block;}
+  .tile-fig{display:block;width:100%;height:100%;}
+  .exl-row.done .tile-fig{opacity:.4;}
+  .exl-ck{position:absolute;right:3px;bottom:3px;width:20px;height:20px;border-radius:var(--r-full);background:var(--green);color:var(--on-green);display:flex;align-items:center;justify-content:center;}
+  .exl-ck .ic{width:12px;height:12px;stroke-width:3.2;}
+  .exl-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+  .exl-nm{font-size:var(--fs-lg);font-weight:600;line-height:1.2;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+  .exl-row.done .exl-nm{color:var(--text-dim);}
+  .exl-sm{display:block;font-size:var(--fs-body);color:var(--text-dim);line-height:1.25;}
+  .exl-pl{display:inline-block;width:8px;height:8px;margin-left:8px;border-radius:var(--r-full);background:var(--amber);vertical-align:middle;}
+  .exlist.narrow .exl-tile{display:none;} .exlist.narrow .exl-open{padding-left:var(--sp-4);} .exlist.narrow .exl-nm{-webkit-line-clamp:3;}
+  @media (max-width:339px){ .exl-tile{width:var(--t44);height:var(--t44);} .exl-open{gap:10px;padding-left:12px;} .exl-sm{font-size:var(--fs-sm);} }
+  /* inside an exercise: no day tabs (they live on the list), Back to the list, one "..." */
+  body.log-ex #dayTabs{display:none;}
+  .xtop{display:flex;align-items:center;justify-content:space-between;min-height:var(--t44);margin:-8px 0 0;}
+  .xback{display:inline-flex;align-items:center;gap:2px;min-height:var(--t44);margin:0 0 0 -10px;padding:0 12px 0 6px;border:0;background:none;color:var(--light);font:inherit;font-size:var(--fs-lg);cursor:pointer;}
+  .xtop .icbtn{margin-right:-10px;}
+  body.log-ex .xh-name{margin-top:0;}
+  body.log-ex .xh-meta{min-height:0;margin-left:0;overflow:visible;clip-path:none;gap:0;font-size:var(--fs-body);}
+  body.log-ex .xh-meta>span{margin-left:0;white-space:normal;}
+  .xh-side::before{content:"•";margin:0 6px;} .xh-side:empty{display:none;}
+  body.log-ex .xh-meta .xh-ck{margin-left:var(--sp-2);}
+  body.log-ex .setgrid.head>div:nth-child(1),body.log-ex .setgrid.head>div:nth-child(5){visibility:hidden;}
+  /* Reps Left: dots under the set being entered; a finished set shows "Left: n"; later sets show nothing */
+  .rir-row:not(.entering){display:none;}
+  .rir-done{font-size:var(--fs-sm);color:var(--text-dim);margin:-2px 0 var(--sp-2) 42px;}
+  .tight .rir-done{margin-left:0;}
+  .next-ex{display:flex;align-items:center;justify-content:center;width:100%;min-height:52px;margin:var(--sp-3) 0 0;border:0;border-radius:var(--r-sm);background:var(--text);color:var(--bg);font:inherit;font-size:var(--fs-lg);font-weight:700;cursor:pointer;}
+  /* side alignment (owner, 2026-11-19: spacing does not stick to the frame): text, glyphs and controls sit on the 16 px gutter or on their panel's inner edge */
+  .day-carousel{margin:0;padding-left:0;padding-right:0;}
+  .day-card .dtag{white-space:normal;line-height:1.2;letter-spacing:.05em;} /* Next Session: on one line, wrapping only on a narrow card (three-day routines) */
+  .day-card.next .dtag{color:var(--text);} .day-card.today:not(.next) .dtag{color:var(--text-dim);}
+  .plan-row{padding:0;} .plan-row .ic{margin-right:-4px;}
+  /* an icon button keeps its full 44 px box inside its container; the glyph is drawn to the edge inside it (a negative margin would push the box under the clip) */
+  .exl-head{padding:0;} .exl-head .icbtn,.xtop .icbtn,.card-titlerow .icbtn{margin-right:0;justify-content:flex-end;}
+  .exl-head .icbtn .ic,.xtop .icbtn .ic{margin-right:-3.3px;} .card-titlerow .icbtn .ic{margin-right:-2.8px;}
+  .exl-menu{margin-right:2px;}
+  .xback{margin-left:0;padding-left:0;} .xback .ic{margin-left:-7.3px;}
+  .card-titlerow{margin-right:0;}
+  #remList .bx{margin:-10px 0 0 0;padding:0;justify-content:flex-end;} #remList .bx svg{margin-right:-3.5px;}
+  .rhythm .rhythm-ring{margin-right:-2px;}
+  .set-chev{margin-right:-5px;}
+  .lrow .ic{margin-right:-7px;}
+  #strInfoBtn{right:2px;}
   /* a view that is showing carries .view-on (set by setView), the hook B4 animates from */
   @media (prefers-reduced-motion: reduce){ .viewtab svg,.btn,.start-cta{transition:none;} }
 </style>
@@ -1610,7 +1676,6 @@
 
 <footer><div class="footer-inner">
   <div id="logFooter" style="display:none">
-  <div id="pager" class="pager"></div>
   <div class="timer" id="timer"><div class="timer-row"><svg class="ring" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="18"/><circle id="ringArc" cx="22" cy="22" r="18" stroke-dasharray="113.1" stroke-dashoffset="0"/></svg><div class="t" id="timerT">1:30</div><div class="acts"><button type="button" id="tPlus">+30s</button><button type="button" id="tSkip">Skip</button></div></div><div class="tbar"><i id="timerBar" style="width:100%"></i></div></div>
   <button class="finish-btn" id="finishBtn">Finish Session</button>
   </div>
@@ -2865,7 +2930,7 @@ function fmtDate(t){ const d=new Date(t); if(isNaN(d)) return 'an unknown date';
 // ---------- units: everything is stored in lb always; these convert only at the display boundary ----------
 const LB_PER_KG=1/0.45359237;
 // Text Size zooms the whole app rather than just the type, so every layout keeps its proportions and nothing overlaps
-const TEXT_SIZES={standard:1,large:1.15,larger:1.3};
+const TEXT_SIZES={small:.9,standard:1,large:1.15,larger:1.3};
 function applyTextSize(){ const z=TEXT_SIZES[settings.textSize]||1, r=document.documentElement; r.style.zoom=z===1?'':z; r.style.setProperty('--tz',z); }
 function unitLabel(){ return settings.unit==='kg'?'kg':'lb'; }
 function dispWeight(lb){ if(lb===''||lb==null) return lb; const n=parseFloat(lb); if(isNaN(n)) return lb; return settings.unit==='kg'?Math.round(n/LB_PER_KG*2)/2:n; }
@@ -3367,7 +3432,7 @@ document.getElementById('weekClose').onclick=closeWeek; document.getElementById(
 async function loadDay(d){
   if(d!==currentDay){
     if(hold.key) stopHold(false); // a hold left running when the day changes stops with its seconds kept on the set it was timing (the draft reload below would orphan it)
-    focusIdx=null; closeMore();
+    focusIdx=null; logScreen='list'; enterSet=null; closeMore();
     // MO-2: the new day's exercise slides in from the side of its tab (only for a day the user chose on the Log)
     const order=PROGRAM.map(p=>p.id).concat('cardio'), oi=order.indexOf(currentDay), ni=order.indexOf(d);
     if(view==='log'&&!booting&&oi>=0&&ni>=0) focusDir=Math.sign(ni-oi);
@@ -3393,6 +3458,7 @@ function updateLogChrome(){
   if(currentDay==='cardio') return;
   const btn=document.getElementById('finishBtn'), off=!sessionInProgress();
   btn.classList.toggle('is-off',off); btn.setAttribute('aria-disabled',String(off));
+  btn.classList.toggle('is-hidden',off); // owner, 2026-11-19: Finish Session shows only once a set has been logged that day
   const on=sessionStarted(); document.querySelectorAll('#dayLabel .day-prog,#dayLabel .day-bar').forEach(el=>el.style.visibility=on?'':'hidden');
 }
 // only checks each exercise's own primary muscle, not every secondary muscle it happens to also touch
@@ -3630,9 +3696,85 @@ function orderedExercises(day){
 // It is not stored (NC-1); a reload lands on the derived exercise again.
 let focusIdx=null, focusDay=null, focusDir=0, moreOpen=false;
 function derivedFocus(ord){ const i=ord.findIndex(ex=>!ensureState(ex).sets.every(s=>s.done)); return i<0?ord.length-1:i; }
-function setFocus(i){ const day=PROGRAM.find(d=>d.id===currentDay); if(!day) return; const n=day.exercises.length; i=Math.max(0,Math.min(n-1,i)); if(i===focusIdx) return; focusDir=Math.sign(i-focusIdx); focusIdx=i; closeMore();
+function setFocus(i){ const day=PROGRAM.find(d=>d.id===currentDay); if(!day) return; const n=day.exercises.length; i=Math.max(0,Math.min(n-1,i)); if(i===focusIdx) return; focusDir=Math.sign(i-focusIdx); focusIdx=i; enterSet=null; closeMore();
   { const a=document.activeElement; if(a&&a.closest&&a.closest('#exerciseList')) a.blur(); } // another exercise is another set of fields: nothing to hand focus back to (and the keyboard goes away)
   render(); window.scrollTo(0,0); }
+// ---------- Log: the exercise list, then one exercise (list-first, owner 2026-11-16) ----------
+// The Log opens on the day's exercises as a list (Start on Home and a day change land here, with the next exercise ringed). A row opens that
+// exercise; "Exercises" (or Next Exercise, or a swipe) moves on. The Log tab keeps wherever you were.
+let logScreen='list', enterSet=null; // enterSet: the set whose Reps Left dots are showing, when the user moved to a set other than the first unchecked one
+function goLog(){ logScreen='list'; setView('log'); }
+function showList(){
+  closeMore(); logScreen='list'; focusDir=-1; enterSet=null;
+  { const a=document.activeElement; if(a&&a.closest&&a.closest('#exerciseList')) a.blur(); }
+  render(); window.scrollTo(0,0);
+  const cur=document.querySelector('#exerciseList .exl-open[data-i="'+focusIdx+'"]'); if(cur) cur.focus({preventScroll:true});
+}
+function openExercise(i){
+  const day=PROGRAM.find(d=>d.id===currentDay); if(!day) return; i=Math.max(0,Math.min(day.exercises.length-1,i));
+  closeMore(); { const a=document.activeElement; if(a&&a.closest&&a.closest('#exerciseList')) a.blur(); }
+  logScreen='exercise'; focusDir=1; focusIdx=i; enterSet=null; render(); window.scrollTo(0,0);
+  const nm=document.querySelector('#exerciseList .xh-name'); if(nm) nm.focus({preventScroll:true});
+}
+// the first exercise after this one with an unchecked set (wrapping round), else back to the list
+function nextExercise(){
+  const day=PROGRAM.find(d=>d.id===currentDay), ord=orderedExercises(day), un=k=>!ensureState(ord[k]).sets.every(s=>s.done); let k=-1;
+  for(let j=focusIdx+1;j<ord.length;j++) if(un(j)){ k=j; break; }
+  if(k<0) for(let j=0;j<focusIdx;j++) if(un(j)){ k=j; break; }
+  if(k<0) showList(); else openExercise(k);
+}
+// the muscle art on a list row: the Home body map, cropped to the lift's area and tinted (target muscles coral, helpers dimmer)
+const TILE_GRP={Chest:{v:0,p:['chest-upper','chest-mid','chest-lower'],box:'25 150 400 400'},Back:{v:1,p:['back-lats','back-traps','lowerback'],box:'25 150 400 400'},
+  Shoulders:{v:0,p:['delt-front','delt-lateral'],box:'25 150 400 400'},Arms:{v:0,p:['biceps'],box:'25 190 400 400'},Forearms:{v:0,p:['forearm-flexor','forearm-extensor'],box:'25 230 400 400'},
+  Quads:{v:0,p:['quads'],box:'60 430 330 330'},Hamstrings:{v:1,p:['hamstrings','glutes'],box:'60 430 330 330'},Calves:{v:1,p:['calves-gastroc','calves-soleus'],box:'60 560 330 330'},
+  Core:{v:0,p:['abs-upper','abs-lower','abs-obliques'],box:'25 220 400 400'}};
+const TILE_SEC={chest:['chest-upper','chest-mid','chest-lower'],shoulders:['delt-front','delt-lateral','delt-rear'],biceps:['biceps'],triceps:['triceps-lateral','triceps-long'],back:['back-lats','back-traps'],quads:['quads'],glutes:['glutes'],forearms:['forearm-flexor','forearm-extensor']};
+const tileCache={};
+function muscleTile(ex){
+  const g=TILE_GRP[ex.group]||TILE_GRP.Chest, trib=ex.group==='Arms'&&(ex.m||[])[0]==='triceps', v=trib?1:g.v, prim=trib?['triceps-lateral','triceps-long']:g.p, box=trib?'25 190 400 400':g.box, key=ex.group+'|'+v+'|'+(ex.m||[]).join();
+  if(tileCache[key]) return tileCache[key]; const src=document.querySelectorAll('#bodymapCard .fig svg')[v]; if(!src) return '';
+  const sec=new Set((ex.m||[]).flatMap(k=>TILE_SEC[k]||[])), c=src.cloneNode(true); c.setAttribute('viewBox',box); c.removeAttribute('width'); c.removeAttribute('height'); c.setAttribute('aria-hidden','true'); c.setAttribute('class','tile-fig');
+  c.querySelectorAll('defs,.muscle-glow').forEach(n=>n.remove());
+  c.querySelectorAll('path').forEach(p=>{ const m=p.getAttribute('data-m'); let f='color-mix(in srgb,var(--text) 10%,transparent)';
+    if(m&&prim.includes(m)) f='var(--accent)'; else if(m&&sec.has(m)) f='color-mix(in srgb,var(--accent) 38%,transparent)'; else if(m) f='color-mix(in srgb,var(--text) 16%,transparent)';
+    p.setAttribute('style','fill:'+f+';stroke:none;filter:none;opacity:1;animation:none'); p.removeAttribute('class'); });
+  return tileCache[key]=c.outerHTML;
+}
+// "3 sets • 6–10 reps • 115 lb" (a hold reads seconds, a bodyweight lift "Bodyweight"); partway through the list reads "1/3 sets"
+function repsText(ex){ const m=String(ex.target||'').match(/\d+\s*x\s*([\d\-–]+)\s*(s)?/i), r=m?m[1].replace('-','–'):''; return isTimedTarget(ex.target)?r+' sec':r+' reps'; }
+function weightText(ex,m){ if(ex.start===0) return 'Bodyweight'; const w=m.sug; if(typeof w==='number'&&w!==-1) return dispWeight(w)+' '+unitLabel(); return w===-1?'Find a Weight':'Add Body Weight'; }
+function exSummary(ex,m,state,partial){ const n=state.sets.length, d=state.sets.filter(x=>x.done).length; return `${partial&&d&&d<n?d+'/'+n:n} sets • ${repsText(ex)} • ${weightText(ex,m)}`; }
+// a note or a tip is waiting behind the "..." (the dot on the button): same cases the More sheet's content comes from
+function hasNoteOrTip(ex,day,m){
+  return !!(notes[histKey(ex)]||'').trim()||isPlateau(ex)||!!ex.rotPrev||m.sug===-1||!!m.estFrom||
+    ((day.lvl==='new'||day.lvl==='exp')&&!m.timed&&ex.start!==0&&ex.step!==0&&!(hist[ex.name]||[]).length&&!lastByName[ex.name]);
+}
+function renderList(day,ord){
+  const wrap=document.createElement('div'); wrap.className='exlist'; const done=k=>ensureState(ord[k]).sets.every(s=>s.done), nDone=ord.filter((e,k)=>done(k)).length;
+  wrap.innerHTML=`<div class="exl-head"><h2 class="exl-prog">${nDone} of ${ord.length} Done</h2><button type="button" class="icbtn" id="dayOptBtn" aria-label="Day Options" aria-haspopup="dialog">${IC.dots}</button></div><div class="exl-rows" role="list"></div>`;
+  const rows=wrap.querySelector('.exl-rows');
+  ord.forEach((ex,i)=>{
+    const st=ensureState(ex), m=exModel(ex), dn=done(i), part=!dn&&st.sets.some(s=>s.done), sum=exSummary(ex,m,st,true), flag=hasNoteOrTip(ex,day,m);
+    const row=document.createElement('div'); row.className='exl-row'+(dn?' done':''); row.setAttribute('role','listitem');
+    row.innerHTML=`<button type="button" class="exl-open" data-i="${i}" aria-label="${esc(ex.name)}, ${esc(sum)}, ${dn?'finished':part?'in progress':'not started'}"><span class="exl-tile">${muscleTile(ex)}${dn?`<i class="exl-ck" aria-hidden="true">${IC.check}</i>`:''}</span><span class="exl-txt"><span class="exl-nm">${esc(ex.name)}${isPlateau(ex)?'<i class="exl-pl" role="img" aria-label="Plateau"></i>':''}</span><span class="exl-sm">${esc(sum).replace(/(• )([^•]+)$/,(m,a,b)=>a+b.replace(/ /g,'\u00a0'))}</span></span></button><button type="button" class="icbtn exl-menu" data-i="${i}" aria-label="${esc(ex.name)} options${flag?', has notes or tips':''}" aria-haspopup="dialog">${flag?'<i class="ndot" aria-hidden="true"></i>':''}${IC.dots}</button>`;
+    rows.appendChild(row);
+  });
+  wrap.querySelectorAll('.exl-open').forEach(b=>b.onclick=()=>openExercise(+b.dataset.i));
+  wrap.querySelectorAll('.exl-menu').forEach(b=>b.onclick=e=>{ e.currentTarget.focus({preventScroll:true}); openRowMenu(ord[+b.dataset.i]); });
+  wrap.querySelector('#dayOptBtn').onclick=e=>{ e.currentTarget.focus({preventScroll:true}); openDayOptions(); };
+  wrap.classList.toggle('narrow',innerWidth/zoomNow()<300); // a 320 px screen at Larger text: names and summaries get the room, the tile goes
+  return wrap;
+}
+// the "..." on a row: How To (the cue), Swap Exercise, Demo. Its own small sheet, so the exercise screen's More content is not touched.
+function openRowMenu(ex){
+  openInfo(ex.name,b=>{
+    const yt='https://www.youtube.com/results?search_query='+encodeURIComponent(ex.name.replace('/',' ')+' exercise form'), l=document.createElement('div'); l.className='sheet-list';
+    const how=document.createElement('button'); how.type='button'; how.className='lrow'; how.innerHTML=`<span class="grow">How To</span>${IC.chevR}`;
+    how.onclick=()=>{ b.innerHTML=''; const p=document.createElement('p'); p.className='sheet-p'; p.textContent=ex.cue||'No cue written yet.'; b.appendChild(p); };
+    const sw=document.createElement('button'); sw.type='button'; sw.className='lrow'; sw.innerHTML=`<span class="grow">Swap Exercise</span>${IC.chevR}`; sw.onclick=()=>{ closeInfo(); openSwap(currentDay,ex); };
+    const dm=document.createElement('a'); dm.className='lrow'; dm.href=yt; dm.target='_blank'; dm.rel='noopener'; dm.innerHTML='<span class="grow">Demo<span class="sub">Opens YouTube</span></span>';
+    l.append(how,sw,dm); b.appendChild(l); });
+}
 function render(){
   const focusKey=listFocusKey();
   // several settings handlers (unit, auto-rotate, rotate-every, deload start/end) re-render the log after a change
@@ -3642,14 +3784,22 @@ function render(){
   renderTabs(); renderBody();
   const day=PROGRAM.find(d=>d.id===currentDay), ord=orderedExercises(day);
   if(focusDay!==currentDay||focusIdx==null||focusIdx>=ord.length){ focusDay=currentDay; focusIdx=derivedFocus(ord); }
+  const inList=logScreen==='list'; document.body.classList.toggle('log-list',inList); document.body.classList.toggle('log-ex',!inList);
   const list=document.getElementById('exerciseList'); list.innerHTML=''; logCards=new Map(); logDirty.clear();
-  const ex=ord[focusIdx], card=renderExercise(ex,day); logCards.set(ex,card); list.appendChild(card);
-  if(focusDir){ card.classList.add(focusDir>0?'enter-r':'enter-l'); card.addEventListener('animationend',()=>card.classList.remove('enter-r','enter-l'),{once:true}); focusDir=0; }
-  mountMore(card); fitSetGrid(card);
+  let el, card=null;
+  if(inList){ el=renderList(day,ord); list.appendChild(el); mountMore(null); }
+  else{ const ex=ord[focusIdx]; card=renderExercise(ex,day); logCards.set(ex,card); el=card; list.appendChild(card); }
+  if(focusDir){ el.classList.add(focusDir>0?'enter-r':'enter-l'); el.addEventListener('animationend',()=>el.classList.remove('enter-r','enter-l'),{once:true}); focusDir=0; }
+  if(card){ mountMore(card); fitSetGrid(card); }
   updateLogSummary(day);
   popSet=null;
   restoreListFocus(focusKey);
 }
+// Reps Left dots follow the set being entered: moving into another set's fields (without a redraw) moves the dots there
+document.getElementById('exerciseList').addEventListener('focusin',e=>{
+  const row=e.target.closest&&e.target.closest('.setgrid:not(.head)'); if(!row||row.dataset.i==null) return;
+  const i=+row.dataset.i; enterSet=i; document.querySelectorAll('#exerciseList .rir-row').forEach(r=>r.classList.toggle('entering',+r.dataset.i===i));
+});
 // 2.0 narrow rows: when the Weight head no longer fits (320 px, larger text) the head keeps the unit and the grid tightens; a five-character weight steps down a size
 function fitSetGrid(card){
   if(!card||!card.isConnected) return; const body=card.querySelector('.ex-body'); if(!body) return; body.classList.remove('tight','xt');
@@ -3660,7 +3810,7 @@ function fitSetGrid(card){
   const fit=i=>i.classList.toggle('long',(i.value||i.placeholder||'').length>=5);
   body.querySelectorAll('.setgrid:not(.head) input:first-of-type').forEach(i=>{ fit(i); i.addEventListener('input',()=>fit(i)); });
 }
-window.addEventListener('resize',()=>{ const c=document.querySelector('#exerciseList .exercise'); if(c) fitSetGrid(c); });
+window.addEventListener('resize',()=>{ const c=document.querySelector('#exerciseList .exercise'); if(c) fitSetGrid(c); const l=document.querySelector('#exerciseList .exlist'); if(l) l.classList.toggle('narrow',innerWidth/zoomNow()<300); });
 // ---------- Log: the More sheet ----------
 // One static sheet (so it gets the shared dialog code: focus trap, Escape, focus return). Its content is built with the card, so a redraw while
 // it is open (How To, the plate step, the fixed-bar switch) re-mounts the new content and the sheet stays where it is.
@@ -3673,7 +3823,7 @@ function mountMore(card){
 }
 // the dot on More says a note or a tip is inside; typing a note shows it at once
 function syncMoreDot(hasNote){ const b=document.getElementById('moreBtn'); if(!b) return; const has=!!b.querySelector('.ndot'), want=hasNote||!!document.querySelector('#moreBody .plateau-tip,#moreBody .first-log-note');
-  if(want&&!has){ b.insertAdjacentHTML('afterbegin','<i class="ndot" aria-hidden="true"></i>'); b.setAttribute('aria-label','More, has notes or tips'); } else if(!want&&has){ b.querySelector('.ndot').remove(); b.removeAttribute('aria-label'); } }
+  if(want&&!has){ b.insertAdjacentHTML('afterbegin','<i class="ndot" aria-hidden="true"></i>'); b.setAttribute('aria-label','More About This Exercise, has notes or tips'); } else if(!want&&has){ b.querySelector('.ndot').remove(); b.setAttribute('aria-label','More About This Exercise'); } }
 function openMore(){ moreOpen=true; document.getElementById('moreBg').classList.add('on'); document.getElementById('moreSheet').classList.add('on'); const b=document.getElementById('moreBtn'); if(b) b.setAttribute('aria-expanded','true'); }
 function closeMore(){ if(!moreOpen) return; moreOpen=false; document.getElementById('moreBg').classList.remove('on'); document.getElementById('moreSheet').classList.remove('on'); const b=document.getElementById('moreBtn'); if(b) b.setAttribute('aria-expanded','false');
   // the shared dialog code returns focus to the element that opened the sheet, which a redraw may have replaced: land on the current More button
@@ -3731,11 +3881,12 @@ function renderExercise(ex,day){
     // the focus layout draws one exercise at a time, always open (the stored `open` flag stays in the draft and is ignored, LF-6)
     const card=document.createElement('div'); card.className='exercise open'+(complete?' complete':'');
     const more=document.createElement('div'); more.className='more-body'; card._more=more; // what the More sheet shows: tools, tips, bar, notes, details
-    const short=(ex.start===0&&typeof sug==='number')?'':sug===null?'Add Body Weight':sug===-1?'Find a Weight':`${dispWeight(sug)} ${unitLabel()}`;
+    const short=(typeof sug==='number'&&sug!==-1&&ex.start!==0)?`${dispWeight(sug)} ${unitLabel()}`:''; // the suggested weight in words, for the details (the row and list summaries use weightText)
     const head=document.createElement('div'); head.className='xh';
-    head.innerHTML=`<div class="xh-row"><div class="xh-eyebrow">${esc(ex.group)}${plat?'<span class="badge plateau">Plateau</span>':''}</div><button type="button" class="icbtn" id="dayOptBtn" aria-label="Day Options" aria-haspopup="dialog">${IC.dots}</button></div>
-      <h3 class="xh-name">${esc(ex.name)}</h3>
-      <div class="xh-row xh-sub"><div class="xh-meta"><span>${fmtTarget(ex.target)}</span>${short?`<span class="xh-w">${esc(short)}</span>`:''}${complete?`<span class="xh-ck" role="img" aria-label="finished">${IC.check}</span>`:''}</div><button type="button" class="xh-more" id="moreBtn" aria-haspopup="dialog">NDOT More${IC.chevR}</button></div>`;
+    head.innerHTML=`<div class="xtop"><button type="button" class="xback" id="backBtn">${IC.chevL}<span>Exercises</span></button><button type="button" class="icbtn" id="moreBtn" aria-label="More About This Exercise" aria-haspopup="dialog">${IC.dots}</button></div>
+      <h3 class="xh-name" tabindex="-1">${esc(ex.name)}</h3>
+      <div class="xh-meta"><span class="xh-sum">${esc(exSummary(ex,m,state,false))}</span>${barKind(ex)?'<span class="xh-side"></span>':''}${complete?`<span class="xh-ck" role="img" aria-label="finished">${IC.check}</span>`:''}</div>`;
+    head.querySelector('#backBtn').onclick=e=>{ e.currentTarget.focus({preventScroll:true}); showList(); };
     card.appendChild(head);
 
     const body=document.createElement('div'); body.className='ex-body';
@@ -3782,6 +3933,9 @@ function renderExercise(ex,day){
         const tot=dispWeight(parseFloat(liveLb)), bar=dispWeight(barWeightLb(ex));
         txtEl.innerHTML=tot<bar?`${tot} ${unitLabel()} is under the ${bar} ${unitLabel()} bar`:`<b>${Math.round((tot-bar)/2*100)/100} ${unitLabel()}</b>`;
       };
+      { const inner=updatePlates, sideEl=head.querySelector('.xh-side'); // the one-line caption "10 lb a side" under the title (the stepper is in More)
+        updatePlates=lb=>{ inner(lb); if(!sideEl) return; const ok=!fixed&&liveLb!=null&&liveLb!==''&&!isNaN(parseFloat(liveLb)), tot=ok?dispWeight(parseFloat(liveLb)):0, bar=dispWeight(barWeightLb(ex));
+          sideEl.textContent=(ok&&tot>=bar)?`${Math.round((tot-bar)/2*100)/100} ${unitLabel()} a side`:''; }; }
       barSel.onchange=e=>{ settings.barWeights=settings.barWeights||{}; settings.barWeights[ex.name]=storeWeight(e.target.value); sset('settings',settings); chip.querySelector('.bar-chip-txt').textContent=e.target.selectedOptions[0].textContent; updatePlates(); };
       pl.querySelector('.fixed-chk input').onchange=e=>{ fixed=e.target.checked; settings.fixedBar=settings.fixedBar||{}; settings.fixedBar[ex.name]=fixed; sset('settings',settings); syncFixedUI(); updatePlates(); };
       syncFixedUI(); updatePlates(); platesEl=pl;
@@ -3833,10 +3987,11 @@ function renderExercise(ex,day){
     // weight, only into an empty row). A timed hold shows last time's seconds and nothing fills. The Same as Last chip is gone (owner, 2026-11-14).
     const lastAll=(saved&&saved.sets)?saved.sets.filter(x=>x&&x.r!==''&&x.r!=null):[];
     const lastW=x=>bwLoaded?(parseFloat(x.add)?`BW+${dispWeight(x.add)}`:'BW'):(x.w?Math.round(dispWeight(x.w)*10)/10:'–');
+    const firstOpen=state.sets.findIndex(x=>!x.done), entering=(enterSet!=null&&enterSet<state.sets.length&&!state.sets[enterSet].done)?enterSet:firstOpen;
     state.sets.forEach((s,i)=>{
       if(bwLoaded) s.w=bwTotal(s);
       const addHint=bwLoaded?(state.sets.slice(0,i).map(x=>parseFloat(x.add)||0).filter(Boolean).pop()||lastAdd):0;
-      const row=document.createElement('div'); row.className='setgrid';
+      const row=document.createElement('div'); row.className='setgrid'; row.dataset.i=i;
       row.innerHTML=`<button type="button" class="setnum" aria-label="Set ${i+1} options" aria-description="Opens Remove Set. Sighted users can also swipe the row left." aria-haspopup="dialog">${i+1}</button><span class="slast"></span><input type="number" inputmode="decimal" aria-label="Set ${i+1} ${bwLoaded?'added weight':'weight'}" placeholder="${bwLoaded?'+'+dispWeight(addHint):sug===null?'bw':sug===-1?unitLabel():dispWeight(sug)}" value="${bwLoaded?(s.add?dispWeight(s.add):''):(s.w?dispWeight(s.w):s.w)}"${bwLoaded?' title="extra weight held or worn (dumbbells, a dip belt) — leave blank for bodyweight only"':''}><input type="number" inputmode="numeric" aria-label="Set ${i+1} ${timed?'seconds':'reps'}" placeholder="" value="${s.r}"><div class="setdone ${s.done?'on':''}${popSet===s&&!matchMedia('(prefers-reduced-motion: reduce)').matches?' pop':''}" aria-label="set ${i+1} done" aria-pressed="${!!s.done}">${s.done?'✓':''}</div>`;
       const [wI,rI]=row.querySelectorAll('input');
       // one-shot: the pop mark comes off when its animation ends, so it is an event on this tap, never a state a later draw could replay
@@ -3876,16 +4031,24 @@ function renderExercise(ex,day){
         body.appendChild(hrow);
       }
       if(!timed){
-        // hidden until reps are in, then picked before the set can be checked; stays after Done so it can still be changed
-        const rir=document.createElement('div'); rir.className='rir-row'; setRirA11y(rir,i); rir.hidden=!(s.done||s.r!=='');
-        rir.innerHTML=`<span class="rir-lbl" aria-hidden="true">Reps Left</span>`+[0,1,2,3,4].map(v=>`<span class="rir-pill${s.rir===v?' on':''}" data-v="${v}" aria-pressed="${s.rir===v}" aria-label="${v===4?'4 or more reps':v===1?'1 rep':v+' reps'} left">${v===4?'4+':v}</span>`).join('');
-        rir.querySelectorAll('.rir-pill').forEach(p=>p.onclick=()=>{ actPickRepsLeft(s,parseInt(p.dataset.v)); refreshExercise(ex); });
-        body.appendChild(rir);
+        // Reps Left (2.0): the dots show only under the set being entered, once reps are typed; a finished set shows what was picked; later sets show nothing.
+        // The order is unchanged: reps, then Reps Left, then Done checks the set.
+        if(s.done){ if(s.rir!=null){ const lf=document.createElement('div'); lf.className='rir-done'; lf.textContent=`Left: ${s.rir>=4?'4+':s.rir}`; body.appendChild(lf); } }
+        else{
+          const rir=document.createElement('div'); rir.className='rir-row'+(i===entering?' entering':''); rir.dataset.i=i; setRirA11y(rir,i); rir.hidden=s.r==='';
+          rir.innerHTML=`<span class="rir-lbl" aria-hidden="true">Reps Left</span>`+[0,1,2,3,4].map(v=>`<span class="rir-pill${s.rir===v?' on':''}" data-v="${v}" aria-pressed="${s.rir===v}" aria-label="${v===4?'4 or more reps':v===1?'1 rep':v+' reps'} left">${v===4?'4+':v}</span>`).join('');
+          rir.querySelectorAll('.rir-pill').forEach(p=>p.onclick=()=>{ actPickRepsLeft(s,parseInt(p.dataset.v)); refreshExercise(ex); });
+          body.appendChild(rir);
+        }
       }
     });
     const addset=document.createElement('button'); addset.type='button'; addset.className='addset'; addset.textContent='+ Add Set';
     addset.onclick=()=>{ actAddSet(ex,state); refreshExercise(ex); }; body.appendChild(addset);
-    if(platesEl) body.appendChild(platesEl);
+    if(complete){ // every set is checked: the way on
+      const ordAll=orderedExercises(day), me=ordAll.indexOf(ex), more1=ordAll.some((e2,k)=>k!==me&&!ensureState(e2).sets.every(x=>x.done));
+      const nb=document.createElement('button'); nb.type='button'; nb.className='next-ex'; nb.textContent=more1?'Next Exercise':'Back to Exercises'; nb.onclick=e=>{ e.currentTarget.blur(); nextExercise(); }; body.appendChild(nb); }
+    // the plates row (stepper, caption text) is the first thing in More
+    if(platesEl) more.insertBefore(platesEl,more.firstChild);
 
     const ta=document.createElement('textarea'); ta.className='notes'; ta.placeholder='Notes — seat setting, how it felt'; ta.setAttribute('aria-label',`Notes for ${ex.name}`); ta.value=notes[histKey(ex)]||'';
     ta.oninput=e=>{ notes[histKey(ex)]=e.target.value; sset('notes',notes); syncMoreDot(!!e.target.value.trim()); }; more.appendChild(ta);
@@ -3902,7 +4065,7 @@ function renderExercise(ex,day){
         if(bits.length){ const p=document.createElement('p'); p.className='sheet-p dim'; p.textContent=bits.join(' · '); more.appendChild(p); }
         if(lastTimeEl) more.appendChild(lastTimeEl); }
       const flagged=!!(notes[histKey(ex)]||'').trim()||!!more.querySelector('.plateau-tip,.first-log-note');
-      head.querySelector('#moreBtn').innerHTML=head.querySelector('#moreBtn').innerHTML.replace('NDOT',flagged?'<i class="ndot" aria-hidden="true"></i>':''); if(flagged) head.querySelector('#moreBtn').setAttribute('aria-label','More, has notes or tips');
+      if(flagged){ const mb=head.querySelector('#moreBtn'); mb.insertAdjacentHTML('afterbegin','<i class="ndot" aria-hidden="true"></i>'); mb.setAttribute('aria-label','More About This Exercise, has notes or tips'); }
     }
     card.appendChild(body); return card;
 }
@@ -3914,33 +4077,9 @@ function updateLogSummary(day){
   fb.classList.toggle('all-done',allComplete); // quiet until every set is done, then the one coral action (owner, 2026-11-14)
   document.body.classList.toggle('all-done',allComplete);
   document.getElementById('dayLabel').innerHTML=`<h2 class="sr-only">${esc(day.name)} ${esc(day.sub)}</h2>`;
-  // Previous, the Day List (progress segments and position), Next. Next is never in Finish's place and never finishes (LF-2).
-  const n=ord.length, i=focusIdx, p=document.getElementById('pager');
-  p.classList.toggle('narrow',innerWidth/zoomNow()<300); // a 320 px screen with larger text: the progress segments drop out, Previous and Next slim down
-  p.innerHTML=`<button type="button" class="pg prev" aria-label="Previous Exercise"${i===0?' aria-disabled="true"':''}>${IC.chevL}</button>
-    <button type="button" class="pg list" aria-haspopup="dialog" aria-label="Day List. Exercise ${i+1} of ${n}, ${doneN} finished">${IC.list}<span class="segs" aria-hidden="true">${ord.map((ex,k)=>`<i class="${ensureState(ex).sets.every(s=>s.done)?'done':k===i?'cur':''}"></i>`).join('')}</span><span>${i+1}/${n}</span></button>
-    <button type="button" class="pg next" aria-label="Next Exercise"${i===n-1?' aria-disabled="true"':''}>Next${IC.chevR}</button>`;
-  p.querySelector('.prev').onclick=e=>{ e.currentTarget.focus({preventScroll:true}); setFocus(focusIdx-1); pagerFocus('.prev'); };
-  p.querySelector('.next').onclick=e=>{ e.currentTarget.focus({preventScroll:true}); setFocus(focusIdx+1); pagerFocus('.next'); };
-  p.querySelector('.list').onclick=e=>{ e.currentTarget.focus({preventScroll:true}); openDayList(); };
   updateLogChrome();
   // a redraw can remove the field that had focus without a focusout (stepping to another exercise with the keyboard up): drop the typing mark so the footer comes back
   { const a=document.activeElement; if(!a||!a.matches(TYPING_SEL)) document.body.classList.remove('typing'); }
-}
-// the pager is redrawn with the card, so a tapped Previous or Next is a new element: put focus back on its successor
-function pagerFocus(sel){ const b=document.querySelector('#pager '+sel); if(b&&b.getAttribute('aria-disabled')!=='true') b.focus({preventScroll:true}); else { const l=document.querySelector('#pager .list'); if(l) l.focus({preventScroll:true}); } }
-// Day List: every exercise with its group, target, weight and check; a tap puts it in focus
-function openDayList(){
-  const day=PROGRAM.find(d=>d.id===currentDay), ord=orderedExercises(day);
-  openInfo(`${day.name}${day.sub?', '+day.sub:''}`,b=>{
-    const l=document.createElement('div'); l.className='sheet-list'; let g=null;
-    ord.forEach((ex,i)=>{ if(ex.group!==g){ g=ex.group; const gh=document.createElement('div'); gh.className='lgh'; gh.textContent=g; l.appendChild(gh); }
-      const m=exModel(ex), dn=ensureState(ex).sets.every(s=>s.done), w=(ex.start===0&&typeof m.sug==='number')?'':m.sug===null?'Add Body Weight':m.sug===-1?'Find a Weight':`${dispWeight(m.sug)} ${unitLabel()}`;
-      const r=document.createElement('button'); r.type='button'; r.className='lrow'+(i===focusIdx?' cur':'');
-      r.innerHTML=`<span class="lck${dn?' on':''}" role="img" aria-label="${dn?'finished':'not finished'}">${IC.check}</span><span class="grow">${esc(ex.name)}<span class="sub">${fmtTarget(ex.target)}${w?' · '+esc(w):''}${isPlateau(ex)?' · Plateau':''}</span></span>`;
-      if(i===focusIdx) r.setAttribute('aria-current','true');
-      r.onclick=()=>{ closeInfo(); setFocus(i); const mb=document.getElementById('moreBtn'); if(mb) mb.focus({preventScroll:true}); }; l.appendChild(r); });
-    b.appendChild(l); });
 }
 // Day Options: the two things that used to be links on the Log page. Each fires the app's own handler.
 function openEditDay(){ setView('more'); renderEditor(); document.getElementById('edDay').value=currentDay; openSetPage('edit'); }
@@ -4005,21 +4144,30 @@ function renderBuilder(panel){
 let homePreviewOpen=false, homePlanOpen=false; // the day's exercise list is closed until its row is tapped (2.0)
 // Home's day cards. A day whose sub is a single letter reads "Push, day A" to a screen reader (the card shows only the letter).
 function dayCardsHTML(){
-  return PROGRAM.map(d=>{ const letter=/^[A-C]$/.test(d.sub||''), today=d.id===currentDay;
-    return `<div class="day-card ${dayType(d)}${today?' today':''}" data-day="${d.id}"${letter?` aria-label="${esc(d.name)}, day ${d.sub}, ${d.exercises.length} Exercises${today?', '+dayTagText():''}"`:''}>${today?'<div class="ddot"></div>':''}<div class="dtag">${today?dayTagText():''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub}</div><div class="dsub">${d.exercises.length} Exercises</div></div>`; }).join('');
+  const nextId=suggestedDayId(); // the rotation's real next session (the tag), whichever card was tapped
+  return PROGRAM.map(d=>{ const letter=/^[A-C]$/.test(d.sub||''), loaded=d.id===currentDay, nxt=d.id===nextId;
+    return `<div class="day-card ${dayType(d)}${loaded?' today':''}${nxt?' next':''}" data-day="${d.id}"${letter?` aria-label="${esc(d.name)}, day ${d.sub}, ${d.exercises.length} Exercises${nxt?', Next Session':''}${loaded?', selected':''}"`:''}>${loaded?'<div class="ddot"></div>':''}<div class="dtag">${nxt?'Next Session':''}</div><div class="dname">${d.name}</div><div class="dsub">${d.sub}</div><div class="dsub">${d.exercises.length} Exercises</div></div>`
+  }).join('');
 }
 // With five or six days the cards scroll sideways. Home opens scrolled so Today is the first card in view (instant, no animation), once per
 // visit; a redraw while the user is looking keeps wherever they scrolled to. Four days or fewer are left exactly as they always were.
 let homeCarKey='';
 function placeCarousel(panel,prevLeft){
   const car=panel.querySelector('.day-carousel'); if(!car) return;
-  const key=ROUTINE_ID+':'+currentDay;
-  if(PROGRAM.length>=5&&homeCarKey!==key){ const t=car.querySelector('.day-card.today'); if(t) car.scrollLeft=Math.max(0,t.offsetLeft-2); homeCarKey=key; }
+  // Next Session is marked on one card: when Home opens, and after a day change, scroll the strip just far enough that card is wholly in view
+  // (an instant jump set before the page paints: no animation, no layout shift, no page scroll). A redraw while the user is looking keeps their scroll.
+  const nx=car.querySelector('.day-card.next'), key=ROUTINE_ID+':'+currentDay+':'+(nx?nx.dataset.day:'');
+  if(homeCarKey!==key){
+    homeCarKey=key;
+    if(nx){ // all in the strip's own (CSS) pixels, so the Text Size zoom does not matter
+      const off=c=>c.offsetLeft-car.offsetLeft, left=off(nx), w=nx.offsetWidth, vis=left-car.scrollLeft>=-0.5&&left+w-car.scrollLeft<=car.clientWidth+0.5;
+      if(!vis){ // not wholly visible: start the strip at the earliest card that shows it in full
+        let to=left; for(const c of car.querySelectorAll('.day-card')){ if(left+w-off(c)<=car.clientWidth+0.5){ to=off(c); break; } }
+        car.scrollLeft=Math.max(0,to); } }
+  }
   else if(prevLeft) car.scrollLeft=prevLeft;
   edgeFade(car);
 }
-// the loaded day is "Today" until a lift has been logged today; after that it's the next one in the rotation
-function dayTagText(){ const t0=new Date(); t0.setHours(0,0,0,0); return sessions.some(x=>!x.isCardio&&x.t>=t0.getTime())?'Next':'Today'; }
 function renderHome(){ renderHomeBody(); placeDeloadLine(); }
 function renderHomeBody(){
   updateBlockUI(); updateCardioLiveBanner();
@@ -4029,7 +4177,8 @@ function renderHomeBody(){
   if(currentDay==='cardio'){
     panel.innerHTML=`
       <div class="greet-wrap">
-        <div class="greet-row"><h2 class="greet-h1">${cardioLive?'Your cardio session is running.':settings.name?'Ready for cardio, '+esc(settings.name)+'?':'Ready for cardio?'}</h2><span id="cardioWhySlot"></span></div>
+        <div class="greet-row"><h2 class="greet-h1 sess">Cardio</h2><span id="cardioWhySlot"></span></div>
+        <div class="greet-hi">${cardioLive?'Your cardio session is running.':settings.name?'Ready for cardio, '+esc(settings.name)+'?':'Ready for cardio?'}</div>
       </div>
       <button class="start-cta" id="arrivalStart">${cardioLive?'Resume Cardio Session':'Go to Cardio Log'}</button>
       <div class="greet-sub" style="margin-top:14px">Feeling fine? Tap a lift day to train it instead.</div>
@@ -4038,8 +4187,8 @@ function renderHomeBody(){
       </div>`;
     document.getElementById('arrivalStart').onclick=()=>setView('log');
     // the reason sentence that sat under the headline, one tap away
-    document.getElementById('cardioWhySlot').replaceWith(infoBtn('cardioWhyBtn',cardioLive?'About Your Cardio Session':'Why Cardio Today',()=>openInfo(cardioLive?'Cardio Session':'Cardio Today',b=>infoP(b,cardioLive?'Pick it back up where you left off, or save it from there.':cardioReasonCopy().home))));
-    panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day, ()=>setView('log')));
+    document.getElementById('cardioWhySlot').replaceWith(infoBtn('cardioWhyBtn',cardioLive?'About Your Cardio Session':'About Next Session',()=>openInfo(cardioLive?'Cardio Session':'Next Session',b=>infoP(b,cardioLive?'Pick it back up where you left off, or save it from there.':cardioReasonCopy().home))));
+    panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day, ()=>goLog()));
     placeCarousel(panel,prevLeft);
     return;
   }
@@ -4074,8 +4223,8 @@ function renderHomeBody(){
     const nEx=day.exercises.length;
     panel.innerHTML=`
       <div class="greet-wrap">
+        <h2 class="greet-h1 sess">${esc(day.name)}, ${esc(day.sub)}</h2>
         ${settings.name?`<div class="greet-hi">Ready to work out, ${esc(settings.name)}?</div>`:''}
-        <h2 class="greet-h1">${esc(day.name)}, ${esc(day.sub)}</h2>
       </div>
       <div class="day-carousel${PROGRAM.length===3?' three':''}">
         ${dayCardsHTML()}
@@ -4084,11 +4233,11 @@ function renderHomeBody(){
       <div class="preview-list" id="previewList"${homePlanOpen?'':' hidden'}>${previewRows}${moreRow}</div>
       <button class="start-cta" id="arrivalStart" aria-label="${ctaName}">${ctaTxt}</button>`;
     document.getElementById('planRow').onclick=()=>{ homePlanOpen=!homePlanOpen; renderHome(); document.getElementById('planRow').focus({preventScroll:true}); };
-    panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day, ()=>setView('log')));
+    panel.querySelectorAll('.day-card').forEach(c=>c.onclick=()=>attemptLoadDay(c.dataset.day, ()=>goLog()));
     placeCarousel(panel,prevLeft);
     const more=document.getElementById('previewMore'); if(more) more.onclick=()=>{ homePreviewOpen=!homePreviewOpen; renderHome(); document.getElementById('previewMore').focus({preventScroll:true}); };
   }
-  document.getElementById('arrivalStart').onclick=()=>{ touchDayStart(); setView('log'); };
+  document.getElementById('arrivalStart').onclick=()=>{ touchDayStart(); goLog(); };
 }
 
 async function finishSession(){
@@ -4226,7 +4375,7 @@ function showCelebration({day,worked,nsets,vol,durationMin,pr,rhythmCount}){
     <div class="cel-stats">
       <div class="cel-stat"><b>${dispVol(vol).toLocaleString()}</b><span>${unitLabel()} moved</span></div>
       <div class="cel-stat"><b>${nsets}</b><span>Sets Done</span></div>
-      <div class="cel-stat"><b>${durationMin}<span style="font-size:11px">m</span></b><span>Duration</span></div>
+      <div class="cel-stat"><b>${durationMin}<span style="font-size:var(--fs-cap)">m</span></b><span>Duration</span></div>
     </div>
     ${prHtml}
     <div class="rhythm-msg"><b>${ord(rhythmCount)} session this week</b> — ${rhythmRest}
@@ -4335,7 +4484,7 @@ function renderOnboardStep(step){
     inner.innerHTML=onbShell(3,{skip:false,
       body:`<div class="cel-h1" id="onboardTitle" tabindex="-1">How big should text be?</div>
         <div class="cel-sub">Pick what's easy to read at arm's length between sets. Change it any time in Settings.</div>
-        <div class="onb-opts" role="group" aria-label="Text size">${opt('standard','Standard',15)}${opt('large','Large',17)}${opt('larger','Larger',22)}</div>`,
+        <div class="onb-opts" role="group" aria-label="Text size">${opt('small','Small',13)}${opt('standard','Standard',15)}${opt('large','Large',17)}${opt('larger','Larger',22)}</div>`,
       foot:`<button class="cel-cta" id="onboardNext">Continue</button>`});
     inner.querySelectorAll('.onb-opt').forEach(b=>b.onclick=()=>{
       settings.textSize=b.dataset.k; applyTextSize();
@@ -5527,7 +5676,7 @@ document.getElementById('restSel').onchange=e=>{ settings.rest=parseInt(e.target
 document.getElementById('autoTimer').onchange=e=>{ settings.auto=e.target.checked; sset('settings',settings); };
 document.getElementById('smartRestChk').onchange=e=>{ settings.smartRest=e.target.checked; sset('settings',settings); renderSettings(); };
 // ---------- Settings: the grouped main screen and its pages ----------
-const TEXT_SIZE_LABEL={standard:'Standard',large:'Large',larger:'Larger'};
+const TEXT_SIZE_LABEL={small:'Small',standard:'Standard',large:'Large',larger:'Larger'};
 // the finished quiz in a few words ("Build Muscle, 4 days, Full Gym"); empty until a quiz has been finished
 function quizSummary(){ return QUIZ&&QUIZ.state==='done'?([QUIZ.goal&&QUIZ_GOAL_LABEL[QUIZ.goal],QUIZ.days&&`${QUIZ.days} days`,QUIZ.equip&&QUIZ_EQUIP_LABEL[QUIZ.equip]].filter(Boolean).join(', ')||'All questions skipped'):''; }
 function renderSetMain(){
@@ -5553,7 +5702,7 @@ function renderSetMain(){
   document.querySelectorAll('#setMain .set-seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.u===(settings.unit||'lb')));
   // the same size options as onboarding, applied as soon as one is picked
   const opts=document.getElementById('textSizeOpts'), cur=settings.textSize||'standard';
-  opts.innerHTML=[['standard','Standard',15],['large','Large',17],['larger','Larger',22]].map(([k,l,px])=>`<button class="onb-opt" data-k="${k}" aria-pressed="${cur===k}">${l}<b style="font-size:${px}px" aria-hidden="true">Aa</b></button>`).join('');
+  opts.innerHTML=[['small','Small',13],['standard','Standard',15],['large','Large',17],['larger','Larger',22]].map(([k,l,px])=>`<button class="onb-opt" data-k="${k}" aria-pressed="${cur===k}">${l}<b style="font-size:${px}px" aria-hidden="true">Aa</b></button>`).join('');
   opts.querySelectorAll('.onb-opt').forEach(b=>b.onclick=()=>{ settings.textSize=b.dataset.k; sset('settings',settings); applyTextSize(); renderSetMain(); });
 }
 // ---------- switching routines (R-B) ----------
@@ -6878,7 +7027,7 @@ function swipeStart(t,target){
   if(document.querySelector('.sheet.on,.celebrate-bg.on')) return;
   if(t.clientX<GESTURE_EDGE||t.clientX>innerWidth-GESTURE_EDGE) return;
   if(target.closest('.title-row')&&!target.closest('button')){ swipe={x:t.clientX,y:t.clientY,day:true}; return; }   // days: the plain title row
-  if(currentDay==='cardio'||!target.closest('#exerciseList')||target.closest('input,textarea,select,.scrub')) return; // exercises: the exercise area
+  if(currentDay==='cardio'||logScreen!=='exercise'||target.closest('header,footer,.sheet,.sheet-bg,input,textarea,select,.scrub,button,a,[role=button],.setgrid:not(.head),.rir-row,.hold-row')) return; // exercises: anywhere on the exercise screen that is not a field, a set row (it swipes to delete), Reps Left or a button (not the list)
   swipe={x:t.clientX,y:t.clientY};
 }
 function swipeEnd(t){
