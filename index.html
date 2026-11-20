@@ -1291,7 +1291,7 @@
   /* tonal, not outlined: cardio tiles, steppers and recent-activity chips; one segmented-control style (selected = filled light) */
   .cf-tile,.cf-rc,.cf-stp button{border-color:transparent;}
   .cf-tile{background:var(--panel);} .cf-rc,.cf-stp button{background:var(--panel-raised);}
-  .cf-seg{padding:0;gap:0;} .cf-seg button{font-size:var(--fs-sm);font-weight:600;min-width:0;padding:0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .cf-seg{padding:0;gap:0;} .cf-seg button{flex:1 1 auto;font-size:var(--fs-sm);font-weight:600;min-width:0;padding:0 6px;white-space:nowrap;} /* sized by their words so Conditioning is never cut */
   .cf-seg button.on{background:var(--text);color:var(--bg);box-shadow:none;}
   .cardio-tab{border-style:solid;}
   /* dividers, not dashes */
@@ -1385,6 +1385,13 @@
   .rir-done{font-size:var(--fs-sm);color:var(--text-dim);margin:-2px 0 var(--sp-2) 42px;}
   .tight .rir-done{margin-left:0;}
   .next-ex{display:flex;align-items:center;justify-content:center;width:100%;min-height:52px;margin:var(--sp-3) 0 0;border:0;border-radius:var(--r-sm);background:var(--text);color:var(--bg);font:inherit;font-size:var(--fs-lg);font-weight:700;cursor:pointer;}
+  /* side alignment (owner, 2026-11-19: spacing does not stick to the frame): text, glyphs and controls sit on the 16 px gutter or on their panel's inner edge */
+  .day-carousel{margin:0;padding-left:0;padding-right:0;}
+  .plan-row{padding:0;} .plan-row .ic{margin-right:-4px;}
+  .exl-head{padding:0;} .exl-head .icbtn{margin-right:-14px;} .exl-menu{margin-right:2px;}
+  .xback{margin-left:-13px;} .xtop .icbtn{margin-right:-14px;}
+  .lrow .ic{margin-right:-7px;}
+  #strInfoBtn{right:2px;}
   /* a view that is showing carries .view-on (set by setView), the hook B4 animates from */
   @media (prefers-reduced-motion: reduce){ .viewtab svg,.btn,.start-cta{transition:none;} }
 </style>
