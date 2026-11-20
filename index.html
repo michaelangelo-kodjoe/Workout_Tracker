@@ -986,7 +986,8 @@
   @media (min-width:600px){ .sheet{border:0;} }
   .sheet::before{content:"";position:absolute;top:10px;left:50%;width:36px;height:5px;margin-left:-18px;border-radius:var(--r-full);background:var(--line-strong);opacity:.6;} /* decoration only: Close, the backdrop and Escape dismiss */
   .sheet-head{align-items:center;min-height:var(--t44);margin-bottom:var(--sp-2);}
-  .sheet-head button.linkbtn{background:none;border:0;font-family:inherit;color:var(--light);cursor:pointer;display:inline-flex;align-items:center;min-height:var(--t44);} /* Close as a real button */
+  .sheet-head button.linkbtn{background:none;border:0;font-family:inherit;color:var(--light);cursor:pointer;}
+  .sheet-head .linkbtn{display:inline-flex;align-items:center;min-height:var(--t44);padding:0 12px;margin:0 -12px 0 0;} /* Close as a real button */
   .sheet-title{font-size:var(--fs-lg);font-weight:600;margin:0;}
   .sheet-sub{font-size:var(--fs-sm);color:var(--text-dim);margin-top:2px;line-height:1.45;}
   .sheet-p{font-size:var(--fs-body);color:var(--text);line-height:1.5;margin:0 0 var(--sp-3);}
@@ -1058,7 +1059,8 @@
   .rh-bars i.now{background:color-mix(in srgb,var(--green) 30%,transparent);}
   .rh-axis{font-size:var(--fs-cap);letter-spacing:.08em;text-transform:uppercase;border-top:0;}
   .rh-cap,.cal-wrap>.cal-legend{display:none;} /* captions and the calendar key open from the info buttons */
-  .cal-wrap{padding:8px 10px 12px;}
+  .cal-wrap{padding:8px 16px 12px;}
+  .cal-cell.has-session{position:relative;overflow:visible;} .cal-cell.has-session::after{content:"";position:absolute;inset:-1.5px;} /* the grid sits on the card's inner edge; the hit area still reaches 44 px */
   .cal-head{margin-bottom:4px;min-height:var(--t44);}
   .cal-head .cal-title{margin-left:auto;font-size:var(--fs-lg);font-weight:600;}
   .cal-head #calInfoBtn{margin-right:auto;}
@@ -1131,7 +1133,7 @@
   .onb-seg{border:0;border-radius:var(--r-sm);background:var(--panel-raised);}
   .onb-seg button{border-radius:var(--r-sm);font-size:var(--fs-body);font-weight:600;}
   .set-seg{padding:0;gap:0;} .set-seg button{height:var(--t44);min-width:52px;padding:0 14px;}
-  #mvWhich button{flex:1 1 0;min-width:0;} .set-days button{flex:1 0 auto;} /* a segmented control that spans its row shares it out; it no longer leaves an empty stretch */
+  #mvWhich button{flex:1 1 0;min-width:0;} .set-days button{flex:1 1 0;min-width:auto;} /* a segmented control that spans its row shares it out; it no longer leaves an empty stretch */
   /* ---------- Log: one exercise in focus (B3) ---------- */
   body.log-focus #logView .daylabel,body.log-focus #resetLink{display:none;} /* Edit Day and Clear Today's Entries are in Day Options */
   .daytabs{margin-top:0;gap:6px;padding-bottom:4px;scrollbar-width:none;}
@@ -1291,7 +1293,7 @@
   /* tonal, not outlined: cardio tiles, steppers and recent-activity chips; one segmented-control style (selected = filled light) */
   .cf-tile,.cf-rc,.cf-stp button{border-color:transparent;}
   .cf-tile{background:var(--panel);} .cf-rc,.cf-stp button{background:var(--panel-raised);}
-  .cf-seg{padding:0;gap:0;} .cf-seg button{flex:1 1 auto;font-size:var(--fs-sm);font-weight:600;min-width:0;padding:0 6px;white-space:nowrap;} /* sized by their words so Conditioning is never cut */
+  .cf-seg{padding:0;gap:0;} .cf-seg button{flex:1 1 0;font-size:var(--fs-sm);font-weight:600;min-width:auto;padding:0 4px;white-space:nowrap;} /* equal thirds; a word wider than a third (Conditioning at 320 Larger) takes what it needs */
   .cf-seg button.on{background:var(--text);color:var(--bg);box-shadow:none;}
   .cardio-tab{border-style:solid;}
   /* dividers, not dashes */
@@ -1388,8 +1390,15 @@
   /* side alignment (owner, 2026-11-19: spacing does not stick to the frame): text, glyphs and controls sit on the 16 px gutter or on their panel's inner edge */
   .day-carousel{margin:0;padding-left:0;padding-right:0;}
   .plan-row{padding:0;} .plan-row .ic{margin-right:-4px;}
-  .exl-head{padding:0;} .exl-head .icbtn{margin-right:-14px;} .exl-menu{margin-right:2px;}
-  .xback{margin-left:-13px;} .xtop .icbtn{margin-right:-14px;}
+  /* an icon button keeps its full 44 px box inside its container; the glyph is drawn to the edge inside it (a negative margin would push the box under the clip) */
+  .exl-head{padding:0;} .exl-head .icbtn,.xtop .icbtn,.card-titlerow .icbtn{margin-right:0;justify-content:flex-end;}
+  .exl-head .icbtn .ic,.xtop .icbtn .ic{margin-right:-3.3px;} .card-titlerow .icbtn .ic{margin-right:-2.8px;}
+  .exl-menu{margin-right:2px;}
+  .xback{margin-left:0;padding-left:0;} .xback .ic{margin-left:-7.3px;}
+  .card-titlerow{margin-right:0;}
+  #remList .bx{margin:-10px 0 0 0;padding:0;justify-content:flex-end;} #remList .bx svg{margin-right:-3.5px;}
+  .rhythm .rhythm-ring{margin-right:-2px;}
+  .set-chev{margin-right:-5px;}
   .lrow .ic{margin-right:-7px;}
   #strInfoBtn{right:2px;}
   /* a view that is showing carries .view-on (set by setView), the hook B4 animates from */
@@ -3730,7 +3739,7 @@ function muscleTile(ex){
 }
 // "3 sets • 6–10 reps • 115 lb" (a hold reads seconds, a bodyweight lift "Bodyweight"); partway through the list reads "1/3 sets"
 function repsText(ex){ const m=String(ex.target||'').match(/\d+\s*x\s*([\d\-–]+)\s*(s)?/i), r=m?m[1].replace('-','–'):''; return isTimedTarget(ex.target)?r+' sec':r+' reps'; }
-function weightText(ex,m){ if(ex.start===0) return 'Bodyweight'; const w=m.sug; if(typeof w==='number'&&w!==-1) return dispWeight(w)+' '+unitLabel(); return w===-1?'Find Weight':'Add Body Weight'; }
+function weightText(ex,m){ if(ex.start===0) return 'Bodyweight'; const w=m.sug; if(typeof w==='number'&&w!==-1) return dispWeight(w)+' '+unitLabel(); return w===-1?'Find a Weight':'Add Body Weight'; }
 function exSummary(ex,m,state,partial){ const n=state.sets.length, d=state.sets.filter(x=>x.done).length; return `${partial&&d&&d<n?d+'/'+n:n} sets • ${repsText(ex)} • ${weightText(ex,m)}`; }
 // a note or a tip is waiting behind the "..." (the dot on the button): same cases the More sheet's content comes from
 function hasNoteOrTip(ex,day,m){
@@ -3744,7 +3753,7 @@ function renderList(day,ord){
   ord.forEach((ex,i)=>{
     const st=ensureState(ex), m=exModel(ex), dn=done(i), part=!dn&&st.sets.some(s=>s.done), sum=exSummary(ex,m,st,true), flag=hasNoteOrTip(ex,day,m);
     const row=document.createElement('div'); row.className='exl-row'+(dn?' done':''); row.setAttribute('role','listitem');
-    row.innerHTML=`<button type="button" class="exl-open" data-i="${i}" aria-label="${esc(ex.name)}, ${esc(sum)}, ${dn?'finished':part?'in progress':'not started'}"><span class="exl-tile">${muscleTile(ex)}${dn?`<i class="exl-ck" aria-hidden="true">${IC.check}</i>`:''}</span><span class="exl-txt"><span class="exl-nm">${esc(ex.name)}${isPlateau(ex)?'<i class="exl-pl" role="img" aria-label="Plateau"></i>':''}</span><span class="exl-sm">${esc(sum)}</span></span></button><button type="button" class="icbtn exl-menu" data-i="${i}" aria-label="${esc(ex.name)} options${flag?', has notes or tips':''}" aria-haspopup="dialog">${flag?'<i class="ndot" aria-hidden="true"></i>':''}${IC.dots}</button>`;
+    row.innerHTML=`<button type="button" class="exl-open" data-i="${i}" aria-label="${esc(ex.name)}, ${esc(sum)}, ${dn?'finished':part?'in progress':'not started'}"><span class="exl-tile">${muscleTile(ex)}${dn?`<i class="exl-ck" aria-hidden="true">${IC.check}</i>`:''}</span><span class="exl-txt"><span class="exl-nm">${esc(ex.name)}${isPlateau(ex)?'<i class="exl-pl" role="img" aria-label="Plateau"></i>':''}</span><span class="exl-sm">${esc(sum).replace(/(• )([^•]+)$/,(m,a,b)=>a+b.replace(/ /g,'\u00a0'))}</span></span></button><button type="button" class="icbtn exl-menu" data-i="${i}" aria-label="${esc(ex.name)} options${flag?', has notes or tips':''}" aria-haspopup="dialog">${flag?'<i class="ndot" aria-hidden="true"></i>':''}${IC.dots}</button>`;
     rows.appendChild(row);
   });
   wrap.querySelectorAll('.exl-open').forEach(b=>b.onclick=()=>openExercise(+b.dataset.i));
@@ -3869,7 +3878,7 @@ function renderExercise(ex,day){
     // the focus layout draws one exercise at a time, always open (the stored `open` flag stays in the draft and is ignored, LF-6)
     const card=document.createElement('div'); card.className='exercise open'+(complete?' complete':'');
     const more=document.createElement('div'); more.className='more-body'; card._more=more; // what the More sheet shows: tools, tips, bar, notes, details
-    const short=(ex.start===0&&typeof sug==='number')?'':sug===null?'Add Body Weight':sug===-1?'Find a Weight':`${dispWeight(sug)} ${unitLabel()}`;
+    const short=(typeof sug==='number'&&sug!==-1&&ex.start!==0)?`${dispWeight(sug)} ${unitLabel()}`:''; // the suggested weight in words, for the details (the row and list summaries use weightText)
     const head=document.createElement('div'); head.className='xh';
     head.innerHTML=`<div class="xtop"><button type="button" class="xback" id="backBtn">${IC.chevL}<span>Exercises</span></button><button type="button" class="icbtn" id="moreBtn" aria-label="More About This Exercise" aria-haspopup="dialog">${IC.dots}</button></div>
       <h3 class="xh-name" tabindex="-1">${esc(ex.name)}</h3>
