@@ -1389,6 +1389,7 @@
   .next-ex{display:flex;align-items:center;justify-content:center;width:100%;min-height:52px;margin:var(--sp-3) 0 0;border:0;border-radius:var(--r-sm);background:var(--text);color:var(--bg);font:inherit;font-size:var(--fs-lg);font-weight:700;cursor:pointer;}
   /* side alignment (owner, 2026-11-19: spacing does not stick to the frame): text, glyphs and controls sit on the 16 px gutter or on their panel's inner edge */
   .day-carousel{margin:0;padding-left:0;padding-right:0;}
+  .day-card .dtag{white-space:normal;line-height:1.2;} /* Next Session wraps to two lines on a narrow card (three-day routines) */
   .plan-row{padding:0;} .plan-row .ic{margin-right:-4px;}
   /* an icon button keeps its full 44 px box inside its container; the glyph is drawn to the edge inside it (a negative margin would push the box under the clip) */
   .exl-head{padding:0;} .exl-head .icbtn,.xtop .icbtn,.card-titlerow .icbtn{margin-right:0;justify-content:flex-end;}
@@ -4154,8 +4155,8 @@ function placeCarousel(panel,prevLeft){
   else if(prevLeft) car.scrollLeft=prevLeft;
   edgeFade(car);
 }
-// the loaded day is "Today" until a lift has been logged today; after that it's the next one in the rotation
-function dayTagText(){ const t0=new Date(); t0.setHours(0,0,0,0); return sessions.some(x=>!x.isCardio&&x.t>=t0.getTime())?'Next':'Today'; }
+// the loaded day, the one Start opens, is marked Next Session on its card (owner, 2026-11-19: not Today)
+function dayTagText(){ return 'Next Session'; }
 function renderHome(){ renderHomeBody(); placeDeloadLine(); }
 function renderHomeBody(){
   updateBlockUI(); updateCardioLiveBanner();
