@@ -237,6 +237,12 @@
   .setdone.on.pop{animation:popcheck .4s ease;} /* only the tap that checks it: a redraw rebuilds every check, and replaying the pop made untouched ones pulse */
   @keyframes popcheck{0%{transform:scale(.7);}55%{transform:scale(1.18);}100%{transform:scale(1);}}
   .delta-up{font-family:var(--font);font-size:var(--fs-sm);color:var(--green);white-space:nowrap;}
+  .guide{margin:0 0 var(--sp-3);border-radius:var(--r-sm);background:var(--panel-raised);overflow:hidden;}
+  .guide-h{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:var(--t44);padding:0 var(--sp-3);background:none;border:0;color:var(--text);font:inherit;font-size:var(--fs-body);font-weight:600;text-align:left;cursor:pointer;}
+  .guide-h .ic{width:18px;height:18px;flex:none;color:var(--text-dim);}
+  .guide[data-open="1"] .guide-h .ic{transform:rotate(180deg);}
+  .guide-ol{margin:0;padding:0 var(--sp-3) var(--sp-3) calc(var(--sp-3) + 22px);font-size:var(--fs-body);line-height:1.5;color:var(--text);}
+  .guide-ol[hidden]{display:none;} .guide-ol li{padding:3px 0;} .guide-ol li::marker{color:var(--text-dim);}
   .first-log-note{font-size:var(--fs-sm);line-height:1.55;color:var(--light);background:rgba(79,163,209,.08);border-left:2px solid var(--light);padding:9px 11px;border-radius:var(--r-sm);margin:0 0 10px;}
   .addset{display:block;width:100%;height:var(--t44);margin:4px 0 0;padding:0;border:1px dashed var(--line-strong);border-radius:var(--r-sm);background:none;color:var(--text-dim);font:13px var(--font);cursor:pointer;}
   .notes{width:100%;margin-top:12px;background:var(--panel-raised);border:1px solid var(--line);border-radius:var(--r-sm);color:var(--text);padding:12px;font-size:var(--fs-sm);font-family:var(--font);resize:vertical;min-height:34px;}
@@ -2415,6 +2421,7 @@ const FULL_CATALOG=JSON.parse(document.getElementById('fullCatalog').textContent
 let currentDay='d1', todayData={}, lastSessionData={}, sessionCount=0, recovery={}, familiarity={}, soreOverride={}, recoveryLog=[], hist={}, sessions=[], notes={}, lastByName={}, bodyweight=[], settings={rest:90, auto:true, autoBackup:true, smartRest:true, unit:'lb', autoRotate:true, blockWeeks:4, neverSuggest:[], equipFilter:EQUIP_TYPES.slice(), name:'', onboarded:false, textSize:'standard'}, view='home';
 let dayStartTimes={}; // persisted under 'dayStart' so a reload mid-session doesn't reset the session duration to 1m
 let pendingBlockReview=false; // set by finishSession() when the block is complete; the review sheet opens once the celebration screen closes rather than underneath its full-screen overlay
+const guideCollapsed=new Set(); // lifts whose Find a Weight guide the user collapsed this launch
 let lastDeload=0, deloadStart=0, deloadEnd=0; // deloadEnd: optional, set when End Early is tapped; missing or older than lastDeload means the full 7 days
 
 // ---------- helpers ----------
@@ -3971,7 +3978,17 @@ function renderExercise(ex,day){
     else if(estFrom){ const fn=document.createElement('div'); fn.className='first-log-note'; fn.textContent=`New lift — the weight is a conservative estimate from ${estFrom} (same muscle group, adjusted for the implement and rep range). Adjust it to what feels right; Lift Log learns from what you log.`; more.appendChild(fn); }
     // first-session effort cue for a New or Experienced build: only on a rep-based, loadable lift with no history anywhere; it never writes or changes anything
     if((day.lvl==='new'||day.lvl==='exp')&&!isTimedTarget(ex.target)&&ex.start!==0&&ex.step!==0&&!(hist[ex.name]||[]).length&&!lastByName[ex.name]){
-      const cu=document.createElement('div'); cu.className='first-log-note'; cu.textContent=day.lvl==='new'?'Start light and leave 3 or more Reps Left.':'Work up to a weight that leaves about 2 Reps Left.'; more.appendChild(cu); }
+      if(day.lvl==='new'&&sug===-1){
+        // New lifter, loadable lift, no weight to suggest: the Find a Weight guide (five steps, no numbers). It hides once any set of the lift is checked Done.
+        if(!state.sets.some(x=>x.done)){
+          const open=!guideCollapsed.has(ex.name), gid='guide-'+ex.name.replace(/[^A-Za-z0-9]+/g,'-');
+          const g=document.createElement('div'); g.className='guide'; g.dataset.open=open?'1':'0';
+          g.innerHTML=`<button type="button" class="guide-h" aria-expanded="${open}" aria-controls="${gid}"><span>Find a Weight</span>${IC.chevD}</button><ol class="guide-ol" id="${gid}"${open?'':' hidden'}><li>Start with a weight that feels very light.</li><li>Do your reps, then enter Reps Left.</li><li>If you have plenty of Reps Left, add a little weight and go again.</li><li>Stop adding when the last reps feel hard but your form stays clean.</li><li>Log that weight. Lift Log suggests one next time.</li></ol>`;
+          g.querySelector('.guide-h').onclick=e=>{ const b=e.currentTarget, o=g.dataset.open==='1'; g.dataset.open=o?'0':'1'; b.setAttribute('aria-expanded',String(!o)); g.querySelector('.guide-ol').hidden=o; if(o) guideCollapsed.add(ex.name); else guideCollapsed.delete(ex.name); };
+          const hw=more.querySelector('.howto'); more.insertBefore(g,hw?hw.nextSibling:more.firstChild); // right under the How To, Swap, Demo row
+        }
+      } else {
+      const cu=document.createElement('div'); cu.className='first-log-note'; cu.textContent=day.lvl==='new'?'Start light and leave 3 or more Reps Left.':'Work up to a weight that leaves about 2 Reps Left.'; more.appendChild(cu); } }
 
     const timed=m.timed;
     // bodyweight lifts (split squats, dips, pull-ups…) log bodyweight plus whatever is held or worn: s.add is that
