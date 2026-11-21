@@ -4250,9 +4250,11 @@ async function finishSession(){
   // since finishing also fires recovery, rotation-count and progress bookkeeping for the whole day at once.
   const allSetsDone=day.exercises.every(ex=>{ const s=todayData[ex.name]; return s&&s.sets.every(x=>x.done); });
   if(!allSetsDone){
-    const skipped=day.exercises.filter(ex=>{ const s=todayData[ex.name]; return !s||!s.sets.some(isLogged); }).length;
+    const skippedList=day.exercises.filter(ex=>{ const s=todayData[ex.name]; return !s||!s.sets.some(isLogged); }), skipped=skippedList.length;
+    // name the lifts so the person can go back to the right one: up to three by name, more than three as two names and a count
+    const nm=skippedList.map(e=>e.name), namesTxt=nm.length<=3?(nm.length===1?nm[0]:nm.slice(0,-1).join(', ')+(nm.length===2?' and ':', and ')+nm[nm.length-1]):nm.slice(0,2).join(', ')+' and '+(nm.length-2)+' more';
     const msg=skipped
-      ? `${skipped} exercise${skipped===1?'':'s'} still ${skipped===1?"hasn't":"haven't"} been logged. Log this session anyway?`
+      ? `${skipped} exercise${skipped===1?'':'s'} still ${skipped===1?"hasn't":"haven't"} been logged: ${namesTxt}. Log this session anyway?`
       : `Not every set is checked off yet. Log this session as-is?`;
     if(!await confirmSheet(msg, 'Log It Anyway')) return;
   }
