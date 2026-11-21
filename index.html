@@ -1369,7 +1369,7 @@
   .exl-nm{font-size:var(--fs-lg);font-weight:600;line-height:1.2;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
   .exl-row.done .exl-nm{color:var(--text-dim);}
   .exl-sm{display:block;font-size:var(--fs-body);color:var(--text-dim);line-height:1.25;}
-  .exl-pl{display:inline-block;width:8px;height:8px;margin-left:8px;border-radius:var(--r-full);background:var(--amber);vertical-align:middle;}
+  .exl-plb{display:inline-block;margin-left:8px;padding:1px 7px;border-radius:var(--r-full);font-size:var(--fs-sm);font-weight:600;letter-spacing:.02em;line-height:16px;vertical-align:middle;color:var(--amber);background:rgba(229,177,76,.14);}
   .exlist.narrow .exl-tile{display:none;} .exlist.narrow .exl-open{padding-left:var(--sp-4);} .exlist.narrow .exl-nm{-webkit-line-clamp:3;}
   @media (max-width:339px){ .exl-tile{width:var(--t44);height:var(--t44);} .exl-open{gap:10px;padding-left:12px;} .exl-sm{font-size:var(--fs-sm);} }
   /* inside an exercise: no day tabs (they live on the list), Back to the list, one "..." */
@@ -1693,9 +1693,9 @@
 <div class="sheet" id="adSheet"><div class="sheet-head"><div><div class="sheet-title" id="adSheetTitle" tabindex="-1">Add an Exercise</div><div class="sheet-sub" id="adSheetSub"></div></div><span class="linkbtn" id="adSheetClose">Close</span></div><div id="adSheetBody"></div></div>
 <div class="sheet-bg" id="remBg"></div>
 <div class="sheet" id="remSheet"><div class="sheet-head"><h2 class="sheet-title" id="remTitle" tabindex="-1">Reminders</h2><button type="button" class="linkbtn" id="remClose">Close</button></div><div id="remList">
+      <div class="banner has-x" id="deloadBanner" style="display:none"><div class="bmain"><span id="deloadBannerTxt"></span><div class="bfoot"><button type="button" class="linkbtn" id="deloadBannerBtn">Plan a Deload Week</button></div></div><button type="button" class="bx" aria-label="Dismiss Deload Reminder"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
       <div class="banner has-x" id="backupBanner" style="display:none"><div class="bmain"><span id="backupBannerTxt">It's been a week since your last backup.</span><div class="bfoot"><button type="button" class="linkbtn" id="bannerBtn">Back Up Now</button></div></div><button type="button" class="bx" aria-label="Dismiss Backup Reminder"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
       <div class="banner has-x" id="blockBanner" style="display:none"><div class="bmain"><span id="blockBannerTxt">Your training block is complete.</span><div class="bfoot"><button type="button" class="linkbtn" id="blockBannerBtn">Review What's Changing</button></div></div><button type="button" class="bx" aria-label="Dismiss Training Block Reminder"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
-      <div class="banner has-x" id="deloadBanner" style="display:none"><div class="bmain"><span id="deloadBannerTxt"></span><div class="bfoot"><button type="button" class="linkbtn" id="deloadBannerBtn">Plan a Deload Week</button></div></div><button type="button" class="bx" aria-label="Dismiss Deload Reminder"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
       <div class="banner has-x" id="bwBanner" style="display:none"><div class="bmain"><span id="bwBannerTxt">It's been a week since you last logged your weight.</span><div class="bfoot"><button type="button" class="linkbtn" id="bwBannerBtn">Log It Now</button></div></div><button type="button" class="bx" aria-label="Dismiss Body Weight Reminder"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
 </div></div>
 <div class="sheet-bg" id="moreBg"></div>
@@ -2791,7 +2791,7 @@ function updateBlockUI(){
 }
 // ---------- Home reminders: one row on Home, the list in a sheet ----------
 // bannerQueue is the only place that decides order: the due ids, highest priority first.
-const BANNER_ORDER=['cardioLiveBanner','backupBanner','blockBanner','deloadBanner','bwBanner'];
+const BANNER_ORDER=['cardioLiveBanner','deloadBanner','backupBanner','blockBanner','bwBanner']; // deload before backup (owner, 2026-11-21): a due deload shows first; backup is one tap away in the Reminders list
 function bannerQueue(due){ return BANNER_ORDER.filter(id=>due[id]&&!bannerDismissed.has(id)); }
 let backupFading=false, bannerFocusPending=false, bannerFocusId=null;
 // X on a banner: block, deload and body weight hide for this session only (an in-memory set; an id leaves it when its condition stops being due).
@@ -3756,7 +3756,7 @@ function renderList(day,ord){
   ord.forEach((ex,i)=>{
     const st=ensureState(ex), m=exModel(ex), dn=done(i), part=!dn&&st.sets.some(s=>s.done), sum=exSummary(ex,m,st,true), flag=hasNoteOrTip(ex,day,m);
     const row=document.createElement('div'); row.className='exl-row'+(dn?' done':''); row.setAttribute('role','listitem');
-    row.innerHTML=`<button type="button" class="exl-open" data-i="${i}" aria-label="${esc(ex.name)}, ${esc(sum)}, ${dn?'finished':part?'in progress':'not started'}"><span class="exl-tile">${muscleTile(ex)}${dn?`<i class="exl-ck" aria-hidden="true">${IC.check}</i>`:''}</span><span class="exl-txt"><span class="exl-nm">${esc(ex.name)}${isPlateau(ex)?'<i class="exl-pl" role="img" aria-label="Plateau"></i>':''}</span><span class="exl-sm">${esc(sum).replace(/(• )([^•]+)$/,(m,a,b)=>a+b.replace(/ /g,'\u00a0'))}</span></span></button><button type="button" class="icbtn exl-menu" data-i="${i}" aria-label="${esc(ex.name)} options${flag?', has notes or tips':''}" aria-haspopup="dialog">${flag?'<i class="ndot" aria-hidden="true"></i>':''}${IC.dots}</button>`;
+    row.innerHTML=`<button type="button" class="exl-open" data-i="${i}" aria-label="${esc(ex.name)}, ${esc(sum)}, ${dn?'finished':part?'in progress':'not started'}${isPlateau(ex)?', plateau':''}"><span class="exl-tile">${muscleTile(ex)}${dn?`<i class="exl-ck" aria-hidden="true">${IC.check}</i>`:''}</span><span class="exl-txt"><span class="exl-nm">${esc(ex.name)}${isPlateau(ex)?'<span class="exl-plb" role="img" aria-label="Plateau: no progress in 3 sessions">Plateau</span>':''}</span><span class="exl-sm">${esc(sum).replace(/(• )([^•]+)$/,(m,a,b)=>a+b.replace(/ /g,'\u00a0'))}</span></span></button><button type="button" class="icbtn exl-menu" data-i="${i}" aria-label="${esc(ex.name)} options${flag?', has notes or tips':''}" aria-haspopup="dialog">${flag?'<i class="ndot" aria-hidden="true"></i>':''}${IC.dots}</button>`;
     rows.appendChild(row);
   });
   wrap.querySelectorAll('.exl-open').forEach(b=>b.onclick=()=>openExercise(+b.dataset.i));
@@ -4250,9 +4250,11 @@ async function finishSession(){
   // since finishing also fires recovery, rotation-count and progress bookkeeping for the whole day at once.
   const allSetsDone=day.exercises.every(ex=>{ const s=todayData[ex.name]; return s&&s.sets.every(x=>x.done); });
   if(!allSetsDone){
-    const skipped=day.exercises.filter(ex=>{ const s=todayData[ex.name]; return !s||!s.sets.some(isLogged); }).length;
+    const skippedList=day.exercises.filter(ex=>{ const s=todayData[ex.name]; return !s||!s.sets.some(isLogged); }), skipped=skippedList.length;
+    // name the lifts so the person can go back to the right one: up to three by name, more than three as two names and a count
+    const nm=skippedList.map(e=>e.name), namesTxt=nm.length<=3?(nm.length===1?nm[0]:nm.slice(0,-1).join(', ')+(nm.length===2?' and ':', and ')+nm[nm.length-1]):nm.slice(0,2).join(', ')+' and '+(nm.length-2)+' more';
     const msg=skipped
-      ? `${skipped} exercise${skipped===1?'':'s'} still ${skipped===1?"hasn't":"haven't"} been logged. Log this session anyway?`
+      ? `${skipped} exercise${skipped===1?'':'s'} still ${skipped===1?"hasn't":"haven't"} been logged: ${namesTxt}. Log this session anyway?`
       : `Not every set is checked off yet. Log this session as-is?`;
     if(!await confirmSheet(msg, 'Log It Anyway')) return;
   }
