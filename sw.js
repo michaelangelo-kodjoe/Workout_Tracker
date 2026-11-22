@@ -12,6 +12,11 @@
 // worker (no respondWith for it), so the browser's update check always reaches the network.
 // RELEASE: bump this together with BUILD_ID in index.html (they must be equal; scripts/check.sh checks it).
 const CACHE_VERSION = 'liftlog-v90';
+// Exercise photos live in their own cache. Its name does NOT contain CACHE_VERSION, so the shell bump every release never wipes it;
+// rename it (for example to -v2) only to flush the photos on purpose. A photo is stored the first time it is fetched online (the first
+// time that lift's How To opens), then answered from here with no network. Nothing photo-related is fetched at install.
+const PHOTO_CACHE = 'liftlog-photos-v1';
+const PHOTO_PATH = new URL('./photos/', self.location).pathname;
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './favicon-32.png', './apple-touch-icon.png'];
 const INDEX = new URL('./index.html', self.location).href;
 const ROOT = new URL('./', self.location).href;
@@ -49,7 +54,7 @@ self.addEventListener('install', e=>{
 self.addEventListener('activate', e=>{
   // Old caches go only here, and only after install proved this cache holds a usable index.html.
   e.waitUntil(
-    caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE_VERSION).map(k=>caches.delete(k))))
+    caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE_VERSION && k!==PHOTO_CACHE).map(k=>caches.delete(k))))
       .then(()=>self.clients.claim())
   );
 });
@@ -64,6 +69,16 @@ self.addEventListener('fetch', e=>{
   if(e.request.method!=='GET') return;
   const url=new URL(e.request.url);
   if(url.origin===self.location.origin && url.pathname.endsWith('/sw.js')) return; // never answered or stored by the worker
+  if(url.origin===self.location.origin && url.pathname.startsWith(PHOTO_PATH)){
+    // Bundled exercise photo: cached copy first; on a miss, fetch and keep a good image. Any cache error falls back to the plain network.
+    e.respondWith(caches.open(PHOTO_CACHE).then(async c=>{
+      const hit=await c.match(e.request); if(hit) return hit;
+      const res=await fetch(e.request);
+      if(res.ok && !res.redirected && (res.headers.get('content-type')||'').toLowerCase().startsWith('image/')) e.waitUntil(c.put(e.request,res.clone()).catch(()=>{}));
+      return res;
+    }).catch(()=>fetch(e.request)));
+    return;
+  }
   const isNav=e.request.mode==='navigate';
   const isShell=isNav || (url.origin===self.location.origin && SHELL.some(f=>new URL(f,self.location).href===url.href));
   if(!isShell){

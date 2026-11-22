@@ -47,3 +47,7 @@ This repo is hosted on GitHub Pages, served from the `main` branch. Pushing to `
 1. `git revert -m 1 <merge-commit>` on `main`.
 2. Bump `CACHE_VERSION` in `sw.js` again so installed copies notice the change.
 3. Push `main`.
+
+## Exercise photos
+
+The demo photos in `photos/` come from the [free-exercise-db](https://github.com/yuhonas/free-exercise-db) project (Unlicense). Where those photos originally came from is unconfirmed, so they are used here for personal use only and would need replacing before any wider or App Store release. They are resized to 260 px wide and kept in one folder so they are easy to swap or remove.
