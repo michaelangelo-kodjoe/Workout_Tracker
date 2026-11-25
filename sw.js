@@ -11,7 +11,7 @@
 // installs to pick up (in practice every deploy). sw.js itself is never answered from a cache or stored by this
 // worker (no respondWith for it), so the browser's update check always reaches the network.
 // RELEASE: bump this together with BUILD_ID in index.html (they must be equal; scripts/check.sh checks it).
-const CACHE_VERSION = 'liftlog-v91';
+const CACHE_VERSION = 'liftlog-v92';
 // Exercise photos live in their own cache. Its name does NOT contain CACHE_VERSION, so the shell bump every release never wipes it;
 // rename it (for example to -v2) only to flush the photos on purpose. A photo is stored the first time it is fetched online (the first
 // time that lift's How To opens), then answered from here with no network. Nothing photo-related is fetched at install.
