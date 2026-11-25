@@ -2930,6 +2930,7 @@ async function useNormalWeight(ex,dayId,t){
   const key=pdSkipKey(dayId,ex.name), had=Object.prototype.hasOwnProperty.call(liftDeload.skip,key), prev=liftDeload.skip[key];
   if(await setLiftSkip(key,t)===false) return;
   render();
+  { const h=document.querySelector('.xh-name'); if(h) h.focus({preventScroll:true}); } // the tapped button is gone after render(): keep focus on the lift, not the page body
   undoState={id:'liftDeload',key,prev:had?prev:null,dayId};
   document.getElementById('undoMsg').textContent=`${ex.name} back to normal weight`;
   document.getElementById('undoToast').hidden=false; clearTimeout(undoTimer); undoTimer=setTimeout(hideUndo,6000);
