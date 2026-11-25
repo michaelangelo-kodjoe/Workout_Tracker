@@ -1768,7 +1768,7 @@
 <div class="sheet" id="deloadSheet">
   <div class="sheet-head"><div><div class="sheet-title" id="deloadTitle">Plan a Deload Week</div><div class="sheet-sub" id="deloadStats"></div></div><span class="linkbtn" id="deloadClose">Close</span></div>
   <div class="plateau-tip" style="margin-bottom:14px">A deload is a planned lighter week. It's optional, and you can end it early.</div>
-  <div class="empty" style="margin-bottom:10px">Starting one suggests weights about 10% lighter across every exercise for the next 7 days. Nothing about your logged history changes — it only affects the suggested working weight.</div>
+  <div class="empty" style="margin-bottom:10px">Starting one makes the suggested weights a bit lighter across every exercise for the next 7 days. Nothing about your logged history changes — it only affects the suggested working weight.</div>
   <div class="row" style="gap:10px;flex-wrap:nowrap">
     <button class="btn" id="deloadNotNow" style="flex:1">Not Now</button>
     <button class="btn primary" id="startDeloadBtn" style="flex:1">Start Deload Week</button>
@@ -4126,10 +4126,13 @@ function renderExercise(ex,day){
     }
     if(plat){ const pt=document.createElement('div'); pt.className='plateau-tip';
       const why=`3 sessions in a row below ${pd.lo} reps at ${dispWeight(pd.w)} ${unitLabel()}.`, vr='<span class="linkbtn" style="color:var(--amber)" data-act="variation">';
-      pt.innerHTML=pd.skipped?`${why} You kept your normal weight, so one more session below ${pd.lo} reps brings the lighter session back. You can also ${vr}try a variation</span>.`
+      const wk=' If several lifts feel stuck at once, <span class="linkbtn" style="color:var(--amber)" data-act="deload">consider a full deload week</span>.'; // owner 2026-11-25: keep this way into a deload week
+      pt.innerHTML=pd.skipped?`${why} You kept your normal weight, so one more session below ${pd.lo} reps brings the lighter session back. You can also ${vr}try a variation</span>.${wk}`
         :(isDeloadActive()||returnEaseActive())?`${why} Today's weights are already a bit lighter. You can also ${vr}try a variation</span>.`
-        :`${why} ${vr}Try a variation</span> or switch the rep range for a few weeks.`;
-      pt.querySelector('[data-act="variation"]').onclick=()=>openSwap(currentDay, ex); more.appendChild(pt); }
+        :`${why} ${vr}Try a variation</span> or switch the rep range for a few weeks.${wk}`;
+      pt.querySelector('[data-act="variation"]').onclick=()=>openSwap(currentDay, ex);
+      const dlk=pt.querySelector('[data-act="deload"]'); if(dlk) dlk.onclick=openDeloadSheet;
+      more.appendChild(pt); }
     if(ex.rotPrev){ const idx=day.exercises.indexOf(ex); const rt=document.createElement('div'); rt.className='plateau-tip'; rt.innerHTML=`Swapped in at the start of this block (was ${esc(ex.rotPrev.name)}). <span class="linkbtn" style="color:var(--amber)" data-act="undo">Undo</span> · <span class="linkbtn" style="color:var(--amber)" data-act="never">Never Suggest This</span>`; rt.querySelector('[data-act="undo"]').onclick=()=>undoRotation(day,idx); rt.querySelector('[data-act="never"]').onclick=()=>rejectRotation(day,idx); more.appendChild(rt); }
     if(sug===-1){ const fn=document.createElement('div'); fn.className='first-log-note'; fn.textContent='New lift — no history yet. Log a comfortable first set below; Lift Log will suggest a weight next time from what you log now.'; more.appendChild(fn); }
     else if(estFrom){ const fn=document.createElement('div'); fn.className='first-log-note'; fn.textContent=`New lift — the weight is a conservative estimate from ${estFrom} (same muscle group, adjusted for the implement and rep range). Adjust it to what feels right; Lift Log learns from what you log.`; more.appendChild(fn); }
@@ -6672,7 +6675,7 @@ document.getElementById('deloadBannerBtn').onclick=openDeloadSheet;
 document.getElementById('startDeloadBtn').onclick=async()=>{
   deloadStart=Date.now(); lastDeload=deloadStart; deloadEnd=0;
   await sset('deloadStart',deloadStart); await sset('lastDeload',lastDeload); await sset('deloadEnd',0);
-  closeDeloadSheet(); updateDeloadUI(); render(); showToast('Deload week started — suggestions are ~10% lighter');
+  closeDeloadSheet(); updateDeloadUI(); render(); showToast('Deload week started — suggestions are a bit lighter');
 };
 document.getElementById('exportBtn').onclick=()=>doExport();
 document.getElementById('bannerBtn').onclick=()=>{ bannerFocusPending=true; doExport(); };
