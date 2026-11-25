@@ -1386,6 +1386,12 @@
   .exl-row.done .exl-nm{color:var(--text-dim);}
   .exl-sm{display:block;font-size:var(--fs-body);color:var(--text-dim);line-height:1.25;}
   .exl-plb{display:inline-block;margin-left:8px;padding:1px 7px;border-radius:var(--r-full);font-size:var(--fs-sm);font-weight:600;letter-spacing:.02em;line-height:16px;vertical-align:middle;color:var(--amber);background:rgba(229,177,76,.14);}
+  /* per-lift deload: blue (an action the app took), the amber Plateau tag's shape; note and Use Normal Weight on the exercise screen */
+  .exl-dlb{display:inline-block;margin-left:8px;padding:1px 7px;border-radius:var(--r-full);font-size:var(--fs-sm);font-weight:600;font-style:normal;letter-spacing:.02em;line-height:16px;vertical-align:middle;color:var(--light);background:rgba(79,163,209,.14);}
+  .dl-row{margin:0 0 var(--sp-3);padding:9px 11px 0;border-left:2px solid var(--light);background:rgba(79,163,209,.08);border-radius:var(--r-sm);}
+  .dl-note{margin:0;font-size:var(--fs-sm);line-height:1.5;color:var(--text);}
+  .dl-row .linkbtn{background:none;border:0;margin:0;color:var(--light);font-family:inherit;cursor:pointer;display:flex;align-items:center;min-height:var(--t44);padding:0;font-size:var(--fs-sm);text-decoration:none;}
+  .sheet-note.pd{border-left-color:var(--light);}
   .exlist.narrow .exl-tile{display:none;} .exlist.narrow .exl-open{padding-left:var(--sp-4);} .exlist.narrow .exl-nm{-webkit-line-clamp:3;}
   @media (max-width:339px){ .exl-tile{width:var(--t44);height:var(--t44);} .exl-open{gap:10px;padding-left:12px;} .exl-sm{font-size:var(--fs-sm);} }
   /* inside an exercise: no day tabs (they live on the list), Back to the list, one "..." */
@@ -1561,7 +1567,7 @@
       <h3>Conditioning</h3>
       <div id="condStats"></div>
     </div>
-    <div class="note-sm">Each percentage is how much a lift has changed since the numbers you started with. It weighs both the load and the reps, so adding reps at the same weight counts too. "Relative to body weight" divides your strength by your logged weight, so getting stronger while staying the same size counts extra.<span id="strDlFoot" hidden> Deload sessions, the lighter weeks you plan on purpose, are left out of every percentage, plateau badge and PR.</span></div>
+    <div class="note-sm">Each percentage is how much a lift has changed since the numbers you started with. It weighs both the load and the reps, so adding reps at the same weight counts too. "Relative to body weight" divides your strength by your logged weight, so getting stronger while staying the same size counts extra.<span id="strDlFoot" hidden> Deload sessions, the lighter weeks and single lighter sessions the app plans, are left out of every percentage, Plateau label and PR.</span></div>
   </section>
 
   <section id="moreView" style="display:none">
@@ -1874,7 +1880,7 @@ const store = {
     else this.mem[k]=v;
     return true; }catch(e){ console.error(e); this.saveFailed=true; return false; } }
 };
-const KEYS = ['lastBackup','program','recovery','familiarity','soreOverride','recoveryLog','hist','sessions','notes','lastByName','bodyweight','settings','meta:sessionCount','meta:histMigratedV2','today:d1','today:d2','today:d3','today:d4','today:cardio','today:cardioDay','last:d1','last:d2','last:d3','last:d4','lastDeload','deloadStart','deloadEnd','dayStart','blockStart','blockNum','baselines','backupSnoozeUntil','routineId','programs','quiz','returnEase'];
+const KEYS = ['lastBackup','program','recovery','familiarity','soreOverride','recoveryLog','hist','sessions','notes','lastByName','bodyweight','settings','meta:sessionCount','meta:histMigratedV2','today:d1','today:d2','today:d3','today:d4','today:cardio','today:cardioDay','last:d1','last:d2','last:d3','last:d4','lastDeload','deloadStart','deloadEnd','dayStart','blockStart','blockNum','baselines','backupSnoozeUntil','routineId','programs','quiz','returnEase','liftDeload'];
 const RECOVERY_LOG_CAP=2000;
 const RECOVERY_HOURS = { 'chest-upper':72, 'chest-mid':72, 'chest-lower':72, 'back-lats':72, 'back-traps':72, quads:72, hamstrings:72, glutes:72, lowerback:72, 'delt-front':48, 'delt-lateral':48, 'delt-rear':48, biceps:48, brachialis:48, 'triceps-lateral':48, 'triceps-long':48, 'forearm-flexor':48, 'forearm-extensor':48, 'calves-gastroc':48, 'calves-soleus':48, 'abs-upper':36, 'abs-lower':36, 'abs-obliques':36 };
 const MUSCLE_LABEL = { chest:'Chest', back:'Back', quads:'Quads', hamstrings:'Hamstrings', glutes:'Glutes', lowerback:'Lower back', shoulders:'Shoulders', biceps:'Biceps', triceps:'Triceps', forearms:'Forearms', calves:'Calves', abs:'Core' };
@@ -2544,12 +2550,7 @@ function suggestWeight(ex,last){
   // lift's own step (a 10 lb machine stack can't do 212.5) and at least one step lighter — rounding to the nearest
   // 2.5 left a 12.5 lb lift at 12.5 for the whole deload week. Forcing that step only while it's a fifth of the load
   // or less: on a 7.5 lb curl with 2.5 lb jumps it would be a 33% cut, well past the ~10% the banner promises.
-  if(w && (isDeloadActive() || (mw && returnEaseActive()))){ // an accepted Welcome Back easy start uses the same about-10% rule, only for lifts with history
-    const base=mw||w, step=ex.step||2.5;
-    w=Math.round(base*0.9/step)*step;
-    if(w>=base) w=step/base<=0.2?base-step:base;
-    if(w<=0) w=base;
-  }
+  if(w && (isDeloadActive() || (mw && returnEaseActive()))) w=deloadCut(mw||w, ex.step); // an accepted Welcome Back easy start uses the same about-10% rule, only for lifts with history
   return w;
 }
 // when a slot has no same-day history but this exact lift has been logged under a different day (rotation
@@ -2612,10 +2613,83 @@ function estimateFromRelated(ex){
   const step=ex.step||5; const w=Math.max(step, Math.round(raw/step)*step);
   return {w, from:src.name};
 }
-function isPlateau(ex){
-  const h=noDl(hist[histKey(ex)]||[]); if(h.length<3) return false;
-  const last3=h.slice(-3); const first=last3[0].e1rm;
-  return Math.max(...last3.map(x=>x.e1rm)) <= first*1.01;
+// ---------- per-lift deload (3 missed sessions in a row at the same weight, per lift and per day) ----------
+// liftDeload {from, skip}: from = when this rule started counting (sessions finished earlier are never judged; an imported backup
+// without the key starts it again at import time); skip["<dayId>|<name>"] = t of the newest session of the streak the user kept
+// at normal weight with Use Normal Weight (a newer session of that lift makes it stale, so the next miss brings the cut back).
+// A lighter session of the lift carries dl:1 on its sets in sessions[].ex and on its hist entry (strength numbers skip it);
+// its sets are a normal progression base, and the next sessions climb back one step at a time to the weight before the cut.
+let liftDeload={from:0,skip:{}};
+function cleanLiftDeload(v){ const o=(v&&typeof v==='object'&&!Array.isArray(v))?v:{}; return {from:Number.isFinite(o.from)&&o.from>0&&!isFuture(o.from)?o.from:Date.now(), skip:(o.skip&&typeof o.skip==='object'&&!Array.isArray(o.skip))?o.skip:{}}; }
+// "3 x 8-10" (optionally "/leg", "/side") -> {lo:8, hi:10}; anything else is not judged
+function repRange(t){ const m=String(t||'').match(/^\s*\d+\s*x\s*(\d+)\s*(?:[-–]\s*(\d+))?\s*(?:\/\s*[a-z]+)?\s*$/i); return m?{lo:+m[1],hi:+(m[2]||m[1])}:null; }
+function pdEligible(ex){ return !!ex&&!isTimedTarget(ex.target)&&ex.start!==0&&ex.equip!=='band'&&ex.equip!=='accessory'&&ex.step!==0&&!!repRange(ex.target); }
+const pdLogged=sets=>(Array.isArray(sets)?sets:[]).filter(x=>x&&parseFloat(x.w)>0&&x.r!==''&&x.r!=null&&!isNaN(parseInt(x.r)));
+const pdWeight=sets=>{ const l=pdLogged(sets); return l.length?Math.max(...l.map(x=>parseFloat(x.w))):0; };
+// deloaded in the strength sense: a deload-week session, or this lift's own lighter session
+const pdDeloaded=(s,name)=>!!s.deload||!!(s.ex&&Array.isArray(s.ex[name])&&s.ex[name].some(x=>x&&x.dl));
+// the about-10% deload cut used by the deload week, the Welcome Back easy start and the per-lift deload: rounded to the lift's own step
+// and at least one step lighter while that step is a fifth of the load or less
+function deloadCut(base,step){ step=step||2.5; let w=Math.round(base*0.9/step)*step; if(w>=base) w=step/base<=0.2?base-step:base; if(w<=0) w=base; return w; }
+function pdDayEx(name,dayId){ const d=PROGRAM.find(x=>x.id===dayId); return d?d.exercises.find(e=>e.name===name):null; }
+// the run of missed sessions of a lift on one day, newest first. Neutral sessions (lift absent or no weight logged) are skipped;
+// a session that hit the bottom of the range, a different weight (1 lb or more apart), a deloaded session of the lift on any day,
+// or 14 days or more between two counted sessions ends it.
+function liftStreak(name,dayId){
+  const ex=pdDayEx(name,dayId); if(!pdEligible(ex)) return null;
+  const lo=repRange(ex.target).lo, from=liftDeload.from||Date.now();
+  const list=sessions.filter(s=>!s.isCardio&&Number.isFinite(s.t)&&s.t>=from&&s.ex&&Array.isArray(s.ex[name])).sort((a,b)=>b.t-a.t);
+  let n=0, w=null, t=null, prevT=null;
+  for(const s of list){
+    if(pdDeloaded(s,name)) break;
+    if(s.dayId!==dayId) continue;
+    const ls=pdLogged(s.ex[name]); if(!ls.length) continue;
+    const mw=Math.max(...ls.map(x=>parseFloat(x.w)));
+    if(prevT!=null&&prevT-s.t>=RETURN_GAP_DAYS*864e5) break;
+    if(!ls.some(x=>Math.abs(parseFloat(x.w)-mw)<1&&parseInt(x.r)<lo)) break;
+    if(w!=null&&Math.abs(mw-w)>=1) break;
+    if(w==null){ w=mw; t=s.t; }
+    n++; prevT=s.t;
+  }
+  return {n,w,t,lo,ex};
+}
+const pdSkipKey=(dayId,name)=>dayId+'|'+name;
+// null when the lift is not stuck on that day. stuck: 3 or more misses in a row. pending: the next session of it on that day is lighter
+// (not when the cut would change nothing, not after Use Normal Weight for this streak, never on top of a deload week or an easy start).
+function liftDeloadState(ex,dayId){
+  if(!ex||!dayId) return null;
+  const st=liftStreak(ex.name,dayId); if(!st||st.n<3) return null;
+  const ex2=st.ex, cut=deloadCut(st.w,ex2.step), possible=cut<=st.w-1;
+  const skipped=liftDeload.skip[pdSkipKey(dayId,ex.name)]===st.t;
+  return {n:st.n, w:st.w, t:st.t, lo:st.lo, cut, possible, skipped, pending:possible&&!skipped&&!isDeloadActive()&&!returnEaseActive()};
+}
+// stuck on a day, or (no day: the Strength tab) on any day it is programmed. Replaces the old e1RM plateau test everywhere.
+function liftStuckState(ex,dayId){
+  if(dayId) return liftDeloadState(ex,dayId);
+  let out=null; PROGRAM.forEach(d=>{ if(!d.exercises.some(e=>e.name===ex.name)) return; const s=liftDeloadState(pdDayEx(ex.name,d.id),d.id); if(s&&(!out||s.pending&&!out.pending)) out=s; });
+  return out;
+}
+function liftStuck(ex,dayId){ return !!liftStuckState(ex,dayId); }
+const PD_TAG='<span class="exl-dlb" role="img" aria-label="Deload: lighter today">Deload</span>';
+// the Plateau label: stuck, and the app is not lightening the next session (Use Normal Weight, a cut too small to make, or a deload week)
+function liftPlateau(ex,dayId){ const s=liftStuckState(ex,dayId); return !!s&&!s.pending; }
+function liftPending(ex,dayId){ const s=liftStuckState(ex,dayId); return !!s&&s.pending; }
+// sessions of a lift on a day with a weight logged, newest first
+const pdDaySessions=(name,dayId)=>sessions.filter(s=>!s.isCardio&&s.dayId===dayId&&Number.isFinite(s.t)&&s.ex&&pdLogged(s.ex[name]).length).sort((a,b)=>b.t-a.t);
+// the lift's own lighter sessions on a day, each with the weight before the cut (the newest counted session of it on that day before
+// the lighter one); derived from sessions, never stored, so edits and deletes stay consistent
+function liftDeloadsOn(name,dayId){
+  const list=pdDaySessions(name,dayId), out=[];
+  list.forEach((s,i)=>{ if(s.deload||!s.ex[name].some(x=>x&&x.dl)) return; const pre=list.slice(i+1).find(x=>!pdDeloaded(x,name)); if(pre) out.push({t:s.t,pre:pdWeight(pre.ex[name])}); });
+  return out; // newest first
+}
+// climbing back after the newest lighter session: no counted session since has reached the weight before the cut (within 1 lb)
+function liftClimb(ex,dayId){
+  if(!pdEligible(ex)) return null;
+  const dls=liftDeloadsOn(ex.name,dayId); if(!dls.length) return null;
+  const d=dls[0];
+  if(pdDaySessions(ex.name,dayId).some(s=>s.t>d.t&&!pdDeloaded(s,ex.name)&&pdWeight(s.ex[ex.name])>=d.pre-1)) return null;
+  return d;
 }
 // ---------- exercise rotation: training blocks, tiered slots, rule-based picks ----------
 // Rotation happens at block boundaries (settings.blockWeeks, default 4), never silently mid-block: once a block
@@ -2742,8 +2816,10 @@ function pickForSlot(day, idx, exclude){
   }
   return scored.length?scored[0].a:null;
 }
-function slotReason(ex, idx){
-  if(isPrimarySlot(idx)) return isPlateau(ex)?'plateau':((ex.rotBlocks||0)>=1?'block2':null);
+// deload first, then judge: a stuck primary lift is proposed for a plateau swap only once it has had a lighter session of its own on
+// that day and is stuck again (or when its cut is too small to make, so a lighter session can never come)
+function slotReason(ex, idx, dayId){
+  if(isPrimarySlot(idx)){ const st=liftDeloadState(ex,dayId); if(st&&(!st.possible||liftDeloadsOn(ex.name,dayId).length)) return 'plateau'; return (ex.rotBlocks||0)>=1?'block2':null; }
   return (ex.rotCount||0)>=1?'block':null;
 }
 // one proposal per eligible slot; a pick is excluded for every later slot, and so are outgoing names, so two
@@ -2751,7 +2827,7 @@ function slotReason(ex, idx){
 function buildBlockProposals(){
   const exclude=allNamesInUse(); const out=[];
   PROGRAM.forEach(day=>day.exercises.forEach((ex,idx)=>{
-    const reason=slotReason(ex,idx); if(!reason) return;
+    const reason=slotReason(ex,idx,day.id); if(!reason) return;
     const pick=pickForSlot(day, idx, exclude); if(!pick) return;
     exclude.add(pick.name);
     out.push({dayId:day.id, idx, from:ex.name, pick, primary:isPrimarySlot(idx), reason, apply:true});
@@ -2843,8 +2919,24 @@ async function dismissBanner(id){
   applyBanners(BANNER_NAME[id]+' hidden');
   if(id==='backupBanner') await sset('backupSnoozeUntil',backupSnoozeUntil);
 }
+// Use Normal Weight on a lighter (per-lift deload) session: keep the normal weight for this streak; the toast's Undo brings the cut back
+async function setLiftSkip(key,val){
+  const skip={...liftDeload.skip}; if(val==null) delete skip[key]; else skip[key]=val;
+  const next={...liftDeload,skip};
+  if(!await sset('liftDeload',next)){ showToast("Couldn't save that. Try again.",undefined,true); return false; }
+  liftDeload=next; return true;
+}
+async function useNormalWeight(ex,dayId,t){
+  const key=pdSkipKey(dayId,ex.name), had=Object.prototype.hasOwnProperty.call(liftDeload.skip,key), prev=liftDeload.skip[key];
+  if(await setLiftSkip(key,t)===false) return;
+  render();
+  undoState={id:'liftDeload',key,prev:had?prev:null,dayId};
+  document.getElementById('undoMsg').textContent=`${ex.name} back to normal weight`;
+  document.getElementById('undoToast').hidden=false; clearTimeout(undoTimer); undoTimer=setTimeout(hideUndo,6000);
+}
 async function undoDismiss(){
   const u=undoState; if(!u) return; hideUndo();
+  if(u.id==='liftDeload'){ if(await setLiftSkip(u.key,u.prev)===false) return; if(view==='log'&&currentDay===u.dayId) render(); const ub=document.getElementById('undoBtn'); if(document.activeElement===ub||document.activeElement===document.body){ const h=document.querySelector('.xh-name'); if(h) h.focus({preventScroll:true}); } return; }
   if(u.id==='backupBanner'){ backupSnoozeUntil=u.prev; bannerFocusPending=true; bannerFocusId=u.id; applyBanners('Reminder restored'); if(u.prev) await sset('backupSnoozeUntil',u.prev); else await store.remove('backupSnoozeUntil'); }
   else { bannerDismissed.delete(u.id); bannerFocusPending=true; bannerFocusId=u.id; applyBanners('Reminder restored'); }
 }
@@ -2930,7 +3022,7 @@ async function undoRotation(day,idx){
   await saveProgram(); showToast(`Reverted to ${restored.name}`);
 }
 // ---------- deload / periodization ----------
-function plateauCountAll(){ const seen=new Set(); let n=0; PROGRAM.forEach(day=>day.exercises.forEach(ex=>{ if(seen.has(ex.name)) return; seen.add(ex.name); if(ex.start!==0 && isPlateau(ex)) n++; })); return n; }
+function plateauCountAll(){ const seen=new Set(); let n=0; PROGRAM.forEach(day=>day.exercises.forEach(ex=>{ if(seen.has(ex.name)) return; seen.add(ex.name); if(liftStuck(ex)) n++; })); return n; }
 // Welcome Back (v89): after a long gap the user may take an easy first session. Accepting writes only returnEase {t}; it counts as the
 // deload for the 5-week clock (so the two cuts never stack) without writing lastDeload, which also marks deload days in History.
 const RETURN_GAP_DAYS=14; // the rule; the copy never quotes the number
@@ -2943,23 +3035,22 @@ function weeksSinceDeload(){
   const ld=(lastDeload&&!isFuture(lastDeload)&&lastDeload)||0, base=Math.max(ld,returnEaseT()) || (sessions.length?Math.min(...sessions.map(s=>s.t)):Date.now());
   return Math.max(0,Date.now()-base)/(7*864e5);
 }
-const DELOAD_WEEKS=5, DELOAD_PLATEAUS=3; // the rule; the Home copy never quotes the numbers
+const DELOAD_WEEKS=5; // the rule (time only; a stuck lift gets its own lighter session instead); the Home copy never quotes the number
 // no deload reminder while an easy start is waiting to be used, or for 7 days after it was accepted
-function deloadDue(){ const re=returnEaseT(); return !isDeloadActive() && !(re&&(!returnEase.used||Date.now()-re<7*864e5)) && (weeksSinceDeload()>=DELOAD_WEEKS || plateauCountAll()>=DELOAD_PLATEAUS); }
-// one sentence per cause, stalled wins when both apply
+function deloadDue(){ const re=returnEaseT(); return !isDeloadActive() && !(re&&(!returnEase.used||Date.now()-re<7*864e5)) && weeksSinceDeload()>=DELOAD_WEEKS; }
+// the reminder is time-based only, so the sentence names the time
 function deloadCauseCopy(){
-  if(plateauCountAll()>=DELOAD_PLATEAUS) return 'Some of your lifts have stalled. A lighter deload week can help you recover so you can start progressing again.';
   return lastDeload ? "It's been a while since your last deload. A lighter week can help you recover so you keep progressing."
                     : "It's been a while since you started logging. A lighter week can help you recover so you keep progressing.";
 }
-function plateauBreakIdx(h){
-  // indices into h where a session broke a preceding 3-session plateau
-  const idx=[];
-  for(let i=3;i<h.length;i++){
-    const window=h.slice(i-3,i); const first=window[0].e1rm;
-    const wasPlateaued=Math.max(...window.map(x=>x.e1rm))<=first*1.01;
-    if(wasPlateaued && h[i].e1rm>first*1.03) idx.push(i);
-  }
+// indices into h (the lift's counted hist entries) where a stuck lift broke through: the first counted session, on the day of one of its
+// own lighter sessions, whose weight is more than 1 lb above the weight before that cut. Deload weeks and lifts never lightened get none.
+function plateauBreakIdx(h,name){
+  const days=[...new Set(sessions.filter(s=>!s.isCardio&&!s.deload&&s.dayId&&s.ex&&Array.isArray(s.ex[name])&&s.ex[name].some(x=>x&&x.dl)).map(s=>s.dayId))];
+  const ts=new Set();
+  days.forEach(D=>{ const list=pdDaySessions(name,D).filter(s=>!pdDeloaded(s,name)).sort((a,b)=>a.t-b.t);
+    liftDeloadsOn(name,D).forEach(d=>{ const b=list.find(s=>s.t>d.t&&pdWeight(s.ex[name])>d.pre+1); if(b) ts.add(b.t); }); });
+  const idx=[]; h.forEach((x,i)=>{ if(ts.has(x.t)) idx.push(i); });
   return idx;
 }
 function fmtDate(t){ const d=new Date(t); if(isNaN(d)) return 'an unknown date';
@@ -3646,10 +3737,22 @@ function exModel(ex){
     if(cw){ sug=cw; const cs=lastByName[ex.name]; if(cs){ saved=cs; if(cs.d!==currentDay){ const cd=PROGRAM.find(d=>d.id===cs.d); crossDaySub=cd?cd.sub:null; } } }
     else { const est=estimateFromRelated(ex); if(est){ sug=est.w; estFrom=est.from; } }
   }
+  // per-lift deload: 3 missed sessions in a row on this day make this session lighter (only the suggestion; a typed weight is never
+  // rewritten). After the lighter session, each session that reached the bottom of the range adds one step until the weight before
+  // the cut is back (the normal rule's number when that is higher, never past that weight), then the normal rule resumes.
+  const pd=liftDeloadState(ex,currentDay);
+  if(pd&&pd.pending) sug=pd.cut;
+  else if(typeof sug==='number'&&sug>0&&!crossDaySub&&!estFrom&&!isDeloadActive()&&!returnEaseActive()&&daySaved&&daySaved.sets){
+    const climb=liftClimb(ex,currentDay), ls=pdLogged(daySaved.sets);
+    if(climb&&ls.length&&ls.every(x=>parseInt(x.r)>=repRange(ex.target).lo)){
+      const mw=Math.max(...ls.map(x=>parseFloat(x.w)));
+      sug=Math.min(climb.pre, Math.max(sug, mw+(ex.step||2.5)));
+    }
+  }
   const timed=isTimedTarget(ex.target), bwLoaded=ex.start===0;
   // what Same as Last copies from: last time's sets that had reps. Not for timed holds, a first-ever use or a seed.
   const lastSets=(!timed&&saved&&saved.sets)?saved.sets.filter(x=>x&&x.r!==''&&x.r!=null):[];
-  return {saved,sug,crossDaySub,estFrom,timed,bwLoaded,lastSets};
+  return {saved,sug,crossDaySub,estFrom,timed,bwLoaded,lastSets,pd};
 }
 // What a Same as Last tap would put in set j right now: last time's matching set (ls), plus the weight (lb) or the added load,
 // each only if that box is still empty (null = leave it alone). The chip's label and the tap both read this, so they cannot disagree.
@@ -3784,7 +3887,7 @@ function weightText(ex,m){ if(ex.start===0) return 'Bodyweight'; const w=m.sug; 
 function exSummary(ex,m,state,partial){ const n=state.sets.length, d=state.sets.filter(x=>x.done).length; return `${partial&&d&&d<n?d+'/'+n:n} sets • ${repsText(ex)} • ${weightText(ex,m)}`; }
 // a note or a tip is waiting behind the "..." (the dot on the button): same cases the More sheet's content comes from
 function hasNoteOrTip(ex,day,m){
-  return !!(notes[histKey(ex)]||'').trim()||isPlateau(ex)||!!ex.rotPrev||m.sug===-1||!!m.estFrom||
+  return !!(notes[histKey(ex)]||'').trim()||liftPlateau(ex,day.id)||!!ex.rotPrev||m.sug===-1||!!m.estFrom||
     ((day.lvl==='new'||day.lvl==='exp')&&!m.timed&&ex.start!==0&&ex.step!==0&&!(hist[ex.name]||[]).length&&!lastByName[ex.name]);
 }
 function renderList(day,ord){
@@ -3798,9 +3901,9 @@ function renderList(day,ord){
     er.querySelector('.ease-undo').onclick=async e=>{ e.currentTarget.focus({preventScroll:true}); const prev=returnEase; returnEase=null; if(!await store.remove('returnEase')){ returnEase=prev; showToast("Couldn't save that. Try again.",undefined,true); return; } render(); renderHome(); };
   }
   ord.forEach((ex,i)=>{
-    const st=ensureState(ex), m=exModel(ex), dn=done(i), part=!dn&&st.sets.some(s=>s.done), sum=exSummary(ex,m,st,true), flag=hasNoteOrTip(ex,day,m);
+    const st=ensureState(ex), m=exModel(ex), dn=done(i), part=!dn&&st.sets.some(s=>s.done), sum=exSummary(ex,m,st,true), flag=hasNoteOrTip(ex,day,m), plat=liftPlateau(ex,day.id);
     const row=document.createElement('div'); row.className='exl-row'+(dn?' done':''); row.setAttribute('role','listitem');
-    row.innerHTML=`<button type="button" class="exl-open" data-i="${i}" aria-label="${esc(ex.name)}, ${esc(sum)}, ${dn?'finished':part?'in progress':'not started'}${isPlateau(ex)?', plateau':''}"><span class="exl-tile">${muscleTile(ex)}${dn?`<i class="exl-ck" aria-hidden="true">${IC.check}</i>`:''}</span><span class="exl-txt"><span class="exl-nm">${esc(ex.name)}${isPlateau(ex)?'<span class="exl-plb" role="img" aria-label="Plateau: no progress in 3 sessions">Plateau</span>':''}</span><span class="exl-sm">${esc(sum).replace(/(• )([^•]+)$/,(m,a,b)=>a+b.replace(/ /g,'\u00a0'))}</span></span></button><button type="button" class="icbtn exl-menu" data-i="${i}" aria-label="${esc(ex.name)} options${flag?', has notes or tips':''}" aria-haspopup="dialog">${flag?'<i class="ndot" aria-hidden="true"></i>':''}${IC.dots}</button>`;
+    row.innerHTML=`<button type="button" class="exl-open" data-i="${i}" aria-label="${esc(ex.name)}, ${esc(sum)}, ${dn?'finished':part?'in progress':'not started'}${m.pd&&m.pd.pending?', lighter today':plat?', plateau':''}"><span class="exl-tile">${muscleTile(ex)}${dn?`<i class="exl-ck" aria-hidden="true">${IC.check}</i>`:''}</span><span class="exl-txt"><span class="exl-nm">${esc(ex.name)}${m.pd&&m.pd.pending?PD_TAG:plat?'<span class="exl-plb" role="img" aria-label="Plateau: 3 sessions in a row below the target reps">Plateau</span>':''}</span><span class="exl-sm">${esc(sum).replace(/(• )([^•]+)$/,(m,a,b)=>a+b.replace(/ /g,'\u00a0'))}</span></span></button><button type="button" class="icbtn exl-menu" data-i="${i}" aria-label="${esc(ex.name)} options${flag?', has notes or tips':''}" aria-haspopup="dialog">${flag?'<i class="ndot" aria-hidden="true"></i>':''}${IC.dots}</button>`;
     rows.appendChild(row);
   });
   wrap.querySelectorAll('.exl-open').forEach(b=>b.onclick=()=>openExercise(+b.dataset.i));
@@ -3921,7 +4024,7 @@ function renderExercise(ex,day){
     const cur=currentFor(ex), base=baselineFor(ex);
     // the same ± change from the baseline the Strength tab shows ("+10%"), not the old ratio ("110%")
     const chg=pct(base,cur); const lvlTxt=chg!==null&&Math.round(chg*10)!==0?`Strength ${fmtPct(chg)}`:'';
-    const plat=isPlateau(ex);
+    const pd=m.pd, plat=!!pd&&!pd.pending;
     let upTxt=''; // the jump over last time's top weight, in the More sheet's details
     if(!crossDaySub && ex.start!==0 && typeof sug==='number' && saved && saved.sets){
       const loggedLast=saved.sets.filter(s=>s.w!==''&&s.r!=='');
@@ -3937,6 +4040,12 @@ function renderExercise(ex,day){
       <div class="xh-meta"><span class="xh-sum">${esc(exSummary(ex,m,state,false))}</span>${barKind(ex)?'<span class="xh-side"></span>':''}${complete?`<span class="xh-ck" role="img" aria-label="finished">${IC.check}</span>`:''}</div>`;
     head.querySelector('#backBtn').onclick=e=>{ e.currentTarget.focus({preventScroll:true}); showList(); };
     card.appendChild(head);
+    if(pd&&pd.pending){ // never a silent cut: say why, and offer the normal weight back
+      const dr=document.createElement('div'); dr.className='dl-row';
+      dr.innerHTML=`<p class="dl-note">Lighter today: 3 sessions in a row below ${pd.lo} reps at ${dispWeight(pd.w)} ${unitLabel()}, so this session is a bit lighter. You'll build back up from here.</p><button type="button" class="linkbtn pd-normal">Use Normal Weight</button>`;
+      dr.querySelector('.pd-normal').onclick=e=>{ e.currentTarget.focus({preventScroll:true}); useNormalWeight(ex,currentDay,pd.t); };
+      card.appendChild(dr);
+    }
 
     const body=document.createElement('div'); body.className='ex-body';
     const yt='https://www.youtube.com/results?search_query='+encodeURIComponent(ex.name.replace('/',' ')+' exercise form');
@@ -4014,7 +4123,12 @@ function renderExercise(ex,day){
       baseIn.oninput=e=>{ settings.machineBase=settings.machineBase||{}; settings.machineBase[ex.name]=storeWeight(e.target.value); sset('settings',settings); updatePlates(); };
       updatePlates(); const r2=document.createElement('div'); r2.className='more-row'; r2.appendChild(pl); more.appendChild(r2);
     }
-    if(plat){ const pt=document.createElement('div'); pt.className='plateau-tip'; pt.innerHTML=`No progress in 3 sessions. <span class="linkbtn" style="color:var(--amber)" data-act="variation">Try a variation</span>, take a lighter week (about 10% less, same reps), or switch the rep range for a few weeks. If several lifts feel stuck at once, <span class="linkbtn" style="color:var(--amber)" data-act="deload">consider a full deload week</span>.`; pt.querySelector('[data-act="variation"]').onclick=()=>openSwap(currentDay, ex); pt.querySelector('[data-act="deload"]').onclick=openDeloadSheet; more.appendChild(pt); }
+    if(plat){ const pt=document.createElement('div'); pt.className='plateau-tip';
+      const why=`3 sessions in a row below ${pd.lo} reps at ${dispWeight(pd.w)} ${unitLabel()}.`, vr='<span class="linkbtn" style="color:var(--amber)" data-act="variation">';
+      pt.innerHTML=pd.skipped?`${why} You kept your normal weight, so one more session below ${pd.lo} reps brings the lighter session back. You can also ${vr}try a variation</span>.`
+        :(isDeloadActive()||returnEaseActive())?`${why} Today's weights are already a bit lighter. You can also ${vr}try a variation</span>.`
+        :`${why} ${vr}Try a variation</span> or switch the rep range for a few weeks.`;
+      pt.querySelector('[data-act="variation"]').onclick=()=>openSwap(currentDay, ex); more.appendChild(pt); }
     if(ex.rotPrev){ const idx=day.exercises.indexOf(ex); const rt=document.createElement('div'); rt.className='plateau-tip'; rt.innerHTML=`Swapped in at the start of this block (was ${esc(ex.rotPrev.name)}). <span class="linkbtn" style="color:var(--amber)" data-act="undo">Undo</span> · <span class="linkbtn" style="color:var(--amber)" data-act="never">Never Suggest This</span>`; rt.querySelector('[data-act="undo"]').onclick=()=>undoRotation(day,idx); rt.querySelector('[data-act="never"]').onclick=()=>rejectRotation(day,idx); more.appendChild(rt); }
     if(sug===-1){ const fn=document.createElement('div'); fn.className='first-log-note'; fn.textContent='New lift — no history yet. Log a comfortable first set below; Lift Log will suggest a weight next time from what you log now.'; more.appendChild(fn); }
     else if(estFrom){ const fn=document.createElement('div'); fn.className='first-log-note'; fn.textContent=`New lift — the weight is a conservative estimate from ${estFrom} (same muscle group, adjusted for the implement and rep range). Adjust it to what feels right; Lift Log learns from what you log.`; more.appendChild(fn); }
@@ -4319,6 +4433,8 @@ async function finishSession(){
     if(!await confirmSheet(msg, 'Log It Anyway')) return;
   }
   const now=Date.now();
+  // per-lift deload: the lifts whose lighter session was due at the Finish tap (read before anything below changes sessions)
+  const pdDue={}; worked.forEach(ex=>{ const p=liftDeloadState(ex,currentDay); if(p&&p.pending) pdDue[ex.name]=p; });
   // each write is checked: on the first failure stop and tell the user once. The bookkeeping below changes the live
   // state before it is written, so snapshot it first; on failure put it back (in place) and best-effort write the old
   // values over any key that did save, so a retry starts clean and yields one session, one history entry, recovery once.
@@ -4372,7 +4488,10 @@ async function finishSession(){
   let vol=0, nsets=0; const exRec={}; const prCandidates=[];
   worked.forEach(ex=>{
     const sets=todayData[ex.name].sets.filter(st=>st.w&&st.r);
-    exRec[ex.name]=todayData[ex.name].sets.filter(isLogged).map(st=>({w:st.w,r:st.r,rir:st.rir??null,...(parseFloat(st.add)?{add:st.add}:{})}));
+    // lifted lighter (at least 1 lb under the stuck weight) on a session whose cut was due: that lift's sets and history entry carry dl:1,
+    // so strength numbers and PRs skip them; its sets still become the normal base the next sessions build back up from
+    const p=pdDue[ex.name], pdl=!!p&&!dl&&pdWeight(sets)>0&&pdWeight(sets)<=p.w-1;
+    exRec[ex.name]=todayData[ex.name].sets.filter(isLogged).map(st=>({w:st.w,r:st.r,rir:st.rir??null,...(parseFloat(st.add)?{add:st.add}:{}),...(pdl?{dl:1}:{})}));
     nsets+=todayData[ex.name].sets.filter(isLogged).length;
     if(isTimedTarget(ex.target)) return; // seconds, not reps: counted as sets done, never as weight moved or strength
     sets.forEach(st=>vol+=(parseFloat(st.w)||0)*(parseInt(st.r)||0));
@@ -4382,8 +4501,8 @@ async function finishSession(){
     // the set that produced the best e1RM, not the heaviest weight and the most reps taken from different sets —
     // with sets at different loads (e.g. bodyweight plus some added) that pairing described a set never lifted
     const top=sets.reduce((a,s)=>e1rm(s.w,s.r)>e1rm(a.w,a.r)?s:a), topW=parseFloat(top.w), topR=parseInt(top.r);
-    if(!dl && priorBest && b>priorBest*1.0001) prCandidates.push({name:ex.name, w:topW, r:topR, pct:pct(priorBest,b)});
-    (hist[k]=hist[k]||[]).push({t:now,e1rm:Math.round(b*10)/10,w:topW,r:topR,d:currentDay,...(dl?{dl:1}:{})});
+    if(!dl && !pdl && priorBest && b>priorBest*1.0001) prCandidates.push({name:ex.name, w:topW, r:topR, pct:pct(priorBest,b)});
+    (hist[k]=hist[k]||[]).push({t:now,e1rm:Math.round(b*10)/10,w:topW,r:topR,d:currentDay,...(dl||pdl?{dl:1}:{})});
   });
   if(!await sset('hist',hist)) return saveFail();
   sessions.push({t:now,dayId:currentDay,dayName:day.name,sub:day.sub,vol:Math.round(vol),sets:nsets,ex:exRec,...(dl?{deload:true}:{}),...(ROUTINE_ID!=='ul4'?{routineId:ROUTINE_ID,...(dayFocus(day)?{focus:dayFocus(day)}:{})}:{})}); if(!await sset('sessions',sessions)) return saveFail();
@@ -5302,7 +5421,7 @@ async function rederiveAfterSessionChange(names, dayId, t){
   names.forEach(name=>{
     const src=sessions.find(x=>!x.isCardio&&x.t===t&&x.ex&&x.ex[name]);
     let h=(hist[name]||[]).filter(x=>x.t!==t);
-    if(src){ const sets=src.ex[name].filter(x=>x.w&&x.r); const b=bestE1rm(sets); if(b) h.push({t,e1rm:Math.round(b*10)/10,w:Math.max(...sets.map(x=>parseFloat(x.w))),r:Math.max(...sets.map(x=>parseInt(x.r))),d:src.dayId,...(src.deload?{dl:1}:{})}); }
+    if(src){ const sets=src.ex[name].filter(x=>x.w&&x.r); const b=bestE1rm(sets); if(b) h.push({t,e1rm:Math.round(b*10)/10,w:Math.max(...sets.map(x=>parseFloat(x.w))),r:Math.max(...sets.map(x=>parseInt(x.r))),d:src.dayId,...(pdDeloaded(src,name)?{dl:1}:{})}); }
     h.sort((a,b)=>a.t-b.t); if(h.length) hist[name]=h; else delete hist[name];
     const nl=lastByNameFrom(name,lastByName[name]); if(nl) lastByName[name]=nl; else delete lastByName[name];
   });
@@ -5331,7 +5450,8 @@ async function saveSessionEdit(s, edited){
   const i=sessionIndex(s); if(i<0) return;
   if(s.isCardio){ Object.assign(sessions[i], edited); await sset('sessions',sessions); showToast('Session updated'); return; }
   const before=Object.keys(s.ex||{});
-  const ex={}; Object.keys(edited.ex).forEach(n=>{ const sets=edited.ex[n].filter(x=>x.w!==''||x.r!==''); if(sets.length) ex[n]=sets; });
+  // a lift's own lighter session keeps its dl:1 marker through an edit, or the edit would quietly count it as a normal session
+  const ex={}; Object.keys(edited.ex).forEach(n=>{ const was=Array.isArray(s.ex&&s.ex[n])&&s.ex[n].some(x=>x&&x.dl); const sets=edited.ex[n].filter(x=>x.w!==''||x.r!=='').map(x=>was?{...x,dl:1}:x); if(sets.length) ex[n]=sets; });
   if(!Object.keys(ex).length){ sessions.splice(i,1); await sset('sessions',sessions); await rederiveAfterSessionChange(before, s.dayId, s.t); showToast('Session deleted — nothing left in it'); return; }
   let vol=0,nsets=0;
   Object.entries(ex).forEach(([n,sets])=>{ const en=entryFor(n); const timed=!!(en&&en.target&&isTimedTarget(en.target)); sets.forEach(x=>{ nsets++; if(!timed) vol+=(parseFloat(x.w)||0)*(parseInt(x.r)||0); }); });
@@ -5388,7 +5508,7 @@ function buildSessionItem(s){
   const meta=s.isCardio?cardioMeta(s)
     :`${Object.keys(s.ex||{}).length} exercises · ${s.sets} sets · ${dispVol(s.vol||0).toLocaleString()} ${unitLabel()}`;
   const body=s.isCardio?(s.notes?`<div class="sess-notes"></div>`:'')
-    :sessionExLines(s).map(([n,sets])=>`<div class="sess-ex"><b>${esc(n)}</b><span>${sets.map(x=>`<i>${x}</i>`).join('')}</span></div>`).join('');
+    :sessionExLines(s).map(([n,sets])=>`<div class="sess-ex"><b>${esc(n)}${!s.deload&&pdDeloaded(s,n)?' <em class="exl-dlb" role="img" aria-label="Deload: lighter on purpose">Deload</em>':''}</b><span>${sets.map(x=>`<i>${x}</i>`).join('')}</span></div>`).join('');
   el.innerHTML=`<div class="sess-head"><span class="sess-main"><span class="sess-name"><i class="cal-tag t-${p.type}${s.deload?' dl':''}" aria-hidden="true">${p.tag}</i>${s.isCardio?cardioEsc(s.ctypeLabel):p.label}${s.deload?' <span class="badge deload">Deload</span>':''}</span><span class="sess-meta">${meta}</span></span></div>
     <div class="sdet">${body}<div class="sess-acts"><span class="linkbtn" data-act="edit">Edit</span><span class="linkbtn danger" data-act="del">Delete</span></div></div>`;
   if(s.isCardio&&s.notes) el.querySelector('.sess-notes').textContent=s.notes;
@@ -5410,6 +5530,9 @@ function openCalDaySheet(dateObj,daySessions){
   document.getElementById('calDaySheetTitle').textContent=dateObj.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
   const body=document.getElementById('calDaySheetBody'); body.innerHTML='';
   if(daySessions.some(x=>x.deload)){ const n=document.createElement('div'); n.className='sheet-note'; n.setAttribute('role','note'); n.textContent='Deload session. Lighter on purpose, so it is not counted in progress, current strength, plateaus or PRs.'; body.appendChild(n); }
+  { // a lift's own lighter session: named in a blue note; the day itself is not a deload day
+    const names=[...new Set(daySessions.filter(x=>!x.isCardio&&!x.deload&&x.ex).flatMap(x=>Object.keys(x.ex).filter(nm=>pdDeloaded(x,nm))))];
+    if(names.length){ const n=document.createElement('div'); n.className='sheet-note pd'; n.setAttribute('role','note'); n.textContent=`${names.length===1?names[0]:names.slice(0,-1).join(', ')+' and '+names[names.length-1]} ${names.length===1?'was':'were'} lighter on purpose that day, so ${names.length===1?'it is':'they are'} not counted in progress, current strength or PRs.`; body.appendChild(n); } }
   daySessions.forEach(s=>body.appendChild(buildSessionItem(s)));
   document.getElementById('calDayBg').classList.add('on');
   document.getElementById('calDaySheet').classList.add('on');
@@ -5564,14 +5687,15 @@ function renderStrength(){
     const firstOnly=h.length===1&&cls==='flat';
     const last=h.length?h[h.length-1]:null;
     const bestTxt=last?`${dispWeight(last.w)} ${unitLabel()} × ${last.r}`:(ex.seed?(()=>{const b=ex.seed.filter(x=>x.w&&x.r).sort((a,b)=>e1rm(b.w,b.r)-e1rm(a.w,a.r))[0]; return b?`${dispWeight(b.w)} ${unitLabel()} × ${b.r}`:'—';})():'—');
-    const plat=isPlateau(ex);
-    const breaks=plateauBreakIdx(h); const milestoneIdx=breaks.length?breaks[breaks.length-1]+1:null;
+    const stk=day.past?null:liftStuckState(ex), plat=!!stk&&!stk.pending, pdTag=!!stk&&stk.pending;
+    const pdT=new Set(sessions.filter(s=>!s.isCardio&&!s.deload&&pdDeloaded(s,ex.name)).map(s=>s.t)); // this lift's own lighter sessions (not deload weeks)
+    const breaks=plateauBreakIdx(h,ex.name); const milestoneIdx=breaks.length?breaks[breaks.length-1]+1:null;
     const others=(nameSlots[ex.name]||[]).filter(o=>o.name!==day.name); // same-half days show as "also …" instead
     const shareTxt=others.length?` · shares history with ${others.map(o=>`${o.name} ${o.sub}`).join(', ')}`:'';
     const row=document.createElement('div'); row.className='srow';
     // sparkline/scrub series: the baseline, then every session in range; deload sessions sit at the level before them
     const rowSeries=(()=>{ const bT=baselines[histKey(ex)]; const seq=[{v:base,t:null}]; let lv=base, mil=milestoneIdx, dl=[];
-      fullH.filter(x=>!bT||x.t>=bT).forEach(x=>{ if(x.dl){ seq.push({v:lv,t:x.t,dl:1,p:pct(base,lv)}); dl.push(seq.length-1); } else { lv=x.e1rm; seq.push({v:x.e1rm,t:x.t,w:x.w,r:x.r,p:pct(base,x.e1rm)}); } });
+      fullH.filter(x=>!bT||x.t>=bT).forEach(x=>{ if(x.dl){ seq.push({v:lv,t:x.t,dl:1,lift:pdT.has(x.t),p:pct(base,lv)}); dl.push(seq.length-1); } else { lv=x.e1rm; seq.push({v:x.e1rm,t:x.t,w:x.w,r:x.r,p:pct(base,x.e1rm)}); } });
       if(mil!=null){ const hi=mil-1; let c=-1; const at=seq.findIndex(q=>q.t!==null&&!q.dl&&++c===hi); mil=at<0?null:at; }
       return {seq,vals:seq.map(q=>q.v),dl,mil}; })();
     const dlTxt=dlN?(fullN?` · <span class="dlnote">${dlN} deload${dlN>1?'s':''} not counted</span>`:` · <span class="dlnote">${dlN} deload${dlN>1?'s':''}, not counted yet</span>`):'';
@@ -5579,24 +5703,27 @@ function renderStrength(){
     const pastTxt=day.past?` · last done ${fmtDate(fullH[fullH.length-1].t)}`:'';
     const k=histKey(ex);
     const baseTxt=isTimedTarget(ex.target)?'':baselines[k]?`<span class="sd-act"><span class="linkbtn" data-act="baseline-undo">Baseline Reset ${fmtDate(baselines[k])} — Undo</span></span>`:(fullN>=2?`<span class="sd-act"><span class="linkbtn danger" data-act="baseline">Reset Baseline</span></span>`:''); // on its own line under the detail (it used to follow a separator dot, which led the line when it wrapped)
-    row.innerHTML=`<div><div class="sn">${esc(ex.name)}<span class="also"></span>${plat?' <span class="badge plateau">Plateau</span>':''}</div><div class="sd">${sdTxt}${shareTxt}${pastTxt}${baseTxt}</div><div class="sd" data-scrub-readout style="display:none"></div></div><div class="sp ${cls}">${p===null?'Start':firstOnly?'New':fmtPct(p)}</div>${h.length&&!firstOnly?`<div class="scrub" tabindex="0" aria-label="${esc(ex.name)} trend. Drag across it, or use the arrow keys, to see each session.">${sparkline(rowSeries.vals,cls==='down'?'var(--amber)':'var(--green)',rowSeries.mil,undefined,rowSeries.dl)}</div>`:''}`;
+    row.innerHTML=`<div><div class="sn">${esc(ex.name)}<span class="also"></span>${plat?' <span class="badge plateau">Plateau</span>':pdTag?' <span class="exl-dlb" role="img" aria-label="Deload: next session lighter">Deload</span>':''}</div><div class="sd">${sdTxt}${shareTxt}${pastTxt}${baseTxt}</div><div class="sd" data-scrub-readout style="display:none"></div></div><div class="sp ${cls}">${p===null?'Start':firstOnly?'New':fmtPct(p)}</div>${h.length&&!firstOnly?`<div class="scrub" tabindex="0" aria-label="${esc(ex.name)} trend. Drag across it, or use the arrow keys, to see each session.">${sparkline(rowSeries.vals,cls==='down'?'var(--amber)':'var(--green)',rowSeries.mil,undefined,rowSeries.dl)}</div>`:''}`;
     const rowWrap=row.querySelector('.scrub');
     if(rowWrap){
       // point 0 is the baseline itself (from pre-app seed numbers or the first session), so it has no set to show.
       // The readout is its own element rather than a rewrite of .sd, which holds live baseline-reset links.
       const sdEl=row.querySelector('.sd'), readout=row.querySelector('[data-scrub-readout]'), spEl=row.querySelector('.sp');
       const rest={txt:spEl.textContent,cls:spEl.className};
-      const pts=rowSeries.seq.map((q,i)=>i===0?{t:null,p:0}:q.dl?{t:q.t,dl:1,p:q.p}:{t:q.t,p:q.p,w:q.w,r:q.r});
+      const pts=rowSeries.seq.map((q,i)=>i===0?{t:null,p:0}:q.dl?{t:q.t,dl:1,lift:q.lift,p:q.p}:{t:q.t,p:q.p,w:q.w,r:q.r});
+      const txtOf=pt=>pt.t===null?'Your Starting Numbers':pt.dl?`${fmtDate(pt.t)} · ${pt.lift?'Deload':'Deload week'} · not counted`:`${fmtDate(pt.t)} · best set ${dispWeight(pt.w)} ${unitLabel()} × ${pt.r}`;
       const vals=rowSeries.vals;
       bindScrub(rowWrap);
       rowWrap._scrub={pts,coords:sparkCoords(vals,300,26,2),w:300,h:26,pad:2,color:cls==='down'?'var(--amber)':'var(--green)',
         onShow:pt=>{
           spEl.textContent=pt.t===null?'Start':fmtPct(pt.p);
           spEl.className='sp '+(pt.p===null||Math.abs(pt.p)<0.05?'flat':pt.p>0?'up':'down');
-          readout.textContent=pt.t===null?'Your Starting Numbers':pt.dl?`${fmtDate(pt.t)} · Deload week · not counted`:`${fmtDate(pt.t)} · best set ${dispWeight(pt.w)} ${unitLabel()} × ${pt.r}`;
           sdEl.style.display='none'; readout.style.display='';
+          // reserve the height of the tallest readout of this row (a long one wraps at 320 px), so the chart does not jump while scrubbing
+          if(!readout.style.minHeight){ let mh=0; pts.forEach(q=>{ readout.textContent=txtOf(q); mh=Math.max(mh,readout.offsetHeight); }); if(mh) readout.style.minHeight=mh+'px'; }
+          readout.textContent=txtOf(pt);
         },
-        onReset:()=>{ spEl.textContent=rest.txt; spEl.className=rest.cls; readout.style.display='none'; sdEl.style.display=''; }};
+        onReset:()=>{ spEl.textContent=rest.txt; spEl.className=rest.cls; readout.style.display='none'; readout.style.minHeight=''; sdEl.style.display=''; }};
     }
     // the card itself toggles open/closed on click — keep these links from bubbling up to it
     const rb=row.querySelector('[data-act="baseline"]'); if(rb) rb.onclick=async e=>{ e.stopPropagation(); baselines[k]=noDl(fullH).slice(-1)[0].t; await sset('baselines',baselines); renderStrength(); if(view==='log') render(); showToast(`${ex.name}: progress now measured from your latest session`); };
@@ -5633,7 +5760,7 @@ function renderStrength(){
     const ex={name, target:en.target||'3 x 8-12', seed:null, start:en.start===0?0:-1};
     renderRow(ex, {name:half, sub:'Past', badge:'light', past:true});
   });
-  const hasDl=sessions.some(x=>x.deload); document.getElementById('strDlFoot').hidden=!hasDl;
+  const hasDl=sessions.some(x=>x.deload)||Object.values(hist).some(a=>Array.isArray(a)&&a.some(x=>x&&x.dl)); document.getElementById('strDlFoot').hidden=!hasDl;
   [upperList,lowerList].forEach(l=>{
     const {box,list}=pastBox[l.id], n=list.children.length;
     box.querySelector('[data-n]').textContent=n; box.style.display=n?'':'none';
@@ -6399,7 +6526,7 @@ let lastBackup=0;
 const BACKUP_VERSION=1, BACKUP_MAX_BYTES=10*1024*1024;
 // expected top-level type per stored key (null is always allowed: an export writes null for a key that was never set).
 // today:/last: are per-day objects; every other KEYS entry not listed here is checked as an object.
-const BACKUP_TYPES={ lastBackup:'number', 'meta:sessionCount':'number', lastDeload:'number', deloadStart:'number', deloadEnd:'number', blockStart:'number', blockNum:'number', backupSnoozeUntil:'number', returnEase:'object',
+const BACKUP_TYPES={ lastBackup:'number', 'meta:sessionCount':'number', lastDeload:'number', deloadStart:'number', deloadEnd:'number', blockStart:'number', blockNum:'number', backupSnoozeUntil:'number', returnEase:'object', liftDeload:'object',
   'meta:histMigratedV2':'boolean', program:'array', routineId:'string', quiz:'object', recoveryLog:'array', sessions:'array', bodyweight:'array' };
 // arrays whose entries are read as {t:…} by merge, history and the recovery gate
 const BACKUP_TIMED=['recoveryLog','sessions','bodyweight'];
@@ -6447,6 +6574,7 @@ const KEEP_IF_MISSING=[...ROUTINE_KEYS,'quiz'];
 // back what was there before (best effort) and returns false, so a failed restore does not leave a quiet hybrid.
 async function restoreKeys(data){
   if(!('deloadEnd' in data)) data={...data,deloadEnd:0}; // an older backup has none; this phone's stale End Early time must not survive a Replace
+  if(!isObj(data.liftDeload)) data={...data,liftDeload:{from:Date.now(),skip:{}}}; // a backup from before the per-lift deload: its history is never judged, counting starts now
   // last:<id> of days that exist only in a routine from the file (the built-in four are already in KEYS); never today:
   const extraLast=dayKeys(data.programs).map(id=>'last:'+id).filter(k=>!KEYS.includes(k)&&k in data);
   const keys=[...KEYS.filter(k=>!k.startsWith('today:')&&k!=='dayStart'&&k in data&&!(KEEP_IF_MISSING.includes(k)&&data[k]==null)), ...extraLast], prev={};
@@ -6624,6 +6752,13 @@ async function doMergeImport(d){
   { const fq=cleanQuiz(d.quiz), lq=cleanQuiz(await sget('quiz'));
     if(fq&&fq.state!=='draft'&&(!lq||lq.state==='draft')){ await must('quiz',d.quiz); QUIZ=fq; } }
 
+  // per-lift deload: the later start of counting wins; a file from before the feature that brings in sessions this phone would judge
+  // restarts counting now, so imported history is never judged after the fact
+  { const cur=cleanLiftDeload(await sget('liftDeload')), fl=isObj(d.liftDeload)?cleanLiftDeload(d.liftDeload):null; let next=cur;
+    if(fl) next={from:Math.max(cur.from,fl.from),skip:{...fl.skip,...cur.skip}};
+    else if(importedSessions.some(s=>hasT(s)&&s.t>=cur.from&&!localSessionsBefore.some(x=>x.t===s.t))) next={...cur,from:Date.now()};
+    if(JSON.stringify(next)!==JSON.stringify(cur)) await must('liftDeload',next); }
+
   for(const dayId of dayKeys(d.programs)){
     const localLatest=Math.max(0, ...localSessionsBefore.filter(s=>s.dayId===dayId).map(s=>s.t));
     const importedLatest=Math.max(0, ...importedSessions.filter(s=>s.dayId===dayId).map(s=>s.t));
@@ -6736,7 +6871,7 @@ function openSwap(dayId, ex){
   const seen=new Set([ex.name]);
   // the same rule-based pick a block review would make for this slot, shown first
   const suggested=pickForSlot(day, idx, allNamesInUse());
-  if(suggested){ const h=document.createElement('div'); h.className='alt-sec'; h.textContent='Suggested for this slot'; list.appendChild(h); render1(suggested, (isPlateau(ex)?'a fresh variation to break the stall':'a fresh variation')+(suggested.lib?' · from the full library':'')); seen.add(suggested.name);
+  if(suggested){ const h=document.createElement('div'); h.className='alt-sec'; h.textContent='Suggested for this slot'; list.appendChild(h); render1(suggested, (liftStuck(ex,dayId)?'a fresh variation to break the stall':'a fresh variation')+(suggested.lib?' · from the full library':'')); seen.add(suggested.name);
     const skip=document.createElement('div'); skip.className='note-sm'; skip.style.margin='-4px 0 10px'; skip.innerHTML=`Not for you? <span class="linkbtn">Never Suggest ${esc(suggested.name)}</span>`; skip.querySelector('.linkbtn').onclick=async()=>{ await neverSuggest(suggested.name); openSwap(dayId, ex); }; list.appendChild(skip); }
   if(original && original.name!==ex.name){ const h=document.createElement('div'); h.className='alt-sec'; h.textContent='Original'; list.appendChild(h); render1(original,'back to the program'); seen.add(original.name); }
   const h1=document.createElement('div'); h1.className='alt-sec'; h1.textContent=`${ex.group} alternatives`; list.appendChild(h1);
@@ -6901,7 +7036,9 @@ async function init(){
   blockStart=(await sget('blockStart'))||0; blockNum=(await sget('blockNum'))||1;
   lastBackup=(await sget('lastBackup'))||0; { const bs=await sget('backupSnoozeUntil'); backupSnoozeUntil=typeof bs==='number'&&isFinite(bs)?bs:0; } updateBackupUI();
   try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist().catch(()=>{}); }catch(e){} // ask the browser not to evict this data; silent, no UI
-  lastDeload=(await sget('lastDeload'))||0; deloadStart=(await sget('deloadStart'))||0; deloadEnd=(await sget('deloadEnd'))||0; { const re=await sget('returnEase'); returnEase=(re&&typeof re==='object'&&!Array.isArray(re)&&Number.isFinite(re.t))?re:null; } updateDeloadUI(); updateBwUI();
+  lastDeload=(await sget('lastDeload'))||0; deloadStart=(await sget('deloadStart'))||0; deloadEnd=(await sget('deloadEnd'))||0; { const re=await sget('returnEase'); returnEase=(re&&typeof re==='object'&&!Array.isArray(re)&&Number.isFinite(re.t))?re:null; }
+  { const raw=await sget('liftDeload'); liftDeload=cleanLiftDeload(raw); if(JSON.stringify(raw)!==JSON.stringify(liftDeload)) await sset('liftDeload',liftDeload); } // first run of the per-lift deload: count from now
+  updateDeloadUI(); updateBwUI();
   const custom=await sget('program');
   if(custom&&Array.isArray(custom)&&custom.length===4) PROGRAM=custom;
   else if(sessionCount>0 || sessions.length>0){ await sset('program',PROGRAM); } // logged before a program was ever saved (the old fixed defaults): keep those exercises name-for-name so history keys still match, skip the builder
